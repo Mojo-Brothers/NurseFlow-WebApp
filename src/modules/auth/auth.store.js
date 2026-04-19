@@ -3,7 +3,7 @@
  * Menyimpan state session user + role secara global.
  */
 import { create } from 'zustand';
-import { loginWithGoogle, logoutUser, getUserRole } from './auth.service.js';
+import { loginWithGoogle, logoutUser, getUserRole } from './services/auth.service.js';
 
 export const useAuthStore = create((set, get) => ({
   // ─── State ───────────────────────────────

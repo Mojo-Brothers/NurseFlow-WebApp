@@ -6,16 +6,16 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 // Layouts & Pages
 import MainLayout  from './layouts/MainLayout';
-import Login       from './pages/Login';
-import Dashboard   from './pages/Dashboard';
-import Patients    from './pages/Patients';
-import Triage      from './pages/Triage';
-import EMR         from './pages/EMR';
-import Encounters  from './pages/Encounters';
-import Pharmacy    from './pages/Pharmacy';
-import Worklist    from './pages/Worklist';
-import Billing     from './pages/Billing';
-import AdminHub    from './pages/AdminHub';
+import Login       from './modules/auth/pages/LoginPage';
+import Dashboard   from './modules/dashboard/pages/DashboardPage';
+import Patients    from './modules/patient/pages/PatientPage';
+import Triage      from './modules/triage/pages/TriagePage';
+import EMR         from './modules/emr/pages/EMRPage';
+import Encounters  from './modules/encounter/pages/EncounterPage';
+import Pharmacy    from './modules/pharmacy/pages/PharmacyPage';
+import Worklist    from './modules/worklist/pages/WorklistPage';
+import Billing     from './modules/billing/pages/BillingPage';
+import AdminHub    from './modules/admin/pages/AdminHubPage';
 
 const Wrap = ({ children }) => <ErrorBoundary>{children}</ErrorBoundary>;
 

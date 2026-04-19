@@ -3,7 +3,7 @@
  * Menyimpan state vitals, patient pilihan, dan progress hold-to-submit.
  */
 import { create } from 'zustand';
-import { submitTriage } from './triage.service.js';
+import { submitTriage } from './services/triage.service.js';
 import { calculateNEWS2, getTriageColor } from '../../utils/clinicalCalculators.js';
 
 const INITIAL_VITALS = {

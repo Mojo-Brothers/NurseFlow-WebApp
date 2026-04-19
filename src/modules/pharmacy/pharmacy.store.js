@@ -3,7 +3,7 @@ import {
   getPendingMedications,
   dispenseMedication,
   cancelMedication,
-} from './pharmacy.service.js';
+} from './services/pharmacy.service.js';
 
 export const usePharmacyStore = create((set, get) => ({
   pendingQueue: [],

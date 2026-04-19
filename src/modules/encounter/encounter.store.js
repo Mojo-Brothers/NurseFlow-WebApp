@@ -7,7 +7,7 @@ import {
   dischargeEncounter,
   getActiveEncounters,
   getPatientEncounters,
-} from './encounter.service.js';
+} from './services/encounter.service.js';
 
 export const useEncounterStore = create((set, get) => ({
   // ─── State ───────────────────────────────

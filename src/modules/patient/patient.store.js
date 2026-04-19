@@ -3,7 +3,7 @@
  * State global untuk patient context, shared antar halaman.
  */
 import { create } from 'zustand';
-import { getAllPatients, registerPatient } from './patient.service.js';
+import { getAllPatients, registerPatient } from './services/patient.service.js';
 
 export const usePatientStore = create((set, get) => ({
   // ─── State ───────────────────────────────
