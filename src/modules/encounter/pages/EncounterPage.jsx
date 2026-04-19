@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useEncounterStore } from '../encounter.store.js';
+import { useTranslation } from 'react-i18next';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { ENCOUNTER_TYPES } from '../../../core/constants.js';
@@ -12,12 +13,13 @@ const ENCOUNTER_TYPE_LABELS = {
 };
 
 const STATUS_CHIP = {
-  ACTIVE:      { label: 'Aktif',       color: '#88fb99', text: '#006e2c' },
-  DISCHARGED:  { label: 'Dipulangkan', color: '#dee3eb', text: '#424753' },
-  TRANSFERRED: { label: 'Transfer',    color: '#ffd8b2', text: '#8b4500' },
+  ACTIVE:      { label: 'encounter.status.active',       color: '#88fb99', text: '#006e2c' },
+  DISCHARGED:  { label: 'encounter.status.discharged',  color: '#dee3eb', text: '#424753' },
+  TRANSFERRED: { label: 'encounter.status.transferred', color: '#ffd8b2', text: '#8b4500' },
 };
 
 export default function EncounterPage() {
+  const { t } = useTranslation();
   const { currentUser } = useAuth();
   const { activeEncounters, isLoading, error, fetchActiveEncounters, openEncounter, discharge } = useEncounterStore();
   const { patients, fetchPatients } = usePatientStore();
@@ -46,17 +48,17 @@ export default function EncounterPage() {
       setIsModalOpen(false);
       setForm({ ...form, patientId: '', chiefComplaint: '' });
     } catch (err) {
-      alert('Gagal membuka encounter: ' + err.message);
+      alert(t('encounter.modal.error_open') + ': ' + err.message);
     }
     setIsSaving(false);
   };
 
   const handleDischarge = async (encounterId) => {
-    if (!window.confirm('Konfirmasi: Discharge pasien ini?')) return;
+    if (!window.confirm(t('encounter.modal.confirm_discharge'))) return;
     try {
       await discharge(encounterId, currentUser.email);
     } catch (err) {
-      alert('Gagal discharge: ' + err.message);
+      alert(t('encounter.modal.error_discharge') + ': ' + err.message);
     }
   };
 
@@ -76,14 +78,14 @@ export default function EncounterPage() {
     <div className="p-8 max-w-7xl mx-auto w-full">
       <div className="flex-row items-center justify-between mb-8">
         <div>
-          <h2 className="title">Encounter Management</h2>
+          <h2 className="title">{t('encounter.title')}</h2>
           <p className="text-on-surface-variant text-sm mt-1">
-            Episode Kunjungan Pasien · {activeEncounters.length} Aktif Saat Ini
+            {t('encounter.subtitle', { count: activeEncounters.length })}
           </p>
         </div>
         <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
           <span className="material-symbols-outlined icon-small mr-2" style={{ verticalAlign: 'bottom' }}>add_circle</span>
-          Buka Encounter Baru
+          {t('encounter.btn_new')}
         </button>
       </div>
 
@@ -97,15 +99,15 @@ export default function EncounterPage() {
         <div className="px-6 py-4 flex-row items-center gap-2"
           style={{ backgroundColor: 'var(--surface-container-low)' }}>
           <span className="material-symbols-outlined text-primary">local_hospital</span>
-          <h3 className="font-bold text-base">Encounter Aktif</h3>
-          <div className="chip chip-primary ml-auto">{activeEncounters.length} Pasien</div>
+          <h3 className="font-bold text-base">{t('encounter.active_list')}</h3>
+          <div className="chip chip-primary ml-auto">{activeEncounters.length} {t('nav.patients')}</div>
         </div>
 
         <table className="w-full text-left">
           <thead>
             <tr style={{ backgroundColor: 'var(--surface-container)' }}>
-              {['Pasien', 'Tipe', 'Keluhan Utama', 'Dokter', 'Perawat', 'Ward', 'Masuk', 'Status', 'Aksi'].map(h => (
-                <th key={h} className="py-3 px-5 font-bold text-xs uppercase text-on-surface-variant">{h}</th>
+              {['patient', 'type', 'complaint', 'doctor', 'nurse', 'ward', 'admitted', 'status', 'action'].map(key => (
+                <th key={key} className="py-3 px-5 font-bold text-xs uppercase text-on-surface-variant">{t(`encounter.table.${key}`)}</th>
               ))}
             </tr>
           </thead>
@@ -116,14 +118,14 @@ export default function EncounterPage() {
               </td></tr>
             ) : activeEncounters.length === 0 ? (
               <tr><td colSpan="9" className="py-10 text-center text-on-surface-variant">
-                Tidak ada encounter aktif. Mulai dengan membuka encounter baru.
+                {t('encounter.empty_list_hint', { defaultValue: 'No active encounters.' })}
               </td></tr>
             ) : activeEncounters.map(enc => {
               const chip = STATUS_CHIP[enc.status] || STATUS_CHIP.ACTIVE;
               return (
                 <tr key={enc.id} className="border-b hover-bg-surface" style={{ borderColor: 'var(--outline-variant)' }}>
                   <td className="py-4 px-5 font-bold text-primary text-sm">{getPatientName(enc.patient_id)}</td>
-                  <td className="py-4 px-5 text-sm">{ENCOUNTER_TYPE_LABELS[enc.encounter_type] || enc.encounter_type}</td>
+                  <td className="py-4 px-5 text-sm">{t(`encounter.types.${enc.encounter_type.toLowerCase()}`)}</td>
                   <td className="py-4 px-5 text-sm text-on-surface-variant" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {enc.chief_complaint || '—'}
                   </td>
@@ -133,7 +135,7 @@ export default function EncounterPage() {
                   <td className="py-4 px-5 text-xs text-on-surface-variant">{formatTime(enc.admitted_at)}</td>
                   <td className="py-4 px-5">
                     <span className="chip" style={{ backgroundColor: chip.color, color: chip.text }}>
-                      {chip.label}
+                      {t(chip.label)}
                     </span>
                   </td>
                   <td className="py-4 px-5">
@@ -141,7 +143,7 @@ export default function EncounterPage() {
                       <button className="btn-outline-small text-error"
                         style={{ borderColor: 'var(--error)', color: 'var(--error)' }}
                         onClick={() => handleDischarge(enc.id)}>
-                        Discharge
+                        {t('encounter.status.discharged')}
                       </button>
                     )}
                   </td>
@@ -156,7 +158,7 @@ export default function EncounterPage() {
         <div className="modal-overlay">
           <div className="modal-content card" style={{ width: '520px', maxWidth: '95vw' }}>
             <div className="flex-row items-center justify-between mb-6">
-              <h3 className="font-bold text-xl">Buka Encounter Baru</h3>
+              <h3 className="font-bold text-xl">{t('encounter.modal.title')}</h3>
               <button onClick={() => setIsModalOpen(false)} className="btn-ghost" style={{ padding: '4px' }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
@@ -164,10 +166,10 @@ export default function EncounterPage() {
 
             <form onSubmit={handleOpen} className="flex-column gap-4">
               <div>
-                <label className="metric-label mb-2 block">PILIH PASIEN *</label>
+                <label className="metric-label mb-2 block">{t('encounter.modal.patient_label')}</label>
                 <select required className="form-input" value={form.patientId}
                   onChange={e => setForm({ ...form, patientId: e.target.value })}>
-                  <option value="">-- Pilih Pasien --</option>
+                  <option value="">{t('encounter.modal.patient_placeholder')}</option>
                   {patients.map(p => (
                     <option key={p.id} value={p.id}>{p.mrn} — {p.name}</option>
                   ))}
@@ -175,26 +177,28 @@ export default function EncounterPage() {
               </div>
 
               <div>
-                <label className="metric-label mb-2 block">TIPE KUNJUNGAN *</label>
+                <label className="metric-label mb-2 block">{t('encounter.modal.type_label')}</label>
                 <select required className="form-input" value={form.encounterType}
                   onChange={e => setForm({ ...form, encounterType: e.target.value })}>
-                  {Object.entries(ENCOUNTER_TYPE_LABELS).map(([k, v]) => (
-                    <option key={k} value={k}>{v}</option>
+                  {Object.keys(ENCOUNTER_TYPES).map(k => (
+                    <option key={k} value={ENCOUNTER_TYPES[k]}>
+                      {t(`encounter.types.${ENCOUNTER_TYPES[k].toLowerCase()}`)}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="metric-label mb-2 block">KELUHAN UTAMA *</label>
+                <label className="metric-label mb-2 block">{t('encounter.modal.complaint_label')}</label>
                 <textarea required rows={2} className="form-input" style={{ resize: 'vertical' }}
-                  placeholder="Deskripsi keluhan utama pasien..."
+                  placeholder={t('encounter.modal.complaint_placeholder')}
                   value={form.chiefComplaint}
                   onChange={e => setForm({ ...form, chiefComplaint: e.target.value })} />
               </div>
 
               <div className="flex-row gap-4">
                 <div className="flex-1">
-                  <label className="metric-label mb-2 block">WARD</label>
+                  <label className="metric-label mb-2 block">{t('encounter.modal.ward_label')}</label>
                   <select className="form-input" value={form.ward}
                     onChange={e => setForm({ ...form, ward: e.target.value })}>
                     {['IGD', 'ICU', 'NICU', 'Poli Umum', 'Poli Jantung', 'Bedah', 'Kebidanan'].map(w => (
@@ -203,7 +207,7 @@ export default function EncounterPage() {
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="metric-label mb-2 block">DOKTER PENANGGUNG</label>
+                  <label className="metric-label mb-2 block">{t('encounter.modal.doctor_label')}</label>
                   <input className="form-input" value={form.admittingDoctor}
                     onChange={e => setForm({ ...form, admittingDoctor: e.target.value })}
                     placeholder="email dokter" />
@@ -211,9 +215,9 @@ export default function EncounterPage() {
               </div>
 
               <div className="flex-row justify-between mt-4 pt-4" style={{ borderTop: '1px solid var(--outline-variant)' }}>
-                <button type="button" className="btn-ghost" onClick={() => setIsModalOpen(false)}>Batal</button>
+                <button type="button" className="btn-ghost" onClick={() => setIsModalOpen(false)}>{t('encounter.modal.btn_cancel')}</button>
                 <button type="submit" className="btn-primary" disabled={isSaving}>
-                  {isSaving ? 'Menyimpan...' : 'Buka Encounter'}
+                  {isSaving ? t('encounter.modal.saving') : t('encounter.modal.btn_submit')}
                 </button>
               </div>
             </form>

@@ -5,31 +5,48 @@ import { useConnectionStatus } from '../../../core/hooks/useConnectionStatus.js'
 import { getTriageColor } from '../../../utils/clinicalCalculators.js'; // V5 Fix: Import color utility
 import '../styles/Dashboard.css';
 
+import { useAuth } from '../../../contexts/AuthContext.jsx';
+
 const DashboardPage = () => {
   const { t } = useTranslation();
   const { isOnline, statusMessage } = useConnectionStatus();
+  const { currentUser, isLoading: authLoading } = useAuth();
+  
   const [metrics, setMetrics] = useState({ occupancy: 0, avg_news_score: 0.0, staff_on_duty: 0 });
   const [alertsInfo, setAlertsInfo] = useState({ total: 0, highRiskCount: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // 🔥 Resilience Guard: Don't start listeners until Auth is settled
+    if (authLoading || !currentUser) return;
+
+    console.log('[Dashboard] Starting Clinical Listeners (Sentinel Active)');
+    
     const unsubscribeMetrics = listenToWardMetrics('central_medical', (data) => {
       if (data) {
         setMetrics(data);
         setIsLoading(false);
       }
     });
+
     const unsubscribeAlerts = listenToAlerts((data) => {
       setAlertsInfo(data);
     });
+
     return () => {
       unsubscribeMetrics();
       unsubscribeAlerts();
     };
-  }, []);
+  }, [authLoading, currentUser]);
 
   // V5 logic for Dashboard Color Coding
   const wardStatus = getTriageColor(metrics.avg_news_score);
+
+  if (authLoading) return (
+    <div className="flex justify-center items-center h-full">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    </div>
+  );
 
   return (
     <main className="dashboard-main">

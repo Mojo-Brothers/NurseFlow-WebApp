@@ -40,8 +40,71 @@
   "auth": {
     "title": "SYS_AUTH_SERVICE_LAYER",
     "access_restricted": "SYS_SIG_ACCESS_RESTRICTED_MODE",
-    "sign_in_google": "SYS_AUTH_IDP_GOOGLE_OIDC",
-    "authenticating": "SYS_BKG_AUTH_PENDING",
-    "error_login": "SYS_AUTH_ERR_0403"
+    "sign_in_google": "SYS:AUTH_IDP_GOOGLE_OIDC",
+    "authenticating": "SYS:BKG_AUTH_PENDING",
+    "error_login": "SYS:AUTH_ERR_0403"
+  },
+  "encounter": {
+    "title": "SYS:ENCOUNTER_CTRL_SRV",
+    "subtitle": "SYS:EPISODE_METRICS_COUNT_{{count}}",
+    "btn_new": "SYS:TRIGGER_ENCOUNTER_INIT",
+    "active_list": "SYS:COLLECTION_ENCOUNTERS_ACTIVE",
+    "table": {
+      "patient": "SYS:FIELD_PATIENT_UID",
+      "type": "SYS:FIELD_ENC_TYPE",
+      "complaint": "SYS:FIELD_CHIEF_COMPLAINT",
+      "doctor": "SYS_D_EMAIL",
+      "nurse": "SYS_N_EMAIL",
+      "ward": "SYS_WARD_ID",
+      "admitted": "SYS_TS_ADMITTED",
+      "status": "SYS_ENUM_STATUS",
+      "action": "SYS_INTENT_TRIGGER"
+    },
+    "types": {
+      "emergency": "SYS_TYPE_ED",
+      "outpatient": "SYS_TYPE_OPD",
+      "inpatient": "SYS_TYPE_IPD",
+      "planned": "SYS_TYPE_SCHEDULED"
+    },
+    "status": {
+      "active": "SYS_STATE_ACTIVE",
+      "discharged": "SYS_STATE_DISCHARGED",
+      "transferred": "SYS_STATE_TRANSFERRED"
+    },
+    "modal": {
+      "title": "SYS:IF_ENCOUNTER_CREATION",
+      "patient_label": "SYS:INPUT_REF_PATIENT",
+      "patient_placeholder": "SYS:PTR_SELECT_NULL",
+      "type_label": "SYS:INPUT_REF_TYPE",
+      "complaint_label": "SYS:INPUT_REF_COMPLAINT",
+      "complaint_placeholder": "SYS:STR_INPUT_HINT",
+      "ward_label": "SYS:INPUT_REF_WARD",
+      "doctor_label": "SYS:INPUT_REF_MD",
+      "btn_cancel": "SYS:EVT_ABORT",
+      "btn_submit": "SYS:EVT_COMMIT",
+      "saving": "SYS:STATE_IO_PENDING"
+    }
+  },
+  "triage": {
+    "title": "SYS:CLINICAL_TRIAGE_L6",
+    "patient_verification": "SYS:SEC_IDENTITY_VALIDATE",
+    "adaptive_baseline": "SYS:ML_ADAPTIVE_BASELINE",
+    "hold_to_log": "SYS:IO_HOLD_COMMIT",
+    "success_saved": "SYS:IO_COMMIT_ACK_OK",
+    "btn_new": "SYS:UI_RESET_ENGINE",
+    "age": "SYS:CALC_CHRON_AGE",
+    "yrs": "SYS_UNIT_YRS",
+    "no_encounter": "SYS_ERR_ENCOUNTER_NULL",
+    "chronic": "SYS_FLAG_CHRONIC",
+    "normal": "SYS_FLAG_NOMINAL",
+    "vitals": {
+      "hr": "SYS:VITAL_HR",
+      "bp": "SYS:VITAL_SBP",
+      "spo2": "SYS:VITAL_SPO2",
+      "temp": "SYS:VITAL_BT",
+      "weight": "SYS:DIM_WT",
+      "height": "SYS:DIM_HT",
+      "bmi": "SYS:CALC_INDEX_BMI"
+    }
   }
 }

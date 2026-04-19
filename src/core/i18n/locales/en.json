@@ -43,5 +43,75 @@
     "sign_in_google": "Sign in with Google",
     "authenticating": "Authenticating...",
     "error_login": "Login failed. Please check your Google credential access."
+  },
+  "encounter": {
+    "title": "Encounter Management",
+    "subtitle": "Patient Episode Control · {{count}} Active",
+    "btn_new": "Open New Encounter",
+    "active_list": "Active Encounters",
+    "table": {
+      "patient": "Patient",
+      "type": "Type",
+      "complaint": "Chief Complaint",
+      "doctor": "Doctor",
+      "nurse": "Nurse",
+      "ward": "Ward",
+      "admitted": "Admitted",
+      "status": "Status",
+      "action": "Action"
+    },
+    "types": {
+      "emergency": "🚨 ED / Emergency",
+      "outpatient": "🏥 Outpatient",
+      "inpatient": "🛏️ Inpatient",
+      "planned": "📅 Planned"
+    },
+    "status": {
+      "active": "Active",
+      "discharged": "Discharged",
+      "transferred": "Transferred"
+    },
+    "modal": {
+      "title": "Open New Encounter",
+      "patient_label": "SELECT PATIENT *",
+      "patient_placeholder": "-- Select Patient --",
+      "type_label": "ENCOUNTER TYPE *",
+      "complaint_label": "CHIEF COMPLAINT *",
+      "complaint_placeholder": "Describe main complaint...",
+      "ward_label": "WARD",
+      "doctor_label": "ADMITTING DOCTOR",
+      "btn_cancel": "Cancel",
+      "btn_submit": "Open Encounter",
+      "saving": "Saving..."
+    }
+  },
+  "triage": {
+    "title": "Emergency Triage",
+    "patient_verification": "Patient Verification",
+    "adaptive_baseline": "Adaptive Baseline",
+    "hold_to_log": "HOLD TO LOG",
+    "success_saved": "✓ Triage V5 Record Saved (Traceability Locked)",
+    "btn_new": "New Triage",
+    "rapid_vitals": "Rapid Vital Signs",
+    "age": "Age",
+    "yrs": "YRS",
+    "no_encounter": "⚠️ NO ENCOUNTER",
+    "chronic": "CHRONIC",
+    "normal": "NORMAL",
+    "vitals": {
+      "hr": "HEART RATE",
+      "bp": "SYSTOLIC BP",
+      "spo2": "SpO2",
+      "temp": "TEMPERATURE",
+      "weight": "Weight",
+      "height": "Height",
+      "bmi": "Body Mass Index"
+    },
+    "escalation": {
+      "none": "Nominal",
+      "watch": "Watch",
+      "urgent": "Urgent",
+      "critical": "Critical"
+    }
   }
 }

@@ -43,5 +43,75 @@
     "sign_in_google": "Masuk dengan Google",
     "authenticating": "Mengautentikasi...",
     "error_login": "Login gagal. Silakan periksa akses kredensial Google Anda."
+  },
+  "encounter": {
+    "title": "Manajemen Kunjungan",
+    "subtitle": "Kontrol Episode Pasien · {{count}} Aktif",
+    "btn_new": "Buka Encounter Baru",
+    "active_list": "Encounter Aktif",
+    "table": {
+      "patient": "Pasien",
+      "type": "Tipe",
+      "complaint": "Keluhan Utama",
+      "doctor": "Dokter",
+      "nurse": "Perawat",
+      "ward": "Ward",
+      "admitted": "Masuk",
+      "status": "Status",
+      "action": "Aksi"
+    },
+    "types": {
+      "emergency": "🚨 IGD / Emergency",
+      "outpatient": "🏥 Rawat Jalan",
+      "inpatient": "🛏️ Rawat Inap",
+      "planned": "📅 Terencana"
+    },
+    "status": {
+      "active": "Aktif",
+      "discharged": "Dipulangkan",
+      "transferred": "Transfer"
+    },
+    "modal": {
+      "title": "Buka Encounter Baru",
+      "patient_label": "PILIH PASIEN *",
+      "patient_placeholder": "-- Pilih Pasien --",
+      "type_label": "TIPE KUNJUNGAN *",
+      "complaint_label": "KELUHAN UTAMA *",
+      "complaint_placeholder": "Deskripsi keluhan utama pasien...",
+      "ward_label": "WARD",
+      "doctor_label": "DOKTER PENANGGUNG",
+      "btn_cancel": "Batal",
+      "btn_submit": "Buka Encounter",
+      "saving": "Menyimpan..."
+    }
+  },
+  "triage": {
+    "title": "Triage Darurat",
+    "patient_verification": "Verifikasi Pasien",
+    "adaptive_baseline": "Baseline Adaptif",
+    "hold_to_log": "TAHAN UNTUK LOG",
+    "success_saved": "✓ Catatan Triage V5 Disimpan (Traceability Terkunci)",
+    "btn_new": "Triage Baru",
+    "rapid_vitals": "Tanda-tanda Vital Cepat",
+    "age": "Usia",
+    "yrs": "THN",
+    "no_encounter": "⚠️ TIDAK ADA ENCOUNTER",
+    "chronic": "KRONIS",
+    "normal": "NORMAL",
+    "vitals": {
+      "hr": "DETAK JANTUNG",
+      "bp": "TD SISTOLIK",
+      "spo2": "SpO2",
+      "temp": "TEMPERATUR",
+      "weight": "Berat",
+      "height": "Tinggi",
+      "bmi": "Indeks Massa Tubuh"
+    },
+    "escalation": {
+      "none": "Normal",
+      "watch": "Observasi",
+      "urgent": "Urgent",
+      "critical": "Kritis"
+    }
   }
 }
