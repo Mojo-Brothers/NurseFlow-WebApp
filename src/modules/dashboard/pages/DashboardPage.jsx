@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { listenToWardMetrics, listenToAlerts } from '../services/dashboard.service.js';
+import { useTranslation } from 'react-i18next';
 import { useConnectionStatus } from '../../../core/hooks/useConnectionStatus.js';
 import { getTriageColor } from '../../../utils/clinicalCalculators.js'; // V5 Fix: Import color utility
 import '../styles/Dashboard.css';
 
 const DashboardPage = () => {
+  const { t } = useTranslation();
   const { isOnline, statusMessage } = useConnectionStatus();
   const [metrics, setMetrics] = useState({ occupancy: 0, avg_news_score: 0.0, staff_on_duty: 0 });
   const [alertsInfo, setAlertsInfo] = useState({ total: 0, highRiskCount: 0 });
@@ -41,14 +43,14 @@ const DashboardPage = () => {
         <div className="flex-row justify-between items-baseline flex-wrap gap-4">
           <div>
             <div className="flex-row items-center gap-2">
-              <p className="subtitle m-0">Clinical Overview</p>
+              <p className="subtitle m-0">{t('dashboard.overview')}</p>
               <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-success' : 'bg-error'}`}></span>
             </div>
             <h2 className="title">NurseFlow</h2>
           </div>
           <div className="date-chip">
             <span className="material-symbols-outlined icon-small text-primary">calendar_today</span>
-            <span>Sunday, 19 April • 2026 Shift</span>
+            <span>{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })} • 2026 Shift</span>
           </div>
         </div>
       </section>
@@ -57,31 +59,31 @@ const DashboardPage = () => {
         <div className="metrics-group">
           <div className="card metric-card border-primary-left">
             <div>
-              <p className="metric-label">Ward Occupancy</p>
+              <p className="metric-label">{t('dashboard.ward_occupancy')}</p>
               <h3 className="metric-value text-primary">{isLoading ? '--' : metrics.occupancy}%</h3>
             </div>
             <div className="flex-row items-center gap-2">
               <div className="progress-bar-bg">
                 <div className="progress-bar-fill" style={{ width: `${isLoading ? 0 : metrics.occupancy}%` }}></div>
               </div>
-              <span className="progress-text">{isOnline ? 'Live Sync' : 'Offline Cache'}</span>
+              <span className="progress-text">{isOnline ? t('dashboard.live_sync') : t('dashboard.offline_cache')}</span>
             </div>
           </div>
           <div className="card metric-card">
             <div>
-              <p className="metric-label">Avg. NEWS2 Score</p>
+              <p className="metric-label">{t('dashboard.avg_news')}</p>
               <h3 className={`metric-value text-${wardStatus}`}>{isLoading ? '--' : metrics.avg_news_score}</h3>
             </div>
             <div className="flex-row items-center gap-1">
               <div className={`chip chip-${wardStatus}`}>
-                {metrics.avg_news_score > 5 ? 'Critical' : 'Stable'}
+                {metrics.avg_news_score > 5 ? t('dashboard.critical') : t('dashboard.stable')}
               </div>
               <span className="progress-text">Ward average</span>
             </div>
           </div>
           <div className="card metric-card">
             <div>
-              <p className="metric-label">Staff on Duty</p>
+              <p className="metric-label">{t('dashboard.staff_on_duty')}</p>
               <h3 className="metric-value">{isLoading ? '--' : String(metrics.staff_on_duty).padStart(2, '0')}</h3>
             </div>
             <div className="avatar-stack">
@@ -100,32 +102,32 @@ const DashboardPage = () => {
           </div>
           <h3 className="attention-title">
             <span className="material-symbols-outlined icon-fill">notifications_active</span>
-            Clinical Escalations
+            {t('dashboard.escalations')}
           </h3>
           <div className="attention-list">
             <div className="attention-item">
-              <span>Critical (Bypass)</span>
+              <span>{t('dashboard.critical')} (Bypass)</span>
               <span className={`badge ${alertsInfo.highRiskCount > 0 ? 'badge-error animate-pulse' : 'badge-outline'}`}>
                 {String(alertsInfo.highRiskCount).padStart(2, '0')}
               </span>
             </div>
             <div className="attention-item">
-              <span>Urgent Response</span>
+              <span>{t('dashboard.urgent')} Response</span>
               <span className="badge badge-warning">
                 {String(alertsInfo.total - alertsInfo.highRiskCount).padStart(2, '0')}
               </span>
             </div>
           </div>
           <button className="btn-full-error">
-            Bypass to Triage
+            {t('dashboard.bypass_triage')}
             <span className="material-symbols-outlined icon-small">bolt</span>
           </button>
         </div>
 
         <div className="card task-card">
           <div className="flex-row justify-between items-center mb-6">
-            <h3 className="headline font-bold text-lg">Handovers & Continuity</h3>
-            <button className="text-primary text-sm font-bold bg-transparent">View Logs</button>
+            <h3 className="headline font-bold text-lg">{t('dashboard.handovers')}</h3>
+            <button className="text-primary text-sm font-bold bg-transparent">{t('dashboard.view_logs')}</button>
           </div>
           <div className="task-list">
             <div className="task-item">

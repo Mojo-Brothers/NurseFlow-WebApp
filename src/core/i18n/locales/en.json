@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "clinical": "Clinical",
+    "operational": "Operational",
+    "administration": "Administration",
+    "dashboard": "Dashboard",
+    "patients": "Patients",
+    "encounters": "Encounters Management",
+    "triage": "Triage ED",
+    "emr": "EMR (SOAP)",
+    "worklist": "Worklist",
+    "pharmacy": "Pharmacy",
+    "billing": "Billing",
+    "admin": "Admin Hub",
+    "settings": "Settings",
+    "language": "Language",
+    "logout": "Logout"
+  },
+  "dashboard": {
+    "overview": "Clinical Overview",
+    "ward_occupancy": "Ward Occupancy",
+    "avg_news": "Avg. NEWS2 Score",
+    "staff_on_duty": "Staff on Duty",
+    "escalations": "Clinical Escalations",
+    "bypass_triage": "Bypass to Triage",
+    "handovers": "Handovers & Continuity",
+    "view_logs": "View Logs",
+    "critical": "Critical",
+    "urgent": "Urgent",
+    "stable": "Stable",
+    "live_sync": "Live Sync",
+    "offline_cache": "Offline Cache"
+  },
+  "roles": {
+    "doctor": "Doctor",
+    "nurse": "Nurse",
+    "admin": "Admin",
+    "pharmacist": "Pharmacist"
+  },
+  "auth": {
+    "title": "Clinical Secure Authentication",
+    "access_restricted": "Access to this system is strictly limited. Please identify yourself using your corporate account.",
+    "sign_in_google": "Sign in with Google",
+    "authenticating": "Authenticating...",
+    "error_login": "Login failed. Please check your Google credential access."
+  }
+}

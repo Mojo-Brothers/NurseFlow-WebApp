@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import '../styles/Login.css';
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { loginWithGoogle } = useAuth();
@@ -16,7 +18,7 @@ export default function LoginPage() {
       await loginWithGoogle();
       navigate('/dashboard');
     } catch (err) {
-      setError('Gagal masuk. Periksa kembali akses kredensial Google Anda.');
+      setError(t('auth.error_login'));
       console.error(err);
     }
     setLoading(false);
@@ -27,14 +29,14 @@ export default function LoginPage() {
       <div className="login-card">
         <div className="login-header">
           <h2 className="title text-primary">NurseFlow</h2>
-          <p className="subtitle">Clinical Secure Authentication</p>
+          <p className="subtitle">{t('auth.title')}</p>
         </div>
         
         {error && <div className="login-error badge-error">{error}</div>}
         
         <div className="flex-column gap-4 text-center">
           <p className="text-on-surface-variant text-sm mb-4">
-            Akses sistem ini dibatasi secara mutlak. Silakan identifikasi diri menggunakan akun korporat Anda.
+            {t('auth.access_restricted')}
           </p>
           <button 
             disabled={loading} 
@@ -47,7 +49,7 @@ export default function LoginPage() {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            {loading ? 'Authenticating...' : 'Sign in with Google'}
+            {loading ? t('auth.authenticating') : t('auth.sign_in_google')}
           </button>
         </div>
       </div>

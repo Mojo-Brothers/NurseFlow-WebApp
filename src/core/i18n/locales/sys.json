@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "clinical": "SYS:CLINICAL_GRP",
+    "operational": "SYS:OPERATIONAL_GRP",
+    "administration": "SYS:ADMIN_GRP",
+    "dashboard": "SYS:DASHBOARD",
+    "patients": "SYS:PATIENT_REGISTRY",
+    "encounters": "SYS:ENCOUNTER_CTRL",
+    "triage": "SYS:TRIAGE_ENGINE",
+    "emr": "SYS:EMR_SOAP_DATA",
+    "worklist": "SYS:TASK_QUEUE",
+    "pharmacy": "SYS:PHARM_MODULE",
+    "billing": "SYS:BILLING_CORE",
+    "admin": "SYS:ADMIN_ROOT",
+    "settings": "SYS:CONFIG_PREFS",
+    "language": "SYS:LOCALE_SELECTOR",
+    "logout": "SYS:AUTH_REVOKE"
+  },
+  "dashboard": {
+    "overview": "SYS:CLINICAL_OVERVIEW",
+    "ward_occupancy": "SYS:WARD_OCCUPancy_METRIC",
+    "avg_news": "SYS:MEAN_NEWS2_SCORE",
+    "staff_on_duty": "SYS:ACTIVE_STAFF_COUNT",
+    "escalations": "SYS:ALERT_ESCALATION_STACK",
+    "bypass_triage": "SYS:BYPASS_TRIAGE_INTENT",
+    "handovers": "SYS:HANDOVER_LOG_BUFFER",
+    "view_logs": "SYS:LOG_VIEW_TRIGGER",
+    "critical": "SYS_CRITICAL_0",
+    "urgent": "SYS_URGENT_1",
+    "stable": "SYS_STABLE_4",
+    "live_sync": "SYS_RPC_ACTIVE",
+    "offline_cache": "SYS_LOCAL_PERSIST"
+  },
+  "roles": {
+    "doctor": "SYS_ID_DOCTOR",
+    "nurse": "SYS_ID_NURSE",
+    "admin": "SYS_ID_ADMIN",
+    "pharmacist": "SYS_ID_PHARMA"
+  },
+  "auth": {
+    "title": "SYS_AUTH_SERVICE_LAYER",
+    "access_restricted": "SYS_SIG_ACCESS_RESTRICTED_MODE",
+    "sign_in_google": "SYS_AUTH_IDP_GOOGLE_OIDC",
+    "authenticating": "SYS_BKG_AUTH_PENDING",
+    "error_login": "SYS_AUTH_ERR_0403"
+  }
+}

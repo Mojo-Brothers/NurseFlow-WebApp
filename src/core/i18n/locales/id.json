@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "clinical": "Klinis",
+    "operational": "Operasional",
+    "administration": "Administrasi",
+    "dashboard": "Dashboard",
+    "patients": "Pasien",
+    "encounters": "Manajemen Kunjungan",
+    "triage": "Triage IGD",
+    "emr": "EMR (SOAP)",
+    "worklist": "Daftar Kerja",
+    "pharmacy": "Farmasi",
+    "billing": "Tagihan",
+    "admin": "Admin Hub",
+    "settings": "Pengaturan",
+    "language": "Bahasa",
+    "logout": "Keluar"
+  },
+  "dashboard": {
+    "overview": "Ikhtisar Klinis",
+    "ward_occupancy": "Okupansi Bangsal",
+    "avg_news": "Rata-rata Skor NEWS2",
+    "staff_on_duty": "Staf Bertugas",
+    "escalations": "Eskalasi Klinis",
+    "bypass_triage": "Bypass ke Triage",
+    "handovers": "Serah Terima & Kontinuitas",
+    "view_logs": "Lihat Log",
+    "critical": "Kritis",
+    "urgent": "Mendesak",
+    "stable": "Stabil",
+    "live_sync": "Sinkronisasi Live",
+    "offline_cache": "Cache Offline"
+  },
+  "roles": {
+    "doctor": "Dokter",
+    "nurse": "Perawat",
+    "admin": "Admin",
+    "pharmacist": "Apoteker"
+  },
+  "auth": {
+    "title": "Autentikasi Aman Klinis",
+    "access_restricted": "Akses ke sistem ini sangat terbatas. Silakan identifikasi diri Anda menggunakan akun korporat Anda.",
+    "sign_in_google": "Masuk dengan Google",
+    "authenticating": "Mengautentikasi...",
+    "error_login": "Login gagal. Silakan periksa akses kredensial Google Anda."
+  }
+}

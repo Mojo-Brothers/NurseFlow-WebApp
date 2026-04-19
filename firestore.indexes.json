@@ -12,8 +12,9 @@
       "collectionGroup": "encounters",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "status",      "order": "ASCENDING" },
-        { "fieldPath": "admitted_at", "order": "DESCENDING" }
+        { "fieldPath": "status",           "order": "ASCENDING" },
+        { "fieldPath": "escalation_level", "order": "DESCENDING" },
+        { "fieldPath": "admitted_at",      "order": "ASCENDING" }
       ]
     },
     {

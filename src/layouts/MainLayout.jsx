@@ -1,35 +1,36 @@
-import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import TopAppBar from '../components/TopAppBar';
 import { useAuth } from '../contexts/AuthContext';
 
 const ROLE_BADGE = {
-  DOCTOR:     { label: 'Dokter',  color: '#3730a3', bg: '#e0e7ff' },
-  NURSE:      { label: 'Perawat', color: '#166534', bg: '#dcfce7' },
-  ADMIN:      { label: 'Admin',   color: '#991b1b', bg: '#fee2e2' },
-  PHARMACIST: { label: 'Farmasi', color: '#92400e', bg: '#fef9c3' },
+  DOCTOR:     { label: 'roles.doctor',  color: '#3730a3', bg: '#e0e7ff' },
+  NURSE:      { label: 'roles.nurse',   color: '#166534', bg: '#dcfce7' },
+  ADMIN:      { label: 'roles.admin',   color: '#991b1b', bg: '#fee2e2' },
+  PHARMACIST: { label: 'roles.pharmacist', color: '#92400e', bg: '#fef9c3' },
 };
 
 // Role-based nav visibility
 const NAV_SCHEMA = [
-  { label: 'Klinis', items: [
-    { name: 'Dashboard',   path: '/dashboard',  icon: 'dashboard',           roles: null },
-    { name: 'Patients',    path: '/patients',   icon: 'groups',              roles: null },
-    { name: 'Encounters',  path: '/encounters', icon: 'local_hospital',      roles: ['DOCTOR','NURSE','ADMIN'] },
-    { name: 'Triage IGD',  path: '/triage',     icon: 'emergency',           roles: ['DOCTOR','NURSE','ADMIN'] },
-    { name: 'EMR (SOAP)',  path: '/emr',        icon: 'medical_information', roles: ['DOCTOR','ADMIN'] },
+  { label: 'nav.clinical', items: [
+    { name: 'nav.dashboard',   path: '/dashboard',  icon: 'dashboard',           roles: null },
+    { name: 'nav.patients',    path: '/patients',   icon: 'groups',              roles: null },
+    { name: 'nav.encounters',  path: '/encounters', icon: 'local_hospital',      roles: ['DOCTOR','NURSE','ADMIN'] },
+    { name: 'nav.triage',      path: '/triage',     icon: 'emergency',           roles: ['DOCTOR','NURSE','ADMIN'] },
+    { name: 'nav.emr',         path: '/emr',        icon: 'medical_information', roles: ['DOCTOR','ADMIN'] },
   ]},
-  { label: 'Operasional', items: [
-    { name: 'Worklist',    path: '/worklist',   icon: 'task_alt',            roles: ['NURSE','ADMIN'] },
-    { name: 'Pharmacy',    path: '/pharmacy',   icon: 'local_pharmacy',      roles: ['PHARMACIST','DOCTOR','ADMIN'] },
-    { name: 'Billing',     path: '/billing',    icon: 'receipt_long',        roles: ['DOCTOR','ADMIN'] },
+  { label: 'nav.operational', items: [
+    { name: 'nav.worklist',    path: '/worklist',   icon: 'task_alt',            roles: ['NURSE','ADMIN'] },
+    { name: 'nav.pharmacy',    path: '/pharmacy',   icon: 'local_pharmacy',      roles: ['PHARMACIST','DOCTOR','ADMIN'] },
+    { name: 'nav.billing',     path: '/billing',    icon: 'receipt_long',        roles: ['DOCTOR','ADMIN'] },
   ]},
-  { label: 'Administrasi', admin: true, items: [
-    { name: 'Admin Hub',   path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
+  { label: 'nav.administration', admin: true, items: [
+    { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
   ]},
 ];
 
 const MainLayout = () => {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const { currentUser, role } = useAuth();
   const badge = ROLE_BADGE[role] || ROLE_BADGE.NURSE;
@@ -52,7 +53,7 @@ const MainLayout = () => {
           fontSize: '1.15rem',
           color: isActive ? (isDanger ? 'var(--error)' : 'var(--primary)') : 'inherit'
         }}>{item.icon}</span>
-        {item.name}
+        {t(item.name)}
       </Link>
     );
   };
@@ -74,20 +75,43 @@ const MainLayout = () => {
               if (visibleItems.length === 0) return null;
               return (
                 <div key={section.label} style={{ marginBottom: '0.5rem' }}>
-                  {section.label !== 'Klinis' && (
-                    <div style={{
-                      padding: '0.5rem 0.875rem 0.25rem',
-                      fontSize: '0.6rem', fontWeight: '800', letterSpacing: '0.1em',
-                      color: section.admin ? 'var(--error)' : 'var(--on-surface-variant)',
-                      textTransform: 'uppercase', opacity: 0.7,
-                    }}>{section.label}</div>
-                  )}
+                  <div style={{
+                    padding: '0.5rem 0.875rem 0.25rem',
+                    fontSize: '0.6rem', fontWeight: '800', letterSpacing: '0.1em',
+                    color: section.admin ? 'var(--error)' : 'var(--on-surface-variant)',
+                    textTransform: 'uppercase', opacity: 0.7,
+                  }}>{t(section.label)}</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     {visibleItems.map(navLink)}
                   </div>
                 </div>
               );
             })}
+          </div>
+
+          {/* ─── Language Switcher (JCI Multi-Lang) ────── */}
+          <div style={{ padding: '0.5rem 0.75rem' }}>
+            <div style={{
+              display: 'flex', gap: '4px', backgroundColor: 'var(--surface-container-high)',
+              padding: '2px', borderRadius: 'var(--radius-md)'
+            }}>
+              {['en', 'id', 'sys'].map(lang => (
+                <button
+                  key={lang}
+                  onClick={() => i18n.changeLanguage(lang)}
+                  style={{
+                    flex: 1, padding: '4px 0', border: 'none', cursor: 'pointer',
+                    fontSize: '0.6rem', fontWeight: '800', borderRadius: '4px',
+                    backgroundColor: i18n.language === lang ? 'var(--primary)' : 'transparent',
+                    color: i18n.language === lang ? 'var(--on-primary)' : 'var(--on-surface-variant)',
+                    transition: 'all 0.2s ease',
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {lang}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* ─── User Card ──────────────────────────────── */}
@@ -114,7 +138,7 @@ const MainLayout = () => {
                   display: 'inline-block', marginTop: '2px', padding: '1px 7px',
                   borderRadius: 'var(--radius-full)', fontSize: '0.6rem', fontWeight: '800',
                   backgroundColor: badge.bg, color: badge.color,
-                }}>{badge.label}</span>
+                }}>{t(badge.label)}</span>
               </div>
             </div>
           )}
