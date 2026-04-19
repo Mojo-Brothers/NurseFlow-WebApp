@@ -1,6 +1,4 @@
 import { useState, useEffect } from 'react';
-import { db } from '../firebase.js';
-import { onSnapshot, doc } from 'firebase/firestore';
 
 /**
  * NurseFlow Resilience Hook (V5)
@@ -9,7 +7,7 @@ import { onSnapshot, doc } from 'firebase/firestore';
  */
 export function useConnectionStatus() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isFirestoreSynced, setIsFirestoreSynced] = useState(true);
+  const [isFirestoreSynced] = useState(true);
 
   useEffect(() => {
     // 1. Monitor Browser Network

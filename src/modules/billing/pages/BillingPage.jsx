@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { getPendingBills, updateBillItems, finalizeBill, markAsPaid } from '../services/billing.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
-import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { useAuth } from '../../../contexts/useAuth.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 
 const SERVICE_CATALOG = [
@@ -39,17 +39,19 @@ export default function BillingPage() {
   const [lineItems, setLineItems]           = useState([]);
   const [addServiceIdx, setAddServiceIdx]   = useState('');
 
-  useEffect(() => {
-    loadBills();
-    fetchPatients();
-  }, [fetchPatients]);
-
-  const loadBills = async () => {
-    setIsLoading(true);
+  const loadBills = React.useCallback(async () => {
     try { setBills(await getPendingBills()); }
     catch (e) { console.error(e); }
     setIsLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadBills();
+      fetchPatients();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchPatients, loadBills]);
 
   const openBill = (bill) => {
     setSelectedBill(bill);
@@ -128,7 +130,7 @@ export default function BillingPage() {
             <div className="p-8 text-center"><span className="material-symbols-outlined anim-spin text-primary">progress_activity</span></div>
           ) : bills.length === 0 ? (
             <div className="p-8 text-center text-on-surface-variant">Tidak ada tagihan aktif.</div>
-          ) : bills.map((bill, i) => {
+          ) : bills.map((bill) => {
             const badge = STATUS_BADGE[bill.status] || STATUS_BADGE.DRAFT;
             return (
               <div key={bill.id}

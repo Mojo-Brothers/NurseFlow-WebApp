@@ -1,0 +1,48 @@
+name: 🔍 CI — Quality Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+
+jobs:
+  quality-gate:
+    name: Lint & Build Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🔍 ESLint Check
+        run: npm run lint
+        # Allows warnings but fails on errors (matches our JCI standards)
+
+      - name: 🏗️ Build Production Bundle
+        run: npm run build
+        env:
+          # Vite inlines env vars at build time — these are PUBLIC (non-secret)
+          VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+
+      - name: 📊 Build Size Report
+        run: |
+          echo "## 📦 Build Artifact Sizes" >> $GITHUB_STEP_SUMMARY
+          du -sh dist/* | sort -h >> $GITHUB_STEP_SUMMARY || true
+
+      - name: 📤 Upload Build Artifact (for downstream jobs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 1

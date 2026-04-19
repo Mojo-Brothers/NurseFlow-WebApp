@@ -4,11 +4,41 @@
  */
 import {
   collection, getDocs, query, orderBy, limit,
-  where, updateDoc, doc, serverTimestamp
+  where, updateDoc, doc, serverTimestamp, onSnapshot
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS } from '../../../core/constants.js';
 import { createAuditLog } from '../../../core/audit/audit.service.js';
+
+/**
+ * Subscription real-time untuk Alert yang belum diresolusi (Observability).
+ */
+export const subscribeToActiveAlerts = (callback) => {
+  const q = query(
+    collection(db, COLLECTIONS.ALERTS),
+    where('resolved', '==', false),
+    orderBy('created_at', 'desc'),
+    limit(50)
+  );
+  return onSnapshot(q, (snap) => {
+    const alerts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    callback(alerts);
+  });
+};
+
+/**
+ * Fetch data telemetry kesehatan sistem.
+ */
+export const fetchSystemHealth = async () => {
+  const q = query(
+    collection(db, COLLECTIONS.SYSTEM_METRICS),
+    orderBy('timestamp', 'desc'),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  return { id: snap.docs[0].id, ...snap.docs[0].data() };
+};
 
 /**
  * Fetch logs dari audit_logs collection (Admin only).

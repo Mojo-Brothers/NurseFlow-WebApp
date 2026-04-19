@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useEncounterStore } from '../encounter.store.js';
 import { useTranslation } from 'react-i18next';
 import { usePatientStore } from '../../patient/patient.store.js';
-import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { useAuth } from '../../../contexts/useAuth.js';
 import { ENCOUNTER_TYPES } from '../../../core/constants.js';
 
 const ENCOUNTER_TYPE_LABELS = {

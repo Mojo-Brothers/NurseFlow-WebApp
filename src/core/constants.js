@@ -11,6 +11,7 @@ export const COLLECTIONS = {
   MEDICATIONS:     'medications',
   ALERTS:          'alerts',
   WARD_METRICS:    'ward_metrics',
+  SYSTEM_METRICS:  'system_metrics',
 };
 
 export const ROLES = {

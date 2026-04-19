@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { useAuth } from '../../../contexts/useAuth.js';
 import { saveSoapNote, getPatientRecords } from '../services/emr.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
@@ -78,6 +78,7 @@ export default function EMRPage() {
       setPatientRecords(hx);
       
     } catch (err) {
+      console.error("[EMR] Submit failure:", err);
       alert("Failed to submit EMR.");
     }
     setIsSaving(false);

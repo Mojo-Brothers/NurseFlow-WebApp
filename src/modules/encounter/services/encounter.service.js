@@ -9,8 +9,7 @@ import {
   serverTimestamp, runTransaction 
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
-import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES, ESCALATION_LEVELS, SYNC_PRIORITIES } from '../../../core/constants.js';
-import { createAuditLog } from '../../../core/audit/audit.service.js';
+import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES, ESCALATION_LEVELS, SYNC_PRIORITIES, ESCALATION_SOURCES } from '../../../core/constants.js';
 
 /**
  * Membuka encounter baru dalam status WAITING.

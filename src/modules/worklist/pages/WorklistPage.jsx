@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { getShiftTasks, updateTaskStatus, createTask } from '../services/worklist.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
-import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { useAuth } from '../../../contexts/useAuth.js';
 
 const TASK_ICONS = {
   MEDICATION:   'medication',
@@ -31,7 +31,7 @@ const TASK_TYPE_LABELS = {
 };
 
 export default function WorklistPage() {
-  const { currentUser, isNurse, isAdmin } = useAuth();
+  const { currentUser } = useAuth();
   const { patients, fetchPatients } = usePatientStore();
   const [tasks, setTasks]           = useState([]);
   const [isLoading, setIsLoading]   = useState(true);
@@ -42,19 +42,21 @@ export default function WorklistPage() {
   });
   const [updatingId, setUpdatingId] = useState(null);
 
-  useEffect(() => {
-    loadTasks();
-    fetchPatients();
-  }, [fetchPatients]);
-
-  const loadTasks = async () => {
-    setIsLoading(true);
+  const loadTasks = React.useCallback(async () => {
     try {
       const data = await getShiftTasks(currentUser.email);
       setTasks(data);
     } catch (err) { console.error(err); }
     setIsLoading(false);
-  };
+  }, [currentUser.email]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadTasks();
+      fetchPatients();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [fetchPatients, loadTasks]);
 
   const handleStatusUpdate = async (taskId, newStatus) => {
     setUpdatingId(taskId);
