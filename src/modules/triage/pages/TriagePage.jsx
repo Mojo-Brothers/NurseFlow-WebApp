@@ -5,6 +5,7 @@ import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateNEWS2, getTriageColor, calculateAge } from '../../../utils/clinicalCalculators.js';
 import { determineEscalation, calculateVelocity } from '../../../core/domain/clinicalEngine.js';
 import HistorySparkline from '../../../components/HistorySparkline.jsx';
+import KeypadInput from '../../../components/KeypadInput.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 
 export default function TriagePage() {
@@ -24,6 +25,7 @@ export default function TriagePage() {
     holdProgress,
     isSubmitting,
     submitSuccess,
+    serverConflict,
     error,
     setVital,
     setHoldProgress,
@@ -124,7 +126,16 @@ export default function TriagePage() {
         </select>
       </div>
 
-      {submitSuccess && <div className="card mb-4 p-4 bg-secondary-container text-on-secondary-container">✓ Triage V5 Record Saved (Traceability Locked)</div>}
+      {submitSuccess && <div className="card mb-4 p-4 bg-secondary-container text-on-secondary-container flex-row items-center justify-between">
+        <span>✓ Triage V5 Record Saved (Traceability Locked)</span>
+        <button onClick={resetForm} className="btn-secondary py-1 text-xs">New Triage</button>
+      </div>}
+
+      {serverConflict && (
+        <div className="card mb-4 p-4 bg-error-container text-on-error-container border-l-4 border-error animate-pulse">
+           <span className="font-bold">{serverConflict.message}</span>
+        </div>
+      )}
 
       {patient && (
         <div className={`card mb-6 p-4 flex-row gap-6 bg-surface-container-low border-l-4 ${news2Score >= 7 ? 'animate-pulse-red' : ''}`} 

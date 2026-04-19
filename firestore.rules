@@ -17,6 +17,14 @@ service cloud.firestore {
     function isAdmin()      { return getRole() == 'ADMIN'; }
     function isPharmacist() { return getRole() == 'PHARMACIST'; }
     function isMedical()    { return isDoctor() || isNurse() || isAdmin(); }
+    
+    // Validasi Dasar Fisiologis (JCI Patient Safety)
+    function isValidVital(val, min, max) { return val >= min && val <= max; }
+    function isValidTriage(data) {
+      return isValidVital(data.vitals.temperature, 30, 45) &&
+             isValidVital(data.news2_score, 0, 20) &&
+             data.escalation_level in ['NONE', 'WATCH', 'URGENT', 'CRITICAL'];
+    }
 
     // ─── AUDIT LOGS: Insert-Only (JCI Immutable) ─────────────
     match /audit_logs/{logId} {
@@ -47,16 +55,19 @@ service cloud.firestore {
       allow read:   if isAuth();
       allow create: if isAuth() && isMedical();
       // Hanya update status (discharge, transfer) — bukan overwrite semua field
-      allow update: if isAuth() && (isDoctor() || isAdmin())
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['status', 'discharged_at', 'bed_number']);
+      allow update: if isAuth() && isMedical()
+                    && (
+                      request.resource.data.diff(resource.data).affectedKeys()
+                        .hasOnly(['status', 'discharged_at', 'bed_number', 'escalation_level', 'escalation_source', 'last_news2', 'updated_at', '_v'])
+                      || (isDoctor() || isAdmin()) // Admin/Doctor Full access
+                    );
       allow delete: if false;
     }
 
     // ─── TRIAGE LOGS: Append-Only ─────────────────────────────
     match /triage_logs/{logId} {
       allow read:             if isAuth();
-      allow create:           if isAuth() && (isNurse() || isDoctor() || isAdmin());
+      allow create:           if isAuth() && isMedical() && isValidTriage(request.resource.data);
       allow update, delete:   if false; // Immutable
     }
 

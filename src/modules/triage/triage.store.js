@@ -46,6 +46,7 @@ export const useTriageStore = create((set, get) => ({
     vitals:        { ...INITIAL_VITALS },
     holdProgress:  0,
     submitSuccess: false,
+    serverConflict: null,
     error:         null,
   }),
 
@@ -67,13 +68,11 @@ export const useTriageStore = create((set, get) => ({
       const news2Score  = calculateNEWS2(vitals);
       const triageLevel = getTriageColor(news2Score);
 
-      // ✅ Panggil SERVICE, bukan Firebase langsung
+      // ✅ Panggil SERVICE (Spark-Safe Transaction)
       await submitTriage({
         patientId:   selectedPatientId,
         encounterId: selectedEncounterId,
         vitals,
-        news2Score,
-        triageLevel,
         assessedBy:  userEmail,
       });
 

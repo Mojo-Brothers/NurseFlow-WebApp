@@ -6,13 +6,13 @@
  */
 import { 
   collection, query, where, orderBy, limit, getDocs, 
-  serverTimestamp, runTransaction, doc 
+  serverTimestamp, runTransaction, doc, increment
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS, SYNC_PRIORITIES, ENCOUNTER_STATUSES } from '../../../core/constants.js';
 import { calculateNEWS2, calculateVelocity, determineEscalation } from '../../../core/domain/clinicalEngine.js';
 
-import { enqueueAction, processQueue } from '../../../core/services/syncQueue.service.js';
+import { enqueueAction } from '../../../core/services/syncQueue.service.js';
 
 /**
  * Submit data triage + Velocity Calculation + State Transition.
@@ -26,7 +26,7 @@ export const submitTriage = async ({
 }) => {
   // Enterprise Resilience: If offline, use Priority Sync Queue
   if (!navigator.onLine) {
-    console.warn('[TriageService] Offline detected. Enqueueing to Priority Sync Queue...');
+    console.warn('[TriageService] Offline detected. Enqueueing to Priority Sync Queue (Spark Safe)...');
     return await enqueueAction({
       type: 'SUBMIT_TRIAGE',
       patientId, encounterId, vitals, assessedBy, reason
@@ -35,6 +35,7 @@ export const submitTriage = async ({
 
   const logRef = doc(collection(db, COLLECTIONS.TRIAGE_LOGS));
   const encounterRef = doc(db, COLLECTIONS.ENCOUNTERS, encounterId);
+  const requestId = Math.random().toString(36).substring(7);
   
   try {
     return await runTransaction(db, async (transaction) => {
@@ -44,13 +45,14 @@ export const submitTriage = async ({
       if (!patientSnap.exists()) throw new Error('Pasien tidak ditemukan.');
       const patient = patientSnap.data();
 
-      const q = query(
+      // Get last triage for velocity calculation
+      const lastTriageQuery = query(
         collection(db, COLLECTIONS.TRIAGE_LOGS),
         where('patientId', '==', patientId),
         orderBy('timestamp', 'desc'),
         limit(1)
       );
-      const prevSnap = await getDocs(q);
+      const prevSnap = await getDocs(lastTriageQuery);
       const lastEntry = prevSnap.empty ? null : prevSnap.docs[0].data();
 
       // 2. Clinical Intelligence (Adaptive & Granular)
@@ -63,7 +65,18 @@ export const submitTriage = async ({
       const escalation = determineEscalation(currentNews2, { hrVelocity });
       const timestamp = serverTimestamp();
 
-      const payload = {
+      // 3. Atomically update Encounter
+      transaction.update(encounterRef, {
+        status:           ENCOUNTER_STATUSES.IN_TREATMENT,
+        last_news2:       currentNews2,
+        escalation_level:  escalation.level,
+        escalation_source: escalation.source,
+        updated_at:       timestamp,
+        _v:               increment(1)
+      });
+
+      // 4. Save Triage Log (Spark-Safe V5)
+      transaction.set(logRef, {
         patientId,
         encounterId,
         vitals: {
@@ -80,18 +93,9 @@ export const submitTriage = async ({
         escalation_source: escalation.source,
         assessed_by:      assessedBy,
         timestamp,
-      };
-
-      // 3. Update Encounter State (State Machine Evolution)
-      transaction.update(encounterRef, {
-        status:           ENCOUNTER_STATUSES.IN_TREATMENT,
-        escalation_level:  escalation.level,
-        escalation_source: escalation.source,
-        updated_at:       timestamp,
+        request_id:       requestId,
+        _v:               1
       });
-
-      // 4. Save Triage Log
-      transaction.set(logRef, payload);
 
       // 5. Atomic Audit V5
       const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
@@ -102,15 +106,14 @@ export const submitTriage = async ({
         resource_type: COLLECTIONS.TRIAGE_LOGS,
         resource_id:   logRef.id,
         reason:        reason,
-        source:        'WEB_APP',
-        sync_priority: escalation.level === 'CRITICAL' ? SYNC_PRIORITIES.CRITICAL : SYNC_PRIORITIES.HIGH,
-        delta: { news2: currentNews2, escalation: escalation.level, source: escalation.source }
+        source:        'WEB_APP_SPARK',
+        delta: { news2: currentNews2, escalation: escalation.level, request_id: requestId }
       });
 
       return logRef.id;
     });
   } catch (err) {
-    console.error('[TriageService] V5 Submission failed:', err);
+    console.error('[TriageService] Spark-Safe V5 Submission failed:', err);
     throw err;
   }
 };

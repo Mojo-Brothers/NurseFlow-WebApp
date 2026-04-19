@@ -6,6 +6,7 @@
  */
 
 import { SYNC_PRIORITIES, QUEUE_STATUS } from '../constants.js';
+import { monitorSync, trackMetric } from './monitoring.service.js';
 
 const DB_NAME = 'nurseflow_sync_db';
 const STORE_NAME = 'sync_queue';
@@ -74,11 +75,14 @@ export const processQueue = async (processor) => {
   for (const entry of sorted) {
     if (entry.next_retry > Date.now()) continue;
 
+    const startTime = Date.now();
     try {
       await processor(entry.payload);
       await removeEntry(db, entry.id);
+      monitorSync(true, Date.now() - startTime);
       console.log(`[SyncQueue] Success: Entry ${entry.id} synced.`);
     } catch (err) {
+      monitorSync(false, Date.now() - startTime, err);
       await handleFailure(db, entry, err.message);
     }
   }
@@ -128,7 +132,7 @@ const handleFailure = async (db, entry, errorMessage) => {
 // Automatic Sync Listener
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    console.log('[SyncQueue] Network Restored. Triggering priority sync...');
-    // In actual implementation, we might need to inject the processor here or trigger a store action
+    trackMetric('NETWORK_RESTORED', { timestamp: Date.now() });
+    // This is handled by App.jsx listener which calls processQueue(executeQueuedAction)
   });
 }

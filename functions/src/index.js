@@ -8,6 +8,8 @@ const functions = require('firebase-functions');
 admin.initializeApp();
 const db = admin.firestore();
 
+const { calculateNEWS2, determineEscalation } = require('./domain/clinicalEngine');
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // STEP 3: AUTH — Sync User Role ke Custom Claims
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -39,33 +41,79 @@ exports.syncUserRole = functions.https.onCall(async (data, context) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // STEP 7: TRIAGE — Auto Alert jika NEWS2 Kritis
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-exports.onTriageCreate = functions.firestore
-  .document('triage_logs/{logId}')
-  .onCreate(async (snap, context) => {
-    const { news2_score, patient_id, assessed_by, triage_level } = snap.data();
-    const logId = context.params.logId;
-
-    // Backend audit (double-layer guarantee)
-    await db.collection('audit_logs').add({
-      timestamp:     admin.firestore.FieldValue.serverTimestamp(),
-      user:          assessed_by, action: 'CREATE',
-      resource_type: 'triage_logs', resource_id: logId,
-      delta:         { news2_score, triage_level }, source: 'CLOUD_FUNCTION',
-    });
-
-    // Buat alert critical jika NEWS2 >= 7
-    if (news2_score >= 7) {
-      await db.collection('alerts').add({
-        type: 'CRITICAL_TRIAGE', patient_id, triage_log_id: logId,
-        news2_score, triage_level, triggered_by: assessed_by,
-        triggered_at: admin.firestore.FieldValue.serverTimestamp(),
-        resolved: false,
-        message: `⚠️ CRITICAL: NEWS2 Score ${news2_score} — Penanganan segera diperlukan!`,
-      });
-    }
-
     return null;
   });
+
+/**
+ * JCI-Elite Secure Triage Processor
+ * Memindahkan kedaulatan kalkulasi ke server.
+ */
+exports.processTriage = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login diperlukan.');
+
+  const { patient_id, encounter_id, vitals, trends = {}, client_score, client_level } = data;
+  const requestId = Math.random().toString(36).substring(7); // Trace ID
+
+  // 1. Fetch Patient Baseline
+  const patientDoc = await db.collection('patients').doc(patient_id).get();
+  if (!patientDoc.exists) throw new functions.https.HttpsError('not-found', 'Pasien tidak ditemukan.');
+  
+  const baseline = patientDoc.data().baseline_profile || null;
+
+  // 2. Server-Side Re-calculation (Source of Truth)
+  const serverScore = calculateNEWS2(vitals, baseline);
+  const serverEscalation = determineEscalation(serverScore, trends);
+
+  // 3. TAMPER DETECTION
+  let tamperDetected = false;
+  if (client_score !== undefined && client_score !== serverScore) tamperDetected = true;
+  if (client_level !== undefined && client_level !== serverEscalation.level) tamperDetected = true;
+
+  // 4. Atomic Update: Log + Encounter State
+  const batch = db.batch();
+  const logRef = db.collection('triage_logs').doc();
+  const encounterRef = db.collection('encounters').doc(encounter_id);
+
+  batch.set(logRef, {
+    patient_id,
+    encounter_id,
+    vitals,
+    news2_score:      serverScore,
+    escalation_level:  serverEscalation.level,
+    escalation_source: serverEscalation.source,
+    assessed_by:       context.auth.token.email,
+    timestamp:         admin.firestore.FieldValue.serverTimestamp(),
+    request_id:        requestId,
+    tamper_alert:      tamperDetected,
+    _v:                1
+  });
+
+  batch.update(encounterRef, {
+    last_news2:        serverScore,
+    escalation_level:  serverEscalation.level,
+    escalation_source: serverEscalation.source,
+    last_updated_at:   admin.firestore.FieldValue.serverTimestamp(),
+    _v:                admin.firestore.FieldValue.increment(1)
+  });
+
+  // 5. System Observability Log
+  await db.collection('system_metrics').add({
+    type: 'TRIAGE_PROCESSED',
+    request_id: requestId,
+    user: context.auth.token.email,
+    tamper_detected: tamperDetected,
+    timestamp: admin.firestore.FieldValue.serverTimestamp()
+  });
+
+  await batch.commit();
+
+  return { 
+    success: true, 
+    score: serverScore, 
+    escalation: serverEscalation,
+    tamper_detected: tamperDetected 
+  };
+});
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // STEP 4: AUDIT — Callable Audit Writer
