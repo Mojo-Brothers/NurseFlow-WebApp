@@ -6,10 +6,11 @@ const MainLayout = () => {
   const location = useLocation();
   
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
-    { name: 'Patients', path: '/patients', icon: 'groups' },
-    { name: 'Triage', path: '/triage', icon: 'emergency' },
-    { name: 'EMR (SOAP)', path: '/emr', icon: 'medical_information' }
+    { name: 'Dashboard',   path: '/dashboard',  icon: 'dashboard'           },
+    { name: 'Patients',    path: '/patients',   icon: 'groups'              },
+    { name: 'Encounters',  path: '/encounters', icon: 'local_hospital'      },
+    { name: 'Triage IGD',  path: '/triage',     icon: 'emergency'           },
+    { name: 'EMR (SOAP)',  path: '/emr',        icon: 'medical_information' },
   ];
 
   return (

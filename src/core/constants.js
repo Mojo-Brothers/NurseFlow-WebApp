@@ -1,11 +1,6 @@
 /**
- * NurseFlow Core Constants
- * Single source of truth — jangan hardcode string collection di mana pun!
+ * NurseFlow — core/constants.js (updated dengan ENCOUNTERS)
  */
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// FIRESTORE COLLECTIONS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const COLLECTIONS = {
   PATIENTS:        'patients',
   ENCOUNTERS:      'encounters',
@@ -13,56 +8,57 @@ export const COLLECTIONS = {
   MEDICAL_RECORDS: 'medical_records',
   AUDIT_LOGS:      'audit_logs',
   USERS:           'users',
-  WARD_METRICS:    'ward_metrics',
+  MEDICATIONS:     'medications',
   ALERTS:          'alerts',
+  WARD_METRICS:    'ward_metrics',
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// USER ROLES (RBAC)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const ROLES = {
-  DOCTOR:      'DOCTOR',
-  NURSE:       'NURSE',
-  ADMIN:       'ADMIN',
-  PHARMACIST:  'PHARMACIST',
+  DOCTOR:     'DOCTOR',
+  NURSE:      'NURSE',
+  ADMIN:      'ADMIN',
+  PHARMACIST: 'PHARMACIST',
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ROUTE PATHS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const ROUTES = {
-  LOGIN:     '/login',
-  DASHBOARD: '/dashboard',
-  PATIENTS:  '/patients',
-  TRIAGE:    '/triage',
-  EMR:       '/emr',
-  ADMIN:     '/admin',
-  PHARMACY:  '/pharmacy',
+  LOGIN:      '/login',
+  DASHBOARD:  '/dashboard',
+  PATIENTS:   '/patients',
+  TRIAGE:     '/triage',
+  EMR:        '/emr',
+  ENCOUNTERS: '/encounters',
+  ADMIN:      '/admin',
+  PHARMACY:   '/pharmacy',
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ROLE → ALLOWED ROUTES MAPPING
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const ROLE_PERMISSIONS = {
-  [ROLES.DOCTOR]:     [ROUTES.DASHBOARD, ROUTES.PATIENTS, ROUTES.EMR, ROUTES.TRIAGE],
-  [ROLES.NURSE]:      [ROUTES.DASHBOARD, ROUTES.TRIAGE, ROUTES.PATIENTS],
-  [ROLES.ADMIN]:      [ROUTES.DASHBOARD, ROUTES.PATIENTS, ROUTES.TRIAGE, ROUTES.EMR, ROUTES.ADMIN],
+  [ROLES.DOCTOR]:     [ROUTES.DASHBOARD, ROUTES.PATIENTS, ROUTES.EMR, ROUTES.TRIAGE, ROUTES.ENCOUNTERS],
+  [ROLES.NURSE]:      [ROUTES.DASHBOARD, ROUTES.TRIAGE, ROUTES.PATIENTS, ROUTES.ENCOUNTERS],
+  [ROLES.ADMIN]:      Object.values(ROUTES).filter(r => r !== ROUTES.LOGIN),
   [ROLES.PHARMACIST]: [ROUTES.DASHBOARD, ROUTES.PHARMACY],
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// TRIAGE LEVELS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 export const TRIAGE_LEVELS = {
-  RED:    'red',    // NEWS2 >= 7 → Emergency
-  ORANGE: 'orange', // NEWS2 5-6 → Urgent
-  YELLOW: 'yellow', // NEWS2 1-4 → Ward
-  GREEN:  'green',  // NEWS2 0   → Routine
+  RED:    'red',
+  ORANGE: 'orange',
+  YELLOW: 'yellow',
+  GREEN:  'green',
 };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// AUDIT ACTIONS
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+export const ENCOUNTER_TYPES = {
+  EMERGENCY:  'EMERGENCY',
+  OUTPATIENT: 'OUTPATIENT',
+  INPATIENT:  'INPATIENT',
+  PLANNED:    'PLANNED',
+};
+
+export const ENCOUNTER_STATUSES = {
+  ACTIVE:      'ACTIVE',
+  COMPLETED:   'COMPLETED',
+  TRANSFERRED: 'TRANSFERRED',
+  DISCHARGED:  'DISCHARGED',
+};
+
 export const AUDIT_ACTIONS = {
   CREATE: 'CREATE',
   UPDATE: 'UPDATE',
@@ -70,4 +66,14 @@ export const AUDIT_ACTIONS = {
   VIEW:   'VIEW',
   LOGIN:  'LOGIN',
   LOGOUT: 'LOGOUT',
+};
+
+// Batas fisiologis untuk validasi vital signs (Step 9)
+export const VITAL_BOUNDS = {
+  heartRate:   { min: 20,  max: 300, unit: 'bpm'  },
+  systolicBP:  { min: 50,  max: 300, unit: 'mmHg' },
+  diastolicBP: { min: 20,  max: 200, unit: 'mmHg' },
+  spo2:        { min: 50,  max: 100, unit: '%'     },
+  temperature: { min: 30,  max: 45,  unit: '°C'   },
+  respRate:    { min: 5,   max: 60,  unit: '/min'  },
 };

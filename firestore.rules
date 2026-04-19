@@ -1,0 +1,99 @@
+rules_version = '2';
+// NurseFlow Firestore Security Rules — Step 7.3
+// JCI-compliant: Role-Based, Append-Only untuk data medis kritis
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ─────────────────────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+    function getRole() {
+      return request.auth.token.role;
+    }
+    function isDoctor()     { return getRole() == 'DOCTOR'; }
+    function isNurse()      { return getRole() == 'NURSE'; }
+    function isAdmin()      { return getRole() == 'ADMIN'; }
+    function isPharmacist() { return getRole() == 'PHARMACIST'; }
+    function isMedical()    { return isDoctor() || isNurse() || isAdmin(); }
+
+    // ─── AUDIT LOGS: Insert-Only (JCI Immutable) ─────────────
+    match /audit_logs/{logId} {
+      allow read:             if isAuth() && isAdmin();
+      allow create:           if isAuth();
+      // TIDAK ADA update/delete — immutable by design
+      allow update, delete:   if false;
+    }
+
+    // ─── USERS ────────────────────────────────────────────────
+    match /users/{userId} {
+      allow read:   if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ─── PATIENTS ─────────────────────────────────────────────
+    match /patients/{patientId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && isMedical();
+      allow update: if isAuth() && (isDoctor() || isAdmin());
+      allow delete: if false; // TIDAK PERNAH hapus rekam medis
+    }
+
+    // ─── ENCOUNTERS ───────────────────────────────────────────
+    match /encounters/{encounterId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && isMedical();
+      // Hanya update status (discharge, transfer) — bukan overwrite semua field
+      allow update: if isAuth() && (isDoctor() || isAdmin())
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['status', 'discharged_at', 'bed_number']);
+      allow delete: if false;
+    }
+
+    // ─── TRIAGE LOGS: Append-Only ─────────────────────────────
+    match /triage_logs/{logId} {
+      allow read:             if isAuth();
+      allow create:           if isAuth() && (isNurse() || isDoctor() || isAdmin());
+      allow update, delete:   if false; // Immutable
+    }
+
+    // ─── MEDICAL RECORDS: Doctors Write, Others Read ──────────
+    match /medical_records/{recordId} {
+      allow read:           if isAuth();
+      allow create:         if isAuth() && isDoctor();
+      // Append-only: update & delete dilarang
+      allow update, delete: if false;
+    }
+
+    // ─── MEDICATIONS ──────────────────────────────────────────
+    match /medications/{medId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && isDoctor();
+      // Pharmacist boleh update status dispensing
+      allow update: if isAuth() && (isPharmacist() || isAdmin())
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['status', 'dispensed_at', 'dispensed_by']);
+      allow delete: if false;
+    }
+
+    // ─── ALERTS: Realtime ─────────────────────────────────────
+    match /alerts/{alertId} {
+      allow read:   if isAuth();
+      allow create: if isAuth();
+      // Boleh resolve (update field 'resolved' saja)
+      allow update: if isAuth()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['resolved', 'resolved_at', 'resolved_by']);
+      allow delete: if false;
+    }
+
+    // ─── WARD METRICS: Read-Only untuk semua, Write hanya Admin ─
+    match /ward_metrics/{wardId} {
+      allow read:   if isAuth();
+      allow write:  if isAuth() && isAdmin();
+    }
+  }
+}

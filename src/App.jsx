@@ -10,6 +10,8 @@ import Dashboard from './pages/Dashboard';
 import Patients from './pages/Patients';
 import Triage from './pages/Triage';
 import EMR from './pages/EMR';
+import Encounters from './pages/Encounters';
+
 
 function App() {
   return (
@@ -22,13 +24,13 @@ function App() {
           {/* Protected Routes Container */}
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/patients" element={<Patients />} />
-              <Route path="/triage" element={<Triage />} />
-              <Route path="/emr" element={<EMR />} />
-              
-              {/* Default Redirect to Dashboard */}
+              <Route path="/dashboard"  element={<Dashboard />} />
+              <Route path="/patients"   element={<Patients />} />
+              <Route path="/triage"     element={<Triage />} />
+              <Route path="/emr"        element={<EMR />} />
+              <Route path="/encounters" element={<Encounters />} />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
+
             </Route>
           </Route>
           
