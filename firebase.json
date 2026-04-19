@@ -17,10 +17,6 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "predeploy": [
-      "npm run lint",
-      "npm run build"
-    ],
     "rewrites": [
       {
         "source": "**",
