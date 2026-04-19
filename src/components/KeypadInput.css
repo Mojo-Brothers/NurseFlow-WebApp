@@ -1,0 +1,56 @@
+.keypad-container {
+  background-color: var(--surface-container-lowest);
+  border: 2px solid transparent;
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.keypad-container.border-error {
+  border-color: var(--error);
+  background-color: var(--error-container);
+}
+
+.keypad-container.border-warning {
+  border-color: #facc15;
+  background-color: #fefce8;
+}
+
+.keypad-display {
+  cursor: pointer;
+}
+
+.keypad-grid {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  padding: var(--space-4);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.keypad-btn {
+  background-color: var(--surface-container-low);
+  color: var(--on-surface);
+  border: none;
+  padding: 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  transition: background-color 0.1s;
+}
+
+.keypad-btn:active {
+  background-color: var(--surface-variant);
+  transform: scale(0.95);
+}
+
+.btn-del {
+  color: var(--error);
+  font-size: 1rem;
+}

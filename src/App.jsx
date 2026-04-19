@@ -1,13 +1,42 @@
 import React from 'react';
-import TopAppBar from './components/TopAppBar';
-import Dashboard from './components/Dashboard';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Layouts & Pages
+import MainLayout from './layouts/MainLayout';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Patients from './pages/Patients';
+import Triage from './pages/Triage';
+import EMR from './pages/EMR';
 
 function App() {
   return (
-    <>
-      <TopAppBar />
-      <Dashboard />
-    </>
+    <Router>
+      <AuthProvider>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          
+          {/* Protected Routes Container */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MainLayout />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/patients" element={<Patients />} />
+              <Route path="/triage" element={<Triage />} />
+              <Route path="/emr" element={<EMR />} />
+              
+              {/* Default Redirect to Dashboard */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            </Route>
+          </Route>
+          
+          {/* Fallback Catch-all */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
+      </AuthProvider>
+    </Router>
   );
 }
 

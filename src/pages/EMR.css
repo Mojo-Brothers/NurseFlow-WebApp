@@ -1,0 +1,70 @@
+.emr-sidebar {
+  width: 350px;
+  background-color: var(--surface-container-low);
+  overflow-y: auto;
+}
+
+.emr-workspace {
+  background-color: var(--surface-container-lowest);
+  position: relative;
+}
+
+.emr-label {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--on-surface);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.emr-textarea {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--on-surface);
+  background-color: var(--background);
+  transition: all 0.2s;
+  resize: vertical;
+}
+
+.emr-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-fixed);
+}
+
+.border-r {
+  border-right: 1px solid var(--outline-variant);
+}
+
+.border-l-primary {
+  border-left: 4px solid var(--primary);
+}
+
+.shadow-none {
+  box-shadow: none;
+}
+
+.hover-underline:hover {
+  text-decoration: underline;
+}
+
+.outline-primary {
+  border: 1px solid var(--primary-fixed);
+}
+
+/* Custom Scrollbar for Workspace */
+.emr-sidebar::-webkit-scrollbar,
+.emr-workspace::-webkit-scrollbar {
+  width: 6px;
+}
+
+.emr-sidebar::-webkit-scrollbar-thumb,
+.emr-workspace::-webkit-scrollbar-thumb {
+  background-color: var(--surface-variant);
+  border-radius: 10px;
+}

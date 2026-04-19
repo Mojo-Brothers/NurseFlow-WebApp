@@ -1,7 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { listenToWardMetrics, listenToAlerts } from '../services/dashboardService';
 import './Dashboard.css';
 
 const Dashboard = () => {
+  // State initialization
+  const [metrics, setMetrics] = useState({
+    occupancy: 0,
+    avg_news_score: 0.0,
+    staff_on_duty: 0
+  });
+  
+  const [alertsInfo, setAlertsInfo] = useState({
+    total: 0,
+    highRiskCount: 0
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Mendaftar (Subscribe) ke Firebase Firestore saat komponen dimuat
+  useEffect(() => {
+    // Listen ke metrik statis dari "central_medical"
+    const unsubscribeMetrics = listenToWardMetrics('central_medical', (data) => {
+      if (data) {
+        setMetrics(data);
+        setIsLoading(false);
+      }
+    });
+
+    // Listen ke jumlah alert di IGD
+    const unsubscribeAlerts = listenToAlerts((data) => {
+      setAlertsInfo(data);
+    });
+
+    // Membersihkan listener ketika komponen dihapus (cleanup)
+    return () => {
+      unsubscribeMetrics();
+      unsubscribeAlerts();
+    };
+  }, []);
   return (
     <main className="dashboard-main">
       <section className="editorial-header">
@@ -24,13 +60,13 @@ const Dashboard = () => {
           <div className="card metric-card border-primary-left">
             <div>
               <p className="metric-label">Ward Occupancy</p>
-              <h3 className="metric-value text-primary">88%</h3>
+              <h3 className="metric-value text-primary">{isLoading ? '--' : metrics.occupancy}%</h3>
             </div>
             <div className="flex-row items-center gap-2">
               <div className="progress-bar-bg">
-                <div className="progress-bar-fill" style={{ width: '88%' }}></div>
+                <div className="progress-bar-fill" style={{ width: `${isLoading ? 0 : metrics.occupancy}%`, transition: 'width 1s ease-in-out' }}></div>
               </div>
-              <span className="progress-text">22/25</span>
+              <span className="progress-text">Live Sync</span>
             </div>
           </div>
 
@@ -38,7 +74,7 @@ const Dashboard = () => {
           <div className="card metric-card">
             <div>
               <p className="metric-label">Avg. NEWS2 Score</p>
-              <h3 className="metric-value">1.4</h3>
+              <h3 className="metric-value">{isLoading ? '--' : metrics.avg_news_score}</h3>
             </div>
             <div className="flex-row items-center gap-1">
               <div className="chip chip-success">Stable</div>
@@ -50,7 +86,7 @@ const Dashboard = () => {
           <div className="card metric-card">
             <div>
               <p className="metric-label">Staff on Duty</p>
-              <h3 className="metric-value">06</h3>
+              <h3 className="metric-value">{isLoading ? '--' : String(metrics.staff_on_duty).padStart(2, '0')}</h3>
             </div>
             <div className="avatar-stack">
               <div className="avatar bg-1"></div>
@@ -73,7 +109,7 @@ const Dashboard = () => {
           <div className="attention-list">
             <div className="attention-item">
               <span>High Risk Patients</span>
-              <span className="badge badge-error">02</span>
+              <span className="badge badge-error">{isLoading ? '0' : String(alertsInfo.highRiskCount).padStart(2, '0')}</span>
             </div>
             <div className="attention-item semi-transparent">
               <span>Moderate Risk</span>

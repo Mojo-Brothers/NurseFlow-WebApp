@@ -1,0 +1,83 @@
+.p-8 { padding: 2rem; }
+.max-w-7xl { max-width: 80rem; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.w-full { width: 100%; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.mr-2 { margin-right: 0.5rem; }
+.mt-1 { margin-top: 0.25rem; }
+.py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+.px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+.py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+.border-collapse { border-collapse: collapse; }
+.border-b { border-bottom: 1px solid var(--surface-variant); }
+.border-t { border-top: 1px solid var(--surface-variant); }
+.bg-surface-high { background-color: var(--surface-container-high); }
+.hover-bg-surface:hover { background-color: var(--surface-container-low); }
+.padding-0 { padding: 0; }
+.block { display: block; }
+.flex-1 { flex: 1; }
+
+.btn-outline-small {
+  background: transparent;
+  border: 1px solid var(--outline-variant);
+  color: var(--on-surface-variant);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  transition: all 0.2s;
+}
+
+.btn-outline-small:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--on-surface-variant);
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(25, 28, 29, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 500px;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  background-color: var(--surface-container-lowest);
+  font-size: 1rem;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
