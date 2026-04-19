@@ -4,7 +4,7 @@
  * ✅ Deterministic, pure functions (Server-Ready).
  */
 
-import { TRIAGE_LEVELS, ESCALATION_LEVELS } from '../constants.js';
+import { TRIAGE_LEVELS, ESCALATION_LEVELS, ESCALATION_SOURCES } from '../constants.js';
 
 /**
  * Calculates NEWS2 (National Early Warning Score)

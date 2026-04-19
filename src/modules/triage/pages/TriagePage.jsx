@@ -38,6 +38,8 @@ export default function TriagePage() {
     ? (parseFloat(weight) / Math.pow(parseFloat(height) / 100, 2)).toFixed(1) 
     : '--';
 
+  const [lastLog, setLastLog] = useState(null);
+
   // V5 Clinical Intelligence (Adaptive & Granular)
   const patient = patients.find(p => p.id === selectedPatientId);
   const baseline = patient?.baseline_profile;
@@ -95,8 +97,6 @@ export default function TriagePage() {
     setHoldProgress(0);
   };
 
-  const patient = patients.find(p => p.id === selectedPatientId);
-
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
       <div className="flex-row items-center justify-between mb-8">
@@ -126,7 +126,6 @@ export default function TriagePage() {
 
       {submitSuccess && <div className="card mb-4 p-4 bg-secondary-container text-on-secondary-container">✓ Triage V5 Record Saved (Traceability Locked)</div>}
 
-      {/* ─── Clinical Baseline Banner (JCI V5) ─── */}
       {patient && (
         <div className={`card mb-6 p-4 flex-row gap-6 bg-surface-container-low border-l-4 ${news2Score >= 7 ? 'animate-pulse-red' : ''}`} 
              style={{ borderLeftColor: news2Score >= 7 ? 'var(--error)' : 'var(--primary)' }}>
