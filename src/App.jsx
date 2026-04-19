@@ -2,41 +2,49 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Layouts & Pages
-import MainLayout from './layouts/MainLayout';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Patients from './pages/Patients';
-import Triage from './pages/Triage';
-import EMR from './pages/EMR';
-import Encounters from './pages/Encounters';
-
+import MainLayout  from './layouts/MainLayout';
+import Login       from './pages/Login';
+import Dashboard   from './pages/Dashboard';
+import Patients    from './pages/Patients';
+import Triage      from './pages/Triage';
+import EMR         from './pages/EMR';
+import Encounters  from './pages/Encounters';
+import AdminHub    from './pages/AdminHub';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/login" element={<Login />} />
-          
-          {/* Protected Routes Container */}
-          <Route element={<ProtectedRoute />}>
-            <Route element={<MainLayout />}>
-              <Route path="/dashboard"  element={<Dashboard />} />
-              <Route path="/patients"   element={<Patients />} />
-              <Route path="/triage"     element={<Triage />} />
-              <Route path="/emr"        element={<EMR />} />
-              <Route path="/encounters" element={<Encounters />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <ErrorBoundary>
+          <Routes>
+            {/* Public */}
+            <Route path="/login" element={<Login />} />
 
+            {/* Protected — semua role */}
+            <Route element={<ProtectedRoute />}>
+              <Route element={<MainLayout />}>
+                <Route path="/dashboard"  element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+                <Route path="/patients"   element={<ErrorBoundary><Patients /></ErrorBoundary>} />
+                <Route path="/encounters" element={<ErrorBoundary><Encounters /></ErrorBoundary>} />
+                <Route path="/triage"     element={<ErrorBoundary><Triage /></ErrorBoundary>} />
+                <Route path="/emr"        element={<ErrorBoundary><EMR /></ErrorBoundary>} />
+
+                {/* Admin only */}
+                <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                  <Route path="/admin" element={<ErrorBoundary><AdminHub /></ErrorBoundary>} />
+                </Route>
+
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              </Route>
             </Route>
-          </Route>
-          
-          {/* Fallback Catch-all */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
+
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </ErrorBoundary>
       </AuthProvider>
     </Router>
   );
