@@ -16,6 +16,7 @@ jobs:
     needs: [] # Runs independently (CI runs in parallel)
 
     permissions:
+      contents: read
       checks: write
       pull-requests: write  # Allows posting preview URL as PR comment
 
