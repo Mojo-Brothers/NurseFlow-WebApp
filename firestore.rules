@@ -90,6 +90,26 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ─── BILLING: Admin & Doctors can manage ──────────────────
+    match /billing/{billId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && (isDoctor() || isAdmin());
+      allow update: if isAuth() && (isDoctor() || isAdmin())
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasAny(['line_items', 'subtotal', 'total', 'status', 'finalized_at', 'paid_at', 'notes']);
+      allow delete: if false;
+    }
+
+    // ─── NURSING TASKS ────────────────────────────────────────
+    match /nursing_tasks/{taskId} {
+      allow read:   if isAuth();
+      allow create: if isAuth() && (isNurse() || isDoctor() || isAdmin());
+      allow update: if isAuth() && (isNurse() || isDoctor() || isAdmin())
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasAny(['status', 'completed_at', 'completed_by', 'notes']);
+      allow delete: if false;
+    }
+
     // ─── WARD METRICS: Read-Only untuk semua, Write hanya Admin ─
     match /ward_metrics/{wardId} {
       allow read:   if isAuth();
