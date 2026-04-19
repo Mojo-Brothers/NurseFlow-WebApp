@@ -5,7 +5,7 @@ import {
   cancelMedication,
 } from './services/pharmacy.service.js';
 
-export const usePharmacyStore = create((set, get) => ({
+export const usePharmacyStore = create((set) => ({
   pendingQueue: [],
   isLoading:    false,
   error:        null,

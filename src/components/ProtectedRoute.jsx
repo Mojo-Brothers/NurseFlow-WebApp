@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.jsx';
+import { useAuth } from '../contexts/useAuth.js';
 import { ROLE_PERMISSIONS } from '../core/constants.js';
 
 /**

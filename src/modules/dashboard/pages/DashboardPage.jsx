@@ -5,7 +5,7 @@ import { useConnectionStatus } from '../../../core/hooks/useConnectionStatus.js'
 import { getTriageColor } from '../../../utils/clinicalCalculators.js'; // V5 Fix: Import color utility
 import '../styles/Dashboard.css';
 
-import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { useAuth } from '../../../contexts/useAuth.js';
 
 const DashboardPage = () => {
   const { t } = useTranslation();

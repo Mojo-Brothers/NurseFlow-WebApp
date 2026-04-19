@@ -3,20 +3,17 @@
  * Menjembatani Firebase onAuthStateChanged dengan Zustand auth store.
  * Role diambil dari Custom Claims setiap kali state berubah.
  */
-import React, { createContext, useContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../core/firebase.js';
 import { useAuthStore } from '../modules/auth/auth.store.js';
 import { getUserRole } from '../modules/auth/services/auth.service.js';
 
-const AuthContext = createContext();
+import { AuthContext } from './AuthContextInstance.js';
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
 
 export function AuthProvider({ children }) {
-  const { currentUser, role, isLoading, isLoggingIn, error, setUser, setLoading, login, logout, clearError } = useAuthStore();
+  const { currentUser, role, isLoading, isLoggingIn, error, setUser, login, logout, clearError } = useAuthStore();
 
   // Sinkronisasi Firebase Auth state → Zustand store
   useEffect(() => {
@@ -46,7 +43,7 @@ export function AuthProvider({ children }) {
       clearTimeout(authTimeout);
       unsubscribe();
     };
-  }, [setUser]);
+  }, [setUser, isLoading]);
 
   const value = {
     currentUser,

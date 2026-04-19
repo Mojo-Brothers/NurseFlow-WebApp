@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePharmacyStore } from '../pharmacy.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
-import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { useAuth } from '../../../contexts/useAuth.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 
 const STATUS_CONFIG = {

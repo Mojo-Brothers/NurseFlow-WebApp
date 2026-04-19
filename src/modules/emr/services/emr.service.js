@@ -3,7 +3,7 @@
  * ✅ Abstraksi penuh untuk electronic medical records.
  * ✅ Append-only: tidak ada metode delete/update pada record medis.
  */
-import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp, runTransaction, doc } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, serverTimestamp, runTransaction, doc } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS } from '../../../core/constants.js';
 

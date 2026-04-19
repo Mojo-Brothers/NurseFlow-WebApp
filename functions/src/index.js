@@ -1,6 +1,6 @@
 /**
- * NurseFlow Cloud Functions — Entry Point (Full)
- * Steps 3 + 4 + 7: Auth, Audit, Triage, Patient, Pharmacy, Billing
+ * NurseFlow Cloud Functions — Entry Point (V5.5 Hardened)
+ * JCI-Grade: Automated Auditing, Tamper Alerts, & Clinical Integrity
  */
 const admin     = require('firebase-admin');
 const functions = require('firebase-functions');
@@ -11,10 +11,10 @@ const db = admin.firestore();
 const { calculateNEWS2, determineEscalation } = require('./domain/clinicalEngine');
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STEP 3: AUTH — Sync User Role ke Custom Claims
+// 1. AUTH — Role-Claims Sync
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 exports.syncUserRole = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login terlebih dahulu.');
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login required.');
 
   const uid = context.auth.uid;
   const userDoc = await db.doc(`users/${uid}`).get();
@@ -30,60 +30,51 @@ exports.syncUserRole = functions.https.onCall(async (data, context) => {
       created_at:  admin.firestore.FieldValue.serverTimestamp(),
     });
     await admin.auth().setCustomUserClaims(uid, { role: 'NURSE' });
-    return { role: 'NURSE', isNew: true };
+    return { role: 'NURSE' };
   }
 
   const { role } = userDoc.data();
   await admin.auth().setCustomUserClaims(uid, { role });
-  return { role, isNew: false };
+  return { role };
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STEP 7: TRIAGE — Auto Alert jika NEWS2 Kritis
+// 2. CLINICAL — Unified Triage Processor
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    return null;
-  });
-
-/**
- * JCI-Elite Secure Triage Processor
- * Memindahkan kedaulatan kalkulasi ke server.
- */
 exports.processTriage = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login diperlukan.');
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login required.');
+  
+  // DEFENSE-IN-DEPTH: Role Verification
+  const userRole = context.auth.token.role;
+  if (!['DOCTOR', 'NURSE'].includes(userRole)) {
+    throw new functions.https.HttpsError('permission-denied', 'Hanya tim medis yang berwenang melakukan Triage.');
+  }
 
-  const { patient_id, encounter_id, vitals, trends = {}, client_score, client_level } = data;
-  const requestId = Math.random().toString(36).substring(7); // Trace ID
+  const { patient_id, encounter_id, vitals, trends, client_score, client_level } = data;
 
-  // 1. Fetch Patient Baseline
   const patientDoc = await db.collection('patients').doc(patient_id).get();
-  if (!patientDoc.exists) throw new functions.https.HttpsError('not-found', 'Pasien tidak ditemukan.');
+  if (!patientDoc.exists) throw new functions.https.HttpsError('not-found', 'Patient not found.');
   
   const baseline = patientDoc.data().baseline_profile || null;
-
-  // 2. Server-Side Re-calculation (Source of Truth)
   const serverScore = calculateNEWS2(vitals, baseline);
   const serverEscalation = determineEscalation(serverScore, trends);
 
-  // 3. TAMPER DETECTION
+  // TAMPER DETECTION
   let tamperDetected = false;
   if (client_score !== undefined && client_score !== serverScore) tamperDetected = true;
   if (client_level !== undefined && client_level !== serverEscalation.level) tamperDetected = true;
 
-  // 4. Atomic Update: Log + Encounter State
   const batch = db.batch();
   const logRef = db.collection('triage_logs').doc();
   const encounterRef = db.collection('encounters').doc(encounter_id);
 
   batch.set(logRef, {
-    patient_id,
-    encounter_id,
-    vitals,
+    patient_id, encounter_id, vitals,
     news2_score:      serverScore,
     escalation_level:  serverEscalation.level,
-    escalation_source: serverEscalation.source,
+    escalation_source: 'SERVER_PROCESSOR',
     assessed_by:       context.auth.token.email,
     timestamp:         admin.firestore.FieldValue.serverTimestamp(),
-    request_id:        requestId,
     tamper_alert:      tamperDetected,
     _v:                1
   });
@@ -91,188 +82,102 @@ exports.processTriage = functions.https.onCall(async (data, context) => {
   batch.update(encounterRef, {
     last_news2:        serverScore,
     escalation_level:  serverEscalation.level,
-    escalation_source: serverEscalation.source,
     last_updated_at:   admin.firestore.FieldValue.serverTimestamp(),
     _v:                admin.firestore.FieldValue.increment(1)
   });
 
-  // 5. System Observability Log
-  await db.collection('system_metrics').add({
-    type: 'TRIAGE_PROCESSED',
-    request_id: requestId,
-    user: context.auth.token.email,
-    tamper_detected: tamperDetected,
-    timestamp: admin.firestore.FieldValue.serverTimestamp()
-  });
+  if (tamperDetected) {
+    const alertRef = db.collection('alerts').doc();
+    batch.set(alertRef, {
+      type: 'URGENT_TAMPER',
+      patient_id,
+      message: `PERINGATAN: Deteksi manipulasi skor NEWS2 pada pasien ${patient_id}. Skor diubah di sisi client.`,
+      triggered_by: 'system_gatekeeper',
+      triggered_at: admin.firestore.FieldValue.serverTimestamp(),
+      resolved: false
+    });
+  }
 
   await batch.commit();
-
-  return { 
-    success: true, 
-    score: serverScore, 
-    escalation: serverEscalation,
-    tamper_detected: tamperDetected 
-  };
+  return { success: true, score: serverScore, tamper_detected: tamperDetected };
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STEP 4: AUDIT — Callable Audit Writer
+// 3. TRIGGERS — Automated Audit Trail (JCI)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-exports.writeAuditLog = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login terlebih dahulu.');
 
-  const { action, resourceType, resourceId, delta } = data;
-  const VALID = ['CREATE','UPDATE','DELETE','VIEW','LOGIN','LOGOUT'];
-  if (!VALID.includes(action)) throw new functions.https.HttpsError('invalid-argument', `Invalid action: ${action}`);
-
-  await db.collection('audit_logs').add({
-    timestamp:     admin.firestore.FieldValue.serverTimestamp(),
-    user:          context.auth.token.email,
-    action, resource_type: resourceType, resource_id: resourceId,
-    delta:         delta || {}, source: 'CLIENT_CALLABLE',
+// Triage Logs Audit (Immutable Record)
+exports.onTriageCreate = functions.firestore
+  .document('triage_logs/{logId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    await db.collection('audit_logs').add({
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      user:      data.assessed_by || 'unknown',
+      action:    'CREATE',
+      resource_type: 'triage_logs',
+      resource_id:   context.params.logId,
+      delta:         { score: data.news2_score, tamper: data.tamper_alert },
+      source:        'TRIGGER_AUTO'
+    });
   });
 
-  return { success: true };
-});
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STEP 5: PATIENT — Registration & Auto-audit
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-/**
- * JCI-Compliant Patient Registration
- * Melakukan generate MRN di sisi server untuk menjamin integritas.
- */
-exports.registerPatient = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login diperlukan.');
-
-  const { name, dob, gender, nik, address, phone } = data;
-  if (!name || !dob || !nik) throw new functions.https.HttpsError('invalid-argument', 'Data wajib (nama, lahir, NIK) kurang.');
-
-  // Generate MRN (00-00-00 format)
-  const randomNum = Math.floor(100000 + Math.random() * 900000); // 6 digits
-  const s = String(randomNum);
-  const mrn = `${s.substring(0,2)}-${s.substring(2,4)}-${s.substring(4,6)}`;
-
-  const payload = {
-    name, dob, gender, nik, address, phone,
-    mrn,
-    is_active:     true,
-    registered_at: admin.firestore.FieldValue.serverTimestamp(),
-    registered_by: context.auth.token.email,
-  };
-
-  // Transactional Write: Patient + Audit
-  const batch = db.batch();
-  const patientRef = db.collection('patients').doc();
-  const auditRef   = db.collection('audit_logs').doc();
-
-  batch.set(patientRef, payload);
-  batch.set(auditRef, {
-    timestamp:     admin.firestore.FieldValue.serverTimestamp(),
-    user:          context.auth.token.email,
-    action:        'CREATE',
-    resource_type: 'patients',
-    resource_id:   patientRef.id,
-    delta:         { name, mrn },
-    source:        'CLOUD_FUNCTION_CALLABLE'
+// Medication Audit (Strict)
+exports.onMedicationCreate = functions.firestore
+  .document('medications/{medId}')
+  .onCreate(async (snap, context) => {
+    const data = snap.data();
+    await db.collection('audit_logs').add({
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      user:      data.prescribed_by,
+      action:    'CREATE',
+      resource_type: 'medications',
+      resource_id:   context.params.medId,
+      delta:         { med: data.medication_name, dose: data.dose },
+      source:        'TRIGGER_AUTO'
+    });
   });
 
-  await batch.commit();
-
-  return { id: patientRef.id, mrn };
-});
-
-// Trigger audit untuk backup jika ada penulisan langsung (Emergency workaround)
+// Patient Audit
 exports.onPatientCreate = functions.firestore
   .document('patients/{patientId}')
   .onCreate(async (snap, context) => {
     const data = snap.data();
-    if (data.registered_by === 'system_auto') return null; // Skip if already handled by callable
-    
-    // Fallback audit
     await db.collection('audit_logs').add({
-      timestamp:     admin.firestore.FieldValue.serverTimestamp(),
-      user:          data.registered_by || 'unknown',
-      action:        'CREATE',
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      user:      data.registered_by || 'system',
+      action:    'CREATE',
       resource_type: 'patients',
       resource_id:   context.params.patientId,
       delta:         { mrn: data.mrn },
-      source:        'CLOUD_FUNCTION_TRIGGER',
+      source:        'TRIGGER_AUTO'
     });
-    return null;
   });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// NEW: PHARMACY — Alert saat resep baru masuk
+// 4. UTILITY — MRN Generation (Secure)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-exports.onMedicationCreate = functions.firestore
-  .document('medications/{medId}')
-  .onCreate(async (snap, context) => {
-    const { patient_id, medication_name, route, prescribed_by } = snap.data();
-    const medId = context.params.medId;
+exports.registerPatient = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login required.');
 
-    // Audit: setiap resep baru
-    await db.collection('audit_logs').add({
-      timestamp:     admin.firestore.FieldValue.serverTimestamp(),
-      user:          prescribed_by, action: 'CREATE',
-      resource_type: 'medications', resource_id: medId,
-      delta:         { medication_name, route }, source: 'CLOUD_FUNCTION',
-    });
+  // DEFENSE-IN-DEPTH: Role Verification
+  const userRole = context.auth.token.role;
+  if (!['DOCTOR', 'NURSE', 'ADMIN'].includes(userRole)) {
+    throw new functions.https.HttpsError('permission-denied', 'Anda tidak memiliki wewenang untuk meregistrasi pasien.');
+  }
 
-    // Alert farmasi jika IV (parenteral — urgent)
-    if (['IV', 'SC', 'IM'].includes(route)) {
-      await db.collection('alerts').add({
-        type:         'URGENT_MEDICATION',
-        patient_id,   medication_id: medId,
-        medication:   medication_name, route,
-        triggered_by: prescribed_by,
-        triggered_at: admin.firestore.FieldValue.serverTimestamp(),
-        resolved:     false,
-        message:      `Resep parenteral (${route}) baru: ${medication_name} — Perlu segera disiapkan farmasi.`,
-      });
-    }
-    return null;
-  });
+  const { name, dob, gender, nik, address, phone } = data;
+  const randomNum = Math.floor(100000 + Math.random() * 900000);
+  const s = String(randomNum);
+  const mrn = `${s.substring(0,2)}-${s.substring(2,4)}-${s.substring(4,6)}`;
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// NEW: BILLING — Audit on bill create
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-exports.onBillingCreate = functions.firestore
-  .document('billing/{billId}')
-  .onCreate(async (snap, context) => {
-    const { patient_id, encounter_id, created_by } = snap.data();
-    await db.collection('audit_logs').add({
-      timestamp:     admin.firestore.FieldValue.serverTimestamp(),
-      user:          created_by || 'system', action: 'CREATE',
-      resource_type: 'billing', resource_id: context.params.billId,
-      delta:         { patient_id, encounter_id }, source: 'CLOUD_FUNCTION',
-    });
-    return null;
-  });
+  const payload = {
+    name, dob, gender, nik, address, phone, mrn,
+    is_active: true,
+    registered_at: admin.firestore.FieldValue.serverTimestamp(),
+    registered_by: context.auth.token.email,
+  };
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// NEW: ENCOUNTER — Auto-billing saat encounter dibuka
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-exports.onEncounterCreate = functions.firestore
-  .document('encounters/{encId}')
-  .onCreate(async (snap, context) => {
-    const { patient_id } = snap.data();
-    const encId = context.params.encId;
-
-    // Auto-buat tagihan DRAFT saat encounter dibuka
-    await db.collection('billing').add({
-      encounter_id:  encId,
-      patient_id,
-      line_items:    [],
-      subtotal:      0,
-      discount:      0,
-      total:         0,
-      status:        'DRAFT',
-      created_at:    admin.firestore.FieldValue.serverTimestamp(),
-      created_by:    'system_auto',
-    });
-
-    console.log(`[onEncounterCreate] Auto-billing created for encounter ${encId}`);
-    return null;
-  });
+  const patientRef = await db.collection('patients').add(payload);
+  return { id: patientRef.id, mrn };
+});

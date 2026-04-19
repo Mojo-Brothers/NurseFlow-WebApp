@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TopAppBar from '../components/TopAppBar';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/useAuth.js';
 
 const ROLE_BADGE = {
   DOCTOR:     { label: 'roles.doctor',  color: '#3730a3', bg: '#e0e7ff' },

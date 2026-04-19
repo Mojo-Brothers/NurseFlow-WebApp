@@ -65,8 +65,6 @@ export const useTriageStore = create((set, get) => ({
     set({ isSubmitting: true, error: null });
 
     try {
-      const news2Score  = calculateNEWS2(vitals);
-      const triageLevel = getTriageColor(news2Score);
 
       // ✅ Panggil SERVICE (Spark-Safe Transaction)
       await submitTriage({

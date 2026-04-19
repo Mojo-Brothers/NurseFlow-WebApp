@@ -7,7 +7,7 @@ import { calculateNEWS2, getTriageColor, calculateAge } from '../../../utils/cli
 import { determineEscalation, calculateVelocity } from '../../../core/domain/clinicalEngine.js';
 import HistorySparkline from '../../../components/HistorySparkline.jsx';
 import KeypadInput from '../../../components/KeypadInput.jsx';
-import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { useAuth } from '../../../contexts/useAuth.js';
 
 export default function TriagePage() {
   const { t } = useTranslation();

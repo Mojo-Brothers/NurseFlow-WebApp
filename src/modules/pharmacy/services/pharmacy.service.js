@@ -4,12 +4,13 @@
  * Pharmacist hanya bisa UPDATE status — tidak bisa CREATE/DELETE.
  */
 import {
-  collection, addDoc, getDocs, query, where,
+  collection, getDocs, query, where,
   orderBy, updateDoc, doc, serverTimestamp, limit,
   runTransaction
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS } from '../../../core/constants.js';
+import { createAuditLog } from '../../../core/audit/audit.service.js';
 
 /**
  * @typedef {'PENDING' | 'DISPENSED' | 'ADMINISTERED' | 'CANCELLED'} MedStatus
