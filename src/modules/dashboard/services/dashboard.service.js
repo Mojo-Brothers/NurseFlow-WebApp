@@ -32,13 +32,10 @@ export const listenToWardMetrics = (wardId, callback) => {
   });
 };
 
-/**
- * Mendengarkan alert eskalasi klinis aktif berdasarkan status is_escalated.
- */
 export const listenToAlerts = (callback) => {
   const q = query(
     collection(db, COLLECTIONS.ENCOUNTERS), 
-    where('is_escalated', '==', true), 
+    where('escalation_level', 'in', ['WATCH', 'URGENT', 'CRITICAL']), 
     orderBy('last_vitals.news2_score', 'desc'),
     limit(10)
   );
@@ -46,8 +43,8 @@ export const listenToAlerts = (callback) => {
   return onSnapshot(q, (snapshot) => {
     const counts = { total: snapshot.size, highRiskCount: 0 };
     snapshot.docs.forEach(doc => {
-      const score = doc.data().last_vitals?.news2_score || 0;
-      if (score >= 7) counts.highRiskCount++;
+      const data = doc.data();
+      if (data.escalation_level === 'CRITICAL') counts.highRiskCount++;
     });
     callback(counts);
   }, (error) => {

@@ -26,6 +26,11 @@
  * @property {string[]} allergies
  * @property {boolean} is_active
  * @property {import('firebase/firestore').Timestamp} registered_at
+ * @property {Object} [baseline_profile]
+ * @property {number} baseline_profile.value
+ * @property {boolean} baseline_profile.chronic_flag
+ * @property {import('firebase/firestore').Timestamp} baseline_profile.last_updated
+ * @property {'MANUAL'|'COMPUTED'} baseline_profile.source
  */
 
 /**
@@ -49,6 +54,8 @@
  * @property {VitalSigns} vitals
  * @property {number} news2_score
  * @property {TriageLevel} triage_level
+ * @property {string} escalation_level  - e.g., 'WATCH', 'URGENT', 'CRITICAL'
+ * @property {string} escalation_source - e.g., 'SYSTEM', 'NURSE', 'DOCTOR'
  * @property {string} assessed_by       - staff email
  * @property {import('firebase/firestore').Timestamp} timestamp
  */

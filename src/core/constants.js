@@ -93,3 +93,20 @@ export const VITAL_BOUNDS = {
   temperature: { min: 30,  max: 45,  unit: '°C'   },
   respRate:    { min: 5,   max: 60,  unit: '/min'  },
 };
+
+export const ESCALATION_SOURCES = {
+  SYSTEM: 'SYSTEM',
+  NURSE:  'NURSE',
+  DOCTOR: 'DOCTOR',
+};
+
+export const BASELINE_SOURCES = {
+  MANUAL:   'MANUAL',
+  COMPUTED: 'COMPUTED',
+};
+
+export const QUEUE_STATUS = {
+  PENDING: 'PENDING',
+  FAILED:  'FAILED',
+  DLQ:     'DEAD_LETTER_QUEUE',
+};

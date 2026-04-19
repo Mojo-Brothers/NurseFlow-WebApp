@@ -37,9 +37,9 @@ export const createEncounter = async ({
         admitting_doctor:   admittingDoctor,
         nurse_in_charge:    nurseInCharge,
         ward,
-        status:             ENCOUNTER_STATUSES.WAITING, // JCI State Machine Start
+        status:             ENCOUNTER_STATUSES.WAITING, 
         escalation_level:   ESCALATION_LEVELS.NONE,
-        is_escalated:       false,
+        escalation_source:  ESCALATION_SOURCES.SYSTEM,
         admitted_at:        timestamp,
         updated_at:         timestamp,
         updated_by:         createdBy,
@@ -102,7 +102,7 @@ export const transitionEncounter = async ({
 
       if (escalationLevel) {
         updatePayload.escalation_level = escalationLevel;
-        updatePayload.is_escalated = escalationLevel !== ESCALATION_LEVELS.NONE;
+        updatePayload.escalation_source = ESCALATION_SOURCES.NURSE; // Default for manual transitions
       }
 
       transaction.update(ref, updatePayload);
@@ -120,7 +120,8 @@ export const transitionEncounter = async ({
         sync_priority: SYNC_PRIORITIES.HIGH,
         delta: { 
           status: { before: current.status, after: targetStatus },
-          escalation: escalationLevel
+          escalation: escalationLevel,
+          source: ESCALATION_SOURCES.NURSE
         }
       });
     });
@@ -136,13 +137,14 @@ export const transitionEncounter = async ({
 export const getActiveEncounters = async (maxResults = 24) => {
   const q = query(
     collection(db, COLLECTIONS.ENCOUNTERS),
-    where('status', 'in', [
-      ENCOUNTER_STATUSES.WAITING, 
-      ENCOUNTER_STATUSES.TRIAGE, 
-      ENCOUNTER_STATUSES.IN_TREATMENT,
-      ENCOUNTER_STATUSES.TRANSFER_INTERNAL
-    ]),
-    orderBy('admitted_at', 'asc'), // FIFO
+      where('status', 'in', [
+        ENCOUNTER_STATUSES.WAITING, 
+        ENCOUNTER_STATUSES.TRIAGE, 
+        ENCOUNTER_STATUSES.IN_TREATMENT,
+        ENCOUNTER_STATUSES.TRANSFER_INTERNAL
+      ]),
+      orderBy('escalation_level', 'desc'), // Prioritize Critical/Urgent
+      orderBy('admitted_at', 'asc'), 
     limit(maxResults)
   );
   const snap = await getDocs(q);

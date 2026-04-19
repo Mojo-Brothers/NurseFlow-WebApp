@@ -3,6 +3,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import { useEffect } from 'react';
+import { processQueue } from './core/services/syncQueue.service.js';
+import { executeQueuedAction } from './core/services/syncProcessor.js';
 
 // Layouts & Pages
 import MainLayout  from './layouts/MainLayout';
@@ -20,6 +23,19 @@ import AdminHub    from './modules/admin/pages/AdminHubPage';
 const Wrap = ({ children }) => <ErrorBoundary>{children}</ErrorBoundary>;
 
 function App() {
+  useEffect(() => {
+    const handleSync = () => {
+      console.log('[App] Network Online: Triggering background sync queue...');
+      processQueue(executeQueuedAction);
+    };
+
+    window.addEventListener('online', handleSync);
+    // Initial check on load
+    if (navigator.onLine) handleSync();
+
+    return () => window.removeEventListener('online', handleSync);
+  }, []);
+
   return (
     <Router>
       <AuthProvider>

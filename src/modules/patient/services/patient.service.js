@@ -37,11 +37,12 @@ export const registerPatient = async (patientData, staffEmail) => {
         is_active:     true,
         registered_at: timestamp,
         registered_by: staffEmail,
-        // Default Masterpiece Baseline Profile
-        clinical_baseline: {
-          resting_hr:  patientData.baseline_hr || 70,
-          base_rr:     patientData.baseline_rr || 16,
-          is_athlete:  patientData.is_athlete || false,
+        // Adaptive Masterpiece Baseline Profile (JCI Hardened)
+        baseline_profile: {
+          value:         Number(patientData.baseline_hr || 70),
+          chronic_flag:  patientData.chronic_flag || false,
+          last_updated:  timestamp,
+          source:        'MANUAL',
         }
       };
 

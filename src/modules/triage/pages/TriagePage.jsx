@@ -38,9 +38,10 @@ export default function TriagePage() {
     ? (parseFloat(weight) / Math.pow(parseFloat(height) / 100, 2)).toFixed(1) 
     : '--';
 
-  const [lastLog, setLastLog] = useState(null);
-
-  const news2Score  = calculateNEWS2(vitals);
+  // V5 Clinical Intelligence (Adaptive & Granular)
+  const patient = patients.find(p => p.id === selectedPatientId);
+  const baseline = patient?.baseline_profile;
+  const news2Score  = calculateNEWS2(vitals, baseline);
   const triageColor = getTriageColor(news2Score);
 
   // V5 Velocity Trend Calculation (Real-time Preview)
@@ -48,7 +49,7 @@ export default function TriagePage() {
     ? calculateVelocity(vitals.heartRate, lastLog.vitals.heartRate, lastLog.timestamp?.toDate()?.toISOString()) 
     : 0;
   
-  const escalationLevel = determineEscalation(news2Score, { hrVelocity });
+  const escalation = determineEscalation(news2Score, { hrVelocity });
 
   useEffect(() => {
     fetchPatients();
@@ -102,7 +103,9 @@ export default function TriagePage() {
         <div>
           <h2 className="title text-primary">Emergency Triage</h2>
           <div className="flex-row items-center gap-2 mt-1">
-             <span className={`chip-${triageColor} font-bold px-2 py-0.5 rounded text-[10px] uppercase`}>{escalationLevel}</span>
+             <span className={`chip-${triageColor} font-bold px-2 py-0.5 rounded text-[10px] uppercase`}>
+               {escalation.level} {escalation.level !== 'NONE' && `• ${escalation.source}`}
+             </span>
              <p className="text-on-surface-variant text-sm">
                 Rapid Vital Signs — {selectedEncounterId ? `ID: ${selectedEncounterId}` : '⚠️ NO ENCOUNTER'}
              </p>
@@ -138,15 +141,18 @@ export default function TriagePage() {
           
           <div className="flex-1 flex-row gap-8 items-center">
             <div className="flex-column gap-1">
-              <span className="text-[10px] font-bold text-on-surface-variant uppercase">Clinical Baseline</span>
+              <span className="text-[10px] font-bold text-on-surface-variant uppercase">Adaptive Baseline</span>
               <div className="flex-row gap-3">
-                <span className="text-sm font-bold">HR: {patient.clinical_baseline?.resting_hr || '70'} <small className="font-normal opacity-70">bpm</small></span>
-                <span className="text-sm font-bold">RR: {patient.clinical_baseline?.base_rr || '16'} <small className="font-normal opacity-70">x/m</small></span>
+                <span className="text-sm font-bold">HR: {patient.baseline_profile?.value || '70'} <small className="font-normal opacity-70">bpm</small></span>
+                <span className={`chip text-[8px] ${patient.baseline_profile?.chronic_flag ? 'bg-warning' : 'bg-success'}`}>
+                  {patient.baseline_profile?.chronic_flag ? 'CHRONIC' : 'NORMAL'}
+                </span>
+                <span className="text-[10px] opacity-50">Src: {patient.baseline_profile?.source}</span>
               </div>
             </div>
 
             <div className="flex-row gap-2">
-              {patient.safety_flags?.allergy_risk && <span className="ipsg-flag flag-allergy">⚠️ Allergy: {patient.clinical_baseline?.allergies?.join(', ')}</span>}
+              {patient.allergies?.length > 0 && <span className="ipsg-flag flag-allergy">⚠️ Allergy: {patient.allergies.join(', ')}</span>}
               {patient.safety_flags?.fall_risk && <span className="ipsg-flag flag-fall">⚠️ Fall Risk</span>}
             </div>
           </div>
@@ -206,8 +212,11 @@ export default function TriagePage() {
             <span className="metric-label">NEWS2 SCORE</span>
             <div className={`text-6xl font-extrabold text-${triageColor}`}>{news2Score}</div>
             <div className={`mt-4 px-4 py-1 rounded-full inline-block text-xs font-black uppercase bg-${triageColor} text-white`}>
-              {escalationLevel}
+              {escalation.level}
             </div>
+            {escalation.level !== 'NONE' && (
+              <p className="text-[10px] font-bold uppercase mt-1 opacity-60">Source: {escalation.source}</p>
+            )}
             <p className="mt-2 text-[10px] text-on-surface-variant italic">Ref: NEWS2 Protocol 2026</p>
           </div>
 

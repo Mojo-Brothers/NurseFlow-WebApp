@@ -12,6 +12,8 @@ import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS, SYNC_PRIORITIES, ENCOUNTER_STATUSES } from '../../../core/constants.js';
 import { calculateNEWS2, calculateVelocity, determineEscalation } from '../../../core/domain/clinicalEngine.js';
 
+import { enqueueAction, processQueue } from '../../../core/services/syncQueue.service.js';
+
 /**
  * Submit data triage + Velocity Calculation + State Transition.
  */
@@ -22,12 +24,26 @@ export const submitTriage = async ({
   assessedBy,
   reason = 'ROUTINE_TRIAGE' 
 }) => {
+  // Enterprise Resilience: If offline, use Priority Sync Queue
+  if (!navigator.onLine) {
+    console.warn('[TriageService] Offline detected. Enqueueing to Priority Sync Queue...');
+    return await enqueueAction({
+      type: 'SUBMIT_TRIAGE',
+      patientId, encounterId, vitals, assessedBy, reason
+    }, SYNC_PRIORITIES.HIGH); 
+  }
+
   const logRef = doc(collection(db, COLLECTIONS.TRIAGE_LOGS));
   const encounterRef = doc(db, COLLECTIONS.ENCOUNTERS, encounterId);
   
   try {
     return await runTransaction(db, async (transaction) => {
-      // 1. Fetch historical data for Trend Analysis
+      // 1. Fetch Patient and historical data for Clinical Intelligence
+      const patientRef = doc(db, COLLECTIONS.PATIENTS, patientId);
+      const patientSnap = await transaction.get(patientRef);
+      if (!patientSnap.exists()) throw new Error('Pasien tidak ditemukan.');
+      const patient = patientSnap.data();
+
       const q = query(
         collection(db, COLLECTIONS.TRIAGE_LOGS),
         where('patientId', '==', patientId),
@@ -37,8 +53,9 @@ export const submitTriage = async ({
       const prevSnap = await getDocs(q);
       const lastEntry = prevSnap.empty ? null : prevSnap.docs[0].data();
 
-      // 2. Clinical Intelligence
-      const currentNews2 = calculateNEWS2(vitals);
+      // 2. Clinical Intelligence (Adaptive & Granular)
+      const baseline = patient.baseline_profile;
+      const currentNews2 = calculateNEWS2(vitals, baseline);
       const hrVelocity = lastEntry 
         ? calculateVelocity(vitals.heartRate, lastEntry.vitals.heartRate, lastEntry.timestamp?.toDate()?.toISOString()) 
         : 0;
@@ -58,17 +75,18 @@ export const submitTriage = async ({
           temperature:    Number(vitals.temperature),
         },
         news2_score:      currentNews2,
-        hr_velocity:      hrVelocity, // JCI V5 Addition
-        escalation_level: escalation,
+        hr_velocity:      hrVelocity, 
+        escalation_level:  escalation.level,
+        escalation_source: escalation.source,
         assessed_by:      assessedBy,
         timestamp,
       };
 
-      // 3. Update Encounter State (Moving from WAITING/TRIAGE -> IN_TREATMENT if severe)
+      // 3. Update Encounter State (State Machine Evolution)
       transaction.update(encounterRef, {
         status:           ENCOUNTER_STATUSES.IN_TREATMENT,
-        escalation_level: escalation,
-        is_escalated:     escalation !== 'NONE',
+        escalation_level:  escalation.level,
+        escalation_source: escalation.source,
         updated_at:       timestamp,
       });
 
@@ -85,8 +103,8 @@ export const submitTriage = async ({
         resource_id:   logRef.id,
         reason:        reason,
         source:        'WEB_APP',
-        sync_priority: escalation === 'CRITICAL' ? SYNC_PRIORITIES.CRITICAL : SYNC_PRIORITIES.HIGH,
-        delta: { news2: currentNews2, escalation }
+        sync_priority: escalation.level === 'CRITICAL' ? SYNC_PRIORITIES.CRITICAL : SYNC_PRIORITIES.HIGH,
+        delta: { news2: currentNews2, escalation: escalation.level, source: escalation.source }
       });
 
       return logRef.id;
