@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { getPatients, registerPatient } from '../services/patientService';
+// ✅ Domain store — shared patient cache, tidak duplikasi fetch
+import { usePatientStore } from '../modules/patient/patient.store.js';
 import './Patients.css';
 
+
 export default function Patients() {
-  const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { patients, isLoading: loading, fetchPatients, addPatient } = usePatientStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   // Form State
   const [name, setName] = useState('');
   const [nik, setNik] = useState('');
@@ -15,35 +16,19 @@ export default function Patients() {
 
   useEffect(() => {
     fetchPatients();
-  }, []);
-
-  const fetchPatients = async () => {
-    setLoading(true);
-    try {
-      const data = await getPatients();
-      setPatients(data);
-    } catch (error) {
-      console.error(error);
-    }
-    setLoading(false);
-  };
+  }, [fetchPatients]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      await registerPatient({
-        name,
-        nik,
-        demographics: { dob, gender },
-        allergies: []
-      });
+      await addPatient(
+        { name, nik, demographics: { dob, gender }, allergies: [] },
+        'system' // akan diganti dengan currentUser.email saat auth terintegrasi
+      );
       setIsModalOpen(false);
-      // Reset form
       setName(''); setNik(''); setDob('');
-      // Reload list
-      fetchPatients();
     } catch (error) {
-      alert("Gagal mendaftarkan pasien");
+      alert('Gagal mendaftarkan pasien: ' + error.message);
     }
   };
 

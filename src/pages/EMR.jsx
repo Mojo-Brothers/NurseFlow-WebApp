@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getPatients } from '../services/patientService';
-import { saveSoapNote, getPatientRecords } from '../services/emrService';
+// ✅ Pakai domain service — bukan Firebase langsung
+import { saveSoapNote, getPatientRecords } from '../modules/emr/emr.service.js';
+import { usePatientStore } from '../modules/patient/patient.store.js';
 import './EMR.css';
 
 const COMMON_MDS = [
@@ -16,12 +17,11 @@ const COMMON_MDS = [
 export default function EMR() {
   const { currentUser } = useAuth();
   
-  // Data State
-  const [patients, setPatients] = useState([]);
-  const [selectedPatientId, setSelectedPatientId] = useState('');
+  // ─── Patient State (Zustand — shared cache, no duplicate fetch) ──
+  const { patients, fetchPatients, selectPatient, selectedPatientId } = usePatientStore();
+
+  // ─── EMR Local State ─────────────────────────────────────────────
   const [patientRecords, setPatientRecords] = useState([]);
-  
-  // UI State
   const [isSaving, setIsSaving] = useState(false);
   
   // SOAP Form State
@@ -33,22 +33,13 @@ export default function EMR() {
   const [medInput, setMedInput] = useState('');
 
   useEffect(() => {
-    async function load() {
-      const data = await getPatients();
-      setPatients(data);
-      if (data.length > 0) setSelectedPatientId(data[0].id);
-    }
-    load();
-  }, []);
+    fetchPatients();
+  }, [fetchPatients]);
 
   // Fetch records whenever patient changes
   useEffect(() => {
     if (selectedPatientId) {
-      async function loadRecords() {
-        const hx = await getPatientRecords(selectedPatientId);
-        setPatientRecords(hx);
-      }
-      loadRecords();
+      getPatientRecords(selectedPatientId).then(setPatientRecords).catch(console.error);
     }
   }, [selectedPatientId]);
 
@@ -67,16 +58,21 @@ export default function EMR() {
   };
 
   const handleSubmit = async () => {
-    if (!subjective || !assessment) return alert("Subjective & Assessment cannot be empty.");
+    if (!subjective || !assessment) return alert("Subjective & Assessment tidak boleh kosong.");
     
     setIsSaving(true);
     try {
-      await saveSoapNote(selectedPatientId, currentUser.email, {
-        subjective,
-        objective,
-        assessment,
-        plan_medications: selectedMeds,
-        plan_instructions: planInstructions
+      // ✅ Panggil domain service — audit log otomatis di dalam service
+      await saveSoapNote({
+        patientId:   selectedPatientId,
+        doctorEmail: currentUser.email,
+        soapData: {
+          subjective,
+          objective,
+          assessment,
+          plan_medications: selectedMeds,
+          plan_instructions: planInstructions
+        }
       });
       
       // Reset Form
@@ -103,8 +99,8 @@ export default function EMR() {
         
         <select 
           className="form-input mb-8" 
-          value={selectedPatientId} 
-          onChange={(e) => setSelectedPatientId(e.target.value)}
+          value={selectedPatientId || ''} 
+          onChange={(e) => selectPatient(e.target.value)}
         >
           {patients.length === 0 ? <option value="">No Patients Available</option> : null}
           {patients.map(p => (
