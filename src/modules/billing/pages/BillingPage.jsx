@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { getPendingBills, updateBillItems, finalizeBill, markAsPaid } from '../services/billing.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { calculateAge } from '../../../utils/clinicalCalculators.js';
 
 const SERVICE_CATALOG = [
   { description: 'Konsultasi Dokter Umum',  unit_price: 150000 },
@@ -101,7 +102,7 @@ export default function BillingPage() {
 
   const getPatientName = (pid) => {
     const p = patients.find(p => p.id === pid);
-    return p ? `${p.mrn} — ${p.name}` : pid;
+    return p ? `${p.mrn} — ${p.name} (${calculateAge(p.demographics?.dob)} thn)` : pid;
   };
 
   return (

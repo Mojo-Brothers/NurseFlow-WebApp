@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { usePharmacyStore } from '../pharmacy.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
+import { calculateAge } from '../../../utils/clinicalCalculators.js';
 
 const STATUS_CONFIG = {
   PENDING:      { label: 'Menunggu',    bg: '#fef9c3', text: '#92400e', icon: 'schedule'      },
@@ -44,7 +45,7 @@ export default function PharmacyPage() {
 
   const getPatientName = (pid) => {
     const p = patients.find(p => p.id === pid);
-    return p ? `${p.mrn} — ${p.name}` : pid;
+    return p ? `${p.mrn} — ${p.name} (${calculateAge(p.demographics?.dob)} thn)` : pid;
   };
 
   const formatTime = (ts) => ts?.toDate?.().toLocaleString('id-ID', {

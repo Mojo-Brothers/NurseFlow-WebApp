@@ -10,11 +10,17 @@ export default function KeypadInput({ value, onChange, label, unit, criticalLow,
     } else if (key === '.') {
       if (!value.includes('.')) onChange(value + key);
     } else {
-      // Bounding to max 3 digits usually
-      if (value.length < 3 || value.includes('.')) {
+      if (value.length < 5 || value.includes('.')) { // Allow up to 5 chars (e.g. 120.5)
          onChange(value + key);
       }
     }
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key >= '0' && e.key <= '9') handleKeyPress(e.key);
+    if (e.key === '.') handleKeyPress('.');
+    if (e.key === 'Backspace') handleKeyPress('DEL');
+    if (e.key === 'Enter') setIsFocused(false);
   };
 
   const numValue = parseFloat(value);
@@ -22,7 +28,13 @@ export default function KeypadInput({ value, onChange, label, unit, criticalLow,
   const isWarning = !isCritical && (numValue <= criticalLow * 1.2 || numValue >= criticalHigh * 0.8) && value !== '';
 
   return (
-    <div className={`keypad-container ${isCritical ? 'border-error' : isWarning ? 'border-warning' : ''}`}>
+    <div 
+      className={`keypad-container ${isCritical ? 'border-error' : isWarning ? 'border-warning' : ''}`}
+      tabIndex="0"
+      onKeyDown={onKeyDown}
+      onFocus={() => setIsFocused(true)}
+      style={{ outline: 'none' }}
+    >
       <div 
         className="keypad-display" 
         onClick={() => setIsFocused(!isFocused)}
@@ -43,19 +55,12 @@ export default function KeypadInput({ value, onChange, label, unit, criticalLow,
               key={k} 
               type="button" 
               className={`keypad-btn ${k === 'DEL' ? 'btn-del' : ''}`}
+              onMouseDown={(e) => e.preventDefault()} // Prevent focus loss
               onClick={() => handleKeyPress(k)}
             >
               {k}
             </button>
           ))}
-          <button 
-            type="button" 
-            className="btn-primary" 
-            style={{ gridColumn: 'span 3' }}
-            onClick={() => setIsFocused(false)}
-          >
-            CONFIRM
-          </button>
         </div>
       )}
     </div>

@@ -1,0 +1,30 @@
+.sparkline-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--primary-rgb), 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.sparkline-empty {
+  font-size: 10px;
+  color: var(--on-surface-variant);
+  font-style: italic;
+}
+
+.sparkline-container svg {
+  display: block;
+}
+
+/* Animations for the latest point pulse if needed */
+@keyframes spark-pulse {
+  0% { r: 3; opacity: 1; }
+  50% { r: 5; opacity: 0.5; }
+  100% { r: 3; opacity: 1; }
+}
+
+.sparkline-container circle {
+  animation: spark-pulse 2s infinite ease-in-out;
+}

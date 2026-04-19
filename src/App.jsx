@@ -23,44 +23,30 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <ErrorBoundary>
-          <Routes>
-            {/* ─── Public ─────────────────────────── */}
-            <Route path="/login" element={<Login />} />
-
-            {/* ─── Protected: semua role ────────────── */}
-            <Route element={<ProtectedRoute />}>
-              <Route element={<MainLayout />}>
-                <Route path="/dashboard"  element={<Wrap><Dashboard /></Wrap>} />
-                <Route path="/patients"   element={<Wrap><Patients /></Wrap>} />
-                <Route path="/encounters" element={<Wrap><Encounters /></Wrap>} />
-                <Route path="/triage"     element={<Wrap><Triage /></Wrap>} />
-                <Route path="/emr"        element={<Wrap><EMR /></Wrap>} />
-                <Route path="/worklist"   element={<Wrap><Worklist /></Wrap>} />
-
-                {/* Pharmacy: PHARMACIST + ADMIN + DOCTOR */}
-                <Route element={<ProtectedRoute allowedRoles={['PHARMACIST','ADMIN','DOCTOR']} />}>
-                  <Route path="/pharmacy" element={<Wrap><Pharmacy /></Wrap>} />
-                </Route>
-
-                {/* Billing: ADMIN + DOCTOR */}
-                <Route element={<ProtectedRoute allowedRoles={['ADMIN','DOCTOR']} />}>
-                  <Route path="/billing" element={<Wrap><Billing /></Wrap>} />
-                </Route>
-
-                {/* Admin only */}
-                <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
-                  <Route path="/admin" element={<Wrap><AdminHub /></Wrap>} />
-                </Route>
-
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<MainLayout />}>
+              <Route path="/dashboard"  element={<Wrap><Dashboard /></Wrap>} />
+              <Route path="/patients"   element={<Wrap><Patients /></Wrap>} />
+              <Route path="/encounters" element={<Wrap><Encounters /></Wrap>} />
+              <Route path="/triage"     element={<Wrap><Triage /></Wrap>} />
+              <Route path="/emr"        element={<Wrap><EMR /></Wrap>} />
+              <Route path="/worklist"   element={<Wrap><Worklist /></Wrap>} />
+              <Route element={<ProtectedRoute allowedRoles={['PHARMACIST','ADMIN','DOCTOR']} />}>
+                <Route path="/pharmacy" element={<Wrap><Pharmacy /></Wrap>} />
               </Route>
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN','DOCTOR']} />}>
+                <Route path="/billing" element={<Wrap><Billing /></Wrap>} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                <Route path="/admin" element={<Wrap><AdminHub /></Wrap>} />
+              </Route>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
-
-            {/* ─── Fallback ─────────────────────────── */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </ErrorBoundary>
+          </Route>
+          <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
       </AuthProvider>
     </Router>
   );

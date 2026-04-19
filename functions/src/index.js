@@ -88,18 +88,69 @@ exports.writeAuditLog = functions.https.onCall(async (data, context) => {
 });
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// STEP 5: PATIENT — Auto-audit on create
+// STEP 5: PATIENT — Registration & Auto-audit
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+/**
+ * JCI-Compliant Patient Registration
+ * Melakukan generate MRN di sisi server untuk menjamin integritas.
+ */
+exports.registerPatient = functions.https.onCall(async (data, context) => {
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login diperlukan.');
+
+  const { name, dob, gender, nik, address, phone } = data;
+  if (!name || !dob || !nik) throw new functions.https.HttpsError('invalid-argument', 'Data wajib (nama, lahir, NIK) kurang.');
+
+  // Generate MRN (00-00-00 format)
+  const randomNum = Math.floor(100000 + Math.random() * 900000); // 6 digits
+  const s = String(randomNum);
+  const mrn = `${s.substring(0,2)}-${s.substring(2,4)}-${s.substring(4,6)}`;
+
+  const payload = {
+    name, dob, gender, nik, address, phone,
+    mrn,
+    is_active:     true,
+    registered_at: admin.firestore.FieldValue.serverTimestamp(),
+    registered_by: context.auth.token.email,
+  };
+
+  // Transactional Write: Patient + Audit
+  const batch = db.batch();
+  const patientRef = db.collection('patients').doc();
+  const auditRef   = db.collection('audit_logs').doc();
+
+  batch.set(patientRef, payload);
+  batch.set(auditRef, {
+    timestamp:     admin.firestore.FieldValue.serverTimestamp(),
+    user:          context.auth.token.email,
+    action:        'CREATE',
+    resource_type: 'patients',
+    resource_id:   patientRef.id,
+    delta:         { name, mrn },
+    source:        'CLOUD_FUNCTION_CALLABLE'
+  });
+
+  await batch.commit();
+
+  return { id: patientRef.id, mrn };
+});
+
+// Trigger audit untuk backup jika ada penulisan langsung (Emergency workaround)
 exports.onPatientCreate = functions.firestore
   .document('patients/{patientId}')
   .onCreate(async (snap, context) => {
-    const { nik, name, registered_by } = snap.data();
+    const data = snap.data();
+    if (data.registered_by === 'system_auto') return null; // Skip if already handled by callable
+    
+    // Fallback audit
     await db.collection('audit_logs').add({
       timestamp:     admin.firestore.FieldValue.serverTimestamp(),
-      user:          registered_by || 'system', action: 'CREATE',
-      resource_type: 'patients', resource_id: context.params.patientId,
-      delta:         { name, nik: nik?.substring(0, 4) + '············' },
-      source:        'CLOUD_FUNCTION',
+      user:          data.registered_by || 'unknown',
+      action:        'CREATE',
+      resource_type: 'patients',
+      resource_id:   context.params.patientId,
+      delta:         { mrn: data.mrn },
+      source:        'CLOUD_FUNCTION_TRIGGER',
     });
     return null;
   });

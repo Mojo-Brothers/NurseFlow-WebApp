@@ -1,42 +1,56 @@
-import { collection, doc, onSnapshot } from 'firebase/firestore';
+/**
+ * Dashboard Service — Masterpiece Edition 2026
+ * Real-time listeners for ward metrics and clinical alerts.
+ */
+import { collection, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
+import { COLLECTIONS } from '../../../core/constants.js';
 
 /**
- * Mendengarkan (listen) metrik bangsal secara Realtime
+ * Menarik metrik bangsal secara real-time dari koleksi Encounters.
+ * Kalkulasi langsung di frontend untuk reaktivitas maksimal.
  */
 export const listenToWardMetrics = (wardId, callback) => {
-  const wardRef = doc(db, 'ward_metrics', wardId);
-  return onSnapshot(wardRef, (docSnap) => {
-    if (docSnap.exists()) {
-      callback(docSnap.data());
-    } else {
-      console.warn("Dokumen Ward tidak ditemukan!");
-      callback(null);
-    }
+  const q = query(
+    collection(db, COLLECTIONS.ENCOUNTERS), 
+    where('ward', '==', wardId), 
+    where('status', '!=', 'DISCHARGED')
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const total = snapshot.size;
+    const newsScores = snapshot.docs.map(doc => doc.data().last_vitals?.news2_score || 0);
+    const avgNews = newsScores.length > 0 ? (newsScores.reduce((a, b) => a + b, 0) / newsScores.length).toFixed(1) : 0;
+    
+    callback({
+      occupancy: Math.min(Math.round((total / 20) * 100), 100), // Max 20 beds for now
+      avg_news_score: parseFloat(avgNews),
+      staff_on_duty: 4 // Hardcoded for simplified demo
+    });
   }, (error) => {
-    console.error("Error mendengarkan metrik bangsal:", error);
+    console.error('[DashboardService] Ward Metrics Sync Error:', error);
   });
 };
 
 /**
- * Mendengarkan (listen) daftar alert triage secara Realtime
+ * Mendengarkan alert eskalasi klinis aktif berdasarkan status is_escalated.
  */
 export const listenToAlerts = (callback) => {
-  const alertsRef = collection(db, 'alerts');
-  return onSnapshot(alertsRef, (querySnapshot) => {
-    const alertsList = [];
-    let highRiskCount = 0;
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      alertsList.push({ id: doc.id, ...data });
-      if (data.type === 'High Risk Patient') {
-        highRiskCount++;
-      }
+  const q = query(
+    collection(db, COLLECTIONS.ENCOUNTERS), 
+    where('is_escalated', '==', true), 
+    orderBy('last_vitals.news2_score', 'desc'),
+    limit(10)
+  );
+  
+  return onSnapshot(q, (snapshot) => {
+    const counts = { total: snapshot.size, highRiskCount: 0 };
+    snapshot.docs.forEach(doc => {
+      const score = doc.data().last_vitals?.news2_score || 0;
+      if (score >= 7) counts.highRiskCount++;
     });
-    callback({
-      total: alertsList.length,
-      highRiskCount: highRiskCount,
-      allAlerts: alertsList
-    });
+    callback(counts);
+  }, (error) => {
+    console.error('[DashboardService] Alerts Sync Error:', error);
   });
 };

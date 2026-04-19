@@ -175,7 +175,13 @@ button {
 .text-on-surface { color: var(--on-surface); }
 .text-on-surface-variant { color: var(--on-surface-variant); }
 .text-error { color: var(--error); }
+.text-success { color: #166534; }
+.text-warning { color: #92400e; }
 .text-white { color: white; }
+
+.bg-success { background-color: #dcfce7; }
+.bg-error { background-color: var(--error-container); }
+.bg-warning { background-color: #fef9c3; }
 
 /* Text Utils */
 .font-bold { font-weight: 700; }

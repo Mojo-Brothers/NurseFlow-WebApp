@@ -5,46 +5,89 @@
  */
 import {
   collection, addDoc, getDocs, query, where,
-  orderBy, updateDoc, doc, serverTimestamp, limit
+  orderBy, updateDoc, doc, serverTimestamp, limit,
+  runTransaction
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS } from '../../../core/constants.js';
-import { createAuditLog } from '../../../core/audit/audit.service.js';
 
 /**
  * @typedef {'PENDING' | 'DISPENSED' | 'ADMINISTERED' | 'CANCELLED'} MedStatus
  */
 
 /**
- * Tambah satu/banyak medication order dari dokter.
+ * Tambah satu/banyak medication order dari dokter (Spark compatible).
  * @param {Object[]} medications - Array medication objects
+ * @param {string} encounterId   - WAJIB: Link ke kunjungan
  * @param {string} prescribedBy  - email dokter
  * @returns {Promise<string[]>} - array of dokumen IDs
  */
-export const prescribeMedications = async (medications, prescribedBy) => {
+export const prescribeMedications = async (medications, encounterId, prescribedBy) => {
+  if (!encounterId) throw new Error('Encounter ID wajib disediakan untuk peresepan.');
+
+  const timestamp = serverTimestamp();
   const ids = [];
-  for (const med of medications) {
-    const payload = {
-      ...med,
-      prescribed_by:  prescribedBy,
-      status:         'PENDING',
-      prescribed_at:  serverTimestamp(),
-      dispensed_at:   null,
-      dispensed_by:   null,
-    };
-    const ref = await addDoc(collection(db, COLLECTIONS.MEDICATIONS), payload);
-    ids.push(ref.id);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      for (const med of medications) {
+        const medRef = doc(collection(db, COLLECTIONS.MEDICATIONS));
+        
+        const payload = {
+          ...med,
+          encounter_id:   encounterId,
+          prescribed_by:  prescribedBy,
+          status:         'PENDING',
+          prescribed_at:  timestamp,
+          dispensed_at:   null,
+          dispensed_by:   null,
+        };
+
+        transaction.set(medRef, payload);
+        ids.push(medRef.id);
+
+        // 2. Alert Trigger Manual: Cek rute berisiko tinggi (IV, SC, IM)
+        const highRiskRoutes = ['IV', 'SC', 'IM', 'INTRAVENA', 'SUBCUTAN'];
+        const route = (med.route || '').toUpperCase();
+
+        if (highRiskRoutes.some(r => route.includes(r))) {
+          const alertRef = doc(collection(db, 'alerts'));
+          transaction.set(alertRef, {
+            type:          'PARENTERAL_MEDICATION',
+            patient_id:    med.patient_id,
+            med_order_id:  medRef.id,
+            med_name:      med.medication_name,
+            route:         med.route,
+            triggered_at:  timestamp,
+            triggered_by:  prescribedBy,
+            resolved:      false,
+            message:       `🔔 PARENTERAL ALERT: ${med.medication_name} via ${med.route}. Pastikan observasi pasca-pemberian.`,
+          });
+        }
+      }
+
+      // 3. Multi-resource Audit
+      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
+      transaction.set(auditRef, {
+        timestamp,
+        user:          prescribedBy,
+        action:        AUDIT_ACTIONS.CREATE,
+        resource_type: COLLECTIONS.MEDICATIONS,
+        resource_id:   ids.join(','),
+        delta: { 
+          encounterId, 
+          count: medications.length, 
+          meds: medications.map(m => m.medication_name) 
+        },
+        source: 'CLIENT_TRANSACTION_SPARK'
+      });
+    });
+
+    return ids;
+  } catch (err) {
+    console.error('[PharmacyService] Prescription transaction failed:', err);
+    throw err;
   }
-
-  await createAuditLog({
-    userEmail:    prescribedBy,
-    action:       AUDIT_ACTIONS.CREATE,
-    resourceType: COLLECTIONS.MEDICATIONS,
-    resourceId:   ids.join(','),
-    delta:        { count: medications.length, medications: medications.map(m => m.medication_name) },
-  });
-
-  return ids;
 };
 
 /**

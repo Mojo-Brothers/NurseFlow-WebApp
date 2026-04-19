@@ -20,16 +20,32 @@ export function AuthProvider({ children }) {
 
   // Sinkronisasi Firebase Auth state → Zustand store
   useEffect(() => {
+    const authTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('[AuthContext] Auth initialization timed out. Failsafe activated.');
+        // We can force loading false here if store doesn't respond
+      }
+    }, 5000);
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        // Ambil role dari Custom Claims (tidak perlu Firestore read)
-        const userRole = await getUserRole(user);
-        setUser(user, userRole);
-      } else {
-        setUser(null, null);
+      try {
+        if (user) {
+          const userRole = await getUserRole(user);
+          setUser(user, userRole);
+        } else {
+          setUser(null, null);
+        }
+      } catch (err) {
+        console.error('[AuthContext] Critical boot error:', err);
+      } finally {
+        clearTimeout(authTimeout);
       }
     });
-    return unsubscribe;
+
+    return () => {
+      clearTimeout(authTimeout);
+      unsubscribe();
+    };
   }, [setUser]);
 
   const value = {

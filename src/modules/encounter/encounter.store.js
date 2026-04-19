@@ -7,6 +7,7 @@ import {
   dischargeEncounter,
   getActiveEncounters,
   getPatientEncounters,
+  getPatientActiveEncounter,
 } from './services/encounter.service.js';
 
 export const useEncounterStore = create((set, get) => ({
@@ -35,6 +36,18 @@ export const useEncounterStore = create((set, get) => ({
       set({ patientEncounters: encounters, isLoading: false });
     } catch (err) {
       set({ error: err.message, isLoading: false });
+    }
+  },
+
+  fetchPatientActiveEncounter: async (patientId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const active = await getPatientActiveEncounter(patientId);
+      set({ selectedEncounterId: active?.id || null, isLoading: false });
+      return active;
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      return null;
     }
   },
 

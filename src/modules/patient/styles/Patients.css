@@ -81,3 +81,91 @@
   outline: none;
   border-color: var(--primary);
 }
+
+/* ─── Wizard Stepper ─── */
+.wizard-stepper {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--outline-variant);
+  position: relative;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.step-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: var(--surface-container-high);
+  color: var(--on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+}
+
+.step-item.active .step-indicator {
+  background-color: var(--primary);
+  color: var(--on-primary);
+  box-shadow: 0 0 0 4px var(--primary-container);
+}
+
+.step-item.completed .step-indicator {
+  background-color: var(--secondary);
+  color: var(--on-secondary);
+}
+
+.step-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  letter-spacing: 0.05em;
+}
+
+.step-item.active .step-label {
+  color: var(--primary);
+}
+
+/* ─── IPSG Chips & Pillars ─── */
+.ipsg-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.flag-allergy { background-color: #fee2e2; color: #991b1b; }
+.flag-fall { background-color: #fef9c3; color: #854d0e; }
+.flag-insurance { background-color: #dbeafe; color: #1e40af; }
+
+/* ─── Layout Utils ─── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+.section-divider {
+  margin: 1.5rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-container);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}

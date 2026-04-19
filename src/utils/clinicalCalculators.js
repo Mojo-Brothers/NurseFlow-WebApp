@@ -42,8 +42,25 @@ export const calculateNEWS2 = (vitals) => {
 };
 
 export const getTriageColor = (news2Score) => {
-  if (news2Score >= 7) return 'red'; // High clinical risk
-  if (news2Score >= 5) return 'orange'; // Medium clinical risk
-  if (news2Score >= 1) return 'yellow'; // Low clinical risk
-  return 'green'; // Normal
+  if (news2Score >= 7) return 'error';   // High clinical risk (Red)
+  if (news2Score >= 5) return 'warning'; // Medium clinical risk (Orange/Yellow)
+  if (news2Score >= 1) return 'warning'; // Low clinical risk (Yellow)
+  return 'success';                      // Normal (Green)
+};
+
+/**
+ * Menghitung umur dari tanggal lahir secara presisi.
+ * @param {string} dob - ISO Date string (YYYY-MM-DD)
+ * @returns {number}
+ */
+export const calculateAge = (dob) => {
+  if (!dob) return 0;
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
 };

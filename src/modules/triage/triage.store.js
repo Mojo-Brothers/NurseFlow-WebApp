@@ -16,12 +16,13 @@ const INITIAL_VITALS = {
 
 export const useTriageStore = create((set, get) => ({
   // ─── State ───────────────────────────────
-  vitals:            { ...INITIAL_VITALS },
-  selectedPatientId: null,
-  holdProgress:      0,
-  isSubmitting:      false,
-  submitSuccess:     false,
-  error:             null,
+  vitals:              { ...INITIAL_VITALS },
+  selectedPatientId:   null,
+  selectedEncounterId: null,
+  holdProgress:        0,
+  isSubmitting:        false,
+  submitSuccess:       false,
+  error:               null,
 
   // ─── Computed (dipakai UI) ───────────────
   get news2Score() {
@@ -35,7 +36,9 @@ export const useTriageStore = create((set, get) => ({
   setVital: (key, value) =>
     set(state => ({ vitals: { ...state.vitals, [key]: value } })),
 
-  selectPatient: (id) => set({ selectedPatientId: id }),
+  selectPatient: (id) => set({ selectedPatientId: id, selectedEncounterId: null }),
+
+  selectEncounter: (id) => set({ selectedEncounterId: id }),
 
   setHoldProgress: (progress) => set({ holdProgress: progress }),
 
@@ -51,10 +54,10 @@ export const useTriageStore = create((set, get) => ({
    * @param {string} userEmail
    */
   executeSubmit: async (userEmail) => {
-    const { vitals, selectedPatientId } = get();
+    const { vitals, selectedPatientId, selectedEncounterId } = get();
 
-    if (!selectedPatientId) {
-      set({ error: 'Pilih pasien terlebih dahulu.' });
+    if (!selectedPatientId || !selectedEncounterId) {
+      set({ error: 'Pasien dan Encounter Aktif wajib dipilih!' });
       return;
     }
 
@@ -67,6 +70,7 @@ export const useTriageStore = create((set, get) => ({
       // ✅ Panggil SERVICE, bukan Firebase langsung
       await submitTriage({
         patientId:   selectedPatientId,
+        encounterId: selectedEncounterId,
         vitals,
         news2Score,
         triageLevel,

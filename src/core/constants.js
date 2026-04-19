@@ -53,10 +53,26 @@ export const ENCOUNTER_TYPES = {
 };
 
 export const ENCOUNTER_STATUSES = {
-  ACTIVE:      'ACTIVE',
-  COMPLETED:   'COMPLETED',
-  TRANSFERRED: 'TRANSFERRED',
-  DISCHARGED:  'DISCHARGED',
+  WAITING:           'WAITING',
+  TRIAGE:            'TRIAGE',
+  IN_TREATMENT:      'IN_TREATMENT',
+  TRANSFER_INTERNAL: 'TRANSFER_INTERNAL',
+  CANCELLED:         'CANCELLED',
+  NO_SHOW:           'NO_SHOW',
+  DISCHARGED:        'DISCHARGED',
+};
+
+export const ESCALATION_LEVELS = {
+  NONE:      'NONE',
+  WATCH:     'WATCH',
+  URGENT:    'URGENT',
+  CRITICAL:  'CRITICAL',
+};
+
+export const SYNC_PRIORITIES = {
+  CRITICAL: 1, // High Frequency, Immediate Sync
+  HIGH:     2, // Operational State Transitions
+  NORMAL:   3, // Administrative/Demographic data
 };
 
 export const AUDIT_ACTIONS = {

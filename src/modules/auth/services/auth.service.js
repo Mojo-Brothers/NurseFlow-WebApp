@@ -15,8 +15,7 @@ import { auth } from '../../../core/firebase.js';
 import { AUDIT_ACTIONS } from '../../../core/constants.js';
 import { createAuditLog } from '../../../core/audit/audit.service.js';
 
-const functions = getFunctions();
-const syncUserRoleFn = httpsCallable(functions, 'syncUserRole');
+// Initialization moved inside specific functions to prevent module-level race conditions
 
 /**
  * Login via Google OAuth + sync role dari Firestore ke Custom Claims.
@@ -34,6 +33,8 @@ export const loginWithGoogle = async () => {
   let role = 'NURSE';
   let isNew = false;
   try {
+    const functions = getFunctions();
+    const syncUserRoleFn = httpsCallable(functions, 'syncUserRole');
     const result = await syncUserRoleFn();
     role  = result.data.role;
     isNew = result.data.isNew;

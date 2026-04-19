@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import { saveSoapNote, getPatientRecords } from '../services/emr.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
+import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import '../styles/EMR.css';
 
 const COMMON_MDS = [
@@ -92,9 +93,8 @@ export default function EMRPage() {
           value={selectedPatientId || ''} 
           onChange={(e) => selectPatient(e.target.value)}
         >
-          {patients.length === 0 ? <option value="">No Patients Available</option> : null}
           {patients.map(p => (
-            <option key={p.id} value={p.id}>{p.mrn} - {p.name}</option>
+            <option key={p.id} value={p.id}>{p.mrn} — {p.name} ({calculateAge(p.demographics?.dob)} thn)</option>
           ))}
         </select>
 
@@ -103,7 +103,7 @@ export default function EMRPage() {
             <h3 className="font-bold text-lg">{activePatient.name}</h3>
             <p className="text-sm text-on-surface-variant flex-row justify-between mt-2">
               <span>MRN: <strong className="text-on-surface">{activePatient.mrn}</strong></span>
-              <span>DOB: <strong className="text-on-surface">{activePatient.demographics?.dob}</strong></span>
+              <span>Umur: <strong className="text-on-surface">{calculateAge(activePatient.demographics?.dob)} thn</strong></span>
             </p>
           </div>
         )}
