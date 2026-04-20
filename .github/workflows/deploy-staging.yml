@@ -9,16 +9,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy-staging:
-    name: Deploy to Firebase Staging Preview
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 1: Build (Staging)
+  # ─────────────────────────────────────────────────────────────────────────────
+  build:
+    name: 🏗️ Build Staging Artifact
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [] # Runs independently (CI runs in parallel)
-
-    permissions:
-      contents: read
-      checks: write
-      pull-requests: write  # Allows posting preview URL as PR comment
+    timeout-minutes: 15
 
     steps:
       - name: 📥 Checkout Code
@@ -38,7 +35,43 @@ jobs:
         env:
           VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
           VITE_APP_ENV: staging
-          VITE_SENTINEL_VSN: ${{ vars.VITE_SENTINEL_VSN || '2' }}
+          VITE_APP_VERSION: "1.0.${{ github.run_number }}"
+          VITE_GIT_SHA: ${{ github.sha }}
+
+      - name: 📄 Generate Deployment Metadata
+        run: |
+          echo '{"version": "1.0.${{ github.run_number }}", "sha": "${{ github.sha }}", "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"}' > dist/metadata.json
+
+      - name: 📤 Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # JOB 2: Deploy to Preview Channel
+  # ─────────────────────────────────────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy Preview
+    runs-on: ubuntu-latest
+    needs: build
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: staging-dist-${{ github.sha }}
+          path: dist/
 
       - name: 🔥 Deploy to Firebase Hosting Preview Channel
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -54,5 +87,6 @@ jobs:
       - name: 📋 Post Preview URL to Summary
         run: |
           echo "## 🔗 Staging Preview Deployed" >> $GITHUB_STEP_SUMMARY
-          echo "Channel: staging-${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "Expires in: 7 days" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: \`1.0.${{ github.run_number }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Channel**: \`staging-${{ github.run_number }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Expires in**: 7 days" >> $GITHUB_STEP_SUMMARY

@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TopAppBar from '../components/TopAppBar';
 import { useAuth } from '../contexts/useAuth.js';
+import VersionDisplay from '../components/VersionDisplay';
 
 const ROLE_BADGE = {
   DOCTOR:     { label: 'roles.doctor',  color: '#3730a3', bg: '#e0e7ff' },
@@ -126,8 +127,8 @@ const MainLayout = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
               }}>
                 {currentUser.photoURL
-                  ? <img src={currentUser.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  : <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>person</span>
+                   ? <img src={currentUser.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                   : <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>person</span>
                 }
               </div>
               <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
@@ -142,6 +143,9 @@ const MainLayout = () => {
               </div>
             </div>
           )}
+
+          {/* ─── JCI Audit Version ──────────────────────── */}
+          <VersionDisplay />
         </nav>
 
         {/* ═══ Main Content ══════════════════════════════════ */}

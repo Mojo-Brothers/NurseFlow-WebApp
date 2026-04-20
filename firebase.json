@@ -5,10 +5,7 @@
   },
   "functions": {
     "source": "functions",
-    "runtime": "nodejs20",
-    "predeploy": [
-      "npm --prefix \"$RESOURCE_DIR\" run lint"
-    ]
+    "runtime": "nodejs20"
   },
   "hosting": {
     "public": "dist",
@@ -16,10 +13,6 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "predeploy": [
-      "npm run lint",
-      "npm run build"
     ],
     "rewrites": [
       {

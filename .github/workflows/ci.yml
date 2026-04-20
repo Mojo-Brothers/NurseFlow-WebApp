@@ -32,8 +32,13 @@ jobs:
       - name: 🏗️ Build Production Bundle
         run: npm run build
         env:
-          # Vite inlines env vars at build time — these are PUBLIC (non-secret)
           VITE_FIREBASE_PROJECT_ID: ${{ vars.VITE_FIREBASE_PROJECT_ID }}
+          VITE_APP_VERSION: "1.0.${{ github.run_number }}"
+          VITE_GIT_SHA: ${{ github.sha }}
+
+      - name: 📄 Generate Deployment Metadata
+        run: |
+          echo '{"version": "1.0.${{ github.run_number }}", "sha": "${{ github.sha }}", "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"}' > dist/metadata.json
 
       - name: 📊 Build Size Report
         run: |
