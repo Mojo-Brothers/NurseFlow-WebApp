@@ -44,6 +44,9 @@ jobs:
       - name: 📦 Install Dependencies
         run: npm ci
 
+      - name: 🔍 Security Audit (Vulnerability Scan)
+        run: npm audit --audit-level=high
+
       - name: 🔍 ESLint Strict Check
         run: npm run lint
 
@@ -87,12 +90,12 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: 🔒 Deploy Firestore Security Rules
-        run: firebase deploy --only firestore:rules --project nurseflow-309c7
+        run: firebase deploy --only firestore:rules --project ${{ vars.FIREBASE_PROJECT_ID }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: 📇 Deploy Firestore Indexes
-        run: firebase deploy --only firestore:indexes --project nurseflow-309c7
+        run: firebase deploy --only firestore:indexes --project ${{ vars.FIREBASE_PROJECT_ID }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
@@ -129,8 +132,17 @@ jobs:
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: nurseflow-309c7
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
           channelId: live
+
+      - name: 🏥 Health Check Pulse (Sanity Test)
+        run: |
+          echo "Waiting 10s for propagation..."
+          sleep 10
+          URL="https://${{ vars.FIREBASE_PROJECT_ID }}.web.app"
+          echo "Pinging $URL..."
+          curl -f -s "$URL/metadata.json" || (echo "::error::Metadata check failed! Site might be down." && exit 1)
+          echo "Heartbeat SUCCESS. Metadata reachable."
 
   # ─────────────────────────────────────────────────────────────────────────────
   # JOB 4: Audit Log — JCI Compliance (Clinical Trail Tracking)
