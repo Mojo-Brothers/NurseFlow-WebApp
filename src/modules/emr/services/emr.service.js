@@ -1,11 +1,6 @@
-/**
- * EMR Domain — Service Layer
- * ✅ Abstraksi penuh untuk electronic medical records.
- * ✅ Append-only: tidak ada metode delete/update pada record medis.
- */
-import { collection, getDocs, query, where, orderBy, serverTimestamp, runTransaction, doc } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
-import { COLLECTIONS, AUDIT_ACTIONS } from '../../../core/constants.js';
+import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES, SYNC_PRIORITIES } from '../../../core/constants.js';
+import { logAudit } from '../../../core/services/audit.service.js';
 
 /**
  * Menyimpan SOAP note dan memicu audit log secara atomik (Spark compatible).
@@ -15,6 +10,7 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
   if (!encounterId) throw new Error('Encounter ID wajib disediakan untuk registrasi EMR.');
 
   const recordRef = doc(collection(db, COLLECTIONS.MEDICAL_RECORDS));
+  const encounterRef = doc(db, COLLECTIONS.ENCOUNTERS, encounterId);
   const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
 
   try {
@@ -32,26 +28,83 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
         plan_medications: soapData.plan_medications || [],
         plan_instructions: soapData.plan_instructions || '',
         created_at:       timestamp,
+        schema_version:   5.1,
         is_locked:        true,
       };
 
       // 1. Simpan SOAP Note
       transaction.set(recordRef, payload);
 
-      // 2. Audit Log (JCI requirement)
+      // 2. Automated Pharmacy Orders (The Highway)
+      if (soapData.plan_medications && soapData.plan_medications.length > 0) {
+        soapData.plan_medications.forEach(medName => {
+          const medRef = doc(collection(db, COLLECTIONS.MEDICATIONS));
+          transaction.set(medRef, {
+            medication_name: medName,
+            patient_id:      patientId,
+            encounter_id:    encounterId,
+            prescribed_by:   doctorEmail,
+            prescribed_at:   timestamp,
+            status:          'PENDING',
+            dosage:          'As per SOAP plan',
+            source_soap_id:  recordRef.id
+          });
+        });
+      }
+
+      // 3. Automated Billing Itemization (Financial Bridge)
+      // JCI Requirement: Professional fees must be linked to clinical action
+      const billingQuery = query(
+        collection(db, COLLECTIONS.BILLING),
+        where('encounter_id', '==', encounterId),
+        limit(1)
+      );
+      const billingSnap = await getDocs(billingQuery);
+      
+      if (!billingSnap.empty) {
+        const billDoc = billingSnap.docs[0];
+        const currentItems = billDoc.data().line_items || [];
+        const updatedItems = [
+          ...currentItems,
+          {
+            description: `Professional Consultation - ${doctorEmail}`,
+            qty: 1,
+            unit_price: 150000, 
+            total: 150000,
+            linked_record_id: recordRef.id,
+            timestamp: timestamp
+          }
+        ];
+        const subtotal = updatedItems.reduce((sum, i) => sum + i.total, 0);
+        transaction.update(billDoc.ref, { 
+          line_items: updatedItems, 
+          subtotal, 
+          total: subtotal,
+          updated_at: timestamp 
+        });
+      }
+
+      // 4. Lifecycle Transition (Workflow Intelligence)
+      transaction.update(encounterRef, {
+        status:     ENCOUNTER_STATUSES.IN_TREATMENT,
+        updated_at: timestamp,
+        updated_by: doctorEmail
+      });
+
+      // 5. JCI Clinical Signature Audit
       transaction.set(auditRef, {
         timestamp,
         user:          doctorEmail,
-        action:        AUDIT_ACTIONS.CREATE,
+        action:        AUDIT_ACTIONS.MEDICAL_ACTION,
         resource_type: COLLECTIONS.MEDICAL_RECORDS,
         resource_id:   recordRef.id,
+        reason:        'CLINICAL_DOCUMENTATION_COMPLETE',
         delta: {
-          patientId,
-          encounterId,
-          assessment:    soapData.assessment,
-          medications:   soapData.plan_medications,
+          assessment: soapData.assessment,
+          order_count: soapData.plan_medications?.length || 0,
+          new_status: ENCOUNTER_STATUSES.IN_TREATMENT
         },
-        source: 'CLIENT_TRANSACTION_SPARK'
+        source: 'WEB_APP_CORE_SOAP'
       });
     });
 

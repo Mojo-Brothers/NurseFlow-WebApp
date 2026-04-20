@@ -8,6 +8,8 @@ import { determineEscalation, calculateVelocity } from '../../../core/domain/cli
 import HistorySparkline from '../../../components/HistorySparkline.jsx';
 import KeypadInput from '../../../components/KeypadInput.jsx';
 import { useAuth } from '../../../contexts/useAuth.js';
+import { logAudit } from '../../../core/services/audit.service.js';
+import { AUDIT_ACTIONS, COLLECTIONS } from '../../../core/constants.js';
 
 export default function TriagePage() {
   const { t } = useTranslation();
@@ -18,7 +20,8 @@ export default function TriagePage() {
   const { 
     selectedEncounterId, 
     fetchPatientActiveEncounter,
-    selectEncounter 
+    selectEncounter,
+    liveContext 
   } = useEncounterStore();
 
   const {
@@ -73,14 +76,29 @@ export default function TriagePage() {
   }, [selectPatient, fetchPatientActiveEncounter, selectEncounter]);
 
   useEffect(() => {
+    // Priority 1: Use the Live Context (The Highway)
+    if (liveContext?.patientId) {
+      handlePatientChange(liveContext.patientId);
+      
+      // JCI Compliance: Log Triage Session Start (Clinical Audit)
+      logAudit({
+        action: AUDIT_ACTIONS.VIEW,
+        resource_type: COLLECTIONS.TRIAGE_LOGS,
+        resource_id: liveContext.encounterId,
+        reason: 'START_TRIAGE_ASSESSMENT',
+        delta: { patientId: liveContext.patientId }
+      });
+      return;
+    }
+
+    // Priority 2: Standard fallback
     if (patients.length > 0 && !selectedPatientId) {
-      // Use setTimeout to avoid synchronous setState during render cycle
       const timer = setTimeout(() => {
         handlePatientChange(patients[0].id);
       }, 0);
       return () => clearTimeout(timer);
     }
-  }, [patients, selectedPatientId, handlePatientChange]);
+  }, [patients, selectedPatientId, handlePatientChange, liveContext]);
 
   const startHoldSubmit = () => {
     if (!selectedPatientId || !selectedEncounterId) {
@@ -118,17 +136,24 @@ export default function TriagePage() {
              </p>
           </div>
         </div>
-        <select
-          className="form-input w-64"
-          value={selectedPatientId || ''}
-          onChange={(e) => handlePatientChange(e.target.value)}
-        >
-          {patientsLoading ? <option>Loading...</option> : patients.map(p => (
-            <option key={p.id} value={p.id}>
-              {p.name} — MRN: {p.mrn} — {p.demographics?.dob || 'No DOB'}
-            </option>
-          ))}
-        </select>
+        {liveContext ? (
+          <div className="bg-primary-container text-on-primary-container px-4 py-2 rounded-lg flex-row items-center gap-3 border border-primary animate-pulse">
+            <span className="material-symbols-outlined text-sm">lock</span>
+            <span className="text-xs font-bold uppercase tracking-widest">Active Clinical Journey Locked</span>
+          </div>
+        ) : (
+          <select
+            className="form-input w-64"
+            value={selectedPatientId || ''}
+            onChange={(e) => handlePatientChange(e.target.value)}
+          >
+            {patientsLoading ? <option>Loading...</option> : patients.map(p => (
+              <option key={p.id} value={p.id}>
+                {p.name} — MRN: {p.mrn} — {p.demographics?.dob || 'No DOB'}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {submitSuccess && <div className="card mb-4 p-4 bg-secondary-container text-on-secondary-container flex-row items-center justify-between">

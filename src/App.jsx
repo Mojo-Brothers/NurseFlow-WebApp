@@ -19,6 +19,7 @@ import Pharmacy    from './modules/pharmacy/pages/PharmacyPage';
 import Worklist    from './modules/worklist/pages/WorklistPage';
 import Billing     from './modules/billing/pages/BillingPage';
 import AdminHub    from './modules/admin/pages/AdminHubPage';
+import HealthCheck from './modules/core/pages/HealthCheckPage';
 
 const Wrap = ({ children }) => <ErrorBoundary>{children}</ErrorBoundary>;
 
@@ -57,6 +58,7 @@ function App() {
               </Route>
               <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
                 <Route path="/admin" element={<Wrap><AdminHub /></Wrap>} />
+                <Route path="/health" element={<Wrap><HealthCheck /></Wrap>} />
               </Route>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>

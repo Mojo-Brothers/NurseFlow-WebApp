@@ -12,6 +12,7 @@ export const COLLECTIONS = {
   ALERTS:          'alerts',
   WARD_METRICS:    'ward_metrics',
   SYSTEM_METRICS:  'system_metrics',
+  BILLING:         'billing',
 };
 
 export const ROLES = {
@@ -83,6 +84,7 @@ export const AUDIT_ACTIONS = {
   VIEW:   'VIEW',
   LOGIN:  'LOGIN',
   LOGOUT: 'LOGOUT',
+  MEDICAL_ACTION: 'MEDICAL_ACTION',
 };
 
 // Batas fisiologis untuk validasi vital signs (Step 9)
@@ -111,3 +113,9 @@ export const QUEUE_STATUS = {
   FAILED:  'FAILED',
   DLQ:     'DEAD_LETTER_QUEUE',
 };
+
+/**
+ * JCI-Grade System Metadata
+ */
+export const SYSTEM_VERSION   = '5.1.0';  // Spark-Safe V5.1
+export const SCHEMA_VERSION   = 5;        // Healthcare Grade Schema V5

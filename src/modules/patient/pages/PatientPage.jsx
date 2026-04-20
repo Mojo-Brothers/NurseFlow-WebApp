@@ -1,11 +1,16 @@
-import React, { useState, useEffect } from 'react';
 import { usePatientStore } from '../patient.store.js';
+import { useNavigate } from 'react-router-dom';
+import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import { createEncounter } from '../../encounter/services/encounter.service.js';
+import { logAudit } from '../../../core/services/audit.service.js';
+import { AUDIT_ACTIONS, COLLECTIONS } from '../../../core/constants.js';
 import '../styles/Patients.css';
 
 export default function PatientPage() {
+  const navigate = useNavigate();
   const { patients, isLoading: loading, fetchPatients, addPatient } = usePatientStore();
+  const { setLiveContext } = useEncounterStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -88,7 +93,8 @@ export default function PatientPage() {
     if (!reason) return;
 
     try {
-      await createEncounter({
+      // 1. Create Encounter (Architecture Step)
+      const encounterId = await createEncounter({
         patientId,
         encounterType: 'EMERGENCY',
         chiefComplaint: reason,
@@ -96,10 +102,38 @@ export default function PatientPage() {
         ward: 'IGD',
         createdBy: 'system'
       });
-      alert(`Pasien ${patientName} berhasil di-admit. Status: WAITING.`);
+
+      // 2. Set Global Clinical Context (The Highway)
+      setLiveContext(patientId, encounterId);
+
+      // 3. JCI Audit Trail (Compliance)
+      await logAudit({
+        action: AUDIT_ACTIONS.CREATE,
+        resource_type: COLLECTIONS.ENCOUNTERS,
+        resource_id: encounterId,
+        delta: { patientName, reason },
+        reason: 'NEW_ENCOUNTER_ADMISSION'
+      });
+
+      // 4. Auto-Transition (Seamless Flow)
+      alert(`Pasien ${patientName} berhasil di-admit. Menuju modul Triage...`);
+      navigate('/triage');
     } catch (err) {
       alert('Gagal admisi: ' + err.message);
     }
+  };
+
+  const handleViewEMR = async (patientId, patientName) => {
+    // JCI Requirement: Audit clinical access
+    await logAudit({
+      action: AUDIT_ACTIONS.VIEW,
+      resource_type: COLLECTIONS.PATIENTS,
+      resource_id: patientId,
+      delta: { name: patientName },
+      reason: 'CLINICAL_REVIEW'
+    });
+    alert(`Viewing EMR for ${patientName} (Access Recorded)`);
+    // Logic to navigate to EMR page would follow
   };
 
   return (
@@ -167,7 +201,7 @@ export default function PatientPage() {
                   <td className="py-4 px-6 text-right">
                     <div className="flex-row gap-2 justify-end">
                       <button className="btn-primary-small" onClick={() => handleAdmit(p.id, p.name)}>Admit</button>
-                      <button className="btn-outline-small">EMR</button>
+                      <button className="btn-outline-small" onClick={() => handleViewEMR(p.id, p.mrn)}>EMR</button>
                     </div>
                   </td>
                 </tr>

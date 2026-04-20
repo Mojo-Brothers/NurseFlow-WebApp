@@ -1,0 +1,48 @@
+name: ⏪ Rollback — Production (Fail-Safe)
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for emergency rollback (Required for JCI Audit)"
+        required: true
+        type: string
+
+jobs:
+  rollback:
+    name: ⏪ Revert Production Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 💓 Pulse — Rollback Initiation
+        run: |
+          echo "⏪ EMERGENCY ROLLBACK TRIGGERED"
+          echo "REASON: ${{ github.event.inputs.reason }}"
+          echo "ACTOR: ${{ github.actor }}"
+
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 📦 Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: ⏪ Execute Rollback
+        run: firebase hosting:rollback --project ${{ vars.FIREBASE_PROJECT_ID }}
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+      - name: 📋 log Rollback Event (JCI Audit)
+        if: always()
+        run: |
+          echo "## ⏪ NurseFlow Production Rollback Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | \`${{ job.status }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Reason** | \`${{ github.event.inputs.reason }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Triggered By** | \`${{ github.actor }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Timestamp (UTC)** | \`$(date -u '+%Y-%m-%d %H:%M:%S')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> [!CAUTION]" >> $GITHUB_STEP_SUMMARY
+          echo "> This rollback event has been recorded in the permanent audit trail. " >> $GITHUB_STEP_SUMMARY

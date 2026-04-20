@@ -5,7 +5,7 @@
  * ✅ Reliability: 3 Retries + Exponential Backoff + DLQ
  */
 
-import { SYNC_PRIORITIES, QUEUE_STATUS } from '../constants.js';
+import { SYNC_PRIORITIES, QUEUE_STATUS, SCHEMA_VERSION } from '../constants.js';
 import { monitorSync, trackMetric } from './monitoring.service.js';
 
 const DB_NAME = 'nurseflow_sync_db';
@@ -48,8 +48,9 @@ export const enqueueAction = async (payload, priority = SYNC_PRIORITIES.NORMAL) 
       status:      QUEUE_STATUS.PENDING,
       retry_count: 0,
       last_error:  null,
-      next_retry:  Date.now(),
-      created_at:  Date.now(),
+      next_retry:     Date.now(),
+      created_at:     Date.now(),
+      schema_version: SCHEMA_VERSION,
     };
     
     const request = store.add(entry);
