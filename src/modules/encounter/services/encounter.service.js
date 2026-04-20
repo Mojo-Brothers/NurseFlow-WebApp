@@ -46,7 +46,30 @@ export const createEncounter = async ({
 
       transaction.set(encounterRef, payload);
 
-      // Audit V5
+      // 2. Automated Financial Account (The Highway)
+      // JCI Requirement: Every encounter must have a matching billing account
+      const billRef = doc(collection(db, COLLECTIONS.BILLING));
+      transaction.set(billRef, {
+        encounter_id:  encounterRef.id,
+        patient_id:    patientId,
+        line_items:    [
+          {
+            description: 'Emergency Admission Fee',
+            qty: 1,
+            unit_price: 50000,
+            total: 50000,
+            timestamp: timestamp
+          }
+        ],
+        subtotal:      50000,
+        discount:      0,
+        total:         50000,
+        status:        'DRAFT',
+        created_at:    timestamp,
+        created_by:    createdBy,
+      });
+
+      // 3. Audit V5
       const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
       transaction.set(auditRef, {
         timestamp,
@@ -54,10 +77,10 @@ export const createEncounter = async ({
         action:        AUDIT_ACTIONS.CREATE,
         resource_type: COLLECTIONS.ENCOUNTERS,
         resource_id:   encounterRef.id,
-        reason:        'INITIAL_ADMISSION',
+        reason:        'INITIAL_ADMISSION_WITH_BILLING',
         source:        'WEB_APP',
         sync_priority: SYNC_PRIORITIES.HIGH,
-        delta: { status: ENCOUNTER_STATUSES.WAITING }
+        delta: { status: ENCOUNTER_STATUSES.WAITING, bill_id: billRef.id }
       });
     });
 

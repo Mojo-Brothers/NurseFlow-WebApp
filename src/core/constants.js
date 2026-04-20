@@ -12,6 +12,7 @@ export const COLLECTIONS = {
   ALERTS:          'alerts',
   WARD_METRICS:    'ward_metrics',
   SYSTEM_METRICS:  'system_metrics',
+  BILLING:         'billing',
 };
 
 export const ROLES = {
@@ -83,6 +84,7 @@ export const AUDIT_ACTIONS = {
   VIEW:   'VIEW',
   LOGIN:  'LOGIN',
   LOGOUT: 'LOGOUT',
+  MEDICAL_ACTION: 'MEDICAL_ACTION',
 };
 
 // Batas fisiologis untuk validasi vital signs (Step 9)
