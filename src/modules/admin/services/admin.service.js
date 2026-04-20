@@ -27,6 +27,35 @@ export const subscribeToActiveAlerts = (callback) => {
 };
 
 /**
+ * Subscription real-time untuk Patient Flow (Observability).
+ * Menghitung distribusi status encounter yang sedang aktif.
+ */
+export const subscribeToPatientFlowMetrics = (callback) => {
+  const q = query(
+    collection(db, COLLECTIONS.ENCOUNTERS),
+    where('status', '!=', 'DISCHARGED')
+  );
+  
+  return onSnapshot(q, (snap) => {
+    const counts = {
+      WAITING: 0,
+      TRIAGE: 0,
+      IN_TREATMENT: 0,
+      TOTAL: snap.size
+    };
+    
+    snap.docs.forEach(d => {
+      const status = d.data().status;
+      if (counts[status] !== undefined) {
+        counts[status]++;
+      }
+    });
+
+    callback(counts);
+  });
+};
+
+/**
  * Fetch data telemetry kesehatan sistem.
  */
 export const fetchSystemHealth = async () => {

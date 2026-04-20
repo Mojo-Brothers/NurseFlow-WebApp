@@ -1,11 +1,4 @@
-/**
- * NurseFlow — Priority Sync Queue Service (V5 Enterprise Resilient)
- * ✅ Persistence: IndexedDB (Transactional & Scalable)
- * ✅ Priority: CRITICAL -> HIGH -> NORMAL
- * ✅ Reliability: 3 Retries + Exponential Backoff + DLQ
- */
-
-import { SYNC_PRIORITIES, QUEUE_STATUS, SCHEMA_VERSION } from '../constants.js';
+import { SYNC_PRIORITIES, QUEUE_STATUS, SCHEMA_VERSION, MERGE_WHITELIST } from '../constants.js';
 import { monitorSync, trackMetric } from './monitoring.service.js';
 
 const DB_NAME = 'nurseflow_sync_db';
@@ -32,9 +25,53 @@ const initDB = () => {
 };
 
 /**
+ * V10: Smart Conflict Resolver (Field-level Merge)
+ * Memutuskan apakah data lokal bisa menimpa data remote atau butuh manual review.
+ */
+export const mergeData = (local, remote) => {
+  if (!remote) return local;
+  
+  // Jika versi lokal lebih rendah or sama, jangan timpa field kritikal
+  const localVer  = local._v || 0;
+  const remoteVer = remote._v || 0;
+
+  if (localVer < remoteVer) {
+    console.warn('[SyncQueue] Remote version is higher. Merging non-critical fields only.');
+    
+    const merged = { ...remote };
+    MERGE_WHITELIST.forEach(field => {
+      if (local[field] !== undefined) {
+        merged[field] = local[field];
+      }
+    });
+    
+    // Tandai jika ada perbedaan di field KRITIKAL yang tidak di-whitelist
+    const hasConflict = Object.keys(local).some(key => 
+      !MERGE_WHITELIST.includes(key) && local[key] !== remote[key]
+    );
+
+    if (hasConflict) {
+      merged._requires_manual_review = true;
+      merged._conflict_metadata = {
+        last_local_ver: localVer,
+        last_remote_ver: remoteVer,
+        conflict_at: Date.now()
+      };
+    }
+
+    return merged;
+  }
+
+  // Jika lokal lebih baru, timpa dengan menaikkan versi
+  return {
+    ...local,
+    _v: Math.max(localVer, remoteVer) + 1,
+    _last_sync: Date.now()
+  };
+};
+
+/**
  * Add item to sync queue
- * @param {Object} payload - The transaction data
- * @param {number} priority - SYNC_PRIORITIES
  */
 export const enqueueAction = async (payload, priority = SYNC_PRIORITIES.NORMAL) => {
   const db = await initDB();
@@ -54,34 +91,23 @@ export const enqueueAction = async (payload, priority = SYNC_PRIORITIES.NORMAL) 
     };
     
     const request = store.add(entry);
-    request.onsuccess = () => {
-      console.log(`[SyncQueue] Action Enqueued: Priority ${priority}`);
-      resolve(request.result);
-    };
+    request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
 };
 
-/**
- * Process the queue based on priorities
- * @param {Function} processor - Logic to execute for each entry (e.g., Firestore submit)
- */
 export const processQueue = async (processor) => {
   const db = await initDB();
   const entries = await getAllPending(db);
-  
-  // Sort by Priority (Ascending number: 1=Critical, 2=High, 3=Normal)
   const sorted = entries.sort((a, b) => a.priority - b.priority);
   
   for (const entry of sorted) {
     if (entry.next_retry > Date.now()) continue;
-
     const startTime = Date.now();
     try {
       await processor(entry.payload);
       await removeEntry(db, entry.id);
       monitorSync(true, Date.now() - startTime);
-      console.log(`[SyncQueue] Success: Entry ${entry.id} synced.`);
     } catch (err) {
       monitorSync(false, Date.now() - startTime, err);
       await handleFailure(db, entry, err.message);
@@ -113,27 +139,20 @@ const removeEntry = (db, id) => {
 const handleFailure = async (db, entry, errorMessage) => {
   const transaction = db.transaction([STORE_NAME], 'readwrite');
   const store = transaction.objectStore(STORE_NAME);
-  
   entry.retry_count += 1;
   entry.last_error = errorMessage;
   
   if (entry.retry_count >= 3) {
     entry.status = QUEUE_STATUS.DLQ;
-    console.warn(`[SyncQueue] DLQ: Entry ${entry.id} moved to Dead Letter Queue after 3 failures.`);
   } else {
-    // Exponential Backoff: 5s, 30s, 2m
     const backoff = Math.pow( entry.retry_count, 2) * 5000;
     entry.next_retry = Date.now() + backoff;
-    console.log(`[SyncQueue] Retry Scheduled: Entry ${entry.id} in ${backoff/1000}s`);
   }
-  
   store.put(entry);
 };
 
-// Automatic Sync Listener
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
     trackMetric('NETWORK_RESTORED', { timestamp: Date.now() });
-    // This is handled by App.jsx listener which calls processQueue(executeQueuedAction)
   });
 }

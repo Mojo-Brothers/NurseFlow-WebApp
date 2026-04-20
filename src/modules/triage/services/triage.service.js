@@ -67,7 +67,7 @@ export const submitTriage = async ({
 
       // 3. Atomically update Encounter
       transaction.update(encounterRef, {
-        status:           ENCOUNTER_STATUSES.IN_TREATMENT,
+        status:           ENCOUNTER_STATUSES.TRIAGE,
         last_news2:       currentNews2,
         escalation_level:  escalation.level,
         escalation_source: escalation.source,

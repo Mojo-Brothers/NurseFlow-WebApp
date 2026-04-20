@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { usePatientStore } from '../patient.store.js';
 import { useNavigate } from 'react-router-dom';
 import { useEncounterStore } from '../../encounter/encounter.store.js';

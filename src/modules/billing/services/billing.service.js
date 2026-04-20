@@ -5,10 +5,11 @@
  */
 import {
   collection, addDoc, getDocs, query,
-  where, orderBy, updateDoc, doc, serverTimestamp
+  where, orderBy, updateDoc, doc, serverTimestamp,
+  runTransaction
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
-import { COLLECTIONS, AUDIT_ACTIONS } from '../../../core/constants.js';
+import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES } from '../../../core/constants.js';
 import { createAuditLog } from '../../../core/audit/audit.service.js';
 
 /**
@@ -82,21 +83,55 @@ export const finalizeBill = async (billId, finalizedBy) => {
 };
 
 /**
- * Tandai tagihan sebagai LUNAS + discharge encounter.
+ * Tandai tagihan sebagai LUNAS + discharge encounter secara atomik.
  */
 export const markAsPaid = async (billId, paidBy) => {
-  await updateDoc(doc(db, 'billing', billId), {
-    status:  'PAID',
-    paid_at: serverTimestamp(),
-  });
+  const billRef = doc(db, COLLECTIONS.BILLING, billId);
 
-  await createAuditLog({
-    userEmail:    paidBy,
-    action:       AUDIT_ACTIONS.UPDATE,
-    resourceType: 'billing',
-    resourceId:   billId,
-    delta:        { status: { before: 'FINALIZED', after: 'PAID' } },
-  });
+  try {
+    await runTransaction(db, async (transaction) => {
+      const billSnap = await transaction.get(billRef);
+      if (!billSnap.exists()) throw new Error('Tagihan tidak ditemukan.');
+      const billData = billSnap.data();
+
+      const timestamp = serverTimestamp();
+
+      // 1. Update status Billing
+      transaction.update(billRef, {
+        status:  'PAID',
+        paid_at: timestamp,
+      });
+
+      // 2. Automated Discharge (JCI Requirement: Account Closure)
+      if (billData.encounter_id) {
+        const encounterRef = doc(db, COLLECTIONS.ENCOUNTERS, billData.encounter_id);
+        transaction.update(encounterRef, {
+          status:     ENCOUNTER_STATUSES.DISCHARGED,
+          updated_at: timestamp,
+          updated_by: paidBy
+        });
+      }
+
+      // 3. Persistent Audit Logging
+      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
+      transaction.set(auditRef, {
+        timestamp,
+        user:          paidBy,
+        action:        AUDIT_ACTIONS.UPDATE,
+        resource_type: COLLECTIONS.BILLING,
+        resource_id:   billId,
+        reason:        'PAYMENT_RECEIVED_AND_ENCOUNTER_CLOSED',
+        delta: { 
+          billing_status: 'PAID',
+          encounter_status: ENCOUNTER_STATUSES.DISCHARGED
+        },
+        source: 'WEB_APP_BILLING_GATE'
+      });
+    });
+  } catch (err) {
+    console.error('[BillingService] Payment transaction failed:', err);
+    throw err;
+  }
 };
 
 /**
