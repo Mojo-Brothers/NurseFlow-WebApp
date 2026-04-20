@@ -1,3 +1,4 @@
+import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import TopAppBar from '../components/TopAppBar';
@@ -33,6 +34,7 @@ const NAV_SCHEMA = [
 const MainLayout = () => {
   const { t, i18n } = useTranslation();
   const location = useLocation();
+  const [collapsed, setCollapsed] = React.useState(false);
   const { currentUser, role } = useAuth();
   const badge = ROLE_BADGE[role] || ROLE_BADGE.NURSE;
 
@@ -54,7 +56,7 @@ const MainLayout = () => {
           fontSize: '1.15rem',
           color: isActive ? (isDanger ? 'var(--error)' : 'var(--primary)') : 'inherit'
         }}>{item.icon}</span>
-        {t(item.name)}
+        {!collapsed && t(item.name)}
       </Link>
     );
   };
@@ -66,22 +68,48 @@ const MainLayout = () => {
 
         {/* ═══ Sidebar ═══════════════════════════════════════ */}
         <nav style={{
-          width: '220px', flexShrink: 0, display: 'flex', flexDirection: 'column',
+          width: collapsed ? '64px' : '220px', flexShrink: 0, display: 'flex', flexDirection: 'column',
           backgroundColor: 'var(--surface-container-low)',
           borderRight: '1px solid var(--outline-variant)',
+          transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflow: 'hidden'
         }}>
-          <div style={{ flex: 1, padding: '0.75rem', marginTop: '0.5rem', overflowY: 'auto' }}>
+          {/* ─── Toggle Button ─────────────── */}
+          <div style={{ 
+            display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end', 
+            padding: '0.75rem', borderBottom: '1px solid var(--outline-variant)' 
+          }}>
+            <button 
+              onClick={() => setCollapsed(!collapsed)}
+              className="btn-icon"
+              style={{
+                width: '32px', height: '32px', minWidth: '32px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--surface-container-highest)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', border: 'none', color: 'var(--on-surface-variant)'
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
+                {collapsed ? 'menu' : 'menu_open'}
+              </span>
+            </button>
+          </div>
+
+          <div style={{ flex: 1, padding: collapsed ? '0.5rem' : '0.75rem', marginTop: '0.5rem', overflowY: 'auto' }}>
             {NAV_SCHEMA.map(section => {
               const visibleItems = section.items.filter(isVisible);
               if (visibleItems.length === 0) return null;
               return (
                 <div key={section.label} style={{ marginBottom: '0.5rem' }}>
-                  <div style={{
-                    padding: '0.5rem 0.875rem 0.25rem',
-                    fontSize: '0.6rem', fontWeight: '800', letterSpacing: '0.1em',
-                    color: section.admin ? 'var(--error)' : 'var(--on-surface-variant)',
-                    textTransform: 'uppercase', opacity: 0.7,
-                  }}>{t(section.label)}</div>
+                  {!collapsed && (
+                    <div style={{
+                      padding: '0.5rem 0.875rem 0.25rem',
+                      fontSize: '0.6rem', fontWeight: '800', letterSpacing: '0.1em',
+                      color: section.admin ? 'var(--error)' : 'var(--on-surface-variant)',
+                      textTransform: 'uppercase', opacity: 0.7,
+                    }}>{t(section.label)}</div>
+                  )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                     {visibleItems.map(navLink)}
                   </div>
@@ -91,35 +119,38 @@ const MainLayout = () => {
           </div>
 
           {/* ─── Language Switcher (JCI Multi-Lang) ────── */}
-          <div style={{ padding: '0.5rem 0.75rem' }}>
-            <div style={{
-              display: 'flex', gap: '4px', backgroundColor: 'var(--surface-container-high)',
-              padding: '2px', borderRadius: 'var(--radius-md)'
-            }}>
-              {['en', 'id', 'sys'].map(lang => (
-                <button
-                  key={lang}
-                  onClick={() => i18n.changeLanguage(lang)}
-                  style={{
-                    flex: 1, padding: '4px 0', border: 'none', cursor: 'pointer',
-                    fontSize: '0.6rem', fontWeight: '800', borderRadius: '4px',
-                    backgroundColor: i18n.language === lang ? 'var(--primary)' : 'transparent',
-                    color: i18n.language === lang ? 'var(--on-primary)' : 'var(--on-surface-variant)',
-                    transition: 'all 0.2s ease',
-                    textTransform: 'uppercase'
-                  }}
-                >
-                  {lang}
-                </button>
-              ))}
+          {!collapsed && (
+            <div style={{ padding: '0.5rem 0.75rem' }}>
+              <div style={{
+                display: 'flex', gap: '4px', backgroundColor: 'var(--surface-container-high)',
+                padding: '2px', borderRadius: 'var(--radius-md)'
+              }}>
+                {['en', 'id', 'sys'].map(lang => (
+                  <button
+                    key={lang}
+                    onClick={() => i18n.changeLanguage(lang)}
+                    style={{
+                      flex: 1, padding: '4px 0', border: 'none', cursor: 'pointer',
+                      fontSize: '0.6rem', fontWeight: '800', borderRadius: '4px',
+                      backgroundColor: i18n.language === lang ? 'var(--primary)' : 'transparent',
+                      color: i18n.language === lang ? 'var(--on-primary)' : 'var(--on-surface-variant)',
+                      transition: 'all 0.2s ease',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {lang}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* ─── User Card ──────────────────────────────── */}
           {currentUser && (
             <div style={{
               padding: '0.75rem', borderTop: '1px solid var(--outline-variant)',
               display: 'flex', alignItems: 'center', gap: '0.625rem',
+              justifyContent: collapsed ? 'center' : 'flex-start'
             }}>
               <div style={{
                 width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
@@ -131,21 +162,23 @@ const MainLayout = () => {
                    : <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>person</span>
                 }
               </div>
-              <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
-                <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--on-surface)' }}>
-                  {currentUser.displayName || currentUser.email?.split('@')[0]}
-                </p>
-                <span style={{
-                  display: 'inline-block', marginTop: '2px', padding: '1px 7px',
-                  borderRadius: 'var(--radius-full)', fontSize: '0.6rem', fontWeight: '800',
-                  backgroundColor: badge.bg, color: badge.color,
-                }}>{t(badge.label)}</span>
-              </div>
+              {!collapsed && (
+                <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--on-surface)' }}>
+                    {currentUser.displayName || currentUser.email?.split('@')[0]}
+                  </p>
+                  <span style={{
+                    display: 'inline-block', marginTop: '2px', padding: '1px 7px',
+                    borderRadius: 'var(--radius-full)', fontSize: '0.6rem', fontWeight: '800',
+                    backgroundColor: badge.bg, color: badge.color,
+                  }}>{t(badge.label)}</span>
+                </div>
+              )}
             </div>
           )}
 
           {/* ─── JCI Audit Version ──────────────────────── */}
-          <VersionDisplay />
+          {!collapsed && <VersionDisplay />}
         </nav>
 
         {/* ═══ Main Content ══════════════════════════════════ */}

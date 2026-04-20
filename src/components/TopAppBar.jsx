@@ -5,8 +5,7 @@ const TopAppBar = () => {
   return (
     <header className="top-app-bar glass-header">
       <div className="flex items-center gap-3">
-        <span className="material-symbols-outlined text-primary">menu</span>
-        <h1 className="brand-title text-primary">Central Medical Ward</h1>
+        <h1 className="brand-title text-primary">NurseFlow HIS</h1>
       </div>
       <div className="nav-links">
         <a href="#" className="nav-link active">Metrics</a>
