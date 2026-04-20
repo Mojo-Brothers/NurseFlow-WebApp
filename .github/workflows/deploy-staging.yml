@@ -6,7 +6,7 @@ on:
 
 concurrency:
   group: deploy-staging-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # ─────────────────────────────────────────────────────────────────────────────
@@ -18,6 +18,12 @@ jobs:
     timeout-minutes: 15
 
     steps:
+      - name: 💓 Pulse — Workflow Heartbeat
+        run: |
+          echo "🏥 NurseFlow System Pulse: START"
+          echo "TIMESTAMP: $(date -u)"
+          echo "RUNNER_ID: $GITHUB_RUN_ID"
+
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
@@ -64,6 +70,9 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: 💓 Pulse — Workflow Heartbeat
+        run: echo "🚀 Deploy Job Started"
+
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
 
