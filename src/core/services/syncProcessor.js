@@ -1,12 +1,18 @@
-/**
- * NurseFlow — Sync Processor (Enterprise Resilience Hub)
- * Maps queued action types to their actual service handlers.
- */
 import { submitTriage } from '../../modules/triage/services/triage.service.js';
-// In the future, other services like submitSoap atau createMedication will be added here
+import { SCHEMA_VERSION } from '../constants.js';
+
+/**
+ * Version Sentry: Ensures the system doesn't process "future" data after a rollback.
+ */
+const validateSchema = (action) => {
+  if (action.schema_version && action.schema_version > SCHEMA_VERSION) {
+    throw new Error(`[SyncProcessor] Schema Mismatch! Item v${action.schema_version} blocked by System v${SCHEMA_VERSION}. Rollback guard active.`);
+  }
+};
 
 export const executeQueuedAction = async (action) => {
-  console.log(`[SyncProcessor] Executing: ${action.type}`);
+  validateSchema(action);
+  console.log(`[SyncProcessor] Executing: ${action.type} (v${action.schema_version || 'unknown'})`);
   
   switch (action.type) {
     case 'SUBMIT_TRIAGE':

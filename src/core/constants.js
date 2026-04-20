@@ -111,3 +111,9 @@ export const QUEUE_STATUS = {
   FAILED:  'FAILED',
   DLQ:     'DEAD_LETTER_QUEUE',
 };
+
+/**
+ * JCI-Grade System Metadata
+ */
+export const SYSTEM_VERSION   = '5.1.0';  // Spark-Safe V5.1
+export const SCHEMA_VERSION   = 5;        // Healthcare Grade Schema V5

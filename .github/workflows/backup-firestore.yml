@@ -1,0 +1,55 @@
+name: 📥 Backup — Firestore (Clinical Continuity)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Every night at midnight UTC
+  workflow_dispatch:      # Allow manual emergency backup
+    inputs:
+      reason:
+        description: "Reason for manual backup"
+        required: false
+        default: "Pre-maintenance Snapshot"
+
+jobs:
+  backup:
+    name: 📥 Export Firestore Data
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: 💓 Pulse — Backup Initiation
+        run: echo "Starting automated clinical data backup..."
+
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Auth with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: ⚙️ Setup GCloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: 📥 Execute Firestore Export
+        run: |
+          # Create a timestamped folder in the bucket
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BUCKET="gs://${{ vars.FIREBASE_PROJECT_ID }}-backups"
+          echo "Exporting Firestore to $BUCKET/backup_$TIMESTAMP"
+          
+          gcloud firestore export "$BUCKET/backup_$TIMESTAMP" --project ${{ vars.FIREBASE_PROJECT_ID }}
+
+      - name: 📋 log Backup Event (JCI Audit)
+        if: always()
+        run: |
+          echo "## 📥 NurseFlow Firestore Backup Audit" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | \`${{ job.status }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Project ID** | \`${{ vars.FIREBASE_PROJECT_ID }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Timestamp (UTC)** | \`$(date -u '+%Y-%m-%d %H:%M:%S')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> [!NOTE]" >> $GITHUB_STEP_SUMMARY
+          echo "> Backups are stored in the versioned 'backups' bucket in Google Cloud Storage. " >> $GITHUB_STEP_SUMMARY
