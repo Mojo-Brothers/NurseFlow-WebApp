@@ -35,5 +35,8 @@ export default defineConfig([
       },
       sourceType: 'commonjs',
     },
+    rules: {
+      'no-undef': 'off', // CommonJS 'exports'/'require' can sometimes trip this in flat config
+    }
   },
 ])

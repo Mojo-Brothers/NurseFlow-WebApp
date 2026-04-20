@@ -33,11 +33,11 @@ export default function AdminHubPage() {
   const [users, setUsers]         = useState([]);
   const [activeTab, setActiveTab] = useState('audit'); // 'audit' | 'users' | 'observability'
   
-  // Observability State
   const [activeAlerts, setActiveAlerts] = useState([]);
   const [systemHealth, setSystemHealth] = useState(null);
 
   const loadData = React.useCallback(async () => {
+    setLoading(true);
     try {
       if (activeTab === 'audit') {
         const logs = await fetchAuditLogs(50);
@@ -60,7 +60,6 @@ export default function AdminHubPage() {
       loadData();
     }, 0);
     
-    // Subscribe to alerts regardless of tab for global monitoring
     const unsubscribeAlerts = subscribeToActiveAlerts((alerts) => {
       setActiveAlerts(alerts);
     });
