@@ -7,6 +7,7 @@ import { getPendingBills, updateBillItems, finalizeBill, markAsPaid } from '../s
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
+import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
 
 const SERVICE_CATALOG = [
   { description: 'Konsultasi Dokter Umum',  unit_price: 150000 },
@@ -21,10 +22,10 @@ const SERVICE_CATALOG = [
 ];
 
 const STATUS_BADGE = {
-  DRAFT:     { label: 'Draft',      bg: '#fef9c3', text: '#92400e' },
-  FINALIZED: { label: 'Finalized',  bg: '#dbeafe', text: '#1e40af' },
-  PAID:      { label: 'Lunas ✓',    bg: '#dcfce7', text: '#166534' },
-  WAIVED:    { label: 'Diwaiver',   bg: '#f3f4f6', text: '#6b7280' },
+  DRAFT:     { label: 'Draft',      bg: 'rgba(146, 64, 14, 0.1)', text: 'var(--status-warning)' },
+  FINALIZED: { label: 'Finalized',  bg: 'rgba(0, 93, 182, 0.1)',  text: 'var(--status-info)'    },
+  PAID:      { label: 'Lunas ✓',    bg: 'rgba(22, 101, 52, 0.1)', text: 'var(--status-safe)'    },
+  WAIVED:    { label: 'Diwaiver',   bg: 'var(--surface-container-high)', text: 'var(--on-surface-variant)' },
 };
 
 const fmt = (n) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -120,7 +121,7 @@ export default function BillingPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: selectedBill ? '1fr 1.5fr' : '1fr', gap: '1.5rem' }}>
-        <div className="card padding-0 overflow-hidden" style={{ height: 'fit-content' }}>
+        <ClinicalCard className="padding-0 overflow-hidden" style={{ height: 'fit-content' }}>
           <div className="px-5 py-4 flex-row items-center gap-2"
             style={{ backgroundColor: 'var(--surface-container-low)', borderBottom: '1px solid var(--outline-variant)' }}>
             <span className="material-symbols-outlined text-primary">receipt_long</span>
@@ -145,7 +146,7 @@ export default function BillingPage() {
                   <p style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--primary)', margin: 0 }}>{getPatientName(bill.patient_id)}</p>
                   <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.65rem', fontWeight: '800', backgroundColor: badge.bg, color: badge.text }}>{badge.label}</span>
                 </div>
-                <p style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--on-surface)', fontFamily: 'var(--font-headline)' }}>{fmt(bill.total || 0)}</p>
+                <p className="tabular-nums" style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--on-surface)', fontFamily: 'var(--font-headline)' }}>{fmt(bill.total || 0)}</p>
                 <div className="flex-row items-center justify-between mt-2">
                   <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{bill.line_items?.length || 0} item</p>
                   {bill.status === 'FINALIZED' && (isAdmin || isDoctor) && (
@@ -158,10 +159,10 @@ export default function BillingPage() {
               </div>
             );
           })}
-        </div>
+        </ClinicalCard>
 
         {selectedBill && (
-          <div className="card">
+          <ClinicalCard className="p-8">
             <div className="flex-row items-center justify-between mb-5">
               <div>
                 <h3 className="font-bold text-lg" style={{ margin: 0 }}>{getPatientName(selectedBill.patient_id)}</h3>
@@ -201,8 +202,8 @@ export default function BillingPage() {
                         onChange={e => updateQty(idx, parseInt(e.target.value) || 1)}
                         style={{ width: '60px', textAlign: 'center', padding: '0.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--outline-variant)', fontSize: '0.875rem' }} />
                     </td>
-                    <td className="py-3 px-3 text-right text-on-surface-variant">{fmt(item.unit_price)}</td>
-                    <td className="py-3 px-3 text-right font-bold">{fmt(item.total)}</td>
+                    <td className="py-3 px-3 text-right text-on-surface-variant tabular-nums">{fmt(item.unit_price)}</td>
+                    <td className="py-3 px-3 text-right font-bold tabular-nums">{fmt(item.total)}</td>
                     <td className="py-3 px-3 text-right">
                       <button onClick={() => removeItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)' }}>
                         <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
@@ -213,12 +214,19 @@ export default function BillingPage() {
               </tbody>
             </table>
 
-            <div style={{ padding: '1rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--primary-container)', marginBottom: '1.5rem' }}>
+            <ClinicalCard style={{ 
+              padding: '1.5rem', 
+              backgroundColor: '#001b3d', 
+              color: 'white', 
+              marginBottom: '1.5rem',
+              border: 'none',
+              boxShadow: 'none'
+            }}>
               <div className="flex-row items-center justify-between">
-                <p style={{ margin: 0, fontWeight: '700', color: 'var(--on-primary-container)' }}>TOTAL TAGIHAN</p>
-                <p style={{ margin: 0, fontFamily: 'var(--font-headline)', fontWeight: '800', fontSize: '1.5rem', color: 'var(--primary)' }}>{fmt(subtotal)}</p>
+                <p style={{ margin: 0, fontWeight: '800', fontSize: '0.75rem', letterSpacing: '0.1em', opacity: 0.9 }}>TOTAL TAGIHAN</p>
+                <p className="tabular-nums" style={{ margin: 0, fontFamily: 'var(--font-headline)', fontWeight: '950', fontSize: '2.5rem', letterSpacing: '-0.04em' }}>{fmt(subtotal)}</p>
               </div>
-            </div>
+            </ClinicalCard>
 
             <div className="flex-row gap-3 justify-end">
               <button onClick={handleSave} disabled={isSaving} className="btn-ghost">
@@ -231,7 +239,7 @@ export default function BillingPage() {
                 </button>
               )}
             </div>
-          </div>
+          </ClinicalCard>
         )}
       </div>
     </div>

@@ -5,6 +5,33 @@ Manual ini dirancang untuk tenaga medis dan administrator rumah sakit sebagai pa
 
 ---
 
+## 🏛️ V5 Cognitive UI Standard (Adaptive Design)
+
+Mulai tahun 2026, NurseFlow mengadopsi antarmuka kognitif adaptif untuk mendukung pengambilan keputusan cepat di bawah tekanan (Decision Support).
+
+### 🎨 Sistem Warna Semantik (Cognitive Lock)
+Seluruh staf harus memahami makna warna berikut tanpa ambiguitas:
+- **MERAH (Critical):** Tindakan segera. Pasien dalam risiko tinggi atau alert sistem kritis.
+- **KUNING (Warning):** Waspada. SLA terlampaui atau tren klinis menurun.
+- **HIJAU (Safe/Normal):** Operasional berjalan sesuai standar.
+- **BIRU (Info):** Pembaruan data atau informasi administratif.
+
+### 🛡️ Adaptive Modes (Stress & Focus)
+Sistem akan berubah secara otomatis berdasarkan beban kerja klinis:
+1. **STRESS MODE (Pulse Indicator):**
+   - **Trigger:** Jumlah antrian > SLA atau adanya Alert Emergensi yang belum ditangani.
+   - **Efek:** Kontras UI meningkat tajam, elemen visual berdenyut untuk menarik perhatian ke area kritis.
+2. **FOCUS MODE (Noise Reduction):**
+   - **Trigger:** Terjadi saat level stres kritis atau diaktifkan manual.
+   - **Efek:** Sidebar akan mengecil otomatis dan informasi non-esensial disembunyikan untuk mengurangi beban kognitif.
+   - **Whitelist:** Nama pasien, status klinis, dan tombol aksi utama akan selalu terlihat.
+
+### 🔄 Classic UI Rollback (Safety Guard)
+Jika dalam kondisi tertentu staf merasa antarmuka adaptif membingungkan, tersedia tombol **"Classic Mode"** (ikon perisai) di bar atas untuk mengembalikan UI ke tampilan standar secara instan.
+
+---
+*Manual ini adalah dokumen hidup. Setiap perubahan pada sistem Adaptive UI harus melalui persetujuan Komite Medis dan TI.*
+
 ## 🏛️ 1. Filosofi Sistem & Standar JCI
 NurseFlow 2026 bukan sekadar aplikasi pencatatan, melainkan instrumen penegakan standar **Joint Commission International (JCI)** dengan fokus pada:
 1. **International Patient Safety Goals (IPSG):** Identifikasi pasien yang benar via MRN & NIK.

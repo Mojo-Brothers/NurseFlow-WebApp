@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useTriageStore } from '../triage.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useTranslation } from 'react-i18next';
+import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
+import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateNEWS2, getTriageColor, calculateAge } from '../../../utils/clinicalCalculators.js';
 import { determineEscalation, calculateVelocity } from '../../../core/domain/clinicalEngine.js';
@@ -13,8 +15,8 @@ import { AUDIT_ACTIONS, COLLECTIONS } from '../../../core/constants.js';
 
 export default function TriagePage() {
   const { t } = useTranslation();
+  const { metrics, logAction } = useClinicalMetrics('TRIAGE_CONTROL');
   const { currentUser } = useAuth();
-  const intervalRef = useRef(null);
 
   const { patients, isLoading: patientsLoading, fetchPatients } = usePatientStore();
   const { 
@@ -27,16 +29,19 @@ export default function TriagePage() {
   const {
     vitals,
     selectedPatientId,
-    holdProgress,
     submitSuccess,
     serverConflict,
     error: triageError,
-    setVital,
-    setHoldProgress,
+    setVital: storeSetVital,
     executeSubmit,
     selectPatient,
     resetForm,
   } = useTriageStore();
+
+  const setVital = (field, value) => {
+    logAction(`vital_input_${field}`);
+    storeSetVital(field, value);
+  };
 
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
@@ -47,13 +52,11 @@ export default function TriagePage() {
 
   const [lastLog, setLastLog] = useState(null);
 
-  // V5 Clinical Intelligence (Adaptive & Granular)
   const patient = patients.find(p => p.id === selectedPatientId);
   const baseline = patient?.baseline_profile;
   const news2Score  = calculateNEWS2(vitals, baseline);
   const triageColor = getTriageColor(news2Score);
 
-  // V5 Velocity Trend Calculation (Real-time Preview)
   const hrVelocity = lastLog 
     ? calculateVelocity(vitals.heartRate, lastLog.vitals.heartRate, lastLog.timestamp?.toDate()?.toISOString()) 
     : 0;
@@ -65,22 +68,18 @@ export default function TriagePage() {
   }, [fetchPatients]);
 
   const handlePatientChange = useCallback(async (patientId) => {
+    logAction('patient_select');
     selectPatient(patientId);
     if (patientId) {
       const active = await fetchPatientActiveEncounter(patientId);
       if (active) selectEncounter(active.id);
-      
-      // Fetch last log for trend visualization
       setLastLog(null); 
     }
-  }, [selectPatient, fetchPatientActiveEncounter, selectEncounter]);
+  }, [selectPatient, fetchPatientActiveEncounter, selectEncounter, logAction]);
 
   useEffect(() => {
-    // Priority 1: Use the Live Context (The Highway)
     if (liveContext?.patientId) {
       handlePatientChange(liveContext.patientId);
-      
-      // JCI Compliance: Log Triage Session Start (Clinical Audit)
       logAudit({
         action: AUDIT_ACTIONS.VIEW,
         resource_type: COLLECTIONS.TRIAGE_LOGS,
@@ -91,7 +90,6 @@ export default function TriagePage() {
       return;
     }
 
-    // Priority 2: Standard fallback
     if (patients.length > 0 && !selectedPatientId) {
       const timer = setTimeout(() => {
         handlePatientChange(patients[0].id);
@@ -99,28 +97,6 @@ export default function TriagePage() {
       return () => clearTimeout(timer);
     }
   }, [patients, selectedPatientId, handlePatientChange, liveContext]);
-
-  const startHoldSubmit = () => {
-    if (!selectedPatientId || !selectedEncounterId) {
-      return alert(t('triage.no_encounter'));
-    }
-    setHoldProgress(0);
-    const step = 100 / 20;
-    let current = 0;
-    intervalRef.current = setInterval(() => {
-      current += step;
-      setHoldProgress(current);
-      if (current >= 100) {
-        clearInterval(intervalRef.current);
-        executeSubmit(currentUser.email);
-      }
-    }, 100);
-  };
-
-  const cancelHoldSubmit = () => {
-    clearInterval(intervalRef.current);
-    setHoldProgress(0);
-  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto w-full">
@@ -149,7 +125,7 @@ export default function TriagePage() {
           >
             {patientsLoading ? <option>Loading...</option> : patients.map(p => (
               <option key={p.id} value={p.id}>
-                {p.name} — MRN: {p.mrn} — {p.demographics?.dob || 'No DOB'}
+                {p.name} — MRN: {p.mrn}
               </option>
             ))}
           </select>
@@ -161,115 +137,84 @@ export default function TriagePage() {
         <button onClick={resetForm} className="btn-secondary py-1 text-xs">{t('triage.btn_new')}</button>
       </div>}
 
-      {triageError && (
+      {(triageError || serverConflict) && (
         <div className="card mb-4 p-4 bg-error-container text-on-error-container border-l-4 border-error">
-           <span className="font-bold">⚠️ {triageError}</span>
-        </div>
-      )}
-
-      {serverConflict && (
-        <div className="card mb-4 p-4 bg-error-container text-on-error-container border-l-4 border-error animate-pulse">
-           <span className="font-bold">{serverConflict.message}</span>
+           <span className="font-bold">⚠️ {triageError || serverConflict.message}</span>
         </div>
       )}
 
       {patient && (
-        <div className={`card mb-6 p-4 flex-row gap-6 bg-surface-container-low border-l-4 ${news2Score >= 7 ? 'animate-pulse-red' : ''}`} 
-             style={{ borderLeftColor: news2Score >= 7 ? 'var(--error)' : 'var(--primary)' }}>
-          <div className="flex-column gap-1 border-r pr-6 border-outline-variant">
+        <ClinicalCard className="mb-6 p-6 flex-row gap-8 items-center" 
+             style={{ borderLeft: `6px solid var(--status-${news2Score >= 7 ? 'critical' : 'safe'})` }}>
+          <div className="flex-column gap-1 border-r pr-8 border-outline-variant">
             <span className="text-[10px] font-bold text-on-surface-variant uppercase">{t('triage.patient_verification')}</span>
             <div className="flex-row items-baseline gap-2">
               <span className="text-xl font-extrabold text-primary">{patient.name}</span>
-              <span className="text-sm font-bold text-on-surface-variant">({patient.demographics?.gender === 'M' ? 'L' : 'P'})</span>
             </div>
-            <p className="text-xs font-medium text-on-surface-variant">DOB: {patient.demographics?.dob} • NIK: {patient.nik}</p>
+            <p className="text-xs font-medium text-on-surface-variant">DOB: {patient.demographics?.dob} • MRN: {patient.mrn}</p>
           </div>
-          
           <div className="flex-1 flex-row gap-8 items-center">
             <div className="flex-column gap-1">
               <span className="text-[10px] font-bold text-on-surface-variant uppercase">{t('triage.adaptive_baseline')}</span>
               <div className="flex-row gap-3">
-                <span className="text-sm font-bold">HR: {patient.baseline_profile?.value || '70'} <small className="font-normal opacity-70">bpm</small></span>
-                <span className={`chip text-[8px] ${patient.baseline_profile?.chronic_flag ? 'bg-warning' : 'bg-success'}`}>
-                  {patient.baseline_profile?.chronic_flag ? t('triage.chronic') : t('triage.normal')}
-                </span>
-                <span className="text-[10px] opacity-50">Src: {patient.baseline_profile?.source}</span>
+                <span className="text-sm font-bold">HR: {patient.baseline_profile?.value || '70'} bpm</span>
               </div>
             </div>
-
             <div className="flex-row gap-2">
               {patient.allergies?.length > 0 && <span className="ipsg-flag flag-allergy">⚠️ Allergy: {patient.allergies.join(', ')}</span>}
-              {patient.safety_flags?.fall_risk && <span className="ipsg-flag flag-fall">⚠️ Fall Risk</span>}
             </div>
           </div>
-
-          <div className="flex-column items-end justify-center">
-             <span className="text-[10px] font-bold text-on-surface-variant uppercase">{t('triage.age')}</span>
-             <span className="text-xl font-black">{calculateAge(patient.demographics?.dob)} <small className="text-xs">{t('triage.yrs')}</small></span>
-          </div>
-        </div>
+        </ClinicalCard>
       )}
 
       <div className="flex-row gap-8">
         <div className="flex-1">
-          <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="relative">
-               <KeypadInput label={t('triage.vitals.hr')} unit="bpm" value={vitals.heartRate} onChange={(v) => setVital('heartRate', v)} criticalLow={50} criticalHigh={120} />
-               <div className="absolute right-2 bottom-2">
-                 <HistorySparkline data={[68, 72, 85, 92, 88, 95]} width={60} height={20} color="var(--primary)" />
-               </div>
-               {Math.abs(hrVelocity) > 0.5 && (
-                 <span className={`absolute right-12 top-10 text-[10px] font-bold ${hrVelocity > 0 ? 'text-error' : 'text-success'}`}>
-                   {hrVelocity > 0 ? '▲' : '▼'} {Math.abs(hrVelocity).toFixed(1)}/min
-                 </span>
-               )}
-            </div>
-            <div className="relative">
+            <ClinicalCard style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <KeypadInput label={t('triage.vitals.hr')} unit="bpm" value={vitals.heartRate} onChange={(v) => setVital('heartRate', v)} criticalLow={50} criticalHigh={120} />
               <KeypadInput label={t('triage.vitals.bp')} unit="mmHg" value={vitals.systolicBP} onChange={(v) => setVital('systolicBP', v)} criticalLow={90} criticalHigh={180} />
-              <div className="absolute right-2 bottom-2">
-                 <HistorySparkline data={[110, 115, 122, 118, 125, 130]} width={60} height={20} color="var(--secondary)" />
-               </div>
-            </div>
-            <KeypadInput label={t('triage.vitals.spo2')} unit="%" value={vitals.spo2} onChange={(v) => setVital('spo2', v)} criticalLow={92} />
-            <KeypadInput label={t('triage.vitals.temp')} unit="°C" value={vitals.temperature} onChange={(v) => setVital('temperature', v)} criticalHigh={38.5} />
-            
-            <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant flex-column gap-3">
-              <div className="flex-row gap-4">
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">{t('triage.vitals.weight')} (kg)</label>
-                  <input type="number" className="form-input w-full" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder="0.0" />
+              <KeypadInput label={t('triage.vitals.spo2')} unit="%" value={vitals.spo2} onChange={(v) => setVital('spo2', v)} criticalLow={92} />
+              <KeypadInput label={t('triage.vitals.temp')} unit="°C" value={vitals.temperature} onChange={(v) => setVital('temperature', v)} criticalHigh={38.5} />
+              <div className="p-4 bg-surface-container-low rounded-xl border border-outline-variant flex-column gap-3">
+                <div className="flex-row gap-4">
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Weight (kg)</label>
+                    <input type="number" className="form-input w-full" value={weight} onChange={(e) => setWeight(e.target.value)} />
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">Height (cm)</label>
+                    <input type="number" className="form-input w-full" value={height} onChange={(e) => setHeight(e.target.value)} />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <label className="text-[10px] font-bold text-on-surface-variant uppercase mb-1 block">{t('triage.vitals.height')} (cm)</label>
-                  <input type="number" className="form-input w-full" value={height} onChange={(e) => setHeight(e.target.value)} placeholder="0" />
+                <div className="flex-row justify-between items-center px-4 py-3 bg-white rounded-lg border border-primary">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-primary">BMI</span>
+                  <span className="text-2xl font-black tabular-nums">{bmi}</span>
                 </div>
               </div>
-              <div className="flex-row justify-between items-center px-2 py-1 bg-primary-container text-on-primary-container rounded-lg">
-                <span className="text-[10px] font-black uppercase">{t('triage.vitals.bmi')}</span>
-                <span className="text-xl font-black">{bmi} <small className="text-[10px] font-normal opacity-70">kg/m²</small></span>
-              </div>
-            </div>
-          </div>
+            </ClinicalCard>
         </div>
 
         <div className="w-80 flex-column gap-4">
-          <div className="card text-center py-10 relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-2 opacity-10 font-black text-4xl uppercase pointer-events-none">v5</div>
-            <span className="metric-label">{t('dashboard.avg_news')}</span>
-            <div className={`text-6xl font-extrabold text-${triageColor}`}>{news2Score}</div>
+          <ClinicalCard className="text-center py-10 relative overflow-hidden">
+            <span className="metric-label">NEWS2 SCORE</span>
+            <div className={`text-6xl font-extrabold text-${triageColor} tabular-nums`}>{news2Score}</div>
             <div className={`mt-4 px-4 py-1 rounded-full inline-block text-xs font-black uppercase bg-${triageColor} text-white`}>
               {escalation.level}
             </div>
-            {escalation.level !== 'NONE' && (
-              <p className="text-[10px] font-bold uppercase mt-1 opacity-60">Source: {escalation.source}</p>
-            )}
-            <p className="mt-2 text-[10px] text-on-surface-variant italic">Ref: NEWS2 Protocol 2026</p>
-          </div>
+          </ClinicalCard>
 
-          <div className="card flex-column items-center justify-center p-0 relative overflow-hidden" style={{ height: '100px', cursor: 'pointer' }} onMouseDown={startHoldSubmit} onMouseUp={cancelHoldSubmit}>
-            <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: `${holdProgress}%`, backgroundColor: 'var(--primary)', opacity: 0.2 }} />
-            <span className="font-bold text-primary text-xl">{t('triage.hold_to_log')}</span>
-          </div>
+          <button 
+            className="btn-primary flex-column items-center justify-center p-0 relative overflow-hidden" 
+            style={{ height: '100px' }} 
+            onClick={() => {
+               if (!selectedPatientId || !selectedEncounterId) return alert(t('triage.no_encounter'));
+               logAction('triage_log_execute');
+               executeSubmit(currentUser.email);
+            }}
+            disabled={!selectedPatientId || !selectedEncounterId}
+          >
+            <span className="material-symbols-outlined text-4xl mb-1">save_as</span>
+            <span className="font-black text-xs uppercase tracking-widest">LOG CLINICAL VITALS</span>
+          </button>
         </div>
       </div>
     </div>

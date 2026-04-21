@@ -13,14 +13,13 @@ const VersionDisplay = () => {
 
   return (
     <div style={{
-      padding: '0.4rem 0.75rem',
-      fontSize: '0.55rem',
-      letterSpacing: '0.02em',
+      padding: '0.625rem 1rem',
+      fontSize: '0.5rem',
+      letterSpacing: '0.05em',
       color: 'var(--on-surface-variant)',
-      opacity: 0.5,
+      opacity: 'var(--version-opacity)',
       fontFamily: 'monospace',
-      borderTop: '1px solid var(--outline-variant)',
-      backgroundColor: 'var(--surface-container-low)',
+      textTransform: 'uppercase',
       display: 'flex',
       flexDirection: 'column',
       gap: '2px'

@@ -35,7 +35,7 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 
 // ─── Sentinel Versioning ──────────────────────────────────────────────────────
-const SENTINEL_VSN = "2"; // Increment this to force global cache reset on next load
+const SENTINEL_VSN = "3"; // Increment this to force global cache reset on next load
 
 // ─── Synchronous DB Init (REQUIRED — async export causes null-db bug) ─────────
 // NOTE: initializeFirestore is synchronous. Persistence is configured here.

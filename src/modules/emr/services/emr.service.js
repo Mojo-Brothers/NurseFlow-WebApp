@@ -1,125 +1,168 @@
 import { db } from '../../../core/firebase.js';
-import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES, SYNC_PRIORITIES } from '../../../core/constants.js';
-import { logAudit } from '../../../core/services/audit.service.js';
+import { 
+  collection, 
+  doc, 
+  runTransaction, 
+  serverTimestamp, 
+  query, 
+  where, 
+  limit, 
+  getDocs, 
+  orderBy,
+  updateDoc,
+  setDoc
+} from 'firebase/firestore';
+import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES } from '../../../core/constants.js';
 
 /**
- * Menyimpan SOAP note dan memicu audit log secara atomik (Spark compatible).
- * @param {Object} params
+ * 🛡️ DECOUPLED OPERATIONAL BRIDGES
+ * Separated from main EMR transaction to allow for targeted retries.
  */
-export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapData }) => {
-  if (!encounterId) throw new Error('Encounter ID wajib disediakan untuk registrasi EMR.');
 
-  const recordRef = doc(collection(db, COLLECTIONS.MEDICAL_RECORDS));
+export const triggerBillingItem = async ({ encounterId, patientId, doctorEmail }) => {
+  const billingQuery = query(
+    collection(db, COLLECTIONS.BILLING),
+    where('encounter_id', '==', encounterId),
+    limit(1)
+  );
+  const billingSnap = await getDocs(billingQuery);
+  
+  if (billingSnap.empty) throw new Error('Billing record not found for this encounter.');
+
+  const billDoc = billingSnap.docs[0];
+  const billRef = doc(db, COLLECTIONS.BILLING, billDoc.id);
+  const currentBill = billDoc.data();
+  const timestamp = serverTimestamp();
+
+  const billingItem = {
+    description: `Consultation - Dr. ${doctorEmail.split('@')[0].toUpperCase()}`,
+    qty: 1,
+    unit_price: 150000,
+    total: 150000,
+    timestamp: timestamp
+  };
+
+  await updateDoc(billRef, {
+    line_items: [...(currentBill.line_items || []), billingItem],
+    total: (currentBill.total || 0) + 150000,
+    updated_at: timestamp
+  });
+
+  return { ok: true, id: billDoc.id, item: billingItem };
+};
+
+export const triggerPharmacyOrder = async ({ medications, patientId, encounterId, doctorEmail }) => {
+  if (!medications?.length) return { ok: true, count: 0 };
+
+  const timestamp = serverTimestamp();
+  let count = 0;
+
+  // We use batch-like setDoc for independent med orders
+  for (const med of medications) {
+    const medRef = doc(collection(db, COLLECTIONS.MEDICATIONS));
+    await setDoc(medRef, {
+      ...med,
+      patient_id: patientId,
+      encounter_id: encounterId,
+      prescribed_by: doctorEmail,
+      status: 'PENDING',
+      prescribed_at: timestamp
+    });
+    count++;
+  }
+
+  return { ok: true, count };
+};
+
+/**
+ * CORE EMR TRANSACTION
+ * Saves the soap note and audit log. Operational effects are returned for external triggering.
+ */
+export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapData, status = 'SIGNED' }) => {
+  if (!encounterId) throw new Error('Encounter ID wajib disediakan.');
+
+  const soapRef = doc(collection(db, COLLECTIONS.MEDICAL_RECORDS)); // V6 Primary Collection
   const encounterRef = doc(db, COLLECTIONS.ENCOUNTERS, encounterId);
-  const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
 
   try {
-    await runTransaction(db, async (transaction) => {
+    const coreResult = await runTransaction(db, async (transaction) => {
       const timestamp = serverTimestamp();
+      
+      // 1. 🛡️ REAL-TIME VALIDATION
+      const encounterSnap = await transaction.get(encounterRef);
+      if (!encounterSnap.exists()) throw new Error('Clinical encounter not found.');
+      
+      const encounter = encounterSnap.data();
+      if (['DISCHARGED', 'CANCELLED'].includes(encounter.status)) {
+        throw new Error(`LOCKDOWN: Encounter finalized by ${encounter.updated_by} at ${encounter.updated_at?.toDate().toLocaleString()}`);
+      }
 
-      const payload = {
+      // 2. CORE SOAP PAYLOAD
+      const soapPayload = {
         patientId,
         encounterId,
         doctor:           doctorEmail,
-        type:             'SOAP_NOTE',
+        status:           status,
         subjective:       soapData.subjective,
         objective:        soapData.objective,
         assessment:       soapData.assessment,
         plan_medications: soapData.plan_medications || [],
         plan_instructions: soapData.plan_instructions || '',
         created_at:       timestamp,
-        schema_version:   5.1,
-        is_locked:        true,
+        signed_at:        status === 'SIGNED' ? timestamp : null,
+        signed_by:        status === 'SIGNED' ? doctorEmail : null,
       };
 
-      // 1. Simpan SOAP Note
-      transaction.set(recordRef, payload);
+      transaction.set(soapRef, soapPayload);
 
-      // 2. Automated Pharmacy Orders (The Highway)
-      if (soapData.plan_medications && soapData.plan_medications.length > 0) {
-        soapData.plan_medications.forEach(medName => {
-          const medRef = doc(collection(db, COLLECTIONS.MEDICATIONS));
-          transaction.set(medRef, {
-            medication_name: medName,
-            patient_id:      patientId,
-            encounter_id:    encounterId,
-            prescribed_by:   doctorEmail,
-            prescribed_at:   timestamp,
-            status:          'PENDING',
-            dosage:          'As per SOAP plan',
-            source_soap_id:  recordRef.id
-          });
-        });
-      }
-
-      // 3. Automated Billing Itemization (Financial Bridge)
-      // JCI Requirement: Professional fees must be linked to clinical action
-      const billingQuery = query(
-        collection(db, COLLECTIONS.BILLING),
-        where('encounter_id', '==', encounterId),
-        limit(1)
-      );
-      const billingSnap = await getDocs(billingQuery);
-      
-      if (!billingSnap.empty) {
-        const billDoc = billingSnap.docs[0];
-        const currentItems = billDoc.data().line_items || [];
-        const updatedItems = [
-          ...currentItems,
-          {
-            description: `Professional Consultation - ${doctorEmail}`,
-            qty: 1,
-            unit_price: 150000, 
-            total: 150000,
-            linked_record_id: recordRef.id,
-            timestamp: timestamp
-          }
-        ];
-        const subtotal = updatedItems.reduce((sum, i) => sum + i.total, 0);
-        transaction.update(billDoc.ref, { 
-          line_items: updatedItems, 
-          subtotal, 
-          total: subtotal,
-          updated_at: timestamp 
-        });
-      }
-
-      // 4. Lifecycle Transition (Workflow Intelligence)
-      transaction.update(encounterRef, {
-        status:     ENCOUNTER_STATUSES.IN_TREATMENT,
-        updated_at: timestamp,
-        updated_by: doctorEmail
-      });
-
-      // 5. JCI Clinical Signature Audit
+      // 3. CORE AUDIT
+      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
       transaction.set(auditRef, {
         timestamp,
-        user:          doctorEmail,
-        action:        AUDIT_ACTIONS.MEDICAL_ACTION,
+        user: doctorEmail,
+        action: status === 'SIGNED' ? AUDIT_ACTIONS.UPDATE : 'DRAFT_SAVED',
         resource_type: COLLECTIONS.MEDICAL_RECORDS,
-        resource_id:   recordRef.id,
-        reason:        'CLINICAL_DOCUMENTATION_COMPLETE',
-        delta: {
-          assessment: soapData.assessment,
-          order_count: soapData.plan_medications?.length || 0,
-          new_status: ENCOUNTER_STATUSES.IN_TREATMENT
-        },
-        source: 'WEB_APP_CORE_SOAP'
+        resource_id: soapRef.id,
+        reason: status === 'SIGNED' ? 'CLINICAL_SIGN_OFF' : 'DRAFT_PERSISTENCE',
+        delta: { status, encounterId }
       });
+
+      return { soapId: soapRef.id, status };
     });
 
-    return recordRef.id;
+    // 🚀 THE HIGHWAY: Trigger operational side-effects if SIGNED
+    const receipt = { 
+      ...coreResult, 
+      billing: { ok: false }, 
+      pharmacy: { ok: false } 
+    };
+
+    if (status === 'SIGNED') {
+      try {
+        receipt.billing = await triggerBillingItem({ encounterId, patientId, doctorEmail });
+      } catch (e) {
+        receipt.billing = { ok: false, error: e.message };
+      }
+
+      try {
+        receipt.pharmacy = await triggerPharmacyOrder({ 
+          medications: soapData.plan_medications, 
+          patientId, 
+          encounterId, 
+          doctorEmail 
+        });
+      } catch (e) {
+        receipt.pharmacy = { ok: false, error: e.message };
+      }
+    }
+
+    return receipt;
   } catch (err) {
     console.error('[EmrService] SOAP transaction failed:', err);
     throw err;
   }
 };
 
-/**
- * Mengambil semua rekam medis pasien (diurutkan terbaru).
- * @param {string} patientId
- * @returns {Promise<import('../../core/types').SoapNote[]>}
- */
 export const getPatientRecords = async (patientId) => {
   const q = query(
     collection(db, COLLECTIONS.MEDICAL_RECORDS),

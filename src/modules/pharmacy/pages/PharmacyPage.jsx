@@ -1,168 +1,187 @@
-/**
- * Pharmacy Module — E-Prescription & Dispensing Queue
- * Role: PHARMACIST (dispensing), DOCTOR (prescribe), ADMIN (full)
- */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { usePharmacyStore } from '../pharmacy.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
+import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
+import ClinicalCard from '../../../components/ui/ClinicalCard';
 
-const STATUS_CONFIG = {
-  PENDING:      { label: 'Menunggu',    bg: '#fef9c3', text: '#92400e', icon: 'schedule'      },
-  DISPENSED:    { label: 'Diberikan',   bg: '#dcfce7', text: '#166534', icon: 'check_circle'  },
-  ADMINISTERED: { label: 'Diberikan ke Pasien', bg: '#dbeafe', text: '#1e40af', icon: 'medication' },
-  CANCELLED:    { label: 'Dibatalkan',  bg: '#fee2e2', text: '#991b1b', icon: 'cancel'        },
-};
-
-const ROUTE_LABELS = {
-  PO: 'Oral (PO)', IV: 'Infus (IV)', SC: 'Subkutan', IM: 'Intramuskular', TOP: 'Topikal'
+const ROUTE_CONFIG = {
+  PO:  { label: 'Oral', icon: 'pill', bg: 'var(--surface-container-high)', text: 'var(--on-surface)' },
+  IV:  { label: 'Intravena', icon: 'colorize', bg: '#fee2e2', text: '#b91c1c', highAlert: true },
+  SC:  { label: 'Subkutan', icon: 'syringe', bg: '#fee2e2', text: '#b91c1c', highAlert: true },
+  IM:  { label: 'Intramuskular', icon: 'syringe', bg: '#fee2e2', text: '#b91c1c', highAlert: true },
 };
 
 export default function PharmacyPage() {
   const { currentUser, isPharmacist, isAdmin } = useAuth();
-  const { pendingQueue, isLoading, error, fetchQueue, dispense, cancel } = usePharmacyStore();
+  const { pendingQueue, isLoading, fetchQueue, dispense, cancel } = usePharmacyStore();
   const { patients, fetchPatients } = usePatientStore();
-  const [dispensingId, setDispensingId] = useState(null);
+  const { logAction } = useClinicalMetrics('PHARMACY_QUEUE');
+
+  const [verifyingMed, setVerifyingMed] = useState(null);
+  const [ipsgInput, setIpsgInput] = useState('');
+  const [ipsgError, setIpsgError] = useState(false);
 
   useEffect(() => {
     fetchQueue();
     fetchPatients();
   }, [fetchQueue, fetchPatients]);
 
-  const handleDispense = async (id) => {
-    setDispensingId(id);
-    try { await dispense(id, currentUser.email); }
-    catch (e) { alert('Gagal: ' + e.message); }
-    setDispensingId(null);
+  const getPatient = (pid) => patients.find(p => p.id === pid);
+
+  const startDispense = (med) => {
+    logAction('pharmacy_dispense_init');
+    setVerifyingMed(med);
+    setIpsgInput('');
+    setIpsgError(false);
   };
 
-  const handleCancel = async (id) => {
-    if (!window.confirm('Batalkan resep ini?')) return;
-    try { await cancel(id, currentUser.email); }
-    catch (e) { alert('Gagal: ' + e.message); }
-  };
+  const handleFinalDispense = async () => {
+    const patient = getPatient(verifyingMed.patient_id);
+    // 🛡️ IPSG Goal 1: Verify MRN matches
+    if (ipsgInput.trim().toUpperCase() !== patient.mrn.toUpperCase()) {
+      setIpsgError(true);
+      return;
+    }
 
-  const getPatientName = (pid) => {
-    const p = patients.find(p => p.id === pid);
-    return p ? `${p.mrn} — ${p.name} (${calculateAge(p.demographics?.dob)} thn)` : pid;
+    try { 
+      logAction('pharmacy_dispense_complete');
+      await dispense(verifyingMed.id, currentUser.email); 
+      setVerifyingMed(null);
+      fetchQueue();
+    } catch (e) { 
+      alert('Dispensing failure: ' + e.message); 
+    }
   };
-
-  const formatTime = (ts) => ts?.toDate?.().toLocaleString('id-ID', {
-    day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit'
-  }) ?? '—';
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
-      <div className="flex-row items-start justify-between mb-8">
-        <div>
-          <p className="subtitle">Modul Farmasi</p>
-          <h2 className="title">E-Prescription & Dispensing</h2>
-          <p className="text-on-surface-variant text-sm mt-1">
-            Antrian Resep · {pendingQueue.length} pesanan menunggu verifikasi
-          </p>
-        </div>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem',
-          borderRadius: 'var(--radius-full)', fontSize: '0.75rem', fontWeight: '700',
-          backgroundColor: 'var(--secondary-container)', color: 'var(--on-secondary-container)',
-        }}>
-          <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>medication</span>
-          {isPharmacist ? 'APOTEKER' : isAdmin ? 'ADMIN' : 'READ-ONLY'}
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-        {[
-          { label: 'Antrian Pending', value: pendingQueue.length, color: 'var(--warning, #e65100)', icon: 'schedule'    },
-          { label: 'Pasien Terdampak', value: new Set(pendingQueue.map(m => m.patient_id)).size, color: 'var(--primary)', icon: 'person'     },
-          { label: 'Urgent (IV/SC)', value: pendingQueue.filter(m => ['IV','SC','IM'].includes(m.route)).length, color: 'var(--error)', icon: 'emergency' },
-        ].map(s => (
-          <div key={s.label} className="card">
-            <div className="flex-row items-center gap-2 mb-2">
-              <span className="material-symbols-outlined" style={{ color: s.color, fontSize: '1.1rem' }}>{s.icon}</span>
-              <p className="metric-label">{s.label}</p>
+    <div className="p-8 h-full flex-column gap-6 overflow-hidden relative">
+      {/* 🚀 Header Metrics */}
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.5rem' }}>
+         <ClinicalCard padding="1.5rem">
+            <span className="text-[10px] font-black uppercase text-on-surface-variant opacity-60">Pending Queue</span>
+            <div className="text-3xl font-black text-primary">{pendingQueue.length}</div>
+         </ClinicalCard>
+         <ClinicalCard padding="1.5rem">
+            <span className="text-[10px] font-black uppercase text-on-surface-variant opacity-60">High Alert (Parenteral)</span>
+            <div className="text-3xl font-black text-error">
+               {pendingQueue.filter(m => ['IV','SC','IM'].includes(m.route)).length}
             </div>
-            <p style={{ fontSize: '2rem', fontWeight: '800', color: s.color, margin: 0, fontFamily: 'var(--font-headline)' }}>{s.value}</p>
-          </div>
-        ))}
+         </ClinicalCard>
+         <ClinicalCard padding="1.5rem">
+            <span className="text-[10px] font-black uppercase text-on-surface-variant opacity-60">Impacted Patients</span>
+            <div className="text-3xl font-black">{new Set(pendingQueue.map(m => m.patient_id)).size}</div>
+         </ClinicalCard>
+         <ClinicalCard padding="1.5rem" className="bg-secondary-container">
+            <span className="text-[10px] font-black uppercase text-on-secondary-container opacity-60">Current Session</span>
+            <div className="text-sm font-bold text-on-secondary-container">APOTEKER: {currentUser?.email?.split('@')[0].toUpperCase()}</div>
+         </ClinicalCard>
       </div>
 
-      {error && (
-        <div className="card mb-4 p-4" style={{ backgroundColor: 'var(--error-container)', color: 'var(--on-error-container)' }}>⚠️ {error}</div>
-      )}
+      {/* 📋 Dispensing Bento Queue */}
+      <div className="flex-1 overflow-y-auto pr-2 pb-20">
+         <div className="flex-row items-center justify-between mb-4">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Active Dispensing Queue</h3>
+            <button onClick={fetchQueue} className="btn-ghost text-[10px] font-bold">REFRESH QUEUE</button>
+         </div>
 
-      <div className="card padding-0 overflow-hidden">
-        <div className="px-6 py-4 flex-row items-center gap-2"
-          style={{ backgroundColor: 'var(--surface-container-low)', borderBottom: '1px solid var(--outline-variant)' }}>
-          <span className="material-symbols-outlined text-secondary">local_pharmacy</span>
-          <h3 className="font-bold text-base">Antrian Dispensing</h3>
-          <button onClick={fetchQueue} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', fontWeight: '600' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>refresh</span> Refresh
-          </button>
-        </div>
+         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
+            {pendingQueue.length === 0 ? (
+               <div className="col-span-full py-20 text-center flex-column items-center gap-4">
+                  <span className="material-symbols-outlined text-6xl text-success opacity-20">inventory_2</span>
+                  <p className="font-bold text-on-surface-variant">Zero Pending Orders. The bridge is clear.</p>
+               </div>
+            ) : pendingQueue.map(med => {
+               const p = getPatient(med.patient_id);
+               const routeInfo = ROUTE_CONFIG[med.route] || { label: med.route, icon: 'medication' };
+               return (
+                  <ClinicalCard key={med.id} padding="1.5rem" className="hover-lift transition-all">
+                     {routeInfo.highAlert && (
+                        <div className="absolute top-0 right-0 px-3 py-1 bg-error text-white text-[10px] font-black uppercase rounded-bl-lg">
+                           HIGH ALERT
+                        </div>
+                     )}
+                     
+                     <div className="flex-column gap-4">
+                        <div className="flex-column gap-1">
+                           <span className="text-[10px] font-black text-primary uppercase">Patient Identity</span>
+                           <div className="text-base font-black truncate">{p ? p.name : 'Unknown'}</div>
+                           <div className="text-[10px] font-bold text-on-surface-variant">MRN: {p ? p.mrn : '---'} • DOB: {p ? p.demographics?.dob : '---'}</div>
+                        </div>
 
-        <table className="w-full text-left">
-          <thead>
-            <tr style={{ backgroundColor: 'var(--surface-container)' }}>
-              {['Pasien', 'Obat', 'Dosis', 'Frekuensi', 'Rute', 'Dokter', 'Waktu Resep', 'Aksi'].map(h => (
-                <th key={h} className="py-3 px-5 font-bold text-xs uppercase text-on-surface-variant">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr><td colSpan="8" className="py-10 text-center text-on-surface-variant">
-                <span className="material-symbols-outlined anim-spin">progress_activity</span>
-              </td></tr>
-            ) : pendingQueue.length === 0 ? (
-              <tr><td colSpan="8" className="py-12 text-center" style={{ color: 'var(--on-surface-variant)' }}>
-                <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '0.5rem', opacity: 0.4 }}>check_circle</span>
-                Tidak ada resep pending. Antrian kosong.
-              </td></tr>
-            ) : pendingQueue.map((med, i) => (
-              <tr key={med.id} style={{ backgroundColor: i % 2 === 0 ? 'transparent' : 'var(--surface-container-lowest)', transition: 'background 0.15s' }}>
-                <td className="py-4 px-5 font-bold text-sm" style={{ color: 'var(--primary)' }}>
-                  {getPatientName(med.patient_id)}
-                </td>
-                <td className="py-4 px-5 font-bold text-sm">{med.medication_name}</td>
-                <td className="py-4 px-5 text-sm text-on-surface-variant">{med.dosage || '—'}</td>
-                <td className="py-4 px-5 text-sm text-on-surface-variant">{med.frequency || '—'}</td>
-                <td className="py-4 px-5">
-                  <span style={{
-                    padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.7rem', fontWeight: '700',
-                    backgroundColor: ['IV','SC','IM'].includes(med.route) ? '#fee2e2' : '#dbeafe',
-                    color: ['IV','SC','IM'].includes(med.route) ? '#991b1b' : '#1e40af',
-                  }}>{ROUTE_LABELS[med.route] || med.route || '—'}</span>
-                </td>
-                <td className="py-4 px-5 text-sm text-on-surface-variant">{med.prescribed_by?.split('@')[0]}</td>
-                <td className="py-4 px-5 text-xs text-on-surface-variant">{formatTime(med.prescribed_at)}</td>
-                <td className="py-4 px-5">
-                  <div className="flex-row gap-2">
-                    {(isPharmacist || isAdmin) && (
-                      <button
-                        disabled={dispensingId === med.id}
-                        onClick={() => handleDispense(med.id)}
-                        style={{
-                          padding: '0.35rem 0.9rem', borderRadius: 'var(--radius-md)', border: 'none',
-                          backgroundColor: dispensingId === med.id ? 'var(--surface-container)' : 'var(--secondary)',
-                          color: 'white', fontWeight: '700', fontSize: '0.75rem', cursor: 'pointer'
-                        }}>
-                        {dispensingId === med.id ? '...' : '✓ Dispense'}
-                      </button>
-                    )}
-                    <button onClick={() => handleCancel(med.id)} style={{
-                      padding: '0.35rem 0.9rem', borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--error)', backgroundColor: 'transparent',
-                      color: 'var(--error)', fontWeight: '600', fontSize: '0.75rem', cursor: 'pointer'
-                    }}>✕</button>
+                        <div className="p-3 rounded-xl border border-outline-variant flex-row items-center gap-4" style={{ backgroundColor: routeInfo.bg }}>
+                           <span className="material-symbols-outlined" style={{ color: routeInfo.text }}>{routeInfo.icon}</span>
+                           <div className="flex-1">
+                              <div className="text-sm font-black" style={{ color: routeInfo.text }}>{med.medication_name}</div>
+                              <div className="text-[10px] font-bold opacity-70">
+                                 {med.dosage || 'Standard Dosage'} • {routeInfo.label}
+                              </div>
+                           </div>
+                        </div>
+
+                        <div className="flex-row justify-between items-center mt-2">
+                           <div className="flex-column">
+                              <span className="text-[10px] font-black opacity-40 uppercase">Prescribed By</span>
+                              <span className="text-[10px] font-bold uppercase">{med.prescribed_by?.split('@')[0]}</span>
+                           </div>
+                           <button 
+                              onClick={() => startDispense(med)}
+                              className="btn-primary py-2 px-4 text-xs font-black uppercase tracking-wider"
+                           >
+                              ✓ Start Dispensing
+                           </button>
+                        </div>
+                     </div>
+                  </ClinicalCard>
+               );
+            })}
+         </div>
+      </div>
+
+      {/* 🛡️ IPSG DOUBLE-CHECK MODAL */}
+      {verifyingMed && (
+         <div className="absolute inset-0 bg-surface-lowest-transparent backdrop-blur-sm z-50 flex items-center justify-center p-8">
+            <ClinicalCard maxWidth="500px" padding="2rem" className="shadow-2xl border-t-8 border-secondary animate-scale-in">
+               <div className="text-center mb-6">
+                  <span className="material-symbols-outlined text-secondary text-6xl mb-4">how_to_reg</span>
+                  <h2 className="text-2xl font-black text-on-surface">IPSG Verification</h2>
+                  <p className="text-sm text-on-surface-variant mt-2 font-medium">Goal 1: Confirm patient identity before dispensing medication.</p>
+               </div>
+
+               <div className="bg-surface-container-low p-4 rounded-xl mb-6 flex-column gap-3">
+                  <div className="flex-row justify-between border-b pb-2 mb-2">
+                     <span className="text-[10px] font-black uppercase opacity-50">Patient Name</span>
+                     <span className="text-xs font-black">{getPatient(verifyingMed.patient_id)?.name}</span>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  <div className="flex-row justify-between">
+                     <span className="text-[10px] font-black uppercase opacity-50">Order</span>
+                     <span className="text-xs font-black text-secondary">{verifyingMed.medication_name}</span>
+                  </div>
+               </div>
+
+               <div className="flex-column gap-2 mb-6">
+                  <label className="text-xs font-bold text-on-surface-variant">Type Patient MRN to Confirm:</label>
+                  <input 
+                     type="text" 
+                     className={`form-input w-full text-center text-xl font-black tabular-nums ${ipsgError ? 'border-error' : ''}`}
+                     placeholder="Enter MRN..."
+                     value={ipsgInput}
+                     onChange={(e) => { setIpsgInput(e.target.value); setIpsgError(false); }}
+                     autoFocus
+                  />
+                  {ipsgError && <p className="text-[10px] text-error font-bold italic">Identity Mismatch! Verify the patient identity bracelet.</p>}
+               </div>
+
+               <div className="flex-column gap-3">
+                  <button onClick={handleFinalDispense} className="btn-primary w-full py-4 font-black uppercase tracking-widest text-lg" style={{ backgroundColor: 'var(--secondary)' }}>
+                     ✓ CONFIRM & DISPENSE
+                  </button>
+                  <button onClick={() => setVerifyingMed(null)} className="btn-ghost w-full font-bold opacity-60">Cancel Verification</button>
+               </div>
+            </ClinicalCard>
+         </div>
+      )}
     </div>
   );
 }
