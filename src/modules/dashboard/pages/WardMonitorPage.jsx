@@ -5,6 +5,7 @@ import { getTriageColor } from '../../../utils/clinicalCalculators.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { useNavigate } from 'react-router-dom';
 import HandoverModal from '../../handover/components/HandoverModal';
+import { getIsolationType } from '../../core/services/pci.service.js';
 
 export default function WardMonitorPage() {
   const navigate = useNavigate();
@@ -29,6 +30,7 @@ export default function WardMonitorPage() {
         mrn: patient?.mrn || 'N/A',
         news2: enc.last_news2 || 0,
         riskLevel: enc.escalation_level || 'NONE',
+        isolationType: getIsolationType(enc.chief_complaint || enc.assessment), 
         triageColor: getTriageColor(enc.last_news2 || 0),
         lastObs: enc.updated_at?.toDate() 
       };
@@ -55,7 +57,7 @@ export default function WardMonitorPage() {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full relative">
+    <div className="p-8 w-full relative">
       {/* 🛡️ CLINICAL CONTINUITY: SBAR MODAL */}
       {handoverContext && (
         <HandoverModal 
@@ -90,7 +92,7 @@ export default function WardMonitorPage() {
          ))}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
         {filteredData.map(item => (
           <ClinicalCard 
             key={item.id} 
@@ -104,6 +106,12 @@ export default function WardMonitorPage() {
               <div className="flex-column">
                 <span className="text-lg font-black text-on-surface group-hover:text-primary transition-colors">{item.patientName}</span>
                 <span className="text-[10px] font-bold opacity-40 uppercase tracking-tighter">MRN: {item.mrn} • Room {item.ward || 'Triage'}</span>
+                {item.isolationType && (
+                  <div className={`mt-2 flex-row items-center gap-1 text-[8px] font-black px-2 py-0.5 rounded-full border border-error animate-pulse bg-error/5 text-error`}>
+                    <span className="material-symbols-outlined text-[10px]">biosecurity</span>
+                    {item.isolationType} ISOLATION
+                  </div>
+                )}
               </div>
               <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black bg-${item.triageColor} text-white shadow-lg`}>
                 {item.news2}

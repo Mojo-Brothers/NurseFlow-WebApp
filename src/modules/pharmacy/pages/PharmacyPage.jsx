@@ -6,6 +6,7 @@ import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { deductByName } from '../services/inventory.service.js';
+import { isHighAlert, checkLasaRisk } from '../../emr/services/mmu.service.js';
 
 const ROUTE_CONFIG = {
   PO:  { label: 'Oral', icon: 'pill', bg: 'var(--surface-container-high)', text: 'var(--on-surface)' },
@@ -38,9 +39,8 @@ export default function PharmacyPage() {
     setIpsgError(false);
   };
 
-  const handleFinalDispense = async () => {
+  const handleFinalDispense = async (witness = null) => {
     const patient = getPatient(verifyingMed.patient_id);
-    // 🛡️ IPSG Goal 1: Verify MRN matches
     if (ipsgInput.trim().toUpperCase() !== patient.mrn.toUpperCase()) {
       setIpsgError(true);
       return;
@@ -48,11 +48,8 @@ export default function PharmacyPage() {
 
     try { 
       logAction('pharmacy_dispense_complete');
-      
-      // 📦 ATOMIC STOCK DEDUCTION
       await deductByName(verifyingMed.medication_name, 1);
-      
-      await dispense(verifyingMed.id, currentUser.email); 
+      await dispense(verifyingMed.id, currentUser.email, witness); 
       setVerifyingMed(null);
       fetchQueue();
     } catch (e) { 
@@ -98,48 +95,57 @@ export default function PharmacyPage() {
                   <p className="font-bold text-on-surface-variant">Zero Pending Orders. The bridge is clear.</p>
                </div>
             ) : pendingQueue.map(med => {
-               const p = getPatient(med.patient_id);
-               const routeInfo = ROUTE_CONFIG[med.route] || { label: med.route, icon: 'medication' };
-               return (
-                  <ClinicalCard key={med.id} padding="1.5rem" className="hover-lift transition-all">
-                     {routeInfo.highAlert && (
-                        <div className="absolute top-0 right-0 px-3 py-1 bg-error text-white text-[10px] font-black uppercase rounded-bl-lg">
-                           HIGH ALERT
-                        </div>
-                     )}
-                     
-                     <div className="flex-column gap-4">
-                        <div className="flex-column gap-1">
-                           <span className="text-[10px] font-black text-primary uppercase">Patient Identity</span>
-                           <div className="text-base font-black truncate">{p ? p.name : 'Unknown'}</div>
-                           <div className="text-[10px] font-bold text-on-surface-variant">MRN: {p ? p.mrn : '---'} • DOB: {p ? p.demographics?.dob : '---'}</div>
-                        </div>
+                const p = getPatient(med.patient_id);
+                const routeInfo = ROUTE_CONFIG[med.route] || { label: med.route, icon: 'medication' };
+                const lasaConflict = checkLasaRisk(med.medication_name);
+                const highAlert = isHighAlert(med.medication_name) || routeInfo.highAlert;
 
-                        <div className="p-3 rounded-xl border border-outline-variant flex-row items-center gap-4" style={{ backgroundColor: routeInfo.bg }}>
-                           <span className="material-symbols-outlined" style={{ color: routeInfo.text }}>{routeInfo.icon}</span>
-                           <div className="flex-1">
-                              <div className="text-sm font-black" style={{ color: routeInfo.text }}>{med.medication_name}</div>
-                              <div className="text-[10px] font-bold opacity-70">
-                                 {med.dosage || 'Standard Dosage'} • {routeInfo.label}
-                              </div>
-                           </div>
-                        </div>
+                return (
+                   <ClinicalCard key={med.id} padding="1.5rem" className="hover-lift transition-all">
+                      {highAlert && (
+                         <div className="absolute top-0 right-0 px-3 py-1 bg-error text-white text-[10px] font-black uppercase rounded-bl-lg animate-pulse">
+                            HIGH ALERT
+                         </div>
+                      )}
+                      
+                      <div className="flex-column gap-4">
+                         <div className="flex-column gap-1">
+                            <span className="text-[10px] font-black text-primary uppercase">Patient Identity</span>
+                            <div className="text-base font-black truncate">{p ? p.name : 'Unknown'}</div>
+                            <div className="text-[10px] font-bold text-on-surface-variant">MRN: {p ? p.mrn : '---'} • DOB: {p ? p.demographics?.dob : '---'}</div>
+                         </div>
 
-                        <div className="flex-row justify-between items-center mt-2">
-                           <div className="flex-column">
-                              <span className="text-[10px] font-black opacity-40 uppercase">Prescribed By</span>
-                              <span className="text-[10px] font-bold uppercase">{med.prescribed_by?.split('@')[0]}</span>
-                           </div>
-                           <button 
-                              onClick={() => startDispense(med)}
-                              className="btn-primary py-2 px-4 text-xs font-black uppercase tracking-wider"
-                           >
-                              ✓ Start Dispensing
-                           </button>
-                        </div>
-                     </div>
-                  </ClinicalCard>
-               );
+                         <div className="p-3 rounded-xl border-2 flex-row items-center gap-4" style={{ backgroundColor: routeInfo.bg, borderColor: lasaConflict ? 'var(--error)' : 'transparent' }}>
+                            <span className="material-symbols-outlined" style={{ color: routeInfo.text }}>{routeInfo.icon}</span>
+                            <div className="flex-1">
+                               <div className="text-sm font-black" style={{ color: routeInfo.text }}>{med.medication_name}</div>
+                               <div className="text-[10px] font-bold opacity-70">
+                                  {med.dosage || 'Standard Dosage'} • {routeInfo.label}
+                               </div>
+                               {lasaConflict && (
+                                 <div className="mt-1 flex-row items-center gap-1 text-error text-[8px] font-black uppercase animate-bounce-short">
+                                    <span className="material-symbols-outlined text-[10px]">warning</span>
+                                    LASA: Confuse with {lasaConflict}?
+                                 </div>
+                               )}
+                            </div>
+                         </div>
+
+                         <div className="flex-row justify-between items-center mt-2">
+                            <div className="flex-column">
+                               <span className="text-[10px] font-black opacity-40 uppercase">Prescribed By</span>
+                               <span className="text-[10px] font-bold uppercase">{med.prescribed_by?.split('@')[0]}</span>
+                            </div>
+                            <button 
+                               onClick={() => startDispense(med)}
+                               className="btn-primary py-2 px-4 text-xs font-black uppercase tracking-wider"
+                            >
+                               ✓ Start Dispensing
+                            </button>
+                         </div>
+                      </div>
+                   </ClinicalCard>
+                );
             })}
          </div>
       </div>
@@ -178,8 +184,36 @@ export default function PharmacyPage() {
                   {ipsgError && <p className="text-[10px] text-error font-bold italic">Identity Mismatch! Verify the patient identity bracelet.</p>}
                </div>
 
+               {isHighAlert(verifyingMed.medication_name) && (
+                  <div className="p-4 bg-error-container text-on-error-container rounded-xl mb-6 border border-error animate-pulse">
+                     <div className="flex-row items-center gap-2 mb-2">
+                        <span className="material-symbols-outlined text-sm">security</span>
+                        <span className="text-[10px] font-black uppercase">JCI HIGH-ALERT PROTOCOL</span>
+                     </div>
+                     <p className="text-[10px] font-bold mb-3">Double verification required. A colleague must witness this dispense.</p>
+                     <input 
+                        type="email" 
+                        className="form-input w-full text-xs" 
+                        placeholder="Witness Email Address..." 
+                        required 
+                        id="witness_email"
+                     />
+                  </div>
+               )}
+
                <div className="flex-column gap-3">
-                  <button onClick={handleFinalDispense} className="btn-primary w-full py-4 font-black uppercase tracking-widest text-lg" style={{ backgroundColor: 'var(--secondary)' }}>
+                  <button 
+                     onClick={() => {
+                        const witness = document.getElementById('witness_email')?.value;
+                        if (isHighAlert(verifyingMed.medication_name) && (!witness || witness === currentUser.email)) {
+                           alert("JCI MMU VALIDATION: A witness email (different from yours) is mandatory for High-Alert drugs.");
+                           return;
+                        }
+                        handleFinalDispense(witness);
+                     }} 
+                     className="btn-primary w-full py-4 font-black uppercase tracking-widest text-lg" 
+                     style={{ backgroundColor: 'var(--secondary)' }}
+                  >
                      ✓ CONFIRM & DISPENSE
                   </button>
                   <button onClick={() => setVerifyingMed(null)} className="btn-ghost w-full font-bold opacity-60">Cancel Verification</button>

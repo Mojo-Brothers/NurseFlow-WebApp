@@ -80,7 +80,7 @@ export default function BedManagementPage() {
   if (isLoading) return <div className="p-20 text-center opacity-40 font-black uppercase">Loading Ward Map...</div>;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-8 w-full">
       <header className="mb-10 flex-row justify-between items-end">
          <div>
             <h2 className="title text-primary">Ward Spatial Management</h2>

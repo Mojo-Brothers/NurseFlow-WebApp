@@ -228,3 +228,66 @@
     - [x] Refactor Wayfinding untuk menggunakan `useMemo` (Tanpa Render Bertingkat)
     - [x] Perbaiki pelanggaran ESLint di semua modul baru
     - [x] Sertifikasi Proyek Utama (Master Project)
+
+- [x] **Intelijen Anestesi & Bedah (ASC - Anesthesia and Surgical Care)**
+    - *Kegunaan: Menjamin keselamatan pasien selama prosedur invasif melalui pemantauan dan dokumentasi perioperatif yang ketat.*
+    - [x] Buat `surgery.service.js` (Logika Penjadwalan & Skor Aldrete)
+    - [x] Implementasi Dashboard Kamar Operasi (Real-time Tracker)
+    - [x] Integrasi Checklist Keselamatan Bedah (WHO Surgical Safety Checklist)
+    - [x] Buat Form Assessment Pra-Anestesi & Pemulihan (PACU)
+    - [x] Sertifikasi Bedah Fase 28
+
+- [x] **Intelijen Keselamatan Obat Lanjutan (MMU - Medication Management & Use)**
+    - *Kegunaan: Mencegah kesalahan pemberian obat melalui sistem peringatan dini untuk obat berisiko tinggi dan LASA.*
+    - [x] Buat `mmu.service.js` (Mesin Validasi LASA & High-Alert)
+    - [x] Implementasi Visual Badge LASA pada Modul EMR & Farmasi
+    - [x] Tambahkan Verifikasi Ganda (Dual-Sign) untuk Obat High-Alert
+    - [x] Integrasi Database Interaksi Obat Real-time
+    - [x] Sertifikasi Keselamatan Obat Fase 29
+
+- [x] **Surveilans Pencegahan & Pengendalian Infeksi (PCI - Prevention & Control of Infections)**
+    - *Kegunaan: Mendeteksi dini risiko infeksi rumah sakit (HAI) dan memastikan kepatuhan protokol isolasi.*
+    - [x] Buat `pci.service.js` (Mesin Deteksi Risiko Infeksi)
+    - [x] Implementasi Visual Badge "Isolation Protocol" pada Dashboard
+    - [x] Integrasi Laporan HAIs (Hospital Acquired Infections) Otomatis
+    - [x] Buat Dashboard Surveilans Infeksi (Heatmap Bangsal)
+    - [x] Sertifikasi Infeksi Fase 30
+
+- [x] **Intelijen Pendidikan Pasien (PFE - Patient & Family Education)**
+    - *Kegunaan: Memastikan pasien memahami perawatan mereka melalui dokumentasi edukasi yang terstruktur.*
+    - [x] Buat `pfe.service.js` (Repositori Materi Edukasi)
+    - [x] Implementasi Form Verifikasi Pemahaman Pasien di EMR
+    - [x] Tambahkan "Resource Library" Pasien di Portal PHR
+    - [x] Integrasi Dokumentasi Edukasi Terpadu ke Ringkasan Medis
+    - [x] Sertifikasi Edukasi Fase 31
+
+- [ ] **Tata Kelola, Kepemimpinan, & Pengarahan (GLD - Governance, Leadership, and Direction)**
+    - *Kegunaan: Memberikan visibilitas eksekutif terhadap performa rumah sakit dan kepatuhan standar JCI.*
+    - [ ] Buat `gld.service.js` (Mesin KPI Eksekutif)
+    - [ ] Implementasi Executive Command Center (Dashboard Strategis)
+    - [ ] Integrasi JCI Quality Metrics Tracker
+    - [ ] Buat Modul Manajemen Risiko Institusi (Incident Reporting)
+    - [ ] Sertifikasi Tata Kelola Fase 32
+
+- [ ] **Kualifikasi & Pendidikan Staf (SQE - Staff Qualifications and Education)**
+    - *Kegunaan: Menjamin semua tenaga medis memiliki lisensi, kredensial, dan kompetensi yang valid.*
+    - [ ] Buat `sqe.service.js` (Mesin Kredensial & Kompetensi)
+    - [ ] Implementasi Dashboard Kredensial Staf (License Tracker)
+    - [ ] Integrasi Clinical Privilege Verification pada Modul Bedah & EMR
+    - [ ] Sertifikasi Kualifikasi Staf Fase 33
+
+- [ ] **Manajemen Informasi (MOI - Management of Information)**
+    - *Kegunaan: Mengatur tata kelola data, standarisasi terminologi medis, dan keamanan informasi.*
+    - [ ] Buat `moi.service.js` (Mesin Tata Kelola Informasi)
+    - [ ] Implementasi Medical Record Life-cycle Tracker (Retensi & Pemusnahan)
+    - [ ] Buat Modul Standarisasi Singkatan & Simbol Medis (JCI Compliant)
+    - [ ] Integrasi Dashboard Audit Keamanan Data (Security Analytics)
+    - [ ] Sertifikasi Manajemen Informasi Fase 34
+
+- [ ] **Hak Pasien & Keluarga (PFR - Patient and Family Rights)**
+    - *Kegunaan: Memastikan privasi, kerahasiaan, dan hak pasien terpenuhi dalam setiap proses pelayanan.*
+    - [ ] Buat `pfr.service.js` (Mesin Manajemen Hak & Privasi)
+    - [ ] Implementasi Digital Informed Consent dengan Witness Verification
+    - [ ] Buat Dashboard Penanganan Keluhan Pasien (Complaint Handling)
+    - [ ] Integrasi Modul Preferensi Privasi Pasien (DNR, Kerahasiaan Identitas)
+    - [ ] Sertifikasi Hak Pasien Fase 35

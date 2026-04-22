@@ -1,0 +1,22 @@
+.surveillance-page {
+    padding: 3rem;
+    background: var(--surface-container-lowest);
+    min-height: 100%;
+}
+
+.surveillance-page .grid-cols-12 {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+}
+
+.chip-critical {
+    background: var(--error-container);
+    color: var(--on-error-container);
+    border: 1px solid var(--error);
+}
+
+.chip-watch {
+    background: var(--warning-container);
+    color: var(--on-warning-container);
+    border: 1px solid var(--warning);
+}

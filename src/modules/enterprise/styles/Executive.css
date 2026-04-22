@@ -1,0 +1,32 @@
+.executive-war-room {
+    padding: 4rem;
+    min-height: 100%;
+    background: var(--surface-container-lowest);
+}
+
+.executive-war-room .grid-cols-12 {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+}
+
+.executive-war-room .grid-cols-7 {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.executive-war-room .chip-outline {
+    background: transparent;
+    border: 1px solid var(--outline-variant);
+    opacity: 0.8;
+}
+
+/* Animations for critical indicators */
+@keyframes glow-error {
+    0% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.2); }
+    70% { box-shadow: 0 0 20px 10px rgba(186, 26, 26, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0); }
+}
+
+.border-t-error {
+    animation: glow-error 3s infinite;
+}

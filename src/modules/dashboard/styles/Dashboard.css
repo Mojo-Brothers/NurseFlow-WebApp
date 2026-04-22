@@ -1,7 +1,6 @@
 .dashboard-main {
-  padding: 6rem 2rem 6rem;
-  max-width: 80rem;
-  margin: 0 auto;
+  padding: 1.5rem 0.5rem 6rem;
+  width: 100%;
 }
 
 .editorial-header {
@@ -11,18 +10,18 @@
 
 .subtitle {
   color: var(--on-surface-variant);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-size: 0.65rem; /* Reduced */
   text-transform: uppercase;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .title {
-  font-size: 1.875rem;
-  font-weight: 800;
+  font-size: 1.5rem; /* Reduced from 1.875rem */
+  font-weight: 900;
   color: var(--on-surface);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em;
 }
 
 .date-chip {
@@ -48,13 +47,12 @@
 .metrics-group {
   grid-column: span 12;
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Fluid density */
+  gap: var(--space-3);
 }
-@media (min-width: 768px) {
+@media (min-width: 1440px) {
   .metrics-group {
-    grid-column: span 8;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr); /* More columns on wide screens */
   }
 }
 
@@ -73,7 +71,7 @@
   width: 1.75rem;
   height: 1.75rem;
   border-radius: var(--radius-full);
-  border: 2px solid white;
+  border: 2px solid var(--surface);
   margin-left: -0.5rem;
 }
 
@@ -290,7 +288,7 @@
 }
 
 .btn-white {
-  background-color: white;
+  background-color: var(--surface);
   color: var(--primary);
   padding: 0.5rem 1rem;
   border-radius: var(--radius-md);
@@ -379,7 +377,7 @@
   flex: 1;
   min-width: 200px;
   height: 3rem;
-  background-color: white;
+  background-color: var(--surface-container-low);
   border-radius: var(--radius-xl);
   padding: 0.5rem;
   display: flex;
@@ -415,4 +413,8 @@
   font-size: 0.625rem;
   font-weight: 700;
   color: var(--on-surface-variant);
+}
+
+.bg-surface {
+  background-color: var(--surface);
 }

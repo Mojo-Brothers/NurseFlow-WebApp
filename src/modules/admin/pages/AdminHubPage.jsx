@@ -105,7 +105,7 @@ export default function AdminHubPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-8 w-full">
       {/* Header with Global Alert Indicator */}
       <div className="flex-row items-start justify-between mb-8">
         <div>
@@ -505,7 +505,7 @@ function DataConflictsTabView() {
       <div className="p-12 text-center">
         <span className="material-symbols-outlined text-outline" style={{ fontSize: '4rem' }}>fact_check</span>
         <h4 className="title text-lg mt-4">Integritas Data Terpelihara</h4>
-        <p className="text-outline text-sm mt-2 max-w-md mx-auto">
+        <p className="text-outline text-sm mt-2">
           Tidak ada konflik versi data klinis saat ini. Semua sinkronisasi offline-to-online berhasil diverifikasi secara otomatis.
         </p>
       </div>

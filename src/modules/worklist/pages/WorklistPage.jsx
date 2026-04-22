@@ -88,7 +88,7 @@ export default function WorklistPage() {
   const progress  = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-8 w-full">
       <div className="flex-row items-start justify-between mb-8">
         <div>
           <p className="subtitle">Shift Board</p>

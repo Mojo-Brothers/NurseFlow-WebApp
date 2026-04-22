@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PresentationCard from '../../../components/ui/PresentationCard';
 import { selfCheckIn, getEstimatedWaitTime } from '../services/queue.service.js';
+import { getAssignedMaterials } from '../../emr/services/pfe.service.js';
 
 /**
  * PatientPortal — Empowering patients with mobile-first healthcare control.
@@ -102,6 +103,20 @@ export default function PatientPortal() {
              </div>
              <span className="material-symbols-outlined ml-auto opacity-20">chevron_right</span>
           </div>
+
+          <h3 className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mt-8">My Learning Center</h3>
+          {getAssignedMaterials('MOCK_PID').map((item, idx) => (
+            <div key={idx} className="bg-surface-container-highest p-5 rounded-3xl flex flex-row items-center gap-4">
+               <div className="w-12 h-12 rounded-2xl bg-white text-secondary flex items-center justify-center shadow-sm">
+                  <span className="material-symbols-outlined">{item.type === 'VIDEO' ? 'play_circle' : 'article'}</span>
+               </div>
+               <div className="flex flex-col">
+                  <span className="text-xs font-black">{item.title}</span>
+                  <span className="text-[10px] font-medium opacity-60">Educational Resource</span>
+               </div>
+               <span className="material-symbols-outlined ml-auto text-secondary">open_in_new</span>
+            </div>
+          ))}
        </div>
 
        <footer className="mt-8 text-center text-[9px] font-medium opacity-40 leading-relaxed">

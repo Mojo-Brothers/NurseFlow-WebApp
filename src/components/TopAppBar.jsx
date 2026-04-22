@@ -5,7 +5,7 @@ import { useEncounterStore } from '../modules/encounter/encounter.store.js';
 import { useAuthStore } from '../modules/auth/auth.store.js';
 import { useEffect } from 'react';
 
-const TopAppBar = () => {
+const TopAppBar = ({ onMenuClick }) => {
   const { stressLevel, classicUI, toggleClassicUI, triggerCrisis } = useStressMonitor();
   const location = useLocation();
   const { activeEncounters, fetchActiveEncounters } = useEncounterStore();
@@ -19,28 +19,38 @@ const TopAppBar = () => {
   
   return (
     <header className="top-app-bar" style={{
-      position: 'fixed', top: 0, left: 0, right: 0, height: '4rem',
-      backgroundColor: 'rgba(255, 255, 255, 0.6)',
-      backdropFilter: 'blur(20px)',
-      webkitBackdropFilter: 'blur(20px)',
-      borderBottom: '1px solid rgba(255, 255, 255, 0.3)',
+      position: 'fixed', top: 0, left: 0, right: 0, height: '3.25rem',
+      backgroundColor: 'var(--surface)',
+      backdropFilter: 'blur(8px)',
+      WebkitBackdropFilter: 'blur(8px)',
+      borderBottom: '1px solid var(--outline-variant)',
       zIndex: 1000,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '0 2rem'
+      padding: '0 1rem'
     }}>
-      <div className="flex items-center gap-3">
-        <h1 className="brand-title text-primary" style={{ 
-          fontSize: '1.25rem', fontWeight: '900', letterSpacing: '-0.02em', margin: 0 
-        }}>NurseFlow HIS</h1>
-        {!classicUI && stressLevel !== 'none' && (
-          <div className={`chip-${stressLevel} flex-row items-center gap-1 px-3 py-1 rounded-full animate-pulse`}>
-            <span className="material-symbols-outlined text-[14px]">warning</span>
-            <span className="text-[10px] font-black uppercase tracking-widest">{stressLevel} MODE</span>
-          </div>
-        )}
-      </div>
       <div className="flex items-center gap-6">
-        <div className="nav-links hide-on-focus flex-row gap-4">
+        <button 
+          className="material-symbols-outlined md:hidden p-2"
+          style={{ display: 'none' }} // Show via CSS media query
+          id="mobile-menu-btn"
+          onClick={onMenuClick}
+        >
+          menu
+        </button>
+        <div className="flex-column">
+          <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant m-0 opacity-60">Kamis, 24 Oct 2026</p>
+          <h1 className="brand-title" style={{ 
+            fontSize: '1.15rem', fontWeight: '900', letterSpacing: '-0.03em', margin: 0, color: 'var(--on-surface)'
+          }}>Selamat Pagi, Ns. Sarah</h1>
+        </div>
+        
+        <div className="flex items-center px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant hide-on-mobile">
+          <div className="w-2 h-2 rounded-full bg-success mr-2"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-primary">UNIT IGD • STATION 1</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-4">
+        <div className="nav-links hide-on-focus flex-row gap-4 hide-on-mobile">
           <Link to="/dashboard" className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}>Dashboard</Link>
           <Link to="/ward-monitor" className={`nav-link ${location.pathname === '/ward-monitor' ? 'active' : ''} flex-row items-center gap-1.5`}>
             <span className="material-symbols-outlined text-[16px]">visibility</span>
@@ -61,18 +71,12 @@ const TopAppBar = () => {
               Analytics
             </Link>
           )}
-          {(role === 'PHARMACIST' || role === 'ADMIN') && (
-            <Link to="/inventory" className={`nav-link ${location.pathname === '/inventory' ? 'active' : ''} flex-row items-center gap-1.5`}>
-              <span className="material-symbols-outlined text-[16px]">package_2</span>
-              Inventory
-            </Link>
-          )}
           <Link to="/worklist" className={`nav-link ${location.pathname === '/worklist' ? 'active' : ''}`}>Worklist</Link>
         </div>
         
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ 
-          backgroundColor: 'rgba(0,0,0,0.03)', 
-          border: '1px solid rgba(0,0,0,0.05)',
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hide-on-mobile" style={{ 
+          backgroundColor: 'var(--surface-container-low)', 
+          border: '1px solid var(--outline-variant)',
           backdropFilter: 'blur(8px)'
         }}>
           <span className="text-[9px] font-black text-on-surface-variant uppercase opacity-40 mr-1.5 tracking-widest">Simulator</span>
@@ -90,7 +94,7 @@ const TopAppBar = () => {
           <span className="material-symbols-outlined text-[18px]">
             {classicUI ? 'shield_with_heart' : 'shield'}
           </span>
-          <span className="text-[10px] font-black uppercase tracking-tighter">
+          <span className="text-[10px] font-black uppercase tracking-tighter hide-on-mobile">
             {classicUI ? 'Standard UI' : 'Classic Mode'}
           </span>
         </button>

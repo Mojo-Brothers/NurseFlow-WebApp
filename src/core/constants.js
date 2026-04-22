@@ -16,6 +16,8 @@ export const COLLECTIONS = {
   IDEMPOTENCY_LOCKS: 'idempotency_locks', // V10: Atomic locks
   BEDS:            'beds',           // V11: ADT Ward Map
   HANDOVER_LOGS:   'handover_logs',  // V11: SBAR Continuity
+  SURGERY_SCHEDULE: 'surgery_schedule', // V28: ASC Planning
+  SURGERY_LOGS:     'surgery_logs',     // V28: Intra-op Audit
 };
 
 export const ROLES = {

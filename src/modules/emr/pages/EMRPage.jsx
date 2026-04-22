@@ -23,6 +23,11 @@ import HandoverModal from '../../handover/components/HandoverModal';
 import DiagnosticViewer from '../../diagnostics/components/DiagnosticViewer';
 import ClinicalAlertBanner from '../../../components/ui/ClinicalAlertBanner';
 import { getLatestVitals, evaluateSepsisRisk, analyzeVitalTrend } from '../../../core/services/cds.service.js';
+import SurgicalChecklist from '../components/SurgicalChecklist';
+import PatientEducationForm from '../components/PatientEducationForm';
+import DigitalInformedConsent from '../components/DigitalInformedConsent';
+import { verifyClinicalPrivilege } from '../../enterprise/services/sqe.service.js';
+import { validateClinicalTerms } from '../../enterprise/services/moi.service.js';
 
 const COMMON_MDS = [
   { id: 'm1', medication_name: 'Paracetamol', dosage: '500mg', route: 'PO' },
@@ -143,6 +148,24 @@ export default function EMRPage() {
     const conflicts = selectedMeds.filter(med => checkAllergyConflict(med.medication_name, activePatient?.allergies));
     if (status === 'SIGNED' && conflicts.length > 0) {
        return setSafetyError(`SIGN-OFF BLOCKED: Allergy conflict detected for ${conflicts.map(c => c.medication_name).join(', ')}. Please correct the prescription.`);
+    }
+
+    if (status === 'SIGNED') {
+       const privilege = await verifyClinicalPrivilege(currentUser.email, 'GENERAL_PRACTICE');
+       if (!privilege.authorized) {
+          return setSafetyError(`SIGN-OFF BLOCKED: ${privilege.reason}. Please verify your credentials.`);
+       }
+
+       const forbiddenTerms = [
+         ...validateClinicalTerms(subjective),
+         ...validateClinicalTerms(objective),
+         ...validateClinicalTerms(assessment)
+       ];
+
+       if (forbiddenTerms.length > 0) {
+          const terms = [...new Set(forbiddenTerms.map(t => t.term))];
+          return setSafetyError(`SIGN-OFF BLOCKED: Forbidden abbreviations detected (${terms.join(', ')}). Use standard terms (e.g. ${forbiddenTerms[0].replacement}) per JCI MOI.2.`);
+       }
     }
 
     if (!selectedEncounterId) {
@@ -383,6 +406,27 @@ export default function EMRPage() {
               >
                 {t('emr.diagnostics')}
               </button>
+              <button 
+                onClick={() => setActiveSidebarTab('SURGERY')}
+                className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all 
+                  ${activeSidebarTab === 'SURGERY' ? 'border-error text-error' : 'border-transparent text-on-surface-variant opacity-40'}`}
+              >
+                Surgery
+              </button>
+              <button 
+                onClick={() => setActiveSidebarTab('EDUCATION')}
+                className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all 
+                  ${activeSidebarTab === 'EDUCATION' ? 'border-secondary text-secondary' : 'border-transparent text-on-surface-variant opacity-40'}`}
+              >
+                Education
+              </button>
+              <button 
+                onClick={() => setActiveSidebarTab('CONSENT')}
+                className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all 
+                  ${activeSidebarTab === 'CONSENT' ? 'border-secondary text-secondary' : 'border-transparent text-on-surface-variant opacity-40'}`}
+              >
+                Consent
+              </button>
            </div>
 
            {activeSidebarTab === 'TIMELINE' ? (
@@ -414,9 +458,27 @@ export default function EMRPage() {
                  </ClinicalCard>
                ))}
              </>
-           ) : (
-             <DiagnosticViewer encounterId={selectedEncounterId} />
-           )}
+             ) : activeSidebarTab === 'DIAGNOSTICS' ? (
+              <DiagnosticViewer encounterId={selectedEncounterId} />
+             ) : activeSidebarTab === 'SURGERY' ? (
+               <SurgicalChecklist 
+                 encounterId={selectedEncounterId} 
+                 patientId={selectedPatientId}
+                 userEmail={currentUser.email}
+               />
+             ) : activeSidebarTab === 'EDUCATION' ? (
+               <PatientEducationForm
+                 encounterId={selectedEncounterId}
+                 patientId={selectedPatientId}
+                 userEmail={currentUser.email}
+               />
+             ) : (
+               <DigitalInformedConsent
+                 patientId={selectedPatientId}
+                 doctorEmail={currentUser.email}
+                 onComplete={() => setActiveSidebarTab('TIMELINE')}
+               />
+             )}
         </div>
       </div>
 

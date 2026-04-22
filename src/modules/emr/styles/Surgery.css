@@ -1,0 +1,37 @@
+.surgery-dashboard {
+    padding: 2.5rem;
+    min-height: 100%;
+    background: var(--surface-container-lowest);
+}
+
+.surgery-dashboard .bento-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.surgery-dashboard .status-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 100px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.surgery-dashboard .grid-cols-12 {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 1.5rem;
+}
+
+/* Animations for active procedures */
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(186, 26, 26, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(186, 26, 26, 0); }
+}
+
+.chip-error {
+    animation: pulse-red 2s infinite;
+}

@@ -75,7 +75,7 @@ export default function EncounterPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-8 w-full">
       <div className="flex-row items-center justify-between mb-8">
         <div>
           <h2 className="title">{t('encounter.title')}</h2>

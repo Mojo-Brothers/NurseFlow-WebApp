@@ -122,7 +122,7 @@ export default function TriagePage() {
   }, [patients, selectedPatientId, handlePatientChange, liveContext]);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-8 w-full">
       <div className="flex-row items-center justify-between mb-8">
         <div>
           <h2 className="title text-primary">{t('triage.title')}</h2>

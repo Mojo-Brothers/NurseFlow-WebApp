@@ -111,7 +111,7 @@ export default function BillingPage() {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto w-full">
+    <div className="p-8 w-full">
       <div className="flex-row items-start justify-between mb-8">
         <div>
           <p className="subtitle">Keuangan</p>
@@ -218,11 +218,11 @@ export default function BillingPage() {
 
             <ClinicalCard style={{ 
               padding: '1.5rem', 
-              backgroundColor: '#001b3d', 
-              color: 'white', 
+              backgroundColor: 'var(--primary)', 
+              color: 'var(--on-primary)', 
               marginBottom: '1.5rem',
               border: 'none',
-              boxShadow: 'none'
+              boxShadow: 'var(--shadow-presentation)'
             }}>
               <div className="flex-row items-center justify-between">
                 <p style={{ margin: 0, fontWeight: '800', fontSize: '0.75rem', letterSpacing: '0.1em', opacity: 0.9 }}>TOTAL TAGIHAN</p>

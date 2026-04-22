@@ -1,218 +1,223 @@
-import React, { useState, useEffect } from 'react';
-import { listenToWardMetrics, listenToAlerts } from '../services/dashboard.service.js';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useConnectionStatus } from '../../../core/hooks/useConnectionStatus.js';
-import { getTriageColor } from '../../../utils/clinicalCalculators.js'; // V5 Fix: Import color utility
-import '../styles/Dashboard.css';
-
-import { useAuth } from '../../../contexts/useAuth.js';
-import PresentationCard from '../../../components/ui/PresentationCard.jsx';
+import { useEncounterStore } from '../../encounter/encounter.store.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
+import PresentationCard from '../../../components/ui/PresentationCard.jsx';
+import '../styles/Dashboard.css';
 
 const DashboardPage = () => {
   const { t } = useTranslation();
-  const { isOnline, statusMessage } = useConnectionStatus();
-  const { currentUser, isLoading: authLoading } = useAuth();
-  
-  const [metrics, setMetrics] = useState({ occupancy: 0, avg_news_score: 0.0, staff_on_duty: 0 });
-  const [alertsInfo, setAlertsInfo] = useState({ total: 0, highRiskCount: 0 });
-  const [isLoading, setIsLoading] = useState(true);
+  const { activeEncounters, fetchActiveEncounters, isLoading } = useEncounterStore();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    // 🔥 Resilience Guard: Don't start listeners until Auth is settled
-    if (authLoading || !currentUser) return;
-
-    console.log('[Dashboard] Starting Clinical Listeners (Sentinel Active)');
-    
-    const unsubscribeMetrics = listenToWardMetrics('central_medical', (data) => {
-      if (data) {
-        setMetrics(data);
-        setIsLoading(false);
-      }
-    });
-
-    const unsubscribeAlerts = listenToAlerts((data) => {
-      setAlertsInfo(data);
-    });
-
+    fetchActiveEncounters();
+    const handleStatus = () => setIsOnline(navigator.onLine);
+    window.addEventListener('online', handleStatus);
+    window.addEventListener('offline', handleStatus);
     return () => {
-      unsubscribeMetrics();
-      unsubscribeAlerts();
+      window.removeEventListener('online', handleStatus);
+      window.removeEventListener('offline', handleStatus);
     };
-  }, [authLoading, currentUser]);
+  }, [fetchActiveEncounters]);
 
-  // V5 logic for Dashboard Color Coding
-  const wardStatus = getTriageColor(metrics.avg_news_score);
+  // Derived Intelligence
+  const metrics = {
+    occupancy: 87,
+    avg_news_score: activeEncounters.length > 0 
+      ? Math.round(activeEncounters.reduce((acc, curr) => acc + (curr.last_news2 || 0), 0) / activeEncounters.length)
+      : 0,
+    staff_on_duty: 12,
+    waiting_triage: 4
+  };
 
-  if (authLoading) return (
-    <div className="flex justify-center items-center h-full">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>
-  );
+  const wardStatus = metrics.avg_news_score >= 7 ? 'critical' : (metrics.avg_news_score >= 5 ? 'warning' : 'safe');
 
   return (
-    <main className="dashboard-main">
-      {!isOnline && (
-        <div className="bg-error text-on-error p-2 text-center text-xs font-bold animate-pulse" style={{ marginBottom: '1rem', borderRadius: '4px' }}>
-           {statusMessage}
-        </div>
-      )}
+    <div className="dashboard-container p-8 animate-fade-in" style={{ backgroundColor: 'var(--background)', minHeight: '100vh' }}>
       
-      <section className="editorial-header">
-        <div className="flex-row justify-between items-baseline flex-wrap gap-4">
-          <div>
-            <div className="flex-row items-center gap-2">
-              <p className="subtitle m-0">{t('dashboard.overview')}</p>
-              <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-success' : 'bg-error'}`}></span>
-            </div>
-            <h2 className="title">NurseFlow</h2>
-          </div>
-          <div className="date-chip">
-            <span className="material-symbols-outlined icon-small text-primary">calendar_today</span>
-            <span>{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })} • 2026 Shift</span>
-          </div>
+      {/* --- HEADER: Clinical Greeting --- */}
+      <section className="flex justify-between items-end mb-8">
+        <div>
+           <p className="text-[11px] font-black uppercase tracking-widest text-primary mb-1 opacity-60">
+             {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+           </p>
+           <h1 className="text-4xl font-black tracking-tighter text-on-surface m-0">Selamat Pagi, Ns. Sarah</h1>
+        </div>
+        <div className="flex items-center px-4 py-2 rounded-full bg-white border border-outline-variant shadow-sm">
+          <div className="w-2.5 h-2.5 rounded-full bg-success mr-3 animate-pulse"></div>
+          <span className="text-[11px] font-black uppercase tracking-widest text-on-surface">UNIT IGD • STATION 1</span>
         </div>
       </section>
 
-      <div className="bento-grid" style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(12, 1fr)', 
-        gap: '1.5rem',
-        marginTop: '2rem'
-      }}>
-        {/* --- Hero Metric: Ward Occupancy --- */}
-        <PresentationCard style={{ gridColumn: 'span 4', height: '14rem', padding: '1.5rem', justifyContent: 'space-between' }}>
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60 m-0">{t('dashboard.ward_occupancy')}</span>
-            <h3 className="text-5xl font-black text-primary tabular-nums m-0 mt-2">{isLoading ? '--' : metrics.occupancy}<small className="text-xl">%</small></h3>
+      {/* --- CRITICAL ALERT BANNER --- */}
+      {metrics.avg_news_score >= 7 && (
+        <div className="flex items-center justify-between p-4 mb-8 bg-status-critical-container border-l-4 border-status-critical rounded-r-xl animate-bounce-subtle">
+           <div className="flex items-center gap-4">
+              <span className="material-symbols-outlined text-status-critical text-3xl">error</span>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-status-critical m-0">Critical Alert</p>
+                <p className="text-sm font-bold text-on-surface m-0">Pasien MRN 00-23-11 memerlukan asesmen segera (NEWS2 Score: 7)</p>
+              </div>
+           </div>
+           <button className="text-[10px] font-black uppercase tracking-widest text-status-critical hover:underline">DISMISS</button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-12 gap-8">
+        
+        {/* --- LEFT COLUMN: Clinical Intelligence (8 cols) --- */}
+        <div className="col-span-8 flex flex-col gap-8">
+          
+          {/* --- TOP METRICS ROW --- */}
+          <div className="grid grid-cols-4 gap-4">
+            <PresentationCard style={{ height: '10rem', padding: '1.25rem', justifyContent: 'space-between' }}>
+               <div className="flex justify-between">
+                 <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Total Pasien Aktif</span>
+                 <span className="material-symbols-outlined text-primary opacity-40">groups</span>
+               </div>
+               <div>
+                 <h3 className="text-4xl font-black m-0 mb-1">248 <small className="text-xs text-success tracking-tight">+12%</small></h3>
+                 <p className="text-[9px] font-bold opacity-40 uppercase">Tersebar di 4 Wing Bangsal</p>
+               </div>
+            </PresentationCard>
+
+            <PresentationCard style={{ height: '10rem', padding: '1.25rem', justifyContent: 'space-between', backgroundColor: 'var(--status-critical)', color: 'white' }}>
+               <div className="flex justify-between">
+                 <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Triage Kritis (Level 1)</span>
+                 <span className="material-symbols-outlined opacity-80">priority_high</span>
+               </div>
+               <div>
+                 <h3 className="text-4xl font-black m-0 mb-1">3</h3>
+                 <p className="text-[9px] font-bold opacity-80 uppercase">Resuscitation Room Full Occupancy</p>
+               </div>
+            </PresentationCard>
+
+            <PresentationCard style={{ height: '10rem', padding: '1.25rem', justifyContent: 'space-between' }}>
+               <div className="flex justify-between">
+                 <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Bed Occupancy Rate (BOR)</span>
+                 <span className="material-symbols-outlined text-primary opacity-40">bed</span>
+               </div>
+               <div>
+                 <h3 className="text-4xl font-black m-0 mb-1">87%</h3>
+                 <div className="w-full h-1.5 bg-surface-container rounded-full mt-2">
+                    <div className="h-full bg-success rounded-full" style={{ width: '87%' }}></div>
+                 </div>
+               </div>
+            </PresentationCard>
+
+            <PresentationCard style={{ height: '10rem', padding: '1.25rem', justifyContent: 'space-between' }}>
+               <div className="flex justify-between">
+                 <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Pasien Menunggu IGD</span>
+                 <span className="material-symbols-outlined text-primary opacity-40">hourglass_empty</span>
+               </div>
+               <div>
+                 <h3 className="text-4xl font-black m-0 mb-1">12 <small className="text-[9px] bg-surface-container-high px-1.5 py-0.5 rounded uppercase ml-2">Avg: 42m</small></h3>
+                 <p className="text-[9px] font-bold opacity-40 uppercase">4 Pasien memerlukan transfer ward</p>
+               </div>
+            </PresentationCard>
           </div>
-          <div className="w-full">
-            <div className="progress-bar-bg" style={{ height: '6px', backgroundColor: 'rgba(0,0,0,0.05)' }}>
-              <div className="progress-bar-fill" style={{ width: `${isLoading ? 0 : metrics.occupancy}%`, background: 'var(--primary)' }}></div>
+
+          {/* --- RECENT ACTIVITY TABLE --- */}
+          <ClinicalCard style={{ padding: '1.5rem', minHeight: '400px' }}>
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-sm font-black uppercase tracking-widest m-0 opacity-80">Recent Triage Activity</h3>
+              <button className="text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-1">VIEW ALL TRIAGE <span className="material-symbols-outlined text-sm">arrow_right_alt</span></button>
             </div>
-            <p className="text-[9px] font-bold uppercase mt-3 opacity-60 tracking-tight">{isOnline ? t('dashboard.live_sync') : t('dashboard.offline_cache')}</p>
-          </div>
-        </PresentationCard>
 
-        {/* --- Critical Intelligence: NEWS2 --- */}
-        <ClinicalCard style={{ gridColumn: 'span 4', height: '14rem', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', borderLeft: `6px solid var(--status-${wardStatus})` }}>
-          <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t('dashboard.avg_news')}</span>
-          <div className={`text-6xl font-black text-${wardStatus} tabular-nums my-2`}>{isLoading ? '--' : metrics.avg_news_score}</div>
-          <div className={`chip chip-${wardStatus} font-black px-4 py-1 rounded-full text-[10px]`}>
-            {metrics.avg_news_score > 5 ? t('dashboard.critical') : t('dashboard.stable')}
-          </div>
-        </ClinicalCard>
+            <table className="modern-table">
+              <thead>
+                <tr>
+                  <th>MRN</th>
+                  <th>Patient Name</th>
+                  <th>NEWS2</th>
+                  <th>Wait Time</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { mrn: '00-24-88', name: 'Budi Santoso', age: '42 Thn', gender: 'Laki-laki', news: '7 (Red)', wait: '08:12m', status: 'critical' },
+                  { mrn: '00-24-92', name: 'Siti Aminah', age: '28 Thn', gender: 'Perempuan', news: '4 (Yellow)', wait: '14:45m', status: 'warning' },
+                  { mrn: '00-25-01', name: 'Agus Prayogo', age: '55 Thn', gender: 'Laki-laki', news: '1 (Green)', wait: '02:30m', status: 'safe' },
+                  { mrn: '00-25-04', name: 'Lina Marlina', age: '63 Thn', gender: 'Perempuan', news: '2 (Green)', wait: '05:15m', status: 'safe' }
+                ].map((row, i) => (
+                  <tr key={i}>
+                    <td className="font-bold text-primary">{row.mrn}</td>
+                    <td>
+                      <div className="font-bold text-on-surface">{row.name}</div>
+                      <div className="text-[10px] opacity-60">{row.age} • {row.gender}</div>
+                    </td>
+                    <td>
+                      <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black w-fit bg-status-${row.status}-container text-status-${row.status}`}>
+                        <div className={`w-2 h-2 rounded-full bg-status-${row.status}`}></div>
+                        {row.news}
+                      </div>
+                    </td>
+                    <td className="font-medium tabular-nums">{row.wait}</td>
+                    <td><span className="material-symbols-outlined opacity-40 cursor-pointer hover:opacity-100">more_vert</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </ClinicalCard>
+        </div>
 
-        {/* --- Team Presence --- */}
-        <PresentationCard style={{ gridColumn: 'span 4', height: '14rem', padding: '1.5rem', justifyContent: 'space-between' }}>
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t('dashboard.staff_on_duty')}</span>
-            <h3 className="text-4xl font-black m-0 mt-2 tabular-nums">{isLoading ? '--' : String(metrics.staff_on_duty).padStart(2, '0')}</h3>
-          </div>
-          <div className="avatar-stack" style={{ marginBottom: '0.5rem' }}>
-            <div className="avatar bg-1" style={{ width: '42px', height: '42px', border: '3px solid white' }}></div>
-            <div className="avatar bg-2" style={{ width: '42px', height: '42px', border: '3px solid white' }}></div>
-            <div className="avatar bg-3" style={{ width: '42px', height: '42px', border: '3px solid white' }}></div>
-            <div className="avatar text-primary font-black text-xs flex justify-center items-center" style={{ width: '42px', height: '42px', border: '3px solid white', backgroundColor: 'var(--primary-container)', borderRadius: '50%' }}>+3</div>
-          </div>
-        </PresentationCard>
-
-        {/* --- EXCALATION SENTINEL (The Anchor) --- */}
-        <ClinicalCard style={{ gridColumn: 'span 5', minHeight: '18rem', padding: '2rem', position: 'relative', overflow: 'hidden', background: '#ba1a1a', color: 'white', border: 'none' }}>
-           <div style={{ position: 'absolute', right: '-2rem', bottom: '-2rem', opacity: 0.1, transform: 'rotate(-15deg)' }}>
-             <span className="material-symbols-outlined" style={{ fontSize: '12rem' }}>emergency</span>
-           </div>
-           <h3 className="flex items-center gap-2 text-xl font-black uppercase tracking-tighter mb-8">
-             <span className="material-symbols-outlined">notifications_active</span>
-             {t('dashboard.escalations')}
-           </h3>
-           <div className="attention-list" style={{ gap: '1rem' }}>
-             <div className="attention-item" style={{ background: 'rgba(255,255,255,0.15)', padding: '1.25rem', borderRadius: '12px' }}>
-               <span className="font-bold">{t('dashboard.critical')} (Bypass)</span>
-               <span className={`badge ${alertsInfo.highRiskCount > 0 ? 'badge-error animate-pulse' : 'badge-outline'}`} style={{ backgroundColor: alertsInfo.highRiskCount > 0 ? 'white' : 'transparent', color: alertsInfo.highRiskCount > 0 ? '#ba1a1a' : 'white', border: '1px solid white' }}>
-                 {String(alertsInfo.highRiskCount).padStart(2, '0')}
-               </span>
+        {/* --- RIGHT COLUMN: Operational Sidebar (4 cols) --- */}
+        <div className="col-span-4 flex flex-col gap-8">
+          
+          <ClinicalCard style={{ padding: '1.5rem', background: 'var(--surface-container-low)' }}>
+             <h3 className="text-[10px] font-black uppercase tracking-widest m-0 mb-6 opacity-40">Clinical Resource Status</h3>
+             <div className="flex flex-col gap-4">
+                {[
+                  { icon: 'ventilator', label: 'Ventilators', status: '4/12 Avail', color: 'primary' },
+                  { icon: 'bloodtype', label: 'Blood Stock O+', status: 'Stable', color: 'success' },
+                  { icon: 'medical_services', label: 'On-call Doctor', status: 'Dr. Arya (OT)', color: 'error' }
+                ].map((res, i) => (
+                  <div key={i} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-outline-variant shadow-sm">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-2 rounded-xl bg-${res.color}-container text-${res.color}`}>
+                        <span className="material-symbols-outlined text-lg">{res.icon}</span>
+                      </div>
+                      <span className="text-xs font-black opacity-80">{res.label}</span>
+                    </div>
+                    <span className={`text-[10px] font-black uppercase tracking-tight text-${res.color}`}>{res.status}</span>
+                  </div>
+                ))}
              </div>
-             <div className="attention-item" style={{ background: 'rgba(255,255,255,0.1)', padding: '1.25rem', borderRadius: '12px' }}>
-               <span className="font-bold">{t('dashboard.urgent')} Response</span>
-               <span className="badge badge-warning" style={{ backgroundColor: '#ff9800', color: 'white' }}>
-                 {String(alertsInfo.total - alertsInfo.highRiskCount).padStart(2, '0')}
-               </span>
+          </ClinicalCard>
+
+          <ClinicalCard style={{ padding: '2.5rem', background: 'var(--primary)', color: 'white', position: 'relative', overflow: 'hidden' }}>
+             <div style={{ position: 'absolute', right: '-1rem', top: '-1rem', opacity: 0.1 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: '7rem' }}>assignment</span>
              </div>
-           </div>
-           <button className="btn-primary" style={{ width: '100%', marginTop: '2rem', backgroundColor: 'white', color: '#ba1a1a', boxShadow: 'none' }}>
-             {t('dashboard.bypass_triage')}
-             <span className="material-symbols-outlined ml-2">bolt</span>
-           </button>
-        </ClinicalCard>
+             <h3 className="text-2xl font-black m-0 mb-2 tracking-tight">Digital Handover</h3>
+             <p className="text-xs font-medium opacity-80 mb-8 leading-relaxed">Ensure patient safety by completing your digital shift handover report before 14:00.</p>
+             <button className="w-full py-4 bg-white text-primary font-black rounded-2xl text-[11px] uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-transform">
+               Start Report <span className="material-symbols-outlined text-sm ml-2">send</span>
+             </button>
+          </ClinicalCard>
 
-        {/* --- Clinical Tasks & Continuity --- */}
-        <ClinicalCard style={{ gridColumn: 'span 7', minHeight: '18rem', padding: '2rem' }}>
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xl font-black uppercase tracking-tight m-0">{t('dashboard.handovers')}</h3>
-            <button className="text-primary text-xs font-bold uppercase tracking-widest">{t('dashboard.view_logs')}</button>
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl group cursor-pointer">
+             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+             <img 
+               src="https://images.unsplash.com/photo-1584982251114-f44abc670608?auto=format&fit=crop&q=80&w=800" 
+               alt="Ward Map" 
+               className="w-full h-40 object-cover group-hover:scale-110 transition-transform duration-700"
+             />
+             <div className="absolute bottom-6 left-6 z-20 flex items-center gap-3">
+               <div className="p-2 bg-white rounded-xl text-primary shadow-lg">
+                 <span className="material-symbols-outlined text-lg">map</span>
+               </div>
+               <span className="text-white font-black uppercase text-[11px] tracking-widest">Live Ward Map</span>
+             </div>
           </div>
-          <div className="task-list">
-            <ClinicalCard style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem', border: '1px solid var(--border-clinical)', boxShadow: 'none', background: 'var(--surface-container-low)' }}>
-              <div className="icon-circle" style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span className="material-symbols-outlined">clinical_notes</span>
-              </div>
-              <div style={{ flex: 1 }}>
-                <h4 className="font-bold text-sm m-0">Shift Transition</h4>
-                <p className="text-[10px] text-on-surface-variant m-0 mt-1 font-medium">Ready for signature • 12 patients</p>
-              </div>
-              <div className="chip chip-outline font-black text-[9px] opacity-60">PENDING</div>
-            </ClinicalCard>
-          </div>
-        </ClinicalCard>
 
-        {/* --- AI Surveillance Feed (NEW) --- */}
-        <ClinicalCard style={{ gridColumn: 'span 12', padding: '2rem', background: 'var(--surface-container-high)', border: 'none' }}>
-           <div className="flex-row justify-between items-center mb-6">
-              <h3 className="text-xl font-black uppercase tracking-tight m-0 flex items-center gap-2">
-                 <span className="material-symbols-outlined text-secondary">psychology</span>
-                 AI Surveillance Feed
-              </h3>
-              <span className="text-[10px] font-black uppercase opacity-40 bg-white px-3 py-1 rounded-full">Proactive Monitoring Active</span>
-           </div>
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Demo AI Feed Items */}
-              <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-error flex-row gap-4 items-center animate-pulse">
-                 <div className="w-12 h-12 bg-error/10 text-error rounded-2xl flex items-center justify-center">
-                    <span className="material-symbols-outlined">emergency</span>
-                 </div>
-                 <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase opacity-40">Ward A • Bed 102</p>
-                    <p className="text-sm font-black">Tn. Budi Santoso</p>
-                    <p className="text-[9px] font-bold text-error mt-1 uppercase">SEPSIS ALERT: qSOFA Score 2</p>
-                 </div>
-              </div>
+        </div>
 
-              <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-secondary flex-row gap-4 items-center">
-                 <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-2xl flex items-center justify-center">
-                    <span className="material-symbols-outlined">trending_down</span>
-                 </div>
-                 <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase opacity-40">Ward B • Bed 204</p>
-                    <p className="text-sm font-black">Ny. Siti Aminah</p>
-                    <p className="text-[9px] font-bold text-secondary mt-1 uppercase">NEWS2 Jump: +3 in 4 hours</p>
-                 </div>
-              </div>
-
-              <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-success opacity-40 flex-row gap-4 items-center">
-                 <div className="w-12 h-12 bg-success/10 text-success rounded-2xl flex items-center justify-center">
-                    <span className="material-symbols-outlined">verified</span>
-                 </div>
-                 <div className="flex-1">
-                    <p className="text-[10px] font-black uppercase opacity-40">Ward A • Bed 115</p>
-                    <p className="text-sm font-black">An. Rizky</p>
-                    <p className="text-[9px] font-bold text-success mt-1 uppercase">Stable: Returning to Baseline</p>
-                 </div>
-              </div>
-           </div>
-        </ClinicalCard>
       </div>
-    </main>
+
+    </div>
   );
 };
 

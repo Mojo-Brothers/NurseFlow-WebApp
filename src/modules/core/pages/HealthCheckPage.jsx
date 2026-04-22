@@ -51,10 +51,10 @@ const HealthCheckPage = () => {
   return (
     <div style={{ padding: '40px', fontFamily: 'Inter, system-ui, sans-serif', maxWidth: '800px', margin: '0 auto' }}>
       <header style={{ marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: '800', color: '#111827', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--on-surface)', display: 'flex', alignItems: 'center', gap: '12px' }}>
           🏥 NurseFlow System Pulse
         </h1>
-        <p style={{ color: '#6b7280' }}>Diagnostic Dashboard for JCI Compliance & Site Reliability</p>
+        <p style={{ color: 'var(--on-surface-variant)' }}>Diagnostic Dashboard for JCI Compliance & Site Reliability</p>
       </header>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
@@ -63,8 +63,8 @@ const HealthCheckPage = () => {
         <Card title="Network Environment" value={<StatusIcon state={status.offline} />} detail={navigator.userAgent.slice(0, 30) + '...'} />
       </div>
 
-      <div style={{ marginTop: '40px', padding: '24px', backgroundColor: '#f9fafb', borderRadius: '12px', border: '1 -solid #e5e7eb' }}>
-        <h2 style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px' }}>
+      <div style={{ marginTop: '40px', padding: '24px', backgroundColor: 'var(--surface-container-low)', borderRadius: '12px', border: '1px solid var(--outline-variant)' }}>
+        <h2 style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--on-surface)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '16px' }}>
           System Artifacts
         </h2>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -80,17 +80,17 @@ const HealthCheckPage = () => {
 };
 
 const Card = ({ title, value, detail }) => (
-  <div style={{ padding: '24px', backgroundColor: '#fff', borderRadius: '16px', border: '1px solid #f3f4f6', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)' }}>
-    <h3 style={{ fontSize: '0.875rem', fontWeight: '500', color: '#6b7280', marginBottom: '8px' }}>{title}</h3>
+  <div style={{ padding: '24px', backgroundColor: 'var(--surface)', borderRadius: '16px', border: '1px solid var(--outline-variant)', boxShadow: 'var(--ambient-shadow)' }}>
+    <h3 style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--on-surface-variant)', marginBottom: '8px' }}>{title}</h3>
     <div style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '4px' }}>{value}</div>
-    <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{detail}</div>
+    <div style={{ fontSize: '0.75rem', color: 'var(--on-surface-variant)', opacity: 0.6 }}>{detail}</div>
   </div>
 );
 
 const TableRow = ({ label, value }) => (
-  <tr style={{ borderBottom: '1px solid #f3f4f6' }}>
-    <td style={{ padding: '12px 0', fontSize: '0.875rem', color: '#6b7280' }}>{label}</td>
-    <td style={{ padding: '12px 0', fontSize: '0.875rem', fontWeight: '600', textAlign: 'right' }}>{value}</td>
+  <tr style={{ borderBottom: '1px solid var(--outline-variant)' }}>
+    <td style={{ padding: '12px 0', fontSize: '0.875rem', color: 'var(--on-surface-variant)' }}>{label}</td>
+    <td style={{ padding: '12px 0', fontSize: '0.875rem', fontWeight: '600', textAlign: 'right', color: 'var(--on-surface)' }}>{value}</td>
   </tr>
 );
 

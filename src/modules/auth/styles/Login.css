@@ -1,96 +1,264 @@
 /* 
    NurseFlow Login Style 
-   Theme: Clinical Sanctuary (Glassmorphism & Depth)
+   Theme: Clinical Precision (Split-Screen Brand Experience)
 */
 
 .login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
   min-height: 100vh;
-  background: radial-gradient(circle at top left, #f8fafc, #eff6ff);
-  font-family: 'Public Sans', sans-serif;
+  background: white;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-.login-card {
+/* BRAND PANEL (LEFT) */
+.brand-panel {
+  background: #0b57d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  position: relative;
+}
+
+.brand-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent);
+  pointer-events: none;
+}
+
+.brand-card {
   width: 100%;
-  max-width: 420px;
-  padding: 3rem;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 2rem;
-  box-shadow: 
-    0 25px 50px -12px rgba(0, 0, 0, 0.05),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+  max-width: 520px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(40px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3rem;
+  padding: 4rem;
+  color: white;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
+  z-index: 10;
 }
 
-.login-header {
-  text-align: center;
+.brand-card .logo {
+  font-size: 5rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.brand-card .underline {
+  width: 80px;
+  height: 6px;
+  background: #34d399; /* Emerald/Mint from image */
+  border-radius: 3px;
   margin-bottom: 2.5rem;
 }
 
-.login-header .title {
-  font-size: 2.25rem;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  margin: 0;
-  background: linear-gradient(135deg, #1e40af, #3b82f6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.brand-card .tagline {
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+  margin-bottom: 3rem;
+  opacity: 0.95;
 }
 
-.login-header .subtitle {
-  font-size: 0.875rem;
+.hospital-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 5rem;
+}
+
+.feature-icons {
+  display: flex;
+  gap: 3.5rem;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.feature-icon-box {
+  width: 4rem;
+  height: 4rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-item span {
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* LOGIN PANEL (RIGHT) */
+.login-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem;
+  position: relative;
+  background: white;
+}
+
+.login-form-area {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.login-form-area h1 {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.login-form-area .instruction {
   color: #64748b;
-  font-weight: 600;
-  margin-top: 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: 4rem;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.google-login-btn {
+  width: 100%;
+  background: #004ba0;
+  color: white;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 15px 30px rgba(0, 75, 160, 0.2);
+  border: none;
+  cursor: pointer;
+}
+
+.google-login-btn:hover:not(:disabled) {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 40px rgba(0, 75, 160, 0.3);
+}
+
+.google-login-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.google-icon-circle {
+  width: 2.75rem;
+  height: 2.75rem;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+  color: #94a3b8;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.compliance-section {
+  margin-top: 8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.compliance-text {
+  font-size: 0.6rem;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-align: center;
+  line-height: 1.8;
+}
+
+.jci-logo-placeholder {
+  width: 60px;
+  height: 60px;
+  background: #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 900;
+  color: #94a3b8;
+}
+
+.footer-links {
+  position: absolute;
+  bottom: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  width: 80%;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .login-error {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   padding: 1rem;
-  border-radius: 0.75rem;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 1rem;
   font-size: 0.875rem;
   font-weight: 600;
 }
 
-.badge-error {
-  background-color: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  border-radius: 0.75rem;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
-  transition: all 0.2s ease;
-}
-
-.form-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-  outline: none;
-}
-
-.btn-primary {
-  padding: 0.875rem 1.5rem;
-  border-radius: 0.75rem;
-  font-weight: 700;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2);
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.1);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
+@media (max-width: 1024px) {
+  .login-container {
+    grid-template-columns: 1fr;
+  }
+  .brand-panel {
+    display: none;
+  }
 }

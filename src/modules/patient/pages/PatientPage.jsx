@@ -24,7 +24,8 @@ export default function PatientPage() {
     // Step 3: Penjamin
     insurance_type: 'UMUM', insurance_no: '',
     // Step 4: Clinical & Legal
-    blood_type: 'O', allergies: '', fall_risk: false, consent: false
+    blood_type: 'O', allergies: '', fall_risk: false, consent: false,
+    privacy_level: 'STANDARD'
   });
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,6 +78,7 @@ export default function PatientPage() {
           },
           legal_consent: {
             general_consent: true,
+            privacy_level: form.privacy_level,
             signed_at: new Date().toISOString()
           }
         },
@@ -138,7 +140,7 @@ export default function PatientPage() {
   };
 
   return (
-    <div className="patients-container p-8 max-w-7xl mx-auto w-full">
+    <div className="patients-container p-8 w-full">
       <div className="flex-row items-center justify-between mb-8">
         <div>
           <h2 className="title">Patient Directory</h2>
@@ -321,9 +323,20 @@ export default function PatientPage() {
                       <input className="form-input" value={form.allergies} onChange={e => updateField('allergies', e.target.value)} placeholder="Misal: Paracetamol" />
                     </div>
                   </div>
+
                   <div className="flex-row items-center gap-2 p-3 bg-surface-container-low rounded-md mt-2">
                     <input type="checkbox" id="fall" checked={form.fall_risk} onChange={e => updateField('fall_risk', e.target.checked)} />
                     <label htmlFor="fall" className="text-sm font-bold">Pasien beresiko jatuh (Punya riwayat jatuh/lemah)</label>
+                  </div>
+
+                  <div className="flex-column gap-2 mt-2">
+                    <label className="text-[10px] font-black uppercase text-on-surface-variant">Privacy Preference (JCI PFR.1)</label>
+                    <select className="form-input text-xs" value={form.privacy_level} onChange={e => updateField('privacy_level', e.target.value)}>
+                      <option value="STANDARD">Standard Privacy</option>
+                      <option value="VIP">VIP Status (Hidden Ward/Room)</option>
+                      <option value="ANONYMOUS">Anonymous (High Security)</option>
+                      <option value="DNR">Do Not Resuscitate (DNR) Order</option>
+                    </select>
                   </div>
 
                   <p className="section-divider">Legal Consent (JCI Policy)</p>
