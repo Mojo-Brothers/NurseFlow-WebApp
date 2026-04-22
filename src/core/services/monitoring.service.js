@@ -20,7 +20,8 @@ export const trackMetric = async (type, payload) => {
       environment: import.meta.env.MODE,
     };
 
-    console.log(`[Observability] ${type}:`, metric);
+    // [Observability] Production Hardened
+
     
     // In a real production environment, we might use a dedicated metrics store
     // but for this HIS, we use a Firestore metrics collection.

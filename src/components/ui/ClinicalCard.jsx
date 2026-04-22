@@ -25,7 +25,7 @@ const ClinicalCard = ({
   if (isDev && !isOverride) {
     const breaches = [];
     if (props.style?.backdropFilter || props.style?.WebkitBackdropFilter) breaches.push('backdropFilter');
-    if (props.style?.boxShadow) breaches.push('boxShadow');
+    if (props.style?.boxShadow && props.style.boxShadow !== 'none') breaches.push('boxShadow');
     if (props.className?.includes('card-presentation') || props.className?.includes('glass')) breaches.push('presentation-class');
     
     if (breaches.length > 0) {

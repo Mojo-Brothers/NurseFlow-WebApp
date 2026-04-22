@@ -19,6 +19,7 @@ export const useTriageStore = create((set, get) => ({
   vitals:              { ...INITIAL_VITALS },
   selectedPatientId:   null,
   selectedEncounterId: null,
+  selectedBedId:       null,
   holdProgress:        0,
   isSubmitting:        false,
   submitSuccess:       false,
@@ -40,10 +41,13 @@ export const useTriageStore = create((set, get) => ({
 
   selectEncounter: (id) => set({ selectedEncounterId: id }),
 
+  selectBed: (id) => set({ selectedBedId: id }),
+
   setHoldProgress: (progress) => set({ holdProgress: progress }),
 
   resetForm: () => set({
     vitals:        { ...INITIAL_VITALS },
+    selectedBedId: null,
     holdProgress:  0,
     submitSuccess: false,
     serverConflict: null,
@@ -70,6 +74,7 @@ export const useTriageStore = create((set, get) => ({
       await submitTriage({
         patientId:   selectedPatientId,
         encounterId: selectedEncounterId,
+        bedId:       get().selectedBedId,
         vitals,
         assessedBy:  userEmail,
       });

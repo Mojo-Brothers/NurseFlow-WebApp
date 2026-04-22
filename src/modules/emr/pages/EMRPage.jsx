@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { 
@@ -10,11 +11,18 @@ import {
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
+import { dischargeEncounter } from '../../encounter/services/encounter.service.js';
 import { useNavigate, useBlocker } from 'react-router-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, query, collection, where } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
+import { validateClaimReadiness } from '../../billing/services/claimEngine.service.js';
 import { COLLECTIONS } from '../../../core/constants.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
+import { checkAllergyConflict } from '../../../utils/clinicalEngine.js';
+import HandoverModal from '../../handover/components/HandoverModal';
+import DiagnosticViewer from '../../diagnostics/components/DiagnosticViewer';
+import ClinicalAlertBanner from '../../../components/ui/ClinicalAlertBanner';
+import { getLatestVitals, evaluateSepsisRisk, analyzeVitalTrend } from '../../../core/services/cds.service.js';
 
 const COMMON_MDS = [
   { id: 'm1', medication_name: 'Paracetamol', dosage: '500mg', route: 'PO' },
@@ -24,10 +32,11 @@ const COMMON_MDS = [
 ];
 
 export default function EMRPage() {
-  const { currentUser } = useAuth();
+  const { t } = useTranslation();
+  const { currentUser, role, isDoctor, activeFacilityId } = useAuth();
   const navigate = useNavigate();
   const { patients, fetchPatients, selectPatient, selectedPatientId } = usePatientStore();
-  const { selectedEncounterId, fetchPatientActiveEncounter } = useEncounterStore();
+  const { selectedEncounterId, fetchPatientActiveEncounter, activeEncounters } = useEncounterStore();
   const { logAction } = useClinicalMetrics('EMR_CORE');
 
   const [patientRecords, setPatientRecords] = useState([]);
@@ -41,14 +50,14 @@ export default function EMRPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [safetyError, setSafetyError] = useState(null);
   
-  // 🛡️ HUMAN EXPLANATION LAYER: Lockdown Context
-  const [lockContext, setLockContext] = useState(null); // { user, time }
-  
-  // 🛡️ PRODUCTION SAFETY: Rich Execution Receipt
+  const [lockContext, setLockContext] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [retrying, setRetrying] = useState({ billing: false, pharmacy: false });
+  const [showHandover, setShowHandover] = useState(false);
+  const [activeSidebarTab, setActiveSidebarTab] = useState('TIMELINE'); // 'TIMELINE' | 'DIAGNOSTICS'
+  const [cdsAlerts, setCdsAlerts] = useState({ risk: null, trends: null });
+  const [criticalLabResult, setCriticalLabResult] = useState(null);
 
-  // 🛡️ SMART UNSAVED GUARD: Delta detection
   const subjectiveRef = useRef('');
   const assessmentRef = useRef('');
   const isDirty = (subjective !== subjectiveRef.current || assessment !== assessmentRef.current) && (subjective.trim() !== '' || assessment.trim() !== '');
@@ -65,13 +74,20 @@ export default function EMRPage() {
   useEffect(() => {
     if (selectedPatientId) {
       getPatientRecords(selectedPatientId).then(setPatientRecords).catch(console.error);
-      fetchPatientActiveEncounter(selectedPatientId).then(active => {
-         subjectiveRef.current = ''; assessmentRef.current = ''; // Reset on patient change
+      fetchPatientActiveEncounter(selectedPatientId).then(async (active) => {
+         subjectiveRef.current = ''; assessmentRef.current = '';
+         if (active) {
+            const vitals = await getLatestVitals(active.id);
+            if (vitals.length > 0) {
+               const risk = evaluateSepsisRisk(vitals[0].vitals);
+               const trends = vitals.length > 1 ? analyzeVitalTrend(vitals[0].vitals, vitals[1].vitals) : null;
+               setCdsAlerts({ risk, trends });
+            }
+         }
       });
     }
   }, [selectedPatientId, fetchPatientActiveEncounter]);
 
-  // 🛡️ EXPLANATORY LOCKDOWN: Monitor status + context
   useEffect(() => {
     if (!selectedEncounterId) {
       setLockContext(null);
@@ -95,11 +111,38 @@ export default function EMRPage() {
     return () => unsub();
   }, [selectedEncounterId]);
 
+  useEffect(() => {
+    if (!selectedEncounterId) return;
+    
+    // 🧪 LIS: Monitor for Unacknowledged Critical Results
+    const q = query(
+      collection(db, COLLECTIONS.DIAGNOSTICS),
+      where('encounter_id', '==', selectedEncounterId),
+      where('status', '==', 'CRITICAL'),
+      where('acknowledged', '==', false)
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+       if (!snap.empty) {
+          setCriticalLabResult(snap.docs[0].data());
+       } else {
+          setCriticalLabResult(null);
+       }
+    });
+
+    return () => unsub();
+  }, [selectedEncounterId]);
+
   const activePatient = patients.find(p => p.id === selectedPatientId);
 
   const handleAction = async (status) => {
     if (status === 'SIGNED' && (!subjective || !assessment)) {
        return setSafetyError("SIGN-OFF BLOCKED: Subjective & Assessment mandatory for clinical signature.");
+    }
+
+    const conflicts = selectedMeds.filter(med => checkAllergyConflict(med.medication_name, activePatient?.allergies));
+    if (status === 'SIGNED' && conflicts.length > 0) {
+       return setSafetyError(`SIGN-OFF BLOCKED: Allergy conflict detected for ${conflicts.map(c => c.medication_name).join(', ')}. Please correct the prescription.`);
     }
 
     if (!selectedEncounterId) {
@@ -145,7 +188,6 @@ export default function EMRPage() {
     }
   };
 
-  // 🚀 TARGETED RETRY SYSTEM
   const retryModule = async (module) => {
     setRetrying(prev => ({ ...prev, [module]: true }));
     try {
@@ -163,6 +205,19 @@ export default function EMRPage() {
     }
   };
 
+  const handleDischarge = async () => {
+    if (!window.confirm("FINAL DISCHARGE: Are you sure? This will medically close the encounter, release the bed, and finalize billing.")) return;
+    setIsSaving(true);
+    try {
+       await dischargeEncounter(selectedEncounterId, currentUser.email);
+       setSafetyError("Patient Discharged Successfully. Bed Released.");
+    } catch (e) {
+       setSafetyError(`DISCHARGE FAILED: ${e.message}`);
+    } finally {
+       setIsSaving(false);
+    }
+  };
+
   const toggleMed = (med) => {
     const exists = selectedMeds.find(m => m.id === med.id);
     if (exists) {
@@ -174,7 +229,17 @@ export default function EMRPage() {
 
   return (
     <div className="p-8 h-full flex-row gap-8 overflow-hidden relative">
-      {/* 🛡️ RICH SUCCESS RECEIPT OVERLAY */}
+      {showHandover && (
+        <HandoverModal 
+          patient={activePatient} 
+          encounter={activeEncounters?.find(e => e.id === selectedEncounterId)} 
+          onClose={(success) => {
+            setShowHandover(false);
+            if (success) setSafetyError("Handover Secured Successfully.");
+          }} 
+        />
+      )}
+
       {receipt && (
         <div className="absolute inset-0 bg-surface-lowest-transparent backdrop-blur-md z-[100] flex items-center justify-center p-8">
            <ClinicalCard maxWidth="600px" padding="2.5rem" className="shadow-2xl border-t-8 border-success animate-scale-in">
@@ -193,7 +258,6 @@ export default function EMRPage() {
                     <span className="text-xs font-black text-success">LOCKED (ID: {receipt.soapId.slice(-6)})</span>
                  </div>
 
-                 {/* 🚀 TARGETED BILLING RECEIPT */}
                  <div className="flex-row items-center justify-between p-4 bg-surface-container rounded-xl">
                     <div className="flex-row items-center gap-3">
                        <span className="material-symbols-outlined text-secondary">receipt_long</span>
@@ -202,17 +266,12 @@ export default function EMRPage() {
                     {receipt.billing.ok ? (
                        <span className="text-xs font-black text-success">SUCCESS</span>
                     ) : (
-                       <button 
-                         onClick={() => retryModule('billing')} 
-                         disabled={retrying.billing}
-                         className="btn-primary py-1 px-3 text-[8px] font-black uppercase bg-error"
-                       >
+                       <button onClick={() => retryModule('billing')} disabled={retrying.billing} className="btn-primary py-1 px-3 text-[8px] font-black uppercase bg-error">
                          {retrying.billing ? 'Retrying...' : '⚠ RETRY BILLING'}
                        </button>
                     )}
                  </div>
 
-                 {/* 🚀 TARGETED PHARMACY RECEIPT */}
                  <div className="flex-row items-center justify-between p-4 bg-surface-container rounded-xl">
                     <div className="flex-row items-center gap-3">
                        <span className="material-symbols-outlined text-error">pill</span>
@@ -221,25 +280,28 @@ export default function EMRPage() {
                     {receipt.pharmacy.ok ? (
                        <span className="text-xs font-black text-success">{receipt.pharmacy.count} ITEMS SENT</span>
                     ) : (
-                       <button 
-                         onClick={() => retryModule('pharmacy')} 
-                         disabled={retrying.pharmacy}
-                         className="btn-primary py-1 px-3 text-[8px] font-black uppercase bg-error"
-                       >
+                       <button onClick={() => retryModule('pharmacy')} disabled={retrying.pharmacy} className="btn-primary py-1 px-3 text-[8px] font-black uppercase bg-error">
                          {retrying.pharmacy ? 'Retrying...' : '⚠ RETRY PHARMACY'}
                        </button>
                     )}
                  </div>
               </div>
 
-              <button onClick={() => navigate('/dashboard')} className="btn-primary w-full py-4 text-base font-black uppercase tracking-widest">
-                Professional Handover Complete
-              </button>
+              <div className="flex-column gap-3">
+                 <button onClick={() => navigate('/dashboard')} className="btn-primary w-full py-4 text-base font-black uppercase tracking-widest">
+                   Professional Handover Complete
+                 </button>
+                 <button 
+                   onClick={() => navigate(`/reporting/${selectedEncounterId}`)}
+                   className="btn-ghost w-full py-2 text-[10px] font-black uppercase border border-primary/20"
+                 >
+                   View Medical Summary
+                 </button>
+              </div>
            </ClinicalCard>
         </div>
       )}
 
-      {/* 🛡️ DATA LOSS PREVENTION MODAL */}
       {blocker.state === "blocked" && (
         <div className="absolute inset-0 bg-surface-lowest-transparent backdrop-blur-sm z-[200] flex items-center justify-center">
            <ClinicalCard maxWidth="450px" padding="2rem" className="shadow-2xl border-t-4 border-error">
@@ -256,7 +318,6 @@ export default function EMRPage() {
         </div>
       )}
 
-      {/* 🛡️ HUMAN EXPLANATION LOCKDOWN */}
       {lockContext && (
         <div className="absolute inset-0 bg-surface-lowest-transparent backdrop-blur-md z-[250] flex items-center justify-center p-8 text-center text-on-surface">
            <ClinicalCard maxWidth="520px" padding="3rem" className="border-t-8 border-error shadow-2xl animate-pulse">
@@ -268,21 +329,37 @@ export default function EMRPage() {
                  <p className="text-[10px] font-bold opacity-40 mt-1">TIME: {lockContext.time}</p>
               </div>
               <p className="text-on-surface-variant font-medium mb-8">This session was discharged or finalized. Contact your clinical supervisor if this is an error.</p>
-              <button onClick={() => navigate('/dashboard')} className="btn-primary w-full py-4 font-black uppercase">Return to Worklist</button>
+              <div className="flex-column gap-3 w-full">
+                 <button onClick={() => navigate('/dashboard')} className="btn-primary w-full py-4 font-black uppercase">Return to Worklist</button>
+                 <button 
+                   onClick={() => navigate(`/reporting/${selectedEncounterId}`)}
+                   className="btn-ghost w-full py-2 text-[10px] font-black uppercase border border-error/20 text-error"
+                 >
+                   Open Print-Ready Medical Summary
+                 </button>
+              </div>
            </ClinicalCard>
         </div>
       )}
 
       {/* LEFT: History & Timeline */}
       <div className="w-[450px] flex-column gap-6">
-        <ClinicalCard padding="1.5rem" className="bg-surface-container-low border-l-4 border-primary pointer-events-none">
+        <ClinicalCard padding="1.5rem" className="bg-surface-container-low border-l-4 border-primary relative">
           <div className="flex-row items-baseline gap-3 mb-2">
-            <h2 className="text-2xl font-black text-primary">{activePatient?.name || 'Select Patient'}</h2>
+            <h2 className="text-2xl font-black text-primary">{activePatient?.name || t('emr.select_patient', { defaultValue: 'Select Patient' })}</h2>
             <span className="text-xs font-bold text-on-surface-variant">MRN: {activePatient?.mrn}</span>
           </div>
-          <p className="text-xs font-bold uppercase tracking-tighter opacity-60">
-            {activePatient?.demographics?.gender === 'M' ? 'Male' : 'Female'} • {calculateAge(activePatient?.demographics?.dob)} Years Old
+          <p className="text-xs font-bold uppercase tracking-tighter opacity-60 mb-4">
+            {activePatient?.demographics?.gender === 'M' ? t('patient.male', { defaultValue: 'Male' }) : t('patient.female', { defaultValue: 'Female' })} • {calculateAge(activePatient?.demographics?.dob)} {t('triage.yrs')}
           </p>
+          <button 
+            onClick={() => setShowHandover(true)}
+            disabled={!selectedPatientId}
+            className="w-full btn-ghost py-2 text-[10px] font-black uppercase border border-primary/20 hover:bg-primary/5 flex-row items-center justify-center gap-2"
+          >
+             <span className="material-symbols-outlined text-sm">sync_alt</span>
+             {t('emr.handover')}
+          </button>
         </ClinicalCard>
 
         <select className="form-input w-full" value={selectedPatientId || ''} onChange={(e) => selectPatient(e.target.value)}>
@@ -291,49 +368,107 @@ export default function EMRPage() {
         </select>
 
         <div className="flex-1 overflow-y-auto pr-2 flex-column gap-4">
-           <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant px-2">Clinical Timeline (Append-Only)</h3>
-           {patientRecords.length === 0 ? (
-             <p className="text-xs italic opacity-40 text-center py-10">No prior records found.</p>
-           ) : patientRecords.map(rec => (
-             <ClinicalCard key={rec.id} padding="1rem" className="relative hover:border-primary transition-all">
-                <div className="flex-row justify-between mb-4 pb-2 border-b border-outline-variant border-dashed">
-                   <span className="text-[10px] font-black text-primary uppercase">{rec.status === 'SIGNED' ? '✅ Signed' : '📝 Draft'}</span>
-                   <span className="text-[10px] opacity-40 font-bold tabular-nums">{rec.created_at?.toDate().toDateString()}</span>
-                </div>
-                <div className="space-y-4 mb-4">
-                   <div>
-                      <p className="text-[9px] font-black uppercase opacity-60 mb-1">Subjective</p>
-                      <p className="text-xs leading-relaxed">{rec.subjective}</p>
-                   </div>
-                   <div>
-                      <p className="text-[9px] font-black uppercase opacity-60 mb-1">Assessment</p>
-                      <p className="text-xs leading-relaxed font-bold">{rec.assessment}</p>
-                   </div>
-                </div>
-                {/* 🛡️ AUDIT TRACE VISIBILITY */}
-                {rec.status === 'SIGNED' && (
-                  <div className="pt-2 border-t border-outline-variant flex-row justify-between items-center opacity-60">
-                     <span className="text-[8px] font-black uppercase">Trace ID: {rec.id.slice(0,8)}</span>
-                     <span className="text-[8px] font-bold italic">Doc: {rec.doctor?.split('@')[0]}</span>
-                  </div>
-                )}
-             </ClinicalCard>
-           ))}
+           <div className="flex-row gap-4 px-2 mb-2">
+              <button 
+                onClick={() => setActiveSidebarTab('TIMELINE')}
+                className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all 
+                  ${activeSidebarTab === 'TIMELINE' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant opacity-40'}`}
+              >
+                {t('emr.history')}
+              </button>
+              <button 
+                onClick={() => setActiveSidebarTab('DIAGNOSTICS')}
+                className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all 
+                  ${activeSidebarTab === 'DIAGNOSTICS' ? 'border-secondary text-secondary' : 'border-transparent text-on-surface-variant opacity-40'}`}
+              >
+                {t('emr.diagnostics')}
+              </button>
+           </div>
+
+           {activeSidebarTab === 'TIMELINE' ? (
+             <>
+               {patientRecords.length === 0 ? (
+                 <p className="text-xs italic opacity-40 text-center py-10">No prior records found.</p>
+               ) : patientRecords.map(rec => (
+                 <ClinicalCard key={rec.id} padding="1rem" className="relative hover:border-primary transition-all">
+                    <div className="flex-row justify-between mb-4 pb-2 border-b border-outline-variant border-dashed">
+                       <span className="text-[10px] font-black text-primary uppercase">{rec.status === 'SIGNED' ? '✅ Signed' : '📝 Draft'}</span>
+                       <span className="text-[10px] opacity-40 font-bold tabular-nums">{rec.created_at?.toDate().toDateString()}</span>
+                    </div>
+                    <div className="space-y-4 mb-4">
+                       <div>
+                          <p className="text-[9px] font-black uppercase opacity-60 mb-1">Subjective</p>
+                          <p className="text-xs leading-relaxed">{rec.subjective}</p>
+                       </div>
+                       <div>
+                          <p className="text-[9px] font-black uppercase opacity-60 mb-1">Assessment</p>
+                          <p className="text-xs leading-relaxed font-bold">{rec.assessment}</p>
+                       </div>
+                    </div>
+                    {rec.status === 'SIGNED' && (
+                      <div className="pt-2 border-t border-outline-variant flex-row justify-between items-center opacity-60">
+                         <span className="text-[8px] font-black uppercase">Trace ID: {rec.id.slice(0,8)}</span>
+                         <span className="text-[8px] font-bold italic">Doc: {rec.doctor?.split('@')[0]}</span>
+                      </div>
+                    )}
+                 </ClinicalCard>
+               ))}
+             </>
+           ) : (
+             <DiagnosticViewer encounterId={selectedEncounterId} />
+           )}
         </div>
       </div>
 
       {/* RIGHT: SOAP Workspace */}
       <div className="flex-1 flex-column gap-6">
         <div className="flex-row justify-between items-center bg-surface-container px-6 py-4 rounded-2xl border border-outline-variant shadow-sm">
-           <div className="flex-column">
-              <span className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant">Active Workspace</span>
-              <span className="text-sm font-bold">New Professional Entry</span>
+           <div className="flex-row gap-4 items-center">
+              <div className="flex-column">
+                 <span className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant">Active Workspace</span>
+                 <span className="text-sm font-bold">New Professional Entry</span>
+              </div>
+              <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-[8px] font-black uppercase tracking-widest border border-primary/20">
+                 Site: {activeFacilityId}
+              </div>
            </div>
            <div className="flex-row gap-3">
+              {isDoctor && selectedEncounterId && (
+                <button 
+                  onClick={() => navigate('/telemedicine')} 
+                  className="btn-ghost px-4 py-2 text-xs font-black uppercase text-primary border border-primary/20 hover:bg-primary/5 flex-row items-center gap-2"
+                >
+                   <span className="material-symbols-outlined text-sm">videocam</span>
+                   {t('telemedicine.start', { defaultValue: 'Start Tele-Consult' })}
+                </button>
+              )}
               <button disabled={isSaving} onClick={() => handleAction('DRAFT')} className="btn-ghost px-4 py-2 text-xs font-black uppercase">Save Draft</button>
-              <button disabled={isSaving} onClick={() => setShowConfirm(true)} className="btn-primary px-6 py-3 text-xs font-black uppercase tracking-widest shadow-lg">✓ Sign-off</button>
+              {isDoctor ? (
+                <button disabled={isSaving} onClick={() => setShowConfirm(true)} className="btn-primary px-6 py-3 text-xs font-black uppercase tracking-widest shadow-lg">✓ Sign-off</button>
+              ) : (
+                <div className="flex-row items-center px-4 bg-surface-container-high rounded-xl text-[8px] font-black uppercase opacity-40">Doctor Only</div>
+              )}
            </div>
         </div>
+
+        {criticalLabResult && (
+           <div className="p-6 bg-error text-white rounded-2xl flex-row justify-between items-center shadow-xl animate-bounce-short mb-6 border-4 border-white/20">
+              <div className="flex-row items-center gap-6">
+                 <span className="material-symbols-outlined text-4xl">emergency</span>
+                 <div>
+                    <h3 className="text-lg font-black uppercase tracking-tighter leading-none mb-1">CRITICAL LAB VALUE DETECTED</h3>
+                    <p className="text-xs font-bold opacity-80">
+                       {criticalLabResult.test_name}: <span className="text-xl font-black">{criticalLabResult.result_value}</span> {criticalLabResult.unit}
+                    </p>
+                 </div>
+              </div>
+              <button className="bg-white text-error px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:scale-105 transition-all">
+                 Acknowledge & View Details
+              </button>
+           </div>
+        )}
+
+        <ClinicalAlertBanner riskProfile={cdsAlerts.risk} trendAlerts={cdsAlerts.trends} />
 
         {safetyError && (
           <div className="p-4 bg-error-container text-on-error-container text-[10px] font-black uppercase tracking-widest rounded-xl border-l-4 border-error shadow-sm">
@@ -344,31 +479,59 @@ export default function EMRPage() {
         <div className="grid flex-1 overflow-hidden" style={{ gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
            <div className="flex-column gap-6 overflow-y-auto pr-4 scrollbar-hidden">
               <div className="flex-column gap-2">
-                 <label className="text-[10px] font-black uppercase text-on-surface-variant">Subjective Findings</label>
+                 <label className="text-[10px] font-black uppercase text-on-surface-variant">{t('emr.subjective')}</label>
                  <textarea className="form-input min-h-[140px] text-sm leading-relaxed" value={subjective} onChange={e => setSubjective(e.target.value)} />
               </div>
               <div className="flex-column gap-2">
-                 <label className="text-[10px] font-black uppercase text-on-surface-variant">Objective Exam</label>
+                 <label className="text-[10px] font-black uppercase text-on-surface-variant">{t('emr.objective')}</label>
                  <textarea className="form-input min-h-[100px] text-sm leading-relaxed" value={objective} onChange={e => setObjective(e.target.value)} />
               </div>
-              <div className="flex-column gap-2">
-                 <label className="text-[10px] font-black uppercase text-on-surface-variant">Clinical Assessment</label>
-                 <textarea className="form-input min-h-[120px] text-sm leading-relaxed font-bold" value={assessment} onChange={e => setAssessment(e.target.value)} />
-              </div>
+              <div className="flex-column gap-2 relative">
+                  <div className="flex-row justify-between items-center">
+                     <label className="text-[10px] font-black uppercase text-on-surface-variant">{t('emr.assessment')}</label>
+                     {assessment.length > 0 && (
+                        <div className={`flex-row items-center gap-1 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest
+                           ${validateClaimReadiness({}, { assessment, status: 'SIGNED' }).ready ? 'bg-success/10 text-success' : 'bg-error-container text-error animate-pulse'}`}>
+                           <span className="material-symbols-outlined text-[10px]">shield_with_heart</span>
+                           {validateClaimReadiness({}, { assessment, status: 'SIGNED' }).ready ? 'Claim Ready' : 'Claim Risk: Low Data'}
+                        </div>
+                     )}
+                  </div>
+                  <textarea className="form-input min-h-[120px] text-sm leading-relaxed font-bold" value={assessment} onChange={e => setAssessment(e.target.value)} />
+               </div>
            </div>
 
            <div className="flex-column gap-6 overflow-y-auto">
               <div className="flex-column gap-4">
-                 <label className="text-[10px] font-black uppercase text-on-surface-variant">Pharmacy Plan</label>
+                 <label className="text-[10px] font-black uppercase text-on-surface-variant">{t('emr.pharmacy_plan')}</label>
                  <div className="grid grid-cols-1 gap-2">
                     {COMMON_MDS.map(med => {
                        const isSelected = selectedMeds.find(m => m.id === med.id);
+                       const hasConflict = checkAllergyConflict(med.medication_name, activePatient?.allergies);
+                       const isOutOfStock = med.id === 'm3'; // Simulated: Ceftriaxone is low in demo
                        return (
-                          <button key={med.id} onClick={() => toggleMed(med)} className={`flex-row items-center gap-3 p-4 rounded-xl border-2 transition-all ${isSelected ? 'bg-primary text-white border-primary shadow-md' : 'bg-white border-outline-variant'}`}>
-                             <span className="material-symbols-outlined text-sm">{med.route === 'IV' ? 'colorize' : 'pill'}</span>
+                          <button 
+                            key={med.id} 
+                            disabled={hasConflict || isOutOfStock}
+                            onClick={() => toggleMed(med)} 
+                            className={`flex-row items-center gap-3 p-4 rounded-xl border-2 transition-all 
+                              ${hasConflict ? 'border-error bg-error-container text-on-error-container animate-pulse' : 
+                                isOutOfStock ? 'bg-surface-container opacity-50 grayscale' :
+                                isSelected ? 'bg-primary text-white border-primary shadow-md' : 'bg-white border-outline-variant'}`}
+                          >
+                             <span className="material-symbols-outlined text-sm">
+                               {hasConflict ? 'warning' : isOutOfStock ? 'inventory_2' : med.route === 'IV' ? 'colorize' : 'pill'}
+                             </span>
                              <div className="flex-1">
-                                <div className="text-[10px] font-black">{med.medication_name}</div>
-                                <div className="text-[8px] font-bold opacity-60 uppercase">{med.dosage} • {med.route}</div>
+                                <div className="flex-row justify-between items-center">
+                                   <div className="text-[10px] font-black">{med.medication_name}</div>
+                                   {!hasConflict && (
+                                      <div className={`w-1.5 h-1.5 rounded-full ${isOutOfStock ? 'bg-error animate-pulse' : 'bg-success'}`} />
+                                   )}
+                                </div>
+                                <div className="text-[8px] font-bold opacity-60 uppercase">
+                                  {hasConflict ? '⚠️ ALLERGY CONFLICT' : isOutOfStock ? 'OUT OF STOCK' : `${med.dosage} • ${med.route}`}
+                                </div>
                              </div>
                              {isSelected && <span className="material-symbols-outlined text-sm">verified</span>}
                           </button>
@@ -377,14 +540,30 @@ export default function EMRPage() {
                  </div>
               </div>
               <div className="flex-column gap-2">
-                 <label className="text-[10px] font-black uppercase text-on-surface-variant">Instructions</label>
+                 <label className="text-[10px] font-black uppercase text-on-surface-variant">{t('emr.instructions')}</label>
                  <textarea className="form-input h-[120px] text-xs font-medium" placeholder="Referral/Follow-up..." value={planInstructions} onChange={e => setPlanInstructions(e.target.value)} />
               </div>
+
+              <ClinicalCard padding="1.5rem" className="bg-surface-container border-t-4 border-error/20">
+                 <header className="flex-row justify-between items-center mb-4">
+                    <span className="text-[10px] font-black uppercase opacity-60">{t('emr.discharge')}</span>
+                    <span className="material-symbols-outlined text-sm opacity-20 text-error">logout</span>
+                 </header>
+                 <p className="text-[10px] opacity-60 mb-4 leading-tight">Closing the clinical journey will release the patient's bed and lock the medical record from further edits.</p>
+                 <button 
+                   onClick={handleDischarge}
+                   disabled={!selectedEncounterId || isSaving || !isDoctor}
+                   className={`w-full btn-ghost py-3 text-[10px] font-black uppercase border border-error/20 flex-row items-center justify-center gap-2 
+                     ${!isDoctor ? 'opacity-20 cursor-not-allowed' : 'hover:bg-error/5 text-error'}`}
+                 >
+                    <span className="material-symbols-outlined text-sm">door_open</span>
+                    {isDoctor ? 'Execute Final Discharge' : 'Discharge Restricted (Doctor Only)'}
+                 </button>
+              </ClinicalCard>
            </div>
         </div>
       </div>
 
-      {/* 🛡️ PROFESSIONAL CONFIRMATION MODAL */}
       {showConfirm && (
         <div className="absolute inset-0 bg-surface-lowest-transparent backdrop-blur-sm z-[150] flex items-center justify-center p-8">
            <ClinicalCard maxWidth="500px" padding="2.5rem" className="shadow-2xl border-t-8 border-primary animate-scale-in">

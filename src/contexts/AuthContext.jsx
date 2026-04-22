@@ -14,6 +14,12 @@ import { AuthContext } from './AuthContextInstance.js';
 
 export function AuthProvider({ children }) {
   const { currentUser, role, isLoading, isLoggingIn, error, setUser, login, logout, clearError } = useAuthStore();
+  const [activeFacilityId, setActiveFacilityId] = React.useState(localStorage.getItem('active_facility_id') || 'FAC-CENTRAL');
+
+  const switchFacility = (id) => {
+    setActiveFacilityId(id);
+    localStorage.setItem('active_facility_id', id);
+  };
 
   // Sinkronisasi Firebase Auth state → Zustand store
   useEffect(() => {
@@ -26,6 +32,10 @@ export function AuthProvider({ children }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
+        // 🧪 DEV GUARD: Don't overwrite mock session with null if we have a .local user
+        const isMock = currentUser?.email?.endsWith('.local');
+        if (isMock && !user) return; 
+
         if (user) {
           const userRole = await getUserRole(user);
           setUser(user, userRole);
@@ -54,6 +64,8 @@ export function AuthProvider({ children }) {
     loginWithGoogle: login,
     logout,
     clearError,
+    activeFacilityId,
+    switchFacility,
     // Helper role checks — dipakai di komponen
     isAdmin:      role === 'ADMIN',
     isDoctor:     role === 'DOCTOR',

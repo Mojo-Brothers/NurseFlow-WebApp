@@ -3,15 +3,15 @@
     "clinical": "Klinis",
     "operational": "Operasional",
     "administration": "Administrasi",
-    "dashboard": "Dashboard",
-    "patients": "Pasien",
+    "dashboard": "Dashboard Utama",
+    "patients": "Data Pasien",
     "encounters": "Manajemen Kunjungan",
     "triage": "Triage IGD",
-    "emr": "EMR (SOAP)",
+    "emr": "Rekam Medis (SOAP)",
     "worklist": "Daftar Kerja",
     "pharmacy": "Farmasi",
-    "billing": "Tagihan",
-    "admin": "Admin Hub",
+    "billing": "Kasir & Penagihan",
+    "admin": "Pusat Admin",
     "settings": "Pengaturan",
     "language": "Bahasa",
     "logout": "Keluar"
@@ -19,11 +19,11 @@
   "dashboard": {
     "overview": "Ikhtisar Klinis",
     "ward_occupancy": "Okupansi Bangsal",
-    "avg_news": "Rata-rata Skor NEWS2",
+    "avg_news": "Rata-rata NEWS2",
     "staff_on_duty": "Staf Bertugas",
     "escalations": "Eskalasi Klinis",
-    "bypass_triage": "Bypass ke Triage",
-    "handovers": "Serah Terima & Kontinuitas",
+    "bypass_triage": "Langsung ke Triage",
+    "handovers": "Serah Terima (Handover)",
     "view_logs": "Lihat Log",
     "critical": "Kritis",
     "urgent": "Mendesak",
@@ -34,54 +34,54 @@
   "roles": {
     "doctor": "Dokter",
     "nurse": "Perawat",
-    "admin": "Admin",
+    "admin": "Administrator",
     "pharmacist": "Apoteker"
   },
   "auth": {
-    "title": "Autentikasi Aman Klinis",
-    "access_restricted": "Akses ke sistem ini sangat terbatas. Silakan identifikasi diri Anda menggunakan akun korporat Anda.",
+    "title": "Autentikasi Klinis Aman",
+    "access_restricted": "Akses ke sistem ini sangat dibatasi. Silakan identifikasi diri Anda menggunakan akun korporat.",
     "sign_in_google": "Masuk dengan Google",
     "authenticating": "Mengautentikasi...",
-    "error_login": "Login gagal. Silakan periksa akses kredensial Google Anda."
+    "error_login": "Login gagal. Harap periksa akses kredensial Google Anda."
   },
   "encounter": {
     "title": "Manajemen Kunjungan",
     "subtitle": "Kontrol Episode Pasien · {{count}} Aktif",
-    "btn_new": "Buka Encounter Baru",
-    "active_list": "Encounter Aktif",
+    "btn_new": "Buka Kunjungan Baru",
+    "active_list": "Kunjungan Aktif",
     "table": {
       "patient": "Pasien",
       "type": "Tipe",
       "complaint": "Keluhan Utama",
       "doctor": "Dokter",
       "nurse": "Perawat",
-      "ward": "Ward",
+      "ward": "Bangsal",
       "admitted": "Masuk",
       "status": "Status",
       "action": "Aksi"
     },
     "types": {
-      "emergency": "🚨 IGD / Emergency",
+      "emergency": "🚨 IGD / Darurat",
       "outpatient": "🏥 Rawat Jalan",
       "inpatient": "🛏️ Rawat Inap",
       "planned": "📅 Terencana"
     },
     "status": {
       "active": "Aktif",
-      "discharged": "Dipulangkan",
-      "transferred": "Transfer"
+      "discharged": "Selesai",
+      "transferred": "Rujuk/Pindah"
     },
     "modal": {
-      "title": "Buka Encounter Baru",
+      "title": "Buka Kunjungan Baru",
       "patient_label": "PILIH PASIEN *",
       "patient_placeholder": "-- Pilih Pasien --",
       "type_label": "TIPE KUNJUNGAN *",
       "complaint_label": "KELUHAN UTAMA *",
-      "complaint_placeholder": "Deskripsi keluhan utama pasien...",
-      "ward_label": "WARD",
-      "doctor_label": "DOKTER PENANGGUNG",
+      "complaint_placeholder": "Deskripsikan keluhan utama...",
+      "ward_label": "BANGSAL",
+      "doctor_label": "DOKTER PENANGGUNG JAWAB",
       "btn_cancel": "Batal",
-      "btn_submit": "Buka Encounter",
+      "btn_submit": "Buka Kunjungan",
       "saving": "Menyimpan..."
     }
   },
@@ -89,29 +89,43 @@
     "title": "Triage Darurat",
     "patient_verification": "Verifikasi Pasien",
     "adaptive_baseline": "Baseline Adaptif",
-    "hold_to_log": "TAHAN UNTUK LOG",
-    "success_saved": "✓ Catatan Triage V5 Disimpan (Traceability Terkunci)",
+    "hold_to_log": "TAHAN UNTUK SIMPAN",
+    "success_saved": "✓ Rekam Triage V5 Berhasil (Terkunci & Terlacak)",
     "btn_new": "Triage Baru",
-    "rapid_vitals": "Tanda-tanda Vital Cepat",
+    "rapid_vitals": "Data Vital Cepat",
     "age": "Usia",
     "yrs": "THN",
-    "no_encounter": "⚠️ TIDAK ADA ENCOUNTER",
+    "no_encounter": "⚠️ TIDAK ADA KUNJUNGAN",
     "chronic": "KRONIS",
     "normal": "NORMAL",
     "vitals": {
       "hr": "DETAK JANTUNG",
       "bp": "TD SISTOLIK",
       "spo2": "SpO2",
-      "temp": "TEMPERATUR",
-      "weight": "Berat",
-      "height": "Tinggi",
+      "temp": "SUHU",
+      "weight": "Berat Badan",
+      "height": "Tinggi Badan",
       "bmi": "Indeks Massa Tubuh"
     },
     "escalation": {
       "none": "Normal",
-      "watch": "Observasi",
-      "urgent": "Urgent",
+      "watch": "Pantau",
+      "urgent": "Mendesak",
       "critical": "Kritis"
     }
+  },
+  "emr": {
+    "workspace": "Ruang Kerja EMR",
+    "history": "Riwayat & Linimasa",
+    "subjective": "Subjektif",
+    "objective": "Objektif",
+    "assessment": "Asesmen / Diagnosis",
+    "plan": "Rencana Tindakan",
+    "pharmacy_plan": "Rencana Farmasi",
+    "instructions": "Instruksi Medis",
+    "sign_off": "Tanda Tangan Klinis",
+    "discharge": "Kepulangan Pasien",
+    "handover": "Serah Terima SBAR",
+    "diagnostics": "Hasil Diagnostik"
   }
 }

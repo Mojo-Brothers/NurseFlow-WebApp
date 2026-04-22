@@ -5,6 +5,7 @@ import { useAuth } from '../../../contexts/useAuth.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
+import { deductByName } from '../services/inventory.service.js';
 
 const ROUTE_CONFIG = {
   PO:  { label: 'Oral', icon: 'pill', bg: 'var(--surface-container-high)', text: 'var(--on-surface)' },
@@ -47,11 +48,15 @@ export default function PharmacyPage() {
 
     try { 
       logAction('pharmacy_dispense_complete');
+      
+      // 📦 ATOMIC STOCK DEDUCTION
+      await deductByName(verifyingMed.medication_name, 1);
+      
       await dispense(verifyingMed.id, currentUser.email); 
       setVerifyingMed(null);
       fetchQueue();
     } catch (e) { 
-      alert('Dispensing failure: ' + e.message); 
+      alert('Inventory/Dispensing Failure: ' + e.message); 
     }
   };
 

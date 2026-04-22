@@ -20,6 +20,7 @@ import { enqueueAction } from '../../../core/services/syncQueue.service.js';
 export const submitTriage = async ({ 
   patientId, 
   encounterId, 
+  bedId = null,
   vitals, 
   assessedBy,
   reason = 'ROUTINE_TRIAGE' 
@@ -29,7 +30,7 @@ export const submitTriage = async ({
     console.warn('[TriageService] Offline detected. Enqueueing to Priority Sync Queue (Spark Safe)...');
     return await enqueueAction({
       type: 'SUBMIT_TRIAGE',
-      patientId, encounterId, vitals, assessedBy, reason
+      patientId, encounterId, bedId, vitals, assessedBy, reason
     }, SYNC_PRIORITIES.HIGH); 
   }
 
@@ -72,8 +73,25 @@ export const submitTriage = async ({
         escalation_level:  escalation.level,
         escalation_source: escalation.source,
         updated_at:       timestamp,
+        bed_id:           bedId, // Link bed to encounter
         _v:               increment(1)
       });
+
+      // 3.1 🛡️ ADT: Atomic Bed Assignment
+      if (bedId) {
+        const bedRef = doc(db, COLLECTIONS.BEDS, bedId);
+        const bedSnap = await transaction.get(bedRef);
+        if (!bedSnap.exists()) throw new Error('Bed tidak ditemukan.');
+        if (bedSnap.data().is_occupied) throw new Error('Bed sudah terisi oleh pasien lain.');
+
+        transaction.update(bedRef, {
+          is_occupied:  true,
+          encounter_id: encounterId,
+          patient_id:   patientId,
+          assigned_at:  timestamp,
+          assigned_by:  assessedBy
+        });
+      }
 
       // 4. Save Triage Log (Spark-Safe V5)
       transaction.set(logRef, {

@@ -151,6 +151,27 @@ const handleFailure = async (db, entry, errorMessage) => {
   store.put(entry);
 };
 
+/**
+ * Get count of pending actions for UI indicator
+ */
+export const getPendingCount = async () => {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction([STORE_NAME], 'readonly');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.getAll();
+    request.onsuccess = () => {
+      const pending = request.result.filter(e => e.status === QUEUE_STATUS.PENDING);
+      resolve(pending.length);
+    };
+    request.onerror = () => reject(0);
+  });
+};
+
+export const isOnline = () => {
+   return typeof window !== 'undefined' ? window.navigator.onLine : true;
+};
+
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
     trackMetric('NETWORK_RESTORED', { timestamp: Date.now() });

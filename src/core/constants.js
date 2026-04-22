@@ -14,6 +14,8 @@ export const COLLECTIONS = {
   SYSTEM_METRICS:  'system_metrics',
   BILLING:         'billing',
   IDEMPOTENCY_LOCKS: 'idempotency_locks', // V10: Atomic locks
+  BEDS:            'beds',           // V11: ADT Ward Map
+  HANDOVER_LOGS:   'handover_logs',  // V11: SBAR Continuity
 };
 
 export const ROLES = {

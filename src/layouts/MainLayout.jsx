@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import TopAppBar from '../components/TopAppBar';
 import { useAuth } from '../contexts/useAuth.js';
 import VersionDisplay from '../components/VersionDisplay';
+import LanguageSwitcher from '../components/ui/LanguageSwitcher';
+import OfflineStatusIndicator from '../components/ui/OfflineStatusIndicator';
 import { useStressMonitor } from '../core/hooks/useStressMonitor.js';
 
 const ROLE_BADGE = {
@@ -29,6 +31,7 @@ const NAV_SCHEMA = [
   ]},
   { label: 'nav.administration', admin: true, items: [
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
+    { name: 'Map Config',      path: '/wayfinding-admin', icon: 'map',            roles: ['ADMIN'] },
     { name: 'Design Lab',      path: '/lab',        icon: 'biotech',              roles: ['ADMIN'] },
   ]},
 ];
@@ -139,30 +142,10 @@ const MainLayout = () => {
             })}
           </div>
 
-          {/* ─── Language Switcher (JCI Multi-Lang) ────── */}
+          {/* ─── Language Switcher ────── */}
           {showExpanded && (
             <div style={{ padding: '0.5rem 0.75rem' }}>
-              <div style={{
-                display: 'flex', gap: '4px', backgroundColor: 'var(--surface-container-high)',
-                padding: '2px', borderRadius: 'var(--radius-md)'
-              }}>
-                {['en', 'id', 'sys'].map(lang => (
-                  <button
-                    key={lang}
-                    onClick={() => i18n.changeLanguage(lang)}
-                    style={{
-                      flex: 1, padding: '4px 0', border: 'none', cursor: 'pointer',
-                      fontSize: '0.6rem', fontWeight: '800', borderRadius: '4px',
-                      backgroundColor: i18n.language === lang ? 'var(--primary)' : 'transparent',
-                      color: i18n.language === lang ? 'var(--on-primary)' : 'var(--on-surface-variant)',
-                      transition: 'all 0.2s ease',
-                      textTransform: 'uppercase'
-                    }}
-                  >
-                    {lang}
-                  </button>
-                ))}
-              </div>
+               <LanguageSwitcher />
             </div>
           )}
 
@@ -216,6 +199,7 @@ const MainLayout = () => {
           <Outlet />
         </main>
       </div>
+      <OfflineStatusIndicator />
     </div>
   );
 };

@@ -21,6 +21,15 @@ import Billing     from './modules/billing/pages/BillingPage';
 import AdminHub    from './modules/admin/pages/AdminHubPage';
 import HealthCheck from './modules/core/pages/HealthCheckPage';
 import LabPage     from './modules/lab/pages/LabPage';
+import WardMonitor from './modules/dashboard/pages/WardMonitorPage';
+import BedManagement from './modules/ward/pages/BedManagementPage';
+import Analytics from './modules/dashboard/pages/AnalyticsDashboard';
+import EncounterSummary from './modules/reporting/pages/EncounterSummaryPage';
+import Inventory from './modules/pharmacy/pages/InventoryPage';
+import PatientPortal from './modules/patient/pages/PatientPortal';
+import WayfindingPortal from './modules/patient/pages/WayfindingPortal';
+import WayfindingAdmin from './modules/enterprise/pages/WayfindingAdmin';
+import { useAuth } from './contexts/useAuth';
 
 const Wrap = ({ children }) => <ErrorBoundary>{children}</ErrorBoundary>;
 
@@ -45,7 +54,11 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<MainLayout />}>
-              <Route path="/dashboard"  element={<Wrap><Dashboard /></Wrap>} />
+              <Route path="/dashboard" element={
+                <AuthRedirector>
+                  <Wrap><Dashboard /></Wrap>
+                </AuthRedirector>
+              } />
               <Route path="/patients"   element={<Wrap><Patients /></Wrap>} />
               <Route path="/encounters" element={<Wrap><Encounters /></Wrap>} />
               <Route path="/triage"     element={<Wrap><Triage /></Wrap>} />
@@ -62,6 +75,26 @@ function App() {
                 <Route path="/health" element={<Wrap><HealthCheck /></Wrap>} />
                 <Route path="/lab" element={<Wrap><LabPage /></Wrap>} />
               </Route>
+              <Route path="/ward-monitor" element={<Wrap><WardMonitor /></Wrap>} />
+              <Route element={<ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'SUPERVISOR', 'ADMIN']} />}>
+                <Route path="/bed-management" element={<Wrap><BedManagement /></Wrap>} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['SUPERVISOR', 'ADMIN']} />}>
+                <Route path="/analytics" element={<Wrap><Analytics /></Wrap>} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['PHARMACIST', 'ADMIN']} />}>
+                <Route path="/inventory" element={<Wrap><Inventory /></Wrap>} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'SUPERVISOR', 'ADMIN']} />}>
+                <Route path="/reporting/:encounterId" element={<Wrap><EncounterSummary /></Wrap>} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['PATIENT']} />}>
+                <Route path="/portal" element={<PatientPortal />} />
+                <Route path="/wayfinding" element={<WayfindingPortal />} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                <Route path="/wayfinding-admin" element={<WayfindingAdmin />} />
+              </Route>
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Route>
           </Route>
@@ -70,6 +103,12 @@ function App() {
       </AuthProvider>
     </Router>
   );
+}
+
+function AuthRedirector({ children }) {
+  const { role } = useAuth();
+  if (role === 'PATIENT') return <Navigate to="/portal" replace />;
+  return children;
 }
 
 export default App;

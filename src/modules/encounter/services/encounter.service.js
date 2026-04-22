@@ -206,15 +206,74 @@ export const getPatientActiveEncounter = async (patientId) => {
 };
 
 /**
- * Discharge Encounter — Wrapper over transitionEncounter for V5 compliance.
+ * Discharge Encounter — Enhanced V6 (Clinical & Logistical Sync)
  */
-export const dischargeEncounter = async (encounterId, closedBy) => {
-  return transitionEncounter({
-    encounterId,
-    targetStatus: ENCOUNTER_STATUSES.DISCHARGED,
-    reason: 'FINAL_DISCHARGE',
-    userEmail: closedBy
-  });
+export const dischargeEncounter = async (encounterId, userEmail) => {
+  const ref = doc(db, COLLECTIONS.ENCOUNTERS, encounterId);
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      const snap = await transaction.get(ref);
+      if (!snap.exists()) throw new Error('Encounter tidak ditemukan.');
+      const current = snap.data();
+
+      // 1. Guard: Check status
+      if (current.status === ENCOUNTER_STATUSES.DISCHARGED) {
+        throw new Error('Pasien sudah di-discharge sebelumnya.');
+      }
+
+      const timestamp = serverTimestamp();
+
+      // 2. Update Encounter Status
+      transaction.update(ref, {
+        status:     ENCOUNTER_STATUSES.DISCHARGED,
+        updated_at: timestamp,
+        updated_by: userEmail,
+      });
+
+      // 3. 🛡️ ADT: Auto-Release Bed
+      if (current.bed_id) {
+        const bedRef = doc(db, COLLECTIONS.BEDS, current.bed_id);
+        transaction.update(bedRef, {
+          is_occupied:  false,
+          encounter_id: null,
+          patient_id:   null,
+          released_at:  timestamp
+        });
+      }
+
+      // 4. 🛡️ FINANCIAL: Finalize Billing
+      const billingQuery = query(
+        collection(db, COLLECTIONS.BILLING),
+        where('encounter_id', '==', encounterId),
+        limit(1)
+      );
+      const billingSnap = await getDocs(billingQuery);
+      if (!billingSnap.empty) {
+        const billRef = doc(db, COLLECTIONS.BILLING, billingSnap.docs[0].id);
+        transaction.update(billRef, {
+          status: 'WAITING_PAYMENT',
+          finalized_at: timestamp
+        });
+      }
+
+      // 5. Audit V5
+      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
+      transaction.set(auditRef, {
+        timestamp,
+        user:          userEmail,
+        action:        AUDIT_ACTIONS.UPDATE,
+        resource_type: COLLECTIONS.ENCOUNTERS,
+        resource_id:   encounterId,
+        reason:        'FINAL_CLINICAL_DISCHARGE',
+        source:        'WEB_APP',
+        delta: { status: ENCOUNTER_STATUSES.DISCHARGED, bed_released: !!current.bed_id }
+      });
+    });
+  } catch (err) {
+    console.error('[EncounterService] Discharge failed:', err);
+    throw err;
+  }
 };
 
 // Alias for V5 consistency

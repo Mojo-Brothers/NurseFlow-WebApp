@@ -19,3 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
     </StrictMode>
   );
 });
+
+// --- PWA Service Worker Registration (Phase 17) ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('[PWA] Service Worker Active:', reg.scope))
+      .catch(err => console.error('[PWA] Registration Failed:', err));
+  });
+}

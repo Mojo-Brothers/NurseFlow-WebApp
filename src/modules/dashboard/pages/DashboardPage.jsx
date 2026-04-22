@@ -165,6 +165,52 @@ const DashboardPage = () => {
             </ClinicalCard>
           </div>
         </ClinicalCard>
+
+        {/* --- AI Surveillance Feed (NEW) --- */}
+        <ClinicalCard style={{ gridColumn: 'span 12', padding: '2rem', background: 'var(--surface-container-high)', border: 'none' }}>
+           <div className="flex-row justify-between items-center mb-6">
+              <h3 className="text-xl font-black uppercase tracking-tight m-0 flex items-center gap-2">
+                 <span className="material-symbols-outlined text-secondary">psychology</span>
+                 AI Surveillance Feed
+              </h3>
+              <span className="text-[10px] font-black uppercase opacity-40 bg-white px-3 py-1 rounded-full">Proactive Monitoring Active</span>
+           </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Demo AI Feed Items */}
+              <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-error flex-row gap-4 items-center animate-pulse">
+                 <div className="w-12 h-12 bg-error/10 text-error rounded-2xl flex items-center justify-center">
+                    <span className="material-symbols-outlined">emergency</span>
+                 </div>
+                 <div className="flex-1">
+                    <p className="text-[10px] font-black uppercase opacity-40">Ward A • Bed 102</p>
+                    <p className="text-sm font-black">Tn. Budi Santoso</p>
+                    <p className="text-[9px] font-bold text-error mt-1 uppercase">SEPSIS ALERT: qSOFA Score 2</p>
+                 </div>
+              </div>
+
+              <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-secondary flex-row gap-4 items-center">
+                 <div className="w-12 h-12 bg-secondary/10 text-secondary rounded-2xl flex items-center justify-center">
+                    <span className="material-symbols-outlined">trending_down</span>
+                 </div>
+                 <div className="flex-1">
+                    <p className="text-[10px] font-black uppercase opacity-40">Ward B • Bed 204</p>
+                    <p className="text-sm font-black">Ny. Siti Aminah</p>
+                    <p className="text-[9px] font-bold text-secondary mt-1 uppercase">NEWS2 Jump: +3 in 4 hours</p>
+                 </div>
+              </div>
+
+              <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-success opacity-40 flex-row gap-4 items-center">
+                 <div className="w-12 h-12 bg-success/10 text-success rounded-2xl flex items-center justify-center">
+                    <span className="material-symbols-outlined">verified</span>
+                 </div>
+                 <div className="flex-1">
+                    <p className="text-[10px] font-black uppercase opacity-40">Ward A • Bed 115</p>
+                    <p className="text-sm font-black">An. Rizky</p>
+                    <p className="text-[9px] font-bold text-success mt-1 uppercase">Stable: Returning to Baseline</p>
+                 </div>
+              </div>
+           </div>
+        </ClinicalCard>
       </div>
     </main>
   );

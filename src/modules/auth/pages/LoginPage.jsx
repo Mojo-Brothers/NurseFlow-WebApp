@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/useAuth.js';
+import { useAuthStore } from '../auth.store.js';
 import '../styles/Login.css';
 
 export default function LoginPage() {
@@ -51,6 +52,22 @@ export default function LoginPage() {
             </svg>
             {loading ? t('auth.authenticating') : t('auth.sign_in_google')}
           </button>
+
+          {/* 🧪 DEV ONLY: MOCK LOGINS */}
+          <div className="mt-6 pt-6 border-t border-outline-variant flex-column gap-2">
+             <button 
+               onClick={() => { useAuthStore.getState().setUser({ email: 'patient.test@nurseflow.local', displayName: 'Mock Patient' }, 'PATIENT'); navigate('/portal'); }}
+               className="btn-ghost text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100"
+             >
+                Bypass: Patient Portal
+             </button>
+             <button 
+               onClick={() => { useAuthStore.getState().setUser({ email: 'admin.test@nurseflow.local', displayName: 'Mock Admin' }, 'ADMIN'); navigate('/dashboard'); }}
+               className="btn-ghost text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100"
+             >
+                Bypass: Admin Dashboard
+             </button>
+          </div>
         </div>
       </div>
     </div>

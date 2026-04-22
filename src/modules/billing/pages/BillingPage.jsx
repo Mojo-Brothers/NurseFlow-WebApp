@@ -8,6 +8,7 @@ import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
+import PaymentModal from '../components/PaymentModal.jsx';
 
 const SERVICE_CATALOG = [
   { description: 'Konsultasi Dokter Umum',  unit_price: 150000 },
@@ -39,6 +40,7 @@ export default function BillingPage() {
   const [isSaving, setIsSaving]             = useState(false);
   const [lineItems, setLineItems]           = useState([]);
   const [addServiceIdx, setAddServiceIdx]   = useState('');
+  const [activePaymentEncounter, setActivePaymentEncounter] = useState(null);
 
   const loadBills = React.useCallback(async () => {
     try { setBills(await getPendingBills()); }
@@ -150,9 +152,9 @@ export default function BillingPage() {
                 <div className="flex-row items-center justify-between mt-2">
                   <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>{bill.line_items?.length || 0} item</p>
                   {bill.status === 'FINALIZED' && (isAdmin || isDoctor) && (
-                    <button onClick={(e) => { e.stopPropagation(); handlePaid(bill.id); }}
-                      style={{ padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)', border: 'none', backgroundColor: 'var(--secondary)', color: 'white', fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer' }}>
-                      Mark Paid
+                    <button onClick={(e) => { e.stopPropagation(); setActivePaymentEncounter(bill.encounter_id); }}
+                      style={{ padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)', border: 'none', backgroundColor: 'var(--primary)', color: 'white', fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+                      Authorize Settlement
                     </button>
                   )}
                 </div>
@@ -242,6 +244,17 @@ export default function BillingPage() {
           </ClinicalCard>
         )}
       </div>
+
+      {activePaymentEncounter && (
+        <PaymentModal 
+          encounterId={activePaymentEncounter} 
+          onClose={() => setActivePaymentEncounter(null)} 
+          onSettled={() => {
+            setActivePaymentEncounter(null);
+            loadBills();
+          }}
+        />
+      )}
     </div>
   );
 }

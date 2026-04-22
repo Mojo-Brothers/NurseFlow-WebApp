@@ -12,7 +12,8 @@ const validateSchema = (action) => {
 
 export const executeQueuedAction = async (action) => {
   validateSchema(action);
-  console.log(`[SyncProcessor] Executing: ${action.type} (v${action.schema_version || 'unknown'})`);
+  // Production Hardened: Diagnostic logs removed
+
   
   switch (action.type) {
     case 'SUBMIT_TRIAGE':

@@ -1,9 +1,21 @@
-import React from 'react';
 import './TopAppBar.css';
 import { useStressMonitor } from '../core/hooks/useStressMonitor.js';
+import { Link, useLocation } from 'react-router-dom';
+import { useEncounterStore } from '../modules/encounter/encounter.store.js';
+import { useAuthStore } from '../modules/auth/auth.store.js';
+import { useEffect } from 'react';
 
 const TopAppBar = () => {
   const { stressLevel, classicUI, toggleClassicUI, triggerCrisis } = useStressMonitor();
+  const location = useLocation();
+  const { activeEncounters, fetchActiveEncounters } = useEncounterStore();
+  const { role } = useAuthStore();
+
+  useEffect(() => {
+    fetchActiveEncounters();
+  }, [fetchActiveEncounters]);
+
+  const criticalCount = activeEncounters.filter(e => (e.last_news2 || 0) >= 7).length;
   
   return (
     <header className="top-app-bar" style={{
@@ -28,10 +40,34 @@ const TopAppBar = () => {
         )}
       </div>
       <div className="flex items-center gap-6">
-        <div className="nav-links hide-on-focus">
-          <a href="#" className="nav-link active">Metrics</a>
-          <a href="#" className="nav-link">Alerts</a>
-          <a href="#" className="nav-link">Tasks</a>
+        <div className="nav-links hide-on-focus flex-row gap-4">
+          <Link to="/dashboard" className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}>Dashboard</Link>
+          <Link to="/ward-monitor" className={`nav-link ${location.pathname === '/ward-monitor' ? 'active' : ''} flex-row items-center gap-1.5`}>
+            <span className="material-symbols-outlined text-[16px]">visibility</span>
+            Monitor
+            {criticalCount > 0 && (
+              <span className="bg-error text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+                {criticalCount}
+              </span>
+            )}
+          </Link>
+          <Link to="/bed-management" className={`nav-link ${location.pathname === '/bed-management' ? 'active' : ''} flex-row items-center gap-1.5`}>
+            <span className="material-symbols-outlined text-[16px]">bed</span>
+            Bed Map
+          </Link>
+          {(role === 'SUPERVISOR' || role === 'ADMIN') && (
+            <Link to="/analytics" className={`nav-link ${location.pathname === '/analytics' ? 'active' : ''} flex-row items-center gap-1.5`}>
+              <span className="material-symbols-outlined text-[16px]">monitoring</span>
+              Analytics
+            </Link>
+          )}
+          {(role === 'PHARMACIST' || role === 'ADMIN') && (
+            <Link to="/inventory" className={`nav-link ${location.pathname === '/inventory' ? 'active' : ''} flex-row items-center gap-1.5`}>
+              <span className="material-symbols-outlined text-[16px]">package_2</span>
+              Inventory
+            </Link>
+          )}
+          <Link to="/worklist" className={`nav-link ${location.pathname === '/worklist' ? 'active' : ''}`}>Worklist</Link>
         </div>
         
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ 

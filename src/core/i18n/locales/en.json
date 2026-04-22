@@ -113,5 +113,19 @@
       "urgent": "Urgent",
       "critical": "Critical"
     }
+  },
+  "emr": {
+    "workspace": "EMR Workspace",
+    "history": "History & Timeline",
+    "subjective": "Subjective",
+    "objective": "Objective",
+    "assessment": "Clinical Assessment",
+    "plan": "Plan of Care",
+    "pharmacy_plan": "Pharmacy Plan",
+    "instructions": "Instructions",
+    "sign_off": "Clinical Sign-off",
+    "discharge": "Patient Discharge",
+    "handover": "Shift Handover (SBAR)",
+    "diagnostics": "Diagnostic Results"
   }
 }

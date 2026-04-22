@@ -1,4 +1,5 @@
 import { db } from '../../../core/firebase.js';
+import { deductStock } from '../../inventory/services/inventory.service.js';
 import { 
   collection, 
   doc, 
@@ -68,6 +69,14 @@ export const triggerPharmacyOrder = async ({ medications, patientId, encounterId
       status: 'PENDING',
       prescribed_at: timestamp
     });
+    
+    // 📦 Logistical Loop: Deduct stock per prescription entry
+    try {
+      await deductStock(med.id, 1); 
+    } catch (e) {
+      console.error(`Inventory deduction failed for ${med.medication_name}:`, e);
+    }
+    
     count++;
   }
 

@@ -82,7 +82,18 @@ export const getUserRole = async (firebaseUser) => {
   if (!firebaseUser) return null;
   try {
     const tokenResult = await getIdTokenResult(firebaseUser);
-    return tokenResult.claims.role || 'NURSE';
+    const claimRole = tokenResult.claims.role;
+    if (claimRole) return claimRole;
+
+    // 🛡️ DEV FALLBACK: Auto-mapping based on email prefix
+    const email = firebaseUser.email?.toLowerCase() || '';
+    if (email.startsWith('dr.'))   return 'DOCTOR';
+    if (email.startsWith('nurse.')) return 'NURSE';
+    if (email.startsWith('mgmt.'))  return 'SUPERVISOR';
+    if (email.startsWith('admin.')) return 'ADMIN';
+    if (email.startsWith('patient.')) return 'PATIENT';
+
+    return 'NURSE';
   } catch {
     return 'NURSE';
   }
