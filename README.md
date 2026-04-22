@@ -1,16 +1,28 @@
-# React + Vite
+# NurseFlow Enterprise HIS 🏥
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+NurseFlow adalah sistem informasi rumah sakit (HIS) tingkat enterprise yang dirancang untuk skalabilitas, keamanan klinis, dan pengalaman pengguna yang premium.
 
-Currently, two official plugins are available:
+## 📚 Dokumentasi Proyek
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Untuk memahami status pengembangan, arsitektur, dan fitur yang telah diimplementasikan, silakan merujuk ke folder `docs/`:
 
-## React Compiler
+*   **[Daftar Tugas & Progres](docs/task.md)**: Daftar lengkap fitur dari Fase 1 hingga Fase 27 (Wayfinding) beserta fungsi klinisnya.
+*   **[Ringkasan Sertifikasi Fase 27](docs/walkthrough.md)**: Penjelasan mendalam tentang modul navigasi rumah sakit dan hardensasi sistem terakhir.
+*   **[Aturan Desain Klinis](NURSEFLOW_DESIGN_RULES.md)**: Panduan "Design Law" untuk menjaga standar visual medis.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Teknologi Utama
+*   **Frontend**: React + Vite
+*   **State Management**: Zustand
+*   **Styling**: Vanilla CSS (Premium Stitch Design)
+*   **Backend**: Firebase (Auth, Firestore, Hosting)
+*   **PWA**: Dukungan offline penuh
 
-## Expanding the ESLint configuration
+## 🛠️ Pengembangan
+Jalankan server pengembangan lokal:
+```bash
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+*Status: ✅ Produksi Siap (Phase 27 Certified)*
