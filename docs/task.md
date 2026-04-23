@@ -291,3 +291,6 @@
     - [ ] Buat Dashboard Penanganan Keluhan Pasien (Complaint Handling)
     - [ ] Integrasi Modul Preferensi Privasi Pasien (DNR, Kerahasiaan Identitas)
     - [ ] Sertifikasi Hak Pasien Fase 35
+
+- [ ] **Technical Debt & Developer Utilities**
+    - [ ] Buat antarmuka/skrip `Sync User Role` agar pengembang/tester lokal bisa mendapatkan *Custom Claims* (`ADMIN`/`DOCTOR`/`NURSE`) untuk menembus Firestore Security Rules kelas JCI saat ujicoba.

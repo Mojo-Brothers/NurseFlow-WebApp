@@ -8,6 +8,7 @@
     "encounters": "Manajemen Kunjungan",
     "triage": "Triage IGD",
     "emr": "Rekam Medis (SOAP)",
+    "emr_rj": "EMR Rawat Jalan",
     "credentials": "Kredensial Saya",
     "worklist": "Daftar Kerja",
     "pharmacy": "Farmasi",

@@ -1,22 +1,12 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import TopAppBar from '../components/TopAppBar';
 import { useAuth } from '../contexts/useAuth.js';
-import VersionDisplay from '../components/VersionDisplay';
 import LanguageSwitcher from '../components/ui/LanguageSwitcher';
 import OfflineStatusIndicator from '../components/ui/OfflineStatusIndicator';
 import { useStressMonitor } from '../core/hooks/useStressMonitor.js';
-import { getStaffCredentials } from '../modules/enterprise/services/sqe.service.js';
 
-const ROLE_BADGE = {
-  DOCTOR:     { label: 'roles.doctor',  color: '#3730a3', bg: '#e0e7ff' },
-  NURSE:      { label: 'roles.nurse',   color: '#166534', bg: '#dcfce7' },
-  ADMIN:      { label: 'roles.admin',   color: '#991b1b', bg: '#fee2e2' },
-  PHARMACIST: { label: 'roles.pharmacist', color: '#92400e', bg: '#fef9c3' },
-};
-
-// Role-based nav visibility
+// Reusing the same NAV_SCHEMA but adapting it for the new UI
 const NAV_SCHEMA = [
   { label: 'nav.clinical', items: [
     { name: 'nav.dashboard',   path: '/dashboard',  icon: 'dashboard',           roles: null },
@@ -24,6 +14,7 @@ const NAV_SCHEMA = [
     { name: 'nav.encounters',  path: '/encounters', icon: 'local_hospital',      roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.triage',      path: '/triage',     icon: 'emergency',           roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.emr',         path: '/emr',        icon: 'medical_information', roles: ['DOCTOR','ADMIN'] },
+    { name: 'nav.emr_rj',      path: '/emr-rj',     icon: 'personal_injury',     roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.surgery',     path: '/surgery',    icon: 'theater_comedy',      roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.credentials', path: '/credentials', icon: 'badge',              roles: null },
   ]},
@@ -34,227 +25,157 @@ const NAV_SCHEMA = [
   ]},
   { label: 'nav.administration', admin: true, items: [
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
-    { name: 'nav.surveillance', path: '/surveillance', icon: 'biosecurity',       roles: ['ADMIN','DOCTOR'] },
     { name: 'nav.executive',    path: '/executive',    icon: 'monitoring',        roles: ['ADMIN'] },
-    { name: 'nav.governance',   path: '/governance',   icon: 'verified',          roles: ['ADMIN'] },
-    { name: 'Map Config',      path: '/wayfinding-admin', icon: 'map',            roles: ['ADMIN'] },
-    { name: 'Design Lab',      path: '/lab',        icon: 'biotech',              roles: ['ADMIN'] },
   ]},
 ];
 
 const MainLayout = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const location = useLocation();
-  const [collapsed, setCollapsed] = React.useState(false);
-  const { currentUser, role } = useAuth();
-  const { stressLevel, focusMode, classicUI, isPeeking, setIsPeeking } = useStressMonitor();
-  const [credentials, setCredentials] = React.useState(null);
-  const badge = ROLE_BADGE[role] || ROLE_BADGE.NURSE;
-
-  React.useEffect(() => {
-    if (currentUser) {
-      getStaffCredentials(currentUser.email).then(setCredentials).catch(console.error);
-    }
-  }, [currentUser]);
+  const navigate = useNavigate();
+  const { currentUser, role, logout } = useAuth();
+  const { stressLevel } = useStressMonitor();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   
   const isVisible = (item) => !item.roles || item.roles.includes(role);
-  
-  // Adaptive Depth Logic
-  const activeStressClass = classicUI ? '' : (stressLevel === 'critical' ? 'stress-critical' : (stressLevel === 'warning' ? 'stress-warning' : ''));
-  const isFocusMode       = focusMode && !classicUI;
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
-  // Responsive check
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-  const showExpanded = !collapsed && (!isFocusMode || isPeeking);
-
-  // Auto-collapse on mobile initial load
-  React.useEffect(() => {
-    if (isMobile) setCollapsed(true);
-  }, [isMobile]);
-
-  const navLink = (item) => {
-    const isActive  = location.pathname.startsWith(item.path);
-    const isDanger  = item.path === '/admin';
-    return (
-      <Link 
-        key={item.name} 
-        to={item.path} 
-        onClick={() => isMobile && setIsMobileMenuOpen(false)}
-        style={{
-          display: 'flex', alignItems: 'center', padding: '0.6rem 0.875rem',
-          textDecoration: 'none', borderRadius: 'var(--radius-md)', gap: '0.625rem',
-          fontWeight: isActive ? '700' : '500', fontSize: '0.875rem',
-          color:           isActive ? (isDanger ? 'var(--on-error-container)' : 'var(--on-primary-container)') : (isDanger ? 'var(--error)' : 'var(--on-surface-variant)'),
-          backgroundColor: isActive ? (isDanger ? 'var(--error-container)' : 'var(--primary-container)') : 'transparent',
-          transition: 'all 0.15s ease',
-        }}
-      >
-        <span className="material-symbols-outlined" style={{
-          fontSize: '1.15rem',
-          color: isActive ? (isDanger ? 'var(--error)' : 'var(--primary)') : 'inherit'
-        }}>{item.icon}</span>
-        {(showExpanded || (isMobile && isMobileMenuOpen)) && t(item.name)}
-      </Link>
-    );
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   return (
-    <div 
-      className={`flex-column h-full w-full ${activeStressClass} ${isFocusMode ? 'focus-mode' : ''}`}
-      style={{ backgroundColor: 'var(--background)' }}
-    >
-      <TopAppBar onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
+    <div className="bg-surface text-on-surface font-body antialiased flex flex-col md:flex-row min-h-screen relative overflow-x-hidden">
       
-      <div className="flex-row w-full" style={{ marginTop: '3.25rem', height: 'calc(100vh - 3.25rem)', padding: isMobile ? '0' : '1rem', gap: isMobile ? '0' : '1rem' }}>
-
-        {/* ═══ Sidebar (Desktop & Mobile Drawer) ═══════════════ */}
-        <nav 
-          className={`
-            ${isFocusMode ? 'hide-on-focus' : ''} 
-            ${isPeeking ? 'peek-overlay' : ''}
-            ${isMobile && !isMobileMenuOpen ? 'hide-on-mobile' : ''}
-          `}
-          onMouseEnter={() => isFocusMode && setIsPeeking(true)}
-          onMouseLeave={() => setIsPeeking(false)}
-          style={{
-            width: (isMobile && isMobileMenuOpen) ? '280px' : (showExpanded ? '240px' : '72px'), 
-            flexShrink: 0, display: 'flex', flexDirection: 'column',
-            backgroundColor: 'var(--surface)',
-            borderRight: '1px solid var(--outline-variant)',
-            borderRadius: isMobile ? '0' : '0 var(--radius-lg) var(--radius-lg) 0',
-            transition: 'width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.3s ease',
-            overflow: 'hidden',
-            position: (isMobile && isMobileMenuOpen) ? 'fixed' : (isPeeking ? 'absolute' : 'relative'),
-            height: '100%',
-            zIndex: 1000,
-            left: 0,
-            top: 0
-          }}
-        >
-          {/* ─── Toggle Button (Desktop Only) ─────────────── */}
-          {!isMobile && (
-            <div style={{ 
-              display: 'flex', justifyContent: collapsed ? 'center' : 'flex-end', 
-              padding: '0.75rem', borderBottom: '1px solid var(--outline-variant)' 
-            }}>
-              <button 
-                onClick={() => setCollapsed(!collapsed)}
-                className="btn-icon"
-                style={{
-                  width: '32px', height: '32px', minWidth: '32px',
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--surface-container-highest)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', border: 'none', color: 'var(--on-surface-variant)'
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: '1.25rem' }}>
-                  {collapsed ? 'menu' : 'menu_open'}
-                </span>
-              </button>
+      {/* SideNavBar (Desktop) */}
+      <nav className={`hidden md:flex flex-col h-screen w-64 fixed left-0 top-0 z-50 bg-slate-50 dark:bg-slate-950 border-r border-surface-variant py-8 ${stressLevel === 'critical' ? 'border-r-red-500' : ''}`}>
+        
+        <div className="px-8 mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center overflow-hidden">
+              <span className="material-symbols-outlined text-primary text-2xl">medical_services</span>
             </div>
-          )}
-
-          {isMobile && isMobileMenuOpen && (
-            <div className="p-6 border-b flex justify-between items-center">
-              <h2 className="font-black text-primary">NurseFlow</h2>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="material-symbols-outlined">close</button>
+            <div>
+              <h1 className="font-headline text-lg font-bold text-blue-900 dark:text-blue-100">NurseFlow HIS</h1>
+              <p className="font-label text-xs text-slate-500">JCI Accredited</p>
             </div>
-          )}
+          </div>
+          
+          {/* Role-Based View Indicator */}
+          <div className="p-3 bg-blue-50 dark:bg-slate-900 rounded-lg border border-blue-100 dark:border-slate-800 relative overflow-hidden">
+            <div className="flex justify-between items-center mb-1">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Active Session</p>
+              <span className="flex items-center gap-0.5 text-[9px] font-bold text-green-700 bg-green-100 px-1 rounded border border-green-200">
+                <span className="material-symbols-outlined text-[10px]">fingerprint</span> MFA
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-green-500"></span>
+              <span className="text-xs font-semibold text-blue-900 dark:text-blue-100 truncate">{currentUser?.displayName || currentUser?.email}</span>
+            </div>
+            <div className="w-full bg-blue-200 rounded-full h-1 mt-1">
+              <div className="bg-blue-600 h-1 rounded-full" style={{ width: '100%' }}></div>
+            </div>
+          </div>
+        </div>
 
-          <div style={{ flex: 1, padding: (collapsed && !isMobile) ? '0.5rem' : '0.75rem', marginTop: '0.5rem', overflowY: 'auto' }}>
-            {NAV_SCHEMA.map(section => {
+        <div className="px-6 mb-6">
+          <button className="w-full py-2.5 px-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-md font-label text-sm font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_12px_rgba(0,59,130,0.2)] hover:shadow-lg transition-shadow">
+            <span className="material-symbols-outlined text-sm">add</span>
+            New Admission
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <ul className="flex flex-col font-label text-sm font-medium">
+            {NAV_SCHEMA.map((section, idx) => {
               const visibleItems = section.items.filter(isVisible);
               if (visibleItems.length === 0) return null;
+              
               return (
-                <div key={section.label} style={{ marginBottom: '0.5rem' }}>
-                  {(showExpanded || isMobileMenuOpen) && (
-                    <div style={{
-                      padding: '0.5rem 0.875rem 0.25rem',
-                      fontSize: '0.6rem', fontWeight: '800', letterSpacing: '0.1em',
-                      color: section.admin ? 'var(--error)' : 'var(--on-surface-variant)',
-                      textTransform: 'uppercase', opacity: 0.7,
-                    }}>{t(section.label)}</div>
-                  )}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    {visibleItems.map(navLink)}
-                  </div>
-                </div>
+                <React.Fragment key={section.label}>
+                  <li className="px-8 mt-4 mb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{t(section.label)}</li>
+                  {visibleItems.map(item => {
+                    const isActive = location.pathname.startsWith(item.path);
+                    return (
+                      <li key={item.name} className="mb-1">
+                        <Link 
+                          to={item.path} 
+                          className={`flex items-center gap-3 transition-transform ${isActive ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 rounded-l-full ml-4 pl-4 py-3 shadow-sm border-y border-l border-surface-variant' : 'text-slate-600 dark:text-slate-400 px-8 py-3 hover:text-blue-600 dark:hover:text-blue-300 hover:translate-x-1'}`}
+                        >
+                          <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>{item.icon}</span>
+                          {t(item.name)}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </React.Fragment>
               );
             })}
-          </div>
+          </ul>
+        </div>
 
-          <div style={{ padding: '0.5rem 0.75rem' }}>
-             <LanguageSwitcher />
+        <div className="mt-auto flex flex-col font-label text-sm font-medium border-t border-surface-variant pt-4 px-6">
+          <div className="mb-2">
+            <LanguageSwitcher />
           </div>
+          <button onClick={handleLogout} className="flex items-center gap-3 text-slate-600 dark:text-slate-400 px-2 py-3 hover:text-red-600 hover:translate-x-1 transition-transform w-full text-left">
+            <span className="material-symbols-outlined">logout</span>
+            Logout
+          </button>
+        </div>
+      </nav>
 
-          {/* ─── User Card ──────────────────────────────── */}
-          {currentUser && (
-            <div style={{
-              padding: '0.75rem', borderTop: '1px solid var(--outline-variant)',
-              display: 'flex', alignItems: 'center', gap: '0.625rem',
-              justifyContent: (collapsed && !isMobile) ? 'center' : 'flex-start'
-            }}>
-              <div style={{
-                width: '34px', height: '34px', borderRadius: '50%', flexShrink: 0,
-                backgroundColor: 'var(--primary-container)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-              }}>
-                {currentUser.photoURL
-                   ? <img src={currentUser.photoURL} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                   : <span className="material-symbols-outlined" style={{ fontSize: '1.1rem', color: 'var(--primary)' }}>person</span>
-                }
-              </div>
-              {(showExpanded || isMobileMenuOpen) && (
-                <div style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
-                  <p style={{ margin: 0, fontSize: '0.78rem', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--on-surface)' }}>
-                    {currentUser.displayName || currentUser.email?.split('@')[0]}
-                  </p>
-                  <div className="flex-row items-center gap-1">
-                    <span style={{
-                      display: 'inline-block', marginTop: '2px', padding: '1px 7px',
-                      borderRadius: 'var(--radius-full)', fontSize: '0.6rem', fontWeight: '800',
-                      backgroundColor: badge.bg, color: badge.color,
-                    }}>{t(badge.label)}</span>
-                    {credentials?.license?.status === 'EXPIRED' && (
-                      <span className="material-symbols-outlined text-[12px] text-error animate-pulse" title="LICENSE EXPIRED">report</span>
-                    )}
-                  </div>
-                </div>
-              )}
+      {/* TopNavBar (Mobile only) */}
+      <header className="md:hidden flex justify-between items-center w-full px-6 py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-surface-variant sticky top-0 z-40">
+        <div className="flex items-center gap-4">
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="material-symbols-outlined text-slate-700">menu</button>
+          <h1 className="font-headline text-xl font-extrabold tracking-tighter text-blue-800 dark:text-blue-200">NurseFlow</h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="text-error font-label text-xs font-bold uppercase flex items-center gap-1 bg-error-container/50 px-2 py-1 rounded">
+            <span className="material-symbols-outlined text-sm">warning</span> Alert
+          </button>
+        </div>
+      </header>
+
+      {/* Mobile Drawer */}
+      {isMobileMenuOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div className="fixed inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}></div>
+          <div className="relative bg-white w-64 h-full shadow-xl flex flex-col overflow-y-auto">
+            <div className="p-4 border-b flex justify-between items-center">
+              <h2 className="font-headline font-bold text-primary">NurseFlow HIS</h2>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="material-symbols-outlined">close</button>
             </div>
-          )}
+            <ul className="flex-1 p-4 font-label text-sm flex flex-col gap-2">
+              {NAV_SCHEMA.flatMap(section => section.items.filter(isVisible)).map(item => (
+                <li key={item.name}>
+                  <Link to={item.path} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 p-3 rounded-lg text-slate-700 hover:bg-slate-100">
+                    <span className="material-symbols-outlined">{item.icon}</span>
+                    {t(item.name)}
+                  </Link>
+                </li>
+              ))}
+              <li className="mt-4 pt-4 border-t border-slate-200">
+                <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-lg text-red-600 hover:bg-red-50 w-full text-left">
+                  <span className="material-symbols-outlined">logout</span> Logout
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
 
-          {(showExpanded || isMobileMenuOpen) && <VersionDisplay />}
-        </nav>
+      {/* Main Content Canvas */}
+      <main className="flex-1 md:ml-64 bg-surface w-full max-w-full overflow-hidden flex flex-col">
+        <Outlet />
+      </main>
 
-        {/* Mobile Overlay */}
-        {isMobile && isMobileMenuOpen && (
-          <div 
-            onClick={() => setIsMobileMenuOpen(false)}
-            style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 900 }} 
-          />
-        )}
-
-        {/* ═══ Main Content ══════════════════════════════════ */}
-        <main 
-          key={location.pathname}
-          className="dashboard-main-container w-full"
-          style={{ 
-            flexGrow: 1,
-            width: '100%',
-            maxWidth: '100%',
-            overflowY: 'auto', 
-            backgroundColor: isMobile ? 'var(--background)' : 'transparent',
-            borderRadius: isMobile ? '0' : 'var(--radius-lg)',
-            animation: 'fadeIn 0.18s ease-out forwards',
-            padding: isMobile ? '1rem' : '0'
-          }}
-        >
-          <Outlet />
-        </main>
-      </div>
       <OfflineStatusIndicator />
     </div>
   );

@@ -25,7 +25,7 @@ const PresentationCard = ({
     backdropFilter: 'var(--glass-blur)',
     WebkitBackdropFilter: 'var(--glass-blur)',
     border: '1px solid var(--glass-border)',
-    borderRadius: '14px', // Premium Shell Radius
+    borderRadius: 'var(--radius-presentation)', // Premium Shell Radius
     boxShadow: 'var(--shadow-presentation)',
     display: 'flex',
     flexDirection: 'column',

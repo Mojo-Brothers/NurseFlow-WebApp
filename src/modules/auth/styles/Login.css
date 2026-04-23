@@ -1,264 +1,177 @@
 /* 
-   NurseFlow Login Style 
-   Theme: Clinical Precision (Split-Screen Brand Experience)
+   NurseFlow Enterprise Login Style 
+   Theme: High Security Authentication System
 */
 
-.login-container {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
+/* Container Reset & Fonts */
+.login-root {
+  font-family: 'Public Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  color: #191b21;
+  background-color: #f8fafc;
+  display: flex;
   min-height: 100vh;
-  background: white;
+  width: 100%;
   overflow: hidden;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
-/* BRAND PANEL (LEFT) */
-.brand-panel {
-  background: #0b57d0;
+.headline-font {
+  font-family: 'Manrope', sans-serif;
+}
+
+/* Colors */
+:root {
+  --l-primary: #003b82;
+  --l-primary-container: #0051ae;
+  --l-secondary: #126a5b;
+  --l-surface: #f9f9ff;
+  --l-surface-variant: #ededf6;
+  --l-on-surface: #191b21;
+  --l-on-surface-variant: #424752;
+  --l-outline: #737784;
+  --l-outline-variant: #c2c6d4;
+  --l-error: #ba1a1a;
+  --l-error-container: #ffdad6;
+  --l-on-error-container: #93000a;
+}
+
+/* Base Flex Utilities */
+.flx { display: flex; }
+.flx-col { display: flex; flex-direction: column; }
+.flx-row { display: flex; flex-direction: row; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-1 { gap: 0.25rem; }
+.gap-1-5 { gap: 0.375rem; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-10 { gap: 2.5rem; }
+
+/* Layout Columns */
+.login-left {
+  width: 65%;
+  background-color: #ffffff;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
+  flex-direction: column;
   position: relative;
+  overflow-y: auto;
 }
 
-.brand-panel::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent);
-  pointer-events: none;
-}
-
-.brand-card {
-  width: 100%;
-  max-width: 520px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(40px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 3rem;
-  padding: 4rem;
-  color: white;
-  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
-  z-index: 10;
-}
-
-.brand-card .logo {
-  font-size: 5rem;
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  margin-bottom: 0.5rem;
-  line-height: 1;
-}
-
-.brand-card .underline {
-  width: 80px;
-  height: 6px;
-  background: #34d399; /* Emerald/Mint from image */
-  border-radius: 3px;
-  margin-bottom: 2.5rem;
-}
-
-.brand-card .tagline {
-  font-size: 2.5rem;
-  font-weight: 600;
-  line-height: 1.1;
-  margin-bottom: 3rem;
-  opacity: 0.95;
-}
-
-.hospital-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.75rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 5rem;
-}
-
-.feature-icons {
-  display: flex;
-  gap: 3.5rem;
-}
-
-.feature-item {
+.login-right {
+  width: 35%;
+  background-color: #f8fafc;
+  border-left: 1px solid var(--l-outline-variant);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 1.25rem;
-}
-
-.feature-icon-box {
-  width: 4rem;
-  height: 4rem;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.feature-item span {
-  font-size: 0.65rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  opacity: 0.8;
-  text-align: center;
-  white-space: nowrap;
-}
-
-/* LOGIN PANEL (RIGHT) */
-.login-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 4rem;
+  padding: 3rem;
   position: relative;
-  background: white;
+  overflow-y: auto;
 }
 
-.login-form-area {
+/* Components */
+.sys-header {
   width: 100%;
-  max-width: 420px;
-  text-align: center;
-}
-
-.login-form-area h1 {
-  font-size: 3.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 1.5rem;
-  letter-spacing: -0.02em;
-}
-
-.login-form-area .instruction {
-  color: #64748b;
-  font-size: 1.125rem;
-  line-height: 1.6;
-  margin-bottom: 4rem;
-  max-width: 320px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.google-login-btn {
-  width: 100%;
-  background: #004ba0;
-  color: white;
-  border-radius: 1rem;
-  padding: 1.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  font-weight: 700;
-  font-size: 1.125rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 15px 30px rgba(0, 75, 160, 0.2);
-  border: none;
-  cursor: pointer;
-}
-
-.google-login-btn:hover:not(:disabled) {
-  transform: translateY(-4px);
-  box-shadow: 0 25px 40px rgba(0, 75, 160, 0.3);
-}
-
-.google-login-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.google-icon-circle {
-  width: 2.75rem;
-  height: 2.75rem;
-  background: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.security-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 2.5rem;
-  color: #94a3b8;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.compliance-section {
-  margin-top: 8rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.compliance-text {
-  font-size: 0.6rem;
-  color: #94a3b8;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  text-align: center;
-  line-height: 1.8;
-}
-
-.jci-logo-placeholder {
-  width: 60px;
-  height: 60px;
-  background: #e2e8f0;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.75rem 2rem;
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--l-outline-variant);
   font-size: 10px;
-  font-weight: 900;
-  color: #94a3b8;
-}
-
-.footer-links {
-  position: absolute;
-  bottom: 2.5rem;
-  display: flex;
-  justify-content: space-between;
-  width: 80%;
-  font-size: 0.65rem;
   font-weight: 700;
-  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
+  color: var(--l-on-surface-variant);
 }
 
-.login-error {
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: #fee2e2;
-  color: #991b1b;
-  border-radius: 1rem;
+.auth-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 512px;
+}
+
+/* Typography */
+.t-xs { font-size: 0.75rem; line-height: 1rem; }
+.t-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.t-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.t-2xl { font-size: 1.5rem; line-height: 2rem; }
+.t-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+
+.f-medium { font-weight: 500; }
+.f-bold { font-weight: 700; }
+.f-extrabold { font-weight: 800; }
+
+.text-primary { color: var(--l-primary); }
+.text-on-surface { color: var(--l-on-surface); }
+.text-on-surface-variant { color: var(--l-on-surface-variant); }
+
+/* Buttons */
+.btn-primary-auth {
+  width: 100%;
+  padding: 1.25rem 2rem;
+  border-radius: 4px;
+  background-color: var(--l-primary);
+  color: #ffffff;
+  font-family: 'Manrope', sans-serif;
+  border: none;
+  border-bottom: 4px solid var(--l-primary-container);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-primary-auth:hover { background-color: var(--l-primary-container); }
+.btn-primary-auth:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
+.btn-primary-auth:disabled { opacity: 0.7; cursor: wait; }
+
+.btn-secondary-auth {
+  width: 100%;
+  padding: 1rem 2rem;
+  border-radius: 4px;
+  background-color: #ffffff;
+  color: var(--l-on-surface);
+  border: 1px solid var(--l-outline-variant);
+  font-weight: 700;
   font-size: 0.875rem;
-  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.7;
+}
+.btn-secondary-auth:hover { background-color: #f8fafc; opacity: 1; }
+
+.link-sub {
+  color: var(--l-on-surface-variant);
+  text-decoration: underline;
+  text-decoration-color: rgba(194, 198, 212, 0.4);
+  text-underline-offset: 4px;
+  transition: color 0.2s;
+}
+.link-sub:hover { color: var(--l-primary); }
+
+/* Right Panel Elements */
+.medical-grid-pattern {
+  background-image: radial-gradient(rgba(0, 59, 130, 0.03) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
 
+.trust-card {
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* Utilities */
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Responsive */
 @media (max-width: 1024px) {
-  .login-container {
-    grid-template-columns: 1fr;
-  }
-  .brand-panel {
-    display: none;
-  }
+  .login-left { width: 100%; }
+  .login-right { display: none; }
 }

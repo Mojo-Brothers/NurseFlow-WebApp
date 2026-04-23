@@ -57,7 +57,7 @@ const ClinicalCard = ({
     backdropFilter: 'none !important',
     WebkitBackdropFilter: 'none !important',
     transition: 'none !important',
-    borderRadius: '10px',
+    borderRadius: 'var(--radius-clinical)',
     boxShadow: 'none !important',
     display: 'flex',
     flexDirection: 'column',

@@ -1,53 +1,64 @@
-/**
- * Dashboard Service — Masterpiece Edition 2026
- * Real-time listeners for ward metrics and clinical alerts.
- */
-import { collection, onSnapshot, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, orderBy, limit, setDoc } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
-import { COLLECTIONS } from '../../../core/constants.js';
 
-/**
- * Menarik metrik bangsal secara real-time dari koleksi Encounters.
- * Kalkulasi langsung di frontend untuk reaktivitas maksimal.
- */
-export const listenToWardMetrics = (wardId, callback) => {
-  const q = query(
-    collection(db, COLLECTIONS.ENCOUNTERS), 
-    where('ward', '==', wardId), 
-    where('status', '!=', 'DISCHARGED')
-  );
+export const listenToMetrics = (callback) => {
+  // Since metrics is usually a singleton document for the main hospital facility
+  // Query specific document for main facility metrics
+  const docRef = doc(db, 'system_metrics', 'main_facility');
   
-  return onSnapshot(q, (snapshot) => {
-    const total = snapshot.size;
-    const newsScores = snapshot.docs.map(doc => doc.data().last_vitals?.news2_score || 0);
-    const avgNews = newsScores.length > 0 ? (newsScores.reduce((a, b) => a + b, 0) / newsScores.length).toFixed(1) : 0;
-    
-    callback({
-      occupancy: Math.min(Math.round((total / 20) * 100), 100), // Max 20 beds for now
-      avg_news_score: parseFloat(avgNews),
-      staff_on_duty: 4 // Hardcoded for simplified demo
-    });
+  return onSnapshot(docRef, (docSnap) => {
+    if (docSnap.exists()) {
+      callback(docSnap.data());
+    } else {
+      // Return defaults if not seeded yet
+      callback({
+        triageLevels: { active: 0, l1: 0, l2: 0, l3: 0 },
+        ventilators: { total: 0, available: 0 },
+        bedOccupancy: { rate: 0 }
+      });
+    }
   }, (error) => {
-    console.error('[DashboardService] Ward Metrics Sync Error:', error);
+    console.error("Error listening to metrics:", error);
+    callback(null, error);
   });
 };
 
-export const listenToAlerts = (callback) => {
+export const listenToActiveTriage = (callback) => {
+  // Query triage_logs, ordered by severity
   const q = query(
-    collection(db, COLLECTIONS.ENCOUNTERS), 
-    where('escalation_level', 'in', ['WATCH', 'URGENT', 'CRITICAL']), 
-    orderBy('last_vitals.news2_score', 'desc'),
-    limit(10)
+    collection(db, 'triage_logs'),
+    orderBy('news2_score', 'desc'),
+    limit(20)
   );
   
-  return onSnapshot(q, (snapshot) => {
-    const counts = { total: snapshot.size, highRiskCount: 0 };
-    snapshot.docs.forEach(doc => {
-      const data = doc.data();
-      if (data.escalation_level === 'CRITICAL') counts.highRiskCount++;
+  return onSnapshot(q, (querySnapshot) => {
+    const patients = [];
+    querySnapshot.forEach((doc) => {
+      patients.push({ id: doc.id, ...doc.data() });
     });
-    callback(counts);
+    callback(patients);
   }, (error) => {
-    console.error('[DashboardService] Alerts Sync Error:', error);
+    console.error("Error listening to active triage:", error);
+    callback([], error);
+  });
+};
+
+export const listenToAuditLogs = (callback) => {
+  // Query the latest 10 audit logs
+  const q = query(
+    collection(db, 'audit_logs'),
+    orderBy('timestamp', 'desc'),
+    limit(15)
+  );
+  
+  return onSnapshot(q, (querySnapshot) => {
+    const logs = [];
+    querySnapshot.forEach((doc) => {
+      logs.push({ id: doc.id, ...doc.data() });
+    });
+    callback(logs);
+  }, (error) => {
+    console.error("Error listening to audit logs:", error);
+    callback([], error);
   });
 };

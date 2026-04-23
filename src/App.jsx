@@ -19,6 +19,7 @@ import Dashboard   from './modules/dashboard/pages/DashboardPage';
 import Patients    from './modules/patient/pages/PatientPage';
 import Triage      from './modules/triage/pages/TriagePage';
 import EMR         from './modules/emr/pages/EMRPage';
+import OutpatientEMR from './modules/emr/pages/OutpatientEMR';
 import Encounters  from './modules/encounter/pages/EncounterPage';
 import Pharmacy    from './modules/pharmacy/pages/PharmacyPage';
 import Worklist    from './modules/worklist/pages/WorklistPage';
@@ -72,6 +73,7 @@ const router = createBrowserRouter([
           { path: "/encounters", element: <Wrap><Encounters /></Wrap> },
           { path: "/triage",     element: <Wrap><Triage /></Wrap> },
           { path: "/emr",        element: <Wrap><EMR /></Wrap> },
+          { path: "/emr-rj",     element: <Wrap><OutpatientEMR /></Wrap> },
           { path: "/credentials", element: <Wrap><StaffCredentials /></Wrap> },
           { path: "/surgery",    element: <Wrap><SurgeryDashboard /></Wrap> },
           { path: "/worklist",   element: <Wrap><Worklist /></Wrap> },
