@@ -6,7 +6,6 @@ import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { deductByName } from '../services/inventory.service.js';
-import { isHighAlert, checkLasaRisk } from '../../emr/services/mmu.service.js';
 
 const ROUTE_CONFIG = {
   PO:  { label: 'Oral', icon: 'pill', bg: 'var(--surface-container-high)', text: 'var(--on-surface)' },
@@ -97,8 +96,8 @@ export default function PharmacyPage() {
             ) : pendingQueue.map(med => {
                 const p = getPatient(med.patient_id);
                 const routeInfo = ROUTE_CONFIG[med.route] || { label: med.route, icon: 'medication' };
-                const lasaConflict = checkLasaRisk(med.medication_name);
-                const highAlert = isHighAlert(med.medication_name) || routeInfo.highAlert;
+                const lasaConflict = med.lasaWarning;
+                const highAlert = med.isHighAlert || routeInfo.highAlert;
 
                 return (
                    <ClinicalCard key={med.id} padding="1.5rem" className="hover-lift transition-all">
@@ -184,7 +183,7 @@ export default function PharmacyPage() {
                   {ipsgError && <p className="text-[10px] text-error font-bold italic">Identity Mismatch! Verify the patient identity bracelet.</p>}
                </div>
 
-               {isHighAlert(verifyingMed.medication_name) && (
+                {verifyingMed.isHighAlert && (
                   <div className="p-4 bg-error-container text-on-error-container rounded-xl mb-6 border border-error animate-pulse">
                      <div className="flex-row items-center gap-2 mb-2">
                         <span className="material-symbols-outlined text-sm">security</span>
@@ -205,7 +204,7 @@ export default function PharmacyPage() {
                   <button 
                      onClick={() => {
                         const witness = document.getElementById('witness_email')?.value;
-                        if (isHighAlert(verifyingMed.medication_name) && (!witness || witness === currentUser.email)) {
+                        if (verifyingMed.isHighAlert && (!witness || witness === currentUser.email)) {
                            alert("JCI MMU VALIDATION: A witness email (different from yours) is mandatory for High-Alert drugs.");
                            return;
                         }

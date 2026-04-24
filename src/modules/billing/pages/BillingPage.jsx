@@ -4,23 +4,15 @@
  */
 import React, { useEffect, useState } from 'react';
 import { getPendingBills, updateBillItems, finalizeBill, markAsPaid } from '../services/billing.service.js';
+import { getServiceCatalog } from '../../admin/services/masterData.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
 import PaymentModal from '../components/PaymentModal.jsx';
 
-const SERVICE_CATALOG = [
-  { description: 'Konsultasi Dokter Umum',  unit_price: 150000 },
-  { description: 'Konsultasi Dokter Spesialis', unit_price: 350000 },
-  { description: 'Asesmen Triage IGD',       unit_price: 75000  },
-  { description: 'Tindakan Infus (per hari)', unit_price: 200000 },
-  { description: 'Rawat Inap (per hari)',     unit_price: 500000 },
-  { description: 'Pemeriksaan Lab Darah',     unit_price: 120000 },
-  { description: 'Pemeriksaan Rontgen',       unit_price: 250000 },
-  { description: 'ECG',                       unit_price: 150000 },
-  { description: 'Obat-obatan (resep)',        unit_price: 0      },
-];
+// Service Catalog now managed via Firestore master_data
+let SERVICE_CATALOG = [];
 
 const STATUS_BADGE = {
   DRAFT:     { label: 'Draft',      bg: 'rgba(146, 64, 14, 0.1)', text: 'var(--status-warning)' },
@@ -40,21 +32,27 @@ export default function BillingPage() {
   const [isSaving, setIsSaving]             = useState(false);
   const [lineItems, setLineItems]           = useState([]);
   const [addServiceIdx, setAddServiceIdx]   = useState('');
+  const [catalog, setCatalog]               = useState([]);
   const [activePaymentEncounter, setActivePaymentEncounter] = useState(null);
 
-  const loadBills = React.useCallback(async () => {
-    try { setBills(await getPendingBills()); }
+  const loadData = React.useCallback(async () => {
+    try { 
+      const [pendingBills, serviceCatalog] = await Promise.all([
+        getPendingBills(),
+        getServiceCatalog()
+      ]);
+      setBills(pendingBills);
+      setCatalog(serviceCatalog);
+      SERVICE_CATALOG = serviceCatalog; // Sync legacy ref if needed
+    }
     catch (e) { console.error(e); }
     setIsLoading(false);
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadBills();
-      fetchPatients();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [fetchPatients, loadBills]);
+    loadData();
+    fetchPatients();
+  }, [fetchPatients, loadData]);
 
   const openBill = (bill) => {
     setSelectedBill(bill);
@@ -63,7 +61,7 @@ export default function BillingPage() {
 
   const addLineItem = () => {
     if (addServiceIdx === '') return;
-    const svc = SERVICE_CATALOG[parseInt(addServiceIdx)];
+    const svc = catalog[parseInt(addServiceIdx)];
     setLineItems(prev => [...prev, { ...svc, qty: 1, total: svc.unit_price }]);
     setAddServiceIdx('');
   };
@@ -82,7 +80,7 @@ export default function BillingPage() {
     setIsSaving(true);
     try {
       await updateBillItems(selectedBill.id, lineItems, currentUser.email);
-      await loadBills();
+      await loadData();
       setSelectedBill(prev => ({ ...prev, line_items: lineItems, total: subtotal }));
     } catch (e) { alert(e.message); }
     setIsSaving(false);
@@ -92,7 +90,7 @@ export default function BillingPage() {
     if (!window.confirm('Finalize tagihan? Tidak bisa diedit setelah ini.')) return;
     try {
       await finalizeBill(selectedBill.id, currentUser.email);
-      await loadBills();
+      await loadData();
       setSelectedBill(null);
     } catch (e) { alert(e.message); }
   };
@@ -101,7 +99,7 @@ export default function BillingPage() {
     if (!window.confirm('Tandai tagihan sebagai LUNAS?')) return;
     try {
       await markAsPaid(billId, currentUser.email);
-      await loadBills();
+      await loadData();
     } catch (e) { alert(e.message); }
   };
 
@@ -178,7 +176,7 @@ export default function BillingPage() {
             <div className="flex-row gap-2 mb-4">
               <select className="form-input flex-1" value={addServiceIdx} onChange={e => setAddServiceIdx(e.target.value)}>
                 <option value="">-- Tambah Layanan --</option>
-                {SERVICE_CATALOG.map((s, i) => <option key={i} value={i}>{s.description} — {fmt(s.unit_price)}</option>)}
+                {catalog.map((s, i) => <option key={i} value={i}>{s.description} — {fmt(s.unit_price)}</option>)}
               </select>
               <button onClick={addLineItem} className="btn-primary" style={{ flexShrink: 0 }}>+ Tambah</button>
             </div>

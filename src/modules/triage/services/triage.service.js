@@ -39,24 +39,25 @@ export const submitTriage = async ({
   const requestId = Math.random().toString(36).substring(7);
   
   try {
+    // 1. Pre-fetch historical data for Clinical Intelligence (OUTSIDE transaction)
+    // Firestore transactions do not allow collection-level queries.
+    const lastTriageQuery = query(
+      collection(db, COLLECTIONS.TRIAGE_LOGS),
+      where('patientId', '==', patientId),
+      orderBy('timestamp', 'desc'),
+      limit(1)
+    );
+    const prevSnap = await getDocs(lastTriageQuery);
+    const lastEntry = prevSnap.empty ? null : prevSnap.docs[0].data();
+
     return await runTransaction(db, async (transaction) => {
-      // 1. Fetch Patient and historical data for Clinical Intelligence
+      // 2. Fetch Patient snapshot (INSIDE transaction)
       const patientRef = doc(db, COLLECTIONS.PATIENTS, patientId);
       const patientSnap = await transaction.get(patientRef);
       if (!patientSnap.exists()) throw new Error('Pasien tidak ditemukan.');
       const patient = patientSnap.data();
 
-      // Get last triage for velocity calculation
-      const lastTriageQuery = query(
-        collection(db, COLLECTIONS.TRIAGE_LOGS),
-        where('patientId', '==', patientId),
-        orderBy('timestamp', 'desc'),
-        limit(1)
-      );
-      const prevSnap = await getDocs(lastTriageQuery);
-      const lastEntry = prevSnap.empty ? null : prevSnap.docs[0].data();
-
-      // 2. Clinical Intelligence (Adaptive & Granular)
+      // 3. Clinical Intelligence (Adaptive & Granular)
       const baseline = patient.baseline_profile;
       const currentNews2 = calculateNEWS2(vitals, baseline);
       const hrVelocity = lastEntry 

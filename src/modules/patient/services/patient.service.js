@@ -74,11 +74,16 @@ export const registerPatient = async (patientData, staffEmail) => {
  * Get all patients with cursor pagination support.
  */
 export const getAllPatients = async (maxResults = 50) => {
-  const q = query(
-    collection(db, COLLECTIONS.PATIENTS),
-    orderBy('registered_at', 'desc'),
-    limit(maxResults)
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.PATIENTS),
+      orderBy('registered_at', 'desc'),
+      limit(maxResults)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('[PatientService] Failed to fetch patients:', error);
+    throw error;
+  }
 };

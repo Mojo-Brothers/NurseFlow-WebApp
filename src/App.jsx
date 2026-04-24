@@ -37,9 +37,14 @@ import WayfindingPortal from './modules/patient/pages/WayfindingPortal';
 import WayfindingAdmin from './modules/enterprise/pages/WayfindingAdmin';
 import SurgeryDashboard from './modules/emr/pages/SurgeryDashboard';
 import InfectionSurveillance from './modules/admin/pages/InfectionSurveillance';
-import ExecutiveDashboard from './modules/enterprise/pages/ExecutiveDashboard';
-import StaffCredentials from './modules/enterprise/pages/StaffCredentials';
-import DataGovernanceHub from './modules/admin/pages/DataGovernanceHub';
+import GLDExecutiveDashboard from './modules/gld/pages/ExecutiveDashboard';
+import IncidentReporting from './modules/gld/pages/IncidentReportingPage';
+import SQECredentialsDashboard from './modules/sqe/pages/CredentialsDashboard';
+import MOIInformationGovernanceHub from './modules/moi/pages/InformationGovernanceHub';
+import PFRInformedConsent from './modules/pfr/pages/InformedConsentPage';
+import PFRPatientRightsDashboard from './modules/pfr/pages/PatientRightsDashboard';
+import DevTools from './modules/admin/pages/DevTools';
+import MasterDataHub from './modules/admin/pages/MasterDataHub';
 import { useAuth } from './contexts/useAuth';
 
 const Wrap = ({ children }) => <ErrorBoundary>{children}</ErrorBoundary>;
@@ -74,7 +79,7 @@ const router = createBrowserRouter([
           { path: "/triage",     element: <Wrap><Triage /></Wrap> },
           { path: "/emr",        element: <Wrap><EMR /></Wrap> },
           { path: "/emr-rj",     element: <Wrap><OutpatientEMR /></Wrap> },
-          { path: "/credentials", element: <Wrap><StaffCredentials /></Wrap> },
+          { path: "/credentials", element: <Wrap><SQECredentialsDashboard /></Wrap> },
           { path: "/surgery",    element: <Wrap><SurgeryDashboard /></Wrap> },
           { path: "/worklist",   element: <Wrap><Worklist /></Wrap> },
           {
@@ -86,17 +91,22 @@ const router = createBrowserRouter([
             children: [{ path: "/billing", element: <Wrap><Billing /></Wrap> }]
           },
           {
-            element: <ProtectedRoute allowedRoles={['ADMIN']} />,
+            element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR']} />,
             children: [
               { path: "/admin", element: <Wrap><AdminHub /></Wrap> },
               { path: "/surveillance", element: <Wrap><InfectionSurveillance /></Wrap> },
-              { path: "/executive",    element: <Wrap><ExecutiveDashboard /></Wrap> },
-              { path: "/governance",   element: <Wrap><DataGovernanceHub /></Wrap> },
+              { path: "/executive",    element: <Wrap><GLDExecutiveDashboard /></Wrap> },
+              { path: "/information-governance", element: <Wrap><MOIInformationGovernanceHub /></Wrap> },
+              { path: "/admin/master-hub", element: <Wrap><MasterDataHub /></Wrap> },
+              { path: "/admin/dev-tools", element: <Wrap><DevTools /></Wrap> },
               { path: "/health", element: <Wrap><HealthCheck /></Wrap> },
               { path: "/lab", element: <Wrap><LabPage /></Wrap> },
               { path: "/wayfinding-admin", element: <WayfindingAdmin /> }
             ]
           },
+          { path: "/pfr/consent",   element: <Wrap><PFRInformedConsent /></Wrap> },
+          { path: "/pfr/dashboard", element: <Wrap><PFRPatientRightsDashboard /></Wrap> },
+          { path: "/gld-report",    element: <Wrap><IncidentReporting /></Wrap> },
           { path: "/ward-monitor", element: <Wrap><WardMonitor /></Wrap> },
           {
             element: <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'SUPERVISOR', 'ADMIN']} />,
@@ -134,6 +144,14 @@ const router = createBrowserRouter([
 
 function App() {
   useEffect(() => {
+    // Theme Initialization
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
     const handleSync = () => {
       console.log('[App] Network Online: Triggering background sync queue...');
       processQueue(executeQueuedAction);

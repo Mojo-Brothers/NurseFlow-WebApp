@@ -12,9 +12,9 @@ export default function TeleconsultationPage() {
   const [callActive, setCallActive] = useState(false);
 
   return (
-    <div className="h-full flex-row overflow-hidden bg-black/5">
+    <div className="h-full flex-col lg:flex-row overflow-y-auto lg:overflow-hidden bg-black/5">
        {/* LEFT: Video Consultation Console */}
-       <div className="w-[600px] flex-column p-8 gap-6 border-r border-outline-variant bg-surface-container-highest">
+       <div className="w-full lg:w-[600px] shrink-0 flex-column p-4 lg:p-8 gap-6 border-b lg:border-b-0 lg:border-r border-outline-variant bg-surface-container-highest min-h-[500px]">
           <div className="flex-row justify-between items-center mb-4">
              <div>
                 <h1 className="text-2xl font-black tracking-tighter uppercase">{t('telemedicine.session', { defaultValue: 'Virtual Session' })}</h1>
@@ -76,8 +76,8 @@ export default function TeleconsultationPage() {
        </div>
 
        {/* RIGHT: EMR / SOAP Integration */}
-       <div className="flex-1 bg-white overflow-hidden flex-column">
-          <div className="p-4 bg-primary text-white flex-row justify-between items-center px-8">
+       <div className="flex-1 bg-white flex-column min-h-[800px] lg:min-h-0 lg:overflow-hidden">
+          <div className="p-4 bg-primary text-white flex-row justify-between items-center px-4 lg:px-8">
              <span className="text-[10px] font-black uppercase tracking-widest">Parallel Medical Documentation</span>
              <span className="material-symbols-outlined text-sm">history_edu</span>
           </div>

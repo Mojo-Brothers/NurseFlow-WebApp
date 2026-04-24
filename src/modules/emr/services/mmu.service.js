@@ -1,35 +1,32 @@
-/**
- * 💊 MEDICATION MANAGEMENT & USE SERVICE (MMU - Phase 29)
- * Adheres to JCI Standards for Medication Safety (MMU.1 to MMU.7).
- */
+import { getMedicationSafety } from '../../admin/services/masterData.service.js';
 
-const HIGH_ALERT_DRUGS = [
-  'INSULIN', 'HEPARIN', 'MORPHINE', 'POTASSIUM CHLORIDE', 
-  'WARFARIN', 'EPINEPHRINE', 'DIGOXIN', 'CEFTRIAXONE'
-];
+let SAFETY_CACHE = null;
 
-const LASA_PAIRS = [
-  ['AMITRIPTYLINE', 'AMLODIPINE'],
-  ['CEFOTAXIME', 'CEFTRIAXONE'],
-  ['DOPAMINE', 'DOBUTAMINE'],
-  ['GLIPIZIDE', 'GLYBURIDE'],
-  ['HYDRALAZINE', 'HYDROXYZINE']
-];
+const loadSafetyData = async () => {
+  if (!SAFETY_CACHE) {
+    SAFETY_CACHE = await getMedicationSafety();
+  }
+  return SAFETY_CACHE;
+};
 
 /**
  * Check if a medication is High-Alert
  */
-export const isHighAlert = (medName) => {
-  return HIGH_ALERT_DRUGS.includes(medName.toUpperCase());
+export const isHighAlert = async (medName) => {
+  const data = await loadSafetyData();
+  const list = data?.high_alert?.list || [];
+  return list.includes(medName.toUpperCase());
 };
 
 /**
  * Detect LASA (Look-Alike Sound-Alike) Risk
  * Returns the similar drug name if a risk is detected.
  */
-export const checkLasaRisk = (medName) => {
+export const checkLasaRisk = async (medName) => {
+  const data = await loadSafetyData();
+  const pairs = data?.lasa?.pairs || [];
   const upperName = medName.toUpperCase();
-  for (const pair of LASA_PAIRS) {
+  for (const pair of pairs) {
     if (pair.includes(upperName)) {
       return pair.find(name => name !== upperName);
     }
@@ -40,17 +37,17 @@ export const checkLasaRisk = (medName) => {
 /**
  * Policy: Require Double-Sign for High-Alert meds
  */
-export const requireDoubleSign = (medName) => {
-  return isHighAlert(medName);
+export const requireDoubleSign = async (medName) => {
+  return await isHighAlert(medName);
 };
 
 /**
  * Validate Prescription Payload for MMU Compliance
  */
-export const validateMmuCompliance = (medications) => {
-  return medications.map(med => ({
+export const validateMmuCompliance = async (medications) => {
+  return await Promise.all(medications.map(async med => ({
     ...med,
-    isHighAlert: isHighAlert(med.medication_name),
-    lasaWarning: checkLasaRisk(med.medication_name)
-  }));
+    isHighAlert: await isHighAlert(med.medication_name),
+    lasaWarning: await checkLasaRisk(med.medication_name)
+  })));
 };

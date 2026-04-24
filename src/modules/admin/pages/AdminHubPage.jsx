@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { ROLES, AUDIT_ACTIONS, ESCALATION_LEVELS } from '../../../core/constants.js';
 import { 
@@ -30,14 +31,17 @@ const ROLE_COLORS = {
   PHARMACIST: { bg: '#fef9c3', text: '#92400e' },
 };
 
+import MasterDataHub from './MasterDataHub.jsx';
+
 export default function AdminHubPage() {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
 
   const [auditLogs, setAuditLogs] = useState([]);
   const [logFilter, setLogFilter] = useState('ALL');
   const [loading, setLoading]     = useState(true);
   const [users, setUsers]         = useState([]);
-  const [activeTab, setActiveTab] = useState('audit'); // 'audit' | 'users' | 'observability' | 'conflicts'
+  const [activeTab, setActiveTab] = useState('audit'); // 'audit' | 'users' | 'observability' | 'conflicts' | 'master_indices'
   const [systemMode, setSystemMode] = useState(SYSTEM_MODES.OPTIMAL);
   
   const [activeAlerts, setActiveAlerts] = useState([]);
@@ -142,13 +146,16 @@ export default function AdminHubPage() {
         {[
           { id: 'audit', label: 'Audit Trail', icon: 'history' },
           { id: 'observability', label: 'Observability', icon: 'monitoring' },
+          { id: 'master_indices', label: 'Master Indices', icon: 'account_tree' },
           { id: 'conflicts', label: 'Data Conflicts', icon: 'sync_problem' },
           { id: 'users', label: 'Staff Directory', icon: 'group' }
         ].map(tab => (
           <button 
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)} 
-            className={activeTab === tab.id ? 'btn-primary' : 'btn-ghost'}
+            onClick={() => {
+              setActiveTab(tab.id);
+            }} 
+            className={activeTab === tab.id ? 'btn-primary shadow-lg' : 'btn-ghost'}
             style={{ borderRadius: 'var(--radius-full)', padding: '0.6rem 1.2rem', gap: '0.5rem' }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: '1.2rem' }}>{tab.icon}</span>
@@ -178,6 +185,10 @@ export default function AdminHubPage() {
         />
       ) : activeTab === 'conflicts' ? (
         <DataConflictsTabView />
+      ) : activeTab === 'master_indices' ? (
+        <div className="fade-in">
+          <MasterDataHub isEmbedded={true} />
+        </div>
       ) : (
         <UsersTabView 
           users={users} 
@@ -264,6 +275,25 @@ function ObservabilityView({ alerts, health, flow, formatTimestamp }) {
           status="GOOD" 
           icon="person_play"
         />
+      </div>
+
+      {/* JCI Quick Action Panel */}
+      <div className="card bg-primary/5 border border-primary/20 flex flex-row justify-between items-center p-6">
+        <div className="flex flex-row items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary text-white flex items-center justify-center shadow-lg">
+            <span className="material-symbols-outlined">database_gear</span>
+          </div>
+          <div>
+            <h4 className="text-base font-black text-primary">Master Data Hub</h4>
+            <p className="text-xs text-on-surface-variant font-medium">Kelola standarisasi Profesi, Ruangan, dan Indeks Klinis (JCI/KARS Ready).</p>
+          </div>
+        </div>
+        <button 
+          onClick={() => navigate('/admin/master-hub')}
+          className="btn-primary-small shadow-sm"
+        >
+          Buka Master Data Hub
+        </button>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1.5rem' }}>
@@ -451,46 +481,255 @@ function AuditTabView({ logs, filter, setFilter, formatTimestamp }) {
 }
 
 function UsersTabView({ users, onUpdateRole }) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('ALL');
+  const [deptFilter, setDeptFilter] = useState('ALL');
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  // Advanced Filtering Logic
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = 
+      (u.display_name || u.displayName)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.employee_id || u.employeeId)?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = roleFilter === 'ALL' || u.role === roleFilter;
+    const matchesDept = deptFilter === 'ALL' || (u.department || u.profession) === deptFilter;
+    
+    return matchesSearch && matchesRole && matchesDept;
+  });
+
+  const departments = [...new Set(users.map(u => u.department || u.profession))].sort();
+
   return (
-    <div className="card padding-0 overflow-hidden">
-      <table className="w-full text-left">
-        <thead>
-          <tr className="bg-surface-container text-[10px] font-black uppercase text-on-surface-variant">
-            <th className="py-3 px-6">Staff Member</th>
-            <th className="py-3 px-6">Department</th>
-            <th className="py-3 px-6">Access Role</th>
-            <th className="py-3 px-6 text-right">Override Access</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map(u => (
-            <tr key={u.id} className="border-b border-outline-variant">
-              <td className="py-4 px-6">
-                <p className="font-bold text-sm m-0">{u.displayName || u.email}</p>
-                <p className="text-[10px] text-outline m-0">{u.email}</p>
-              </td>
-              <td className="py-4 px-6 text-xs font-bold">{u.department || 'GENERAL'}</td>
-              <td className="py-4 px-6">
-                <span className="chip" style={{
-                  backgroundColor: ROLE_COLORS[u.role]?.bg,
-                  color: ROLE_COLORS[u.role]?.text,
-                  fontWeight: '900'
-                }}>{u.role}</span>
-              </td>
-              <td className="py-4 px-6 text-right">
-                <select
-                  className="form-input text-xs"
-                  style={{ padding: '0.3rem 0.6rem', width: 'auto' }}
-                  value={u.role}
-                  onChange={(e) => onUpdateRole(u.uid, e.target.value)}
-                >
-                  {Object.values(ROLES).map(r => <option key={r} value={r}>{r}</option>)}
-                </select>
-              </td>
+    <div className="space-y-6">
+      {/* 🔍 PREMIUM CONTROL CENTER */}
+      <div className="card p-6 bg-surface-container-low border-none shadow-xl shadow-primary/5">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="flex-1 w-full relative">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary font-bold">search</span>
+            <input 
+              type="text"
+              placeholder="Cari Tenaga Medis (Nama, NIP, Email)..."
+              className="w-full pl-12 pr-4 py-4 bg-surface border-none rounded-2xl text-sm font-bold shadow-inner focus:ring-2 ring-primary/20 transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            <select 
+              className="px-4 py-3 bg-surface border-none rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer"
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+            >
+              <option value="ALL">SEMUA PROFESI</option>
+              {Object.keys(ROLE_COLORS).map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+
+            <select 
+              className="px-4 py-3 bg-surface border-none rounded-xl text-xs font-black uppercase tracking-wider shadow-sm cursor-pointer"
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+            >
+              <option value="ALL">SEMUA DEPARTEMEN</option>
+              {departments.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+
+            <div className="h-10 w-[1px] bg-outline-variant/30 mx-2 hidden lg:block"></div>
+            
+            <div className="text-right">
+              <p className="text-[10px] font-black text-outline uppercase tracking-widest">Total Staff</p>
+              <p className="text-xl font-black text-primary leading-none">{filteredUsers.length}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 📋 STAFF GRID / TABLE */}
+      <div className="card padding-0 overflow-hidden border-none shadow-lg">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-surface-container-high text-[10px] font-black uppercase text-on-surface-variant tracking-[0.15em]">
+              <th className="py-4 px-8">Staff Identity & Credentials</th>
+              <th className="py-4 px-6">Department</th>
+              <th className="py-4 px-6">Security & Role</th>
+              <th className="py-4 px-6">Status</th>
+              <th className="py-4 px-8 text-right">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-outline-variant/20">
+            {filteredUsers.length === 0 ? (
+              <tr>
+                <td colSpan="5" className="py-20 text-center">
+                  <span className="material-symbols-outlined text-4xl text-outline mb-4">person_search</span>
+                  <p className="text-outline font-bold">Data staff tidak ditemukan dengan kriteria ini.</p>
+                </td>
+              </tr>
+            ) : filteredUsers.slice(0, 50).map(u => (
+              <tr key={u.id || u.uid} className="hover:bg-primary/5 transition-colors group">
+                <td className="py-4 px-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center text-primary font-black text-lg border border-primary/10">
+                      {(u.display_name || u.displayName)?.charAt(0) || '?'}
+                    </div>
+                    <div className="flex flex-col">
+                      <p className="font-black text-sm text-on-surface m-0 group-hover:text-primary transition-colors">{u.display_name || u.displayName || 'Unnamed Staff'}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] font-mono text-outline">{u.employee_id || u.employeeId || 'NO-NIP'}</span>
+                        <span className="w-1 h-1 rounded-full bg-outline/30"></span>
+                        <span className="text-[10px] font-bold text-outline">{u.email}</span>
+                      </div>
+                      {(u.str_number || u.metadata?.str) && (
+                        <span className="mt-1 text-[9px] font-black text-secondary flex items-center gap-1 uppercase tracking-tighter">
+                          <span className="material-symbols-outlined" style={{ fontSize: '10px' }}>verified</span>
+                          STR Verified: {(u.str_number || u.metadata?.str).substring(0, 15)}...
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </td>
+                <td className="py-4 px-6">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black text-on-surface">{u.department || u.profession || 'GENERAL'}</span>
+                    <span className="text-[10px] font-bold text-outline mt-0.5">Operational Unit</span>
+                  </div>
+                </td>
+                <td className="py-4 px-6">
+                  <select
+                    className="bg-surface-container border border-outline-variant/30 rounded-lg text-[10px] font-black uppercase px-2 py-1 cursor-pointer focus:ring-2 ring-primary/20"
+                    value={u.role}
+                    onChange={(e) => onUpdateRole(u.uid || u.id, e.target.value)}
+                    style={{
+                      backgroundColor: ROLE_COLORS[u.role]?.bg,
+                      color: ROLE_COLORS[u.role]?.text
+                    }}
+                  >
+                    {Object.values(ROLES).map(r => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </td>
+                <td className="py-4 px-6">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full ${u.status === 'ACTIVE' ? 'bg-success' : 'bg-outline'}`}></span>
+                    <span className="text-[10px] font-black uppercase tracking-wider">{u.status || 'OFFLINE'}</span>
+                  </div>
+                </td>
+                <td className="py-4 px-8 text-right">
+                  <button 
+                    onClick={() => setSelectedUser(u)}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-on-primary rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>id_card</span>
+                    Staff Intelligence
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {filteredUsers.length > 50 && (
+          <div className="p-4 bg-surface-container-lowest text-center border-t border-outline-variant/10">
+            <p className="text-[10px] font-bold text-outline">Menampilkan 50 data teratas. Gunakan pencarian untuk spesifikasi data JCI.</p>
+          </div>
+        )}
+      </div>
+
+      {/* 🧠 STAFF INTELLIGENCE MODAL */}
+      {selectedUser && (
+        <StaffDetailModal 
+          user={selectedUser} 
+          onClose={() => setSelectedUser(null)} 
+        />
+      )}
+    </div>
+  );
+}
+
+// ──────── STAFF DETAIL MODAL (PREMIUM) ────────
+function StaffDetailModal({ user, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-6 bg-surface/80 backdrop-blur-md animate-in fade-in">
+      <div className="w-full max-w-4xl bg-surface rounded-[2.5rem] shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col lg:flex-row max-h-[90vh]">
+        
+        {/* Left Side: Identity Card */}
+        <div className="lg:w-1/3 bg-primary p-10 text-on-primary flex flex-col items-center text-center">
+          <div className="w-32 h-32 rounded-[2.5rem] bg-white/20 backdrop-blur-xl border-4 border-white/30 flex items-center justify-center text-5xl font-black mb-6 shadow-2xl">
+            {(user.display_name || user.displayName)?.charAt(0)}
+          </div>
+          <h3 className="text-2xl font-black tracking-tight leading-none mb-2">{user.display_name || user.displayName}</h3>
+          <span className="px-4 py-1.5 bg-white/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-8">{user.role}</span>
+          
+          <div className="w-full space-y-4 pt-6 border-t border-white/10">
+            <div>
+              <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Employee ID / NIP</p>
+              <p className="font-mono font-black text-lg">{user.employee_id || user.employeeId || 'NF-2026-X'}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Medical Unit</p>
+              <p className="font-black text-base">{user.department || user.profession || 'GENERAL CLINIC'}</p>
+            </div>
+          </div>
+
+          <div className="mt-auto pt-10">
+            <img alt="QR Code" src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${user.id || user.uid}`} className="w-20 h-20 bg-white p-2 rounded-xl opacity-80" />
+            <p className="text-[9px] font-bold mt-2 opacity-50">DIGITAL ID VERIFIED</p>
+          </div>
+        </div>
+
+        {/* Right Side: Professional Meta Data */}
+        <div className="flex-1 p-10 overflow-y-auto bg-surface-container-lowest">
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h4 className="text-xl font-black text-on-surface">Professional Metadata</h4>
+              <p className="text-xs text-on-surface-variant font-medium">JCI Accreditation Data & Licensing Portfolio</p>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-surface-container-high rounded-full transition-colors">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6 mb-10">
+            <MetaItem icon="work_history" label="Experience" value={`${user.years_of_experience || user.metadata?.experienceYears || 0} Years`} />
+            <MetaItem icon="calendar_today" label="Hire Date" value={user.join_date || user.metadata?.hireDate ? new Date(user.join_date || user.metadata.hireDate).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A'} />
+            <MetaItem icon="verified" label="STR Number" value={user.str_number || user.metadata?.str || 'NOT REGISTERED'} status={(user.str_number || user.metadata?.str) ? 'ACTIVE' : 'NONE'} />
+            <MetaItem icon="medical_information" label="SIP Number" value={user.sip_number || user.metadata?.sip || 'N/A'} status={(user.sip_number || user.metadata?.sip) ? 'ACTIVE' : 'NONE'} />
+          </div>
+
+          <div className="card bg-surface-container border-none p-6 rounded-3xl mb-6">
+            <h5 className="text-[10px] font-black uppercase text-primary tracking-widest mb-4">Competency & Skills</h5>
+            <div className="flex flex-wrap gap-2">
+              {(user.specialization || user.metadata?.specialty || 'General Clinical Care').split(',').map(skill => (
+                <span key={skill} className="px-3 py-1 bg-surface border border-outline-variant/30 rounded-lg text-[10px] font-black uppercase">{skill.trim()}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex-row justify-between gap-4 mt-10">
+            <button className="btn-ghost-small flex-1 py-4 font-black">EDIT PROFILE</button>
+            <button className="btn-primary flex-1 py-4 font-black shadow-primary/20">MANAGE PERMISSIONS</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function MetaItem({ icon, label, value, status }) {
+  return (
+    <div className="flex items-start gap-4 p-4 bg-surface rounded-2xl border border-outline-variant/20 shadow-sm">
+      <div className="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center text-primary">
+        <span className="material-symbols-outlined text-xl">{icon}</span>
+      </div>
+      <div>
+        <p className="text-[9px] font-black text-outline uppercase tracking-widest">{label}</p>
+        <p className="text-sm font-black text-on-surface leading-tight mt-0.5">{value}</p>
+        {status && (
+          <span className={`text-[8px] font-black uppercase tracking-tighter ${status === 'ACTIVE' ? 'text-success' : 'text-error'}`}>
+            Status: {status}
+          </span>
+        )}
+      </div>
     </div>
   );
 }

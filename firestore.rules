@@ -141,6 +141,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // ─── SYSTEM DIAGNOSTICS: Connectivity Testing ───────────
+    match /system_diagnostics/{id} {
+      allow read:   if isAuth() && (isClinical() || isAdmin());
+      allow create: if isAuth() && (isClinical() || isAdmin());
+      allow update, delete: if false;
+    }
+
     // ─── SYSTEM METRICS: Internal Telemetry Lockdown ──────────
     match /system_metrics/{id} {
       allow read:             if isAuth() && isAdmin();

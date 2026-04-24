@@ -46,7 +46,7 @@ const ClinicalCard = ({
     console.warn('%c[EMERGENCY OVERRIDE] <ClinicalCard /> is running in bypass mode. This must be fixed before production.', 'background: #ba1a1a; color: white; padding: 4px; font-weight: bold;');
   }
 
-  // 🛡️ LOCK: Enforce the 'Dead Serious' specification
+  // 🛡️ LOCK: Enforce the 'Dead Serious' specification but allow Super Modern updates
   const sanitizedStyle = {
     ...(!isOverride ? {} : props.style),
     padding,
@@ -54,11 +54,11 @@ const ClinicalCard = ({
     maxWidth,
     borderLeft,
     backgroundColor: 'var(--surface-clinical)', 
-    backdropFilter: 'none !important',
-    WebkitBackdropFilter: 'none !important',
-    transition: 'none !important',
+    backdropFilter: 'none',
+    WebkitBackdropFilter: 'none',
+    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
     borderRadius: 'var(--radius-clinical)',
-    boxShadow: 'none !important',
+    boxShadow: 'var(--shadow-clinical)',
     display: 'flex',
     flexDirection: 'column',
     position: 'relative',

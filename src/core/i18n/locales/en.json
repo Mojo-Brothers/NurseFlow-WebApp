@@ -15,8 +15,11 @@
     "surgery": "Operating Theatre (ASC)",
     "surveillance": "Infection Surveillance (PCI)",
     "executive": "Executive Command (GLD)",
-    "governance": "Data Governance (MOI)",
-    "admin": "Admin Hub",
+    "gld_report": "Incident Reporting (GLD)",
+    "moi": "Information Governance",
+    "pfr": "Patient Rights",
+    "admin": "Admin Center",
+    "master_hub": "Master Data Hub",
     "settings": "Settings",
     "language": "Language",
     "logout": "Logout"

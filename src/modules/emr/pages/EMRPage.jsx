@@ -26,7 +26,7 @@ import { getLatestVitals, evaluateSepsisRisk, analyzeVitalTrend } from '../../..
 import SurgicalChecklist from '../components/SurgicalChecklist';
 import PatientEducationForm from '../components/PatientEducationForm';
 import DigitalInformedConsent from '../components/DigitalInformedConsent';
-import { verifyClinicalPrivilege } from '../../enterprise/services/sqe.service.js';
+import { verifyClinicalPrivilege } from '../../sqe/services/sqe.service.js';
 import { validateClinicalTerms } from '../../enterprise/services/moi.service.js';
 
 const COMMON_MDS = [
@@ -251,7 +251,7 @@ export default function EMRPage() {
   };
 
   return (
-    <div className="p-8 h-full flex-row gap-8 overflow-hidden relative">
+    <div className="p-4 lg:p-8 h-full flex-col lg:flex-row gap-6 lg:gap-8 overflow-y-auto lg:overflow-hidden relative">
       {showHandover && (
         <HandoverModal 
           patient={activePatient} 
@@ -366,7 +366,7 @@ export default function EMRPage() {
       )}
 
       {/* LEFT: History & Timeline */}
-      <div className="w-[450px] flex-column gap-6">
+      <div className="w-full lg:w-[450px] shrink-0 flex-column gap-6">
         <ClinicalCard padding="1.5rem" className="bg-surface-container-low border-l-4 border-primary relative">
           <div className="flex-row items-baseline gap-3 mb-2">
             <h2 className="text-2xl font-black text-primary">{activePatient?.name || t('emr.select_patient', { defaultValue: 'Select Patient' })}</h2>
@@ -538,8 +538,8 @@ export default function EMRPage() {
           </div>
         )}
 
-        <div className="grid flex-1 overflow-hidden" style={{ gridTemplateColumns: '1.5fr 1fr', gap: '1.5rem' }}>
-           <div className="flex-column gap-6 overflow-y-auto pr-4 scrollbar-hidden">
+        <div className="flex-col xl:flex-row flex-1 overflow-y-auto lg:overflow-hidden gap-6 xl:gap-8 flex">
+           <div className="flex-1 flex-column gap-6 overflow-y-auto pr-0 xl:pr-4 scrollbar-hidden">
               <div className="flex-column gap-2">
                  <label className="text-[10px] font-black uppercase text-on-surface-variant">{t('emr.subjective')}</label>
                  <textarea className="form-input min-h-[140px] text-sm leading-relaxed" value={subjective} onChange={e => setSubjective(e.target.value)} />
@@ -563,7 +563,7 @@ export default function EMRPage() {
                </div>
            </div>
 
-           <div className="flex-column gap-6 overflow-y-auto">
+           <div className="flex-1 flex-column gap-6 overflow-y-auto w-full xl:max-w-[400px]">
               <div className="flex-column gap-4">
                  <label className="text-[10px] font-black uppercase text-on-surface-variant">{t('emr.pharmacy_plan')}</label>
                  <div className="grid grid-cols-1 gap-2">

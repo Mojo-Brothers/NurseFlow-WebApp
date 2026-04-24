@@ -16,8 +16,12 @@
     "surgery": "Kamar Bedah (ASC)",
     "surveillance": "Surveilans Infeksi (PCI)",
     "executive": "Executive Command (GLD)",
+    "gld_report": "Pelaporan Insiden (GLD)",
     "governance": "Tata Kelola Data (MOI)",
+    "moi": "Tata Kelola Informasi",
+    "pfr": "Hak Pasien",
     "admin": "Pusat Admin",
+    "master_hub": "Pusat Master Data",
     "settings": "Pengaturan",
     "language": "Bahasa",
     "logout": "Keluar"
@@ -133,5 +137,79 @@
     "discharge": "Kepulangan Pasien",
     "handover": "Serah Terima SBAR",
     "diagnostics": "Hasil Diagnostik"
+  },
+  "dashboard_v2": {
+    "title": "Dasbor Utama",
+    "subtitle": "Ikhtisar fasilitas waktu-nyata.",
+    "privacy_shield": "Pelindung Privasi",
+    "emergency_toggle": "Mode Darurat",
+    "critical_incident": "KRITIS: Protokol Insiden Korban Massal Diaktifkan",
+    "eta_trauma": "Kasus trauma masuk ETA 10 mnt. Kesiapan ESI Level 1 di Area Trauma 1-4.",
+    "escalation_notice": "Eskalasi ke Kepala Perawat dalam 45 detik",
+    "time_to_ack": "Waktu Konfirmasi",
+    "ack_form": {
+      "select_role": "1. Pilih Peran",
+      "select_action": "2. Pilih Tindakan",
+      "confirm": "Konfirmasi"
+    },
+    "metrics": {
+      "triage_active": "Triage Aktif",
+      "ventilators": "Ketersediaan Ventilator",
+      "bor": "Okupansi Tempat Tidur (BOR)"
+    },
+    "triage_board": {
+      "title": "Papan Triage Aktif",
+      "subtitle": "Integrasi skor CDS dan NEWS2 waktu-nyata.",
+      "identity": "Identitas Pasien",
+      "timeline": "Status / Linimasa",
+      "vitals": "Data Vital",
+      "cds_action": "Rekomendasi CDS"
+    }
+  },
+  "patients_v2": {
+    "title": "Direktori Pasien",
+    "subtitle": "Rekam Medis Induk Klinis JCI",
+    "search_placeholder": "Cari Nama / No. RM / NIK...",
+    "btn_new": "Pendaftaran Baru",
+    "filters": {
+      "insurance": "Asuransi",
+      "safety": "Keselamatan Klinis",
+      "sort": "Urutkan"
+    },
+    "table": {
+      "identity": "Identitas Pasien (IPSG 1)",
+      "bio": "Bio & Gender",
+      "safety": "Indikator Keselamatan (IPSG 3/6)",
+      "insurance": "Penjamin & DPJP",
+      "reg_date": "Tgl. Daftar",
+      "actions": "Tindakan Klinis"
+    },
+    "wizard": {
+      "title": "Registrasi Klinis Lengkap JCI",
+      "step": "Langkah {{current}} dari 6",
+      "step1": "Identitas Utama",
+      "step2": "Demografi & Kontak",
+      "step3": "Kontak Darurat",
+      "step4": "Penjamin & Asuransi",
+      "step5": "Skrining Safety",
+      "step6": "Persetujuan Umum",
+      "consent_label": "Dengan menandatangani secara digital, saya memahami hak dan kewajiban saya sebagai pasien, menyetujui asuhan medis sesuai standar RS, dan mengizinkan penggunaan data medis saya untuk kepentingan klinis & asuransi sesuai standar akreditasi JCI/KARS."
+    }
+  },
+  "admin_hub": {
+    "title": "Pusat Intelijen Data Master",
+    "governance": "Tata Kelola Administratif",
+    "diagnostic_title": "Diagnostik Persistensi Data",
+    "diagnostic_desc": "Uji kemampuan Read/Write Firestore menggunakan sesi aktif Anda (Audit-Ready).",
+    "btn_test": "Jalankan Uji Konektivitas",
+    "categories": {
+      "professions": "Profesi & Kredensial",
+      "rooms": "Struktur Ruangan & Bed",
+      "roles": "Role & Kewenangan (RBAC)",
+      "categorization": "Pengkategorian Klinis"
+    },
+    "prompt_add": "Masukkan nama entri baru untuk kategori ini:",
+    "prompt_edit": "Ubah nama entri menjadi:",
+    "confirm_delete": "Apakah Anda yakin ingin menghapus entri ini? Tindakan ini akan tercatat dalam audit log."
   }
 }

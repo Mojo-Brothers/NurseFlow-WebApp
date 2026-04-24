@@ -99,27 +99,33 @@ export const fetchAllUsers = async () => {
  */
 export const updateUserRole = async (userId, newRole, adminEmail) => {
   const userRef = doc(db, COLLECTIONS.USERS, userId);
-  const userSnap = await getDocs(query(collection(db, COLLECTIONS.USERS), where('uid', '==', userId)));
-  let oldRole = 'UNKNOWN';
+  const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
 
-  if (!userSnap.empty) {
-    oldRole = userSnap.docs[0].data().role;
-  }
+  await runTransaction(db, async (transaction) => {
+    const userSnap = await transaction.get(userRef);
+    if (!userSnap.exists()) throw new Error("User record not found in Firestore.");
+    
+    const oldRole = userSnap.data().role;
 
-  // Update Firestore
-  await updateDoc(userRef, {
-    role: newRole,
-    updated_at: serverTimestamp()
+    // 1. Update User Role & Metadata
+    transaction.update(userRef, {
+      role: newRole,
+      updated_at: serverTimestamp(),
+      _last_modified_by: adminEmail
+    });
+
+    // 2. Atomic Audit Log Entry
+    transaction.set(auditRef, {
+      timestamp: serverTimestamp(),
+      user: adminEmail,
+      action: AUDIT_ACTIONS.UPDATE,
+      resource_type: COLLECTIONS.USERS,
+      resource_id: userId,
+      delta: { role: { before: oldRole, after: newRole } },
+      source: 'WEB_APP_ADMIN',
+      reason: 'ADMIN_ROLE_MANAGEMENT'
+    });
   });
 
-  // Log audit
-  await createAuditLog({
-    userEmail: adminEmail,
-    action: AUDIT_ACTIONS.UPDATE,
-    resourceType: COLLECTIONS.USERS,
-    resourceId: userId,
-    delta: { role: { before: oldRole, after: newRole } }
-  });
-
-  console.log(`[AdminService] Role for ${userId} updated to ${newRole}`);
+  console.log(`[AdminService] Role for ${userId} successfully updated to ${newRole} with audit log.`);
 };

@@ -98,7 +98,7 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center bg-surface-container-lowest p-4 rounded-xl border border-surface-variant shadow-sm">
         <div>
           <h2 className="font-headline text-2xl font-bold text-on-surface flex items-center gap-2">
-            Main Dashboard
+            {t('dashboard_v2.title')}
             <button 
               onClick={() => setIsPrivacyShieldOn(!isPrivacyShieldOn)}
               className={`flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full transition-colors ${isPrivacyShieldOn ? 'bg-blue-100 text-blue-700 border border-blue-300' : 'text-slate-600 bg-slate-100 border border-slate-300 hover:bg-slate-200'}`} 
@@ -107,60 +107,60 @@ export default function DashboardPage() {
               <span className="material-symbols-outlined text-[14px]">
                 {isPrivacyShieldOn ? 'visibility' : 'visibility_off'}
               </span> 
-              Privacy Shield
+              {t('dashboard_v2.privacy_shield')}
             </button>
             <button onClick={handleSeedData} className="ml-4 text-[10px] font-bold px-2 py-1 bg-yellow-100 text-yellow-800 border border-yellow-300 rounded hover:bg-yellow-200 transition-colors">
               [DEV] Seed Live Data
             </button>
           </h2>
-          <p className="font-body text-sm text-on-surface-variant">Real-time facility overview.</p>
+          <p className="font-body text-sm text-on-surface-variant">{t('dashboard_v2.subtitle')}</p>
         </div>
         <button className="bg-red-600 text-white hover:bg-red-700 px-4 py-2 rounded-md font-label font-bold tracking-wide uppercase text-sm shadow-md transition-colors flex items-center gap-2 animate-[pulse_3s_ease-in-out_infinite]">
           <span className="material-symbols-outlined text-xl">warning</span>
-          <span className="hidden sm:inline">Emergency UI Toggle</span>
+          <span className="hidden sm:inline">{t('dashboard_v2.emergency_toggle')}</span>
           <span className="sm:hidden">Emergency</span>
         </button>
       </div>
 
       {/* JCI Critical Alert Banner */}
-      <div className="bg-red-100 border-l-4 border-red-600 rounded-r-xl p-4 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 animate-[pulse_2s_ease-in-out_infinite] shadow-sm">
-        <div className="flex items-start sm:items-center gap-4">
-          <div className="bg-red-600 text-white rounded-full p-2 flex-shrink-0">
-            <span className="material-symbols-outlined">emergency</span>
+      <div className="bg-red-100 border-l-4 border-red-600 rounded-r-xl p-6 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6 animate-[pulse_2s_ease-in-out_infinite] shadow-sm">
+        <div className="flex flex-row items-start sm:items-center gap-4">
+          <div className="bg-red-600 text-white rounded-full p-3 flex-shrink-0 shadow-md">
+            <span className="material-symbols-outlined text-2xl">emergency</span>
           </div>
           <div>
-            <h2 className="text-red-900 font-headline font-bold text-xl tracking-tight">CRITICAL: Multi-Casualty Incident Protocol Activated</h2>
-            <p className="text-red-800 font-body text-sm mt-1 font-medium">Inbound trauma cases ETA 10 mins. ESI Level 1 preparedness required in Trauma Bays 1-4.</p>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-2">
-              <span className="font-label text-xs font-bold text-red-700 bg-red-200 px-2 py-1 rounded animate-pulse">Escalates to Head Nurse in 45s</span>
-              <span className="font-label text-xs font-semibold text-red-700">Time to Ack: <span className="font-mono">01:15</span></span>
+            <h2 className="text-red-900 font-headline font-bold text-lg md:text-xl tracking-tight">{t('dashboard_v2.critical_incident')}</h2>
+            <p className="text-red-800 font-body text-sm mt-1 font-medium">{t('dashboard_v2.eta_trauma')}</p>
+            <div className="flex flex-wrap items-center gap-3 mt-2">
+              <span className="font-label text-[10px] font-bold text-red-700 bg-red-200 px-2 py-1 rounded animate-pulse border border-red-300">{t('dashboard_v2.escalation_notice')}</span>
+              <span className="font-label text-[10px] font-semibold text-red-700">{t('dashboard_v2.time_to_ack')}: <span className="font-mono">01:15</span></span>
             </div>
           </div>
         </div>
 
         {/* Binding Acknowledgment Form */}
-        <div className="flex flex-col gap-2 w-full xl:w-auto bg-white/50 p-2 rounded-lg border border-red-200">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            <select style={{ minWidth: '150px' }} className="text-xs rounded border-red-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-500 py-1.5 pl-2 pr-8 text-red-900 font-bold bg-white w-full sm:w-auto" defaultValue="">
-              <option disabled value="">1. Select Role</option>
+        <div className="flex flex-col gap-3 w-full xl:w-auto bg-white/40 p-4 rounded-xl border border-red-200">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <select className="text-xs rounded-lg border-red-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-500 py-2 pl-3 pr-8 text-red-900 font-bold bg-white w-full xl:w-48" defaultValue="">
+              <option disabled value="">{t('dashboard_v2.ack_form.select_role')}</option>
               <option value="rn">Charge Nurse</option>
               <option value="md">Attending MD</option>
             </select>
-            <select style={{ minWidth: '180px' }} className="text-xs rounded border-red-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-500 py-1.5 pl-2 pr-8 text-red-900 font-bold bg-white w-full sm:w-auto" defaultValue="">
-              <option disabled value="">2. Assign Action</option>
+            <select className="text-xs rounded-lg border-red-300 shadow-sm focus:border-red-500 focus:ring focus:ring-red-500 py-2 pl-3 pr-8 text-red-900 font-bold bg-white w-full xl:w-56" defaultValue="">
+              <option disabled value="">{t('dashboard_v2.ack_form.select_action')}</option>
               <option value="triage">Deploy Triage Team</option>
               <option value="surge">Activate Surge Capacity</option>
             </select>
-            <button style={{ width: 'max-content' }} className="bg-red-600 text-white hover:bg-red-700 px-4 py-1.5 rounded-md font-label font-bold tracking-wide uppercase text-sm shadow-sm whitespace-nowrap transition-colors flex-shrink-0 w-full sm:w-auto">
-              Confirm Ack
+            <button className="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-lg font-label font-bold tracking-wide uppercase text-sm shadow-md whitespace-nowrap transition-colors flex-shrink-0 w-full sm:w-auto">
+              {t('dashboard_v2.ack_form.confirm')}
             </button>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 2xl:grid-cols-12 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
         {/* Left Column: Key Metrics & Triage Board */}
-        <div className="2xl:col-span-8 flex flex-col gap-6 lg:gap-8">
+        <div className="xl:col-span-8 flex flex-col gap-6 lg:gap-8">
           
           {/* High Contrast Resource Bottlenecks */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -221,9 +221,9 @@ export default function DashboardPage() {
           <div className="bg-surface-container-lowest rounded-xl border border-surface-variant shadow-sm overflow-hidden">
             <div className="p-5 border-b border-surface-variant flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-gray-50">
               <div>
-                <h3 className="font-headline font-bold text-lg text-on-surface tracking-tight">Active Triage Board</h3>
+                <h3 className="font-headline font-bold text-lg text-on-surface tracking-tight">{t('dashboard_v2.triage_board.title')}</h3>
                 <div className="flex flex-wrap items-center gap-2 mt-0.5">
-                  <p className="font-body text-xs text-on-surface-variant">Real-time CDS and NEWS2 scoring integration.</p>
+                  <p className="font-body text-xs text-on-surface-variant">{t('dashboard_v2.triage_board.subtitle')}</p>
                   <span className="font-mono text-[9px] text-green-700 bg-green-100 px-1 py-0.5 rounded border border-green-200 flex items-center gap-0.5" title="Source: HL7 / Monitor [Beds 1-4]">
                     <span className="material-symbols-outlined text-[10px]">sync</span> Source: HL7 Live
                   </span>
@@ -234,15 +234,15 @@ export default function DashboardPage() {
               </button>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[800px]">
+            <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
+              <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-surface-container-low font-label text-xs uppercase tracking-wider text-on-surface-variant border-b border-surface-variant">
-                    <th className="p-3 font-semibold">Patient Identity</th>
-                    <th className="p-3 font-semibold">Status / Timeline</th>
+                    <th className="p-3 font-semibold">{t('dashboard_v2.triage_board.identity')}</th>
+                    <th className="p-3 font-semibold">{t('dashboard_v2.triage_board.timeline')}</th>
                     <th className="p-3 font-semibold">NEWS2</th>
-                    <th className="p-3 font-semibold">Vitals (BP/SPO2/HR)</th>
-                    <th className="p-3 font-semibold">CDS Recommended Action</th>
+                    <th className="p-3 font-semibold">{t('dashboard_v2.triage_board.vitals')}</th>
+                    <th className="p-3 font-semibold">{t('dashboard_v2.triage_board.cds_action')}</th>
                   </tr>
                 </thead>
                 <tbody className="font-body text-sm divide-y divide-surface-variant">
@@ -345,7 +345,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Right Column: Audit Trail & Actions */}
-        <div className="2xl:col-span-4 flex flex-col gap-6">
+        <div className="xl:col-span-4 flex flex-col gap-6">
           <div className="bg-surface-container-lowest rounded-xl h-full flex flex-col border border-surface-variant shadow-sm relative min-h-[400px]">
             <div className="p-5 border-b border-surface-variant z-10 bg-gray-50 rounded-t-xl">
               <h3 className="font-headline font-bold text-lg text-on-surface tracking-tight flex items-center gap-2">

@@ -18,6 +18,11 @@ export const COLLECTIONS = {
   HANDOVER_LOGS:   'handover_logs',  // V11: SBAR Continuity
   SURGERY_SCHEDULE: 'surgery_schedule', // V28: ASC Planning
   SURGERY_LOGS:     'surgery_logs',     // V28: Intra-op Audit
+  INCIDENTS:        'incidents',        // V32: Institutional Risk Management
+  STAFF_CREDENTIALS: 'staff_credentials', // V33: SQE Certification Tracking
+  INFO_GOVERNANCE:   'info_governance',   // V34: MOI Data Lifecycle
+  INFORMED_CONSENTS: 'informed_consents', // V35: PFR Legal Documentation
+  COMPLAINTS:        'patient_complaints', // V35: PFR Complaint Handling
 };
 
 export const ROLES = {
@@ -37,6 +42,7 @@ export const ROUTES = {
   ENCOUNTERS: '/encounters',
   ADMIN:      '/admin',
   PHARMACY:   '/pharmacy',
+  GLD:        '/gld', // V32: Governance Dashboard
 };
 
 export const ROLE_PERMISSIONS = {
@@ -118,6 +124,10 @@ export const AUDIT_ACTIONS = {
   MEDICAL_ACTION: 'MEDICAL_ACTION',
   ALERT_ACK: 'ALERT_ACK',
   CONFLICT_RESOLVE: 'CONFLICT_RESOLVE',
+  CREDENTIAL_VERIFY: 'CREDENTIAL_VERIFY', // V33: Staff Competency Check
+  TERMINOLOGY_AUDIT: 'TERMINOLOGY_AUDIT', // V34: MOI Compliance Check
+  CONSENT_SIGNED: 'CONSENT_SIGNED', // V35: PFR Legal Action
+  PRIVACY_UPDATE: 'PRIVACY_UPDATE', // V35: PFR Policy Change
 };
 
 export const ENCOUNTER_TYPES = {

@@ -53,13 +53,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 9999;
 }
 
 .modal-content {
   width: 100%;
-  max-width: 500px;
+  max-width: 650px;
+  max-height: 90vh;
+  overflow-y: auto;
+  margin: 12px;
+  padding: 1.5rem !important;
   animation: slideUp 0.3s ease-out;
+}
+
+@media (min-width: 640px) {
+  .modal-content {
+    margin: 24px;
+    padding: 2.5rem !important;
+  }
 }
 
 @keyframes slideUp {
@@ -156,10 +167,14 @@
 .flag-fall { background-color: #fef9c3; color: #854d0e; }
 .flag-insurance { background-color: #dbeafe; color: #1e40af; }
 
-/* ─── Layout Utils ─── */
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+/* ─── Layout Utils (Mobile First) ─── */
+.grid-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
 
+@media (min-width: 640px) {
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+}
 .section-divider {
   margin: 1.5rem 0 1rem;
   padding-bottom: 0.5rem;

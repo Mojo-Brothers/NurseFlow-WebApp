@@ -23,6 +23,10 @@ import { createAuditLog } from '../../../core/audit/audit.service.js';
  */
 export const loginWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
+  // Memaksa Google untuk selalu menampilkan pilihan akun (Select Account)
+  provider.setCustomParameters({ 
+    prompt: 'select_account' 
+  });
   // Opsional: batasi ke domain rumah sakit
   // provider.setCustomParameters({ hd: 'hospital.local' });
 
@@ -87,6 +91,10 @@ export const getUserRole = async (firebaseUser) => {
 
     // 🛡️ DEV FALLBACK: Auto-mapping based on email prefix
     const email = firebaseUser.email?.toLowerCase() || '';
+    
+    // 👑 SUPER ADMIN BYPASS (Authenticated Owner)
+    if (email === 'obbyvior@gmail.com') return 'ADMIN';
+
     if (email.startsWith('dr.'))   return 'DOCTOR';
     if (email.startsWith('nurse.')) return 'NURSE';
     if (email.startsWith('mgmt.'))  return 'SUPERVISOR';

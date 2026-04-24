@@ -4,6 +4,7 @@ import {
   dispenseMedication,
   cancelMedication,
 } from './services/pharmacy.service.js';
+import { validateMmuCompliance } from '../emr/services/mmu.service.js';
 
 export const usePharmacyStore = create((set) => ({
   pendingQueue: [],
@@ -13,7 +14,8 @@ export const usePharmacyStore = create((set) => ({
   fetchQueue: async () => {
     set({ isLoading: true, error: null });
     try {
-      const meds = await getPendingMedications();
+      const rawMeds = await getPendingMedications();
+      const meds = await validateMmuCompliance(rawMeds);
       set({ pendingQueue: meds, isLoading: false });
     } catch (err) {
       set({ error: err.message, isLoading: false });

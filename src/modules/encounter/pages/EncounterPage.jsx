@@ -126,7 +126,7 @@ export default function EncounterPage() {
                 <tr key={enc.id} className="border-b hover-bg-surface" style={{ borderColor: 'var(--outline-variant)' }}>
                   <td className="py-4 px-5 font-bold text-primary text-sm">{getPatientName(enc.patient_id)}</td>
                   <td className="py-4 px-5 text-sm">{t(`encounter.types.${enc.encounter_type.toLowerCase()}`)}</td>
-                  <td className="py-4 px-5 text-sm text-on-surface-variant" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <td className="py-4 px-5 text-sm text-on-surface-variant" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={enc.chief_complaint}>
                     {enc.chief_complaint || '—'}
                   </td>
                   <td className="py-4 px-5 text-sm text-on-surface-variant">{enc.admitting_doctor?.split('@')[0] || '—'}</td>
@@ -164,9 +164,9 @@ export default function EncounterPage() {
               </button>
             </div>
 
-            <form onSubmit={handleOpen} className="flex-column gap-4">
+            <form onSubmit={handleOpen} className="flex-column gap-5 mt-4">
               <div>
-                <label className="metric-label mb-2 block">{t('encounter.modal.patient_label')}</label>
+                <label className="text-sm font-bold text-on-surface mb-2 block">{t('encounter.modal.patient_label')}</label>
                 <select required className="form-input" value={form.patientId}
                   onChange={e => setForm({ ...form, patientId: e.target.value })}>
                   <option value="">{t('encounter.modal.patient_placeholder')}</option>
@@ -177,7 +177,7 @@ export default function EncounterPage() {
               </div>
 
               <div>
-                <label className="metric-label mb-2 block">{t('encounter.modal.type_label')}</label>
+                <label className="text-sm font-bold text-on-surface mb-2 block">{t('encounter.modal.type_label')}</label>
                 <select required className="form-input" value={form.encounterType}
                   onChange={e => setForm({ ...form, encounterType: e.target.value })}>
                   {Object.keys(ENCOUNTER_TYPES).map(k => (
@@ -189,7 +189,7 @@ export default function EncounterPage() {
               </div>
 
               <div>
-                <label className="metric-label mb-2 block">{t('encounter.modal.complaint_label')}</label>
+                <label className="text-sm font-bold text-on-surface mb-2 block">{t('encounter.modal.complaint_label')}</label>
                 <textarea required rows={2} className="form-input" style={{ resize: 'vertical' }}
                   placeholder={t('encounter.modal.complaint_placeholder')}
                   value={form.chiefComplaint}
@@ -198,7 +198,7 @@ export default function EncounterPage() {
 
               <div className="flex-row gap-4">
                 <div className="flex-1">
-                  <label className="metric-label mb-2 block">{t('encounter.modal.ward_label')}</label>
+                  <label className="text-sm font-bold text-on-surface mb-2 block">{t('encounter.modal.ward_label')}</label>
                   <select className="form-input" value={form.ward}
                     onChange={e => setForm({ ...form, ward: e.target.value })}>
                     {['IGD', 'ICU', 'NICU', 'Poli Umum', 'Poli Jantung', 'Bedah', 'Kebidanan'].map(w => (
@@ -207,15 +207,17 @@ export default function EncounterPage() {
                   </select>
                 </div>
                 <div className="flex-1">
-                  <label className="metric-label mb-2 block">{t('encounter.modal.doctor_label')}</label>
+                  <label className="text-sm font-bold text-on-surface mb-2 block">{t('encounter.modal.doctor_label')}</label>
                   <input className="form-input" value={form.admittingDoctor}
                     onChange={e => setForm({ ...form, admittingDoctor: e.target.value })}
                     placeholder="email dokter" />
                 </div>
               </div>
 
-              <div className="flex-row justify-between mt-4 pt-4" style={{ borderTop: '1px solid var(--outline-variant)' }}>
-                <button type="button" className="btn-ghost" onClick={() => setIsModalOpen(false)}>{t('encounter.modal.btn_cancel')}</button>
+              <div className="flex-row justify-end gap-3 mt-6 pt-5" style={{ borderTop: '1px solid var(--outline-variant)' }}>
+                <button type="button" className="btn-outline-small" style={{ borderColor: 'var(--outline-variant)', color: 'var(--on-surface-variant)' }} onClick={() => setIsModalOpen(false)}>
+                  {t('encounter.modal.btn_cancel')}
+                </button>
                 <button type="submit" className="btn-primary" disabled={isSaving}>
                   {isSaving ? t('encounter.modal.saving') : t('encounter.modal.btn_submit')}
                 </button>

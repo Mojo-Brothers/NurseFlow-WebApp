@@ -86,8 +86,24 @@ const TopAppBar = ({ onMenuClick }) => {
         </div>
 
         <button 
+          onClick={() => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+          }}
+          className="flex-row items-center gap-2 px-3 py-1.5 rounded-full border bg-surface text-on-surface-variant border-outline-variant transition-all hover:bg-surface-container-high"
+          title="Toggle Dark Mode"
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            dark_mode
+          </span>
+          <span className="text-[10px] font-black uppercase tracking-tighter hide-on-mobile">
+            Tema
+          </span>
+        </button>
+
+        <button 
           onClick={toggleClassicUI}
-          className={`flex-row items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${classicUI ? 'bg-primary text-white border-primary' : 'bg-white text-on-surface-variant border-outline-variant opacity-60 hover:opacity-100'}`}
+          className={`flex-row items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${classicUI ? 'bg-primary text-white border-primary' : 'bg-surface text-on-surface-variant border-outline-variant opacity-60 hover:opacity-100'}`}
           style={{ boxShadow: classicUI ? '0 4px 12px rgba(0, 94, 184, 0.3)' : 'none' }}
           title="Toggle Classic UI (Rollback Safety)"
         >
