@@ -33,15 +33,15 @@ export const createEncounter = async ({
         patient_id:         patientId,
         encounter_type:     encounterType,
         chief_complaint:    chiefComplaint,
-        admitting_doctor:   admittingDoctor,
-        nurse_in_charge:    nurseInCharge,
-        ward,
+        admitting_doctor:   admittingDoctor || null,
+        nurse_in_charge:    nurseInCharge || null,
+        ward:               ward || 'IGD',
         status:             ENCOUNTER_STATUSES.WAITING, 
         escalation_level:   ESCALATION_LEVELS.NONE,
         escalation_source:  ESCALATION_SOURCES.SYSTEM,
         admitted_at:        timestamp,
         updated_at:         timestamp,
-        updated_by:         createdBy,
+        updated_by:         createdBy || 'system',
       };
 
       transaction.set(encounterRef, payload);
@@ -57,8 +57,7 @@ export const createEncounter = async ({
             description: 'Emergency Admission Fee',
             qty: 1,
             unit_price: 50000,
-            total: 50000,
-            timestamp: timestamp
+            total: 50000
           }
         ],
         subtotal:      50000,

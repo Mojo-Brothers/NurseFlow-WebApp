@@ -22,6 +22,9 @@ export const submitTriage = async ({
   encounterId, 
   bedId = null,
   vitals, 
+  esiLevel = null,
+  fallRisk = false,
+  nutritionalRisk = false,
   assessedBy,
   reason = 'ROUTINE_TRIAGE' 
 }) => {
@@ -30,7 +33,7 @@ export const submitTriage = async ({
     console.warn('[TriageService] Offline detected. Enqueueing to Priority Sync Queue (Spark Safe)...');
     return await enqueueAction({
       type: 'SUBMIT_TRIAGE',
-      patientId, encounterId, bedId, vitals, assessedBy, reason
+      patientId, encounterId, bedId, vitals, esiLevel, fallRisk, nutritionalRisk, assessedBy, reason
     }, SYNC_PRIORITIES.HIGH); 
   }
 
@@ -105,7 +108,11 @@ export const submitTriage = async ({
           diastolicBP:    Number(vitals.diastolicBP),
           spo2:           Number(vitals.spo2),
           temperature:    Number(vitals.temperature),
+          painScale:      Number(vitals.painScale || 0),
         },
+        esi_level:        esiLevel,
+        fall_risk:        fallRisk,
+        nutritional_risk: nutritionalRisk,
         news2_score:      currentNews2,
         hr_velocity:      hrVelocity, 
         escalation_level:  escalation.level,

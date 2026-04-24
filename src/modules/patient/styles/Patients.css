@@ -19,6 +19,15 @@
 .block { display: block; }
 .flex-1 { flex: 1; }
 
+/* ─── Responsive View Toggles ─── */
+.desktop-only { display: none !important; }
+.mobile-only { display: block !important; }
+
+@media (min-width: 1024px) {
+  .desktop-only { display: table !important; }
+  .mobile-only { display: none !important; }
+}
+
 .btn-outline-small {
   background: transparent;
   border: 1px solid var(--outline-variant);
@@ -183,4 +192,153 @@
   font-size: 0.75rem;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+/* ─── Patient Card (Mobile) ─── */
+.patient-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.patient-card {
+  background: var(--surface-container-low);
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid var(--outline-variant);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.patient-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-container);
+}
+
+.patient-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.patient-card-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.patient-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.patient-card-actions .btn-primary,
+.patient-card-actions .btn-secondary-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem !important;
+  border-radius: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.025em;
+}
+
+.btn-secondary-container {
+  background-color: var(--secondary-container);
+  color: var(--on-secondary-container);
+  border: none;
+}
+
+.ml-auto-desktop {
+  margin-left: 0;
+}
+
+@media (min-width: 1024px) {
+  .ml-auto-desktop {
+    margin-left: auto;
+  }
+}
+
+.patient-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--on-surface-variant);
+}
+
+/* ─── Filter Bar Enhancements ─── */
+.filter-bar-responsive {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 1.5rem;
+  padding: 1rem;
+  scrollbar-width: none; /* Firefox */
+}
+
+.filter-bar-responsive::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+@media (max-width: 640px) {
+  .filter-bar-responsive {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+    overflow-x: visible;
+    padding: 1.25rem;
+    border-radius: 1.5rem;
+  }
+  
+  .filter-bar-responsive .flex-row {
+    flex-wrap: wrap !important;
+    gap: 0.75rem !important;
+    width: 100%;
+  }
+
+  /* Specific fix for the pills container to ensure they wrap */
+  .filter-bar-responsive .flex-row > div.flex-row {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+
+  .filter-bar-responsive .w-\[1px\] {
+    display: none;
+  }
+
+  /* Fix vertical text issue: Ensure labels have enough space */
+  .filter-bar-responsive span.uppercase {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    display: block;
+    opacity: 0.6;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Hide the divider and search icon on mobile for more space */
+  .filter-bar-responsive .w-\[1px\],
+  .filter-bar-responsive .material-symbols-outlined {
+    display: none !important;
+  }
 }

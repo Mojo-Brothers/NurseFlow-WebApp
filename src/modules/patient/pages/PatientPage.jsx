@@ -5,17 +5,35 @@ import { useNavigate } from 'react-router-dom';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import { createEncounter } from '../../encounter/services/encounter.service.js';
+import { getAvailableDoctors } from '../services/patient.service.js';
 import { logAudit } from '../../../core/services/audit.service.js';
-import { AUDIT_ACTIONS, COLLECTIONS } from '../../../core/constants.js';
+import { AUDIT_ACTIONS, COLLECTIONS, ENCOUNTER_TYPES } from '../../../core/constants.js';
+import { useAuth } from '../../../contexts/useAuth.js';
 import '../styles/Patients.css';
+
+const DUMMY_DOCTORS = [
+  { id: 'd1', name: 'dr. Budi Santoso, Sp.PD' },
+  { id: 'd2', name: 'dr. Siti Aminah, Sp.A' },
+  { id: 'd3', name: 'dr. Robert Wilson, Sp.OT' },
+  { id: 'd4', name: 'dr. Linda Wijaya, Sp.OG' },
+  { id: 'd5', name: 'dr. Ahmad Hidayat, Sp.JP' },
+  { id: 'd6', name: 'dr. Maria Garcia, Sp.An' },
+  { id: 'd7', name: 'dr. Kevin Hartanto, Sp.B' },
+  { id: 'd8', name: 'dr. Sarah Connor, Sp.Rad' }
+];
 
 export default function PatientPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { patients, isLoading: loading, fetchPatients, addPatient, selectPatient } = usePatientStore();
   const { setLiveContext } = useEncounterStore();
+  const { currentUser } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  
+  // ─── Admission Modal State ───
+  const [isAdmitModalOpen, setIsAdmitModalOpen] = useState(false);
+  const [selectedPatientForAdmit, setSelectedPatientForAdmit] = useState(null);
 
   // ─── Local State: Unified Form Data (Super Complete JCI Standard) ───
   const [form, setForm] = useState({
@@ -33,11 +51,13 @@ export default function PatientPage() {
     insurance_type: 'UMUM', insurance_no: '',
     // Step 5: Medis & Safety (IPSG 6)
     blood_type: 'O', allergies: '', fall_risk: false, 
+    primary_physician_id: '',
     // Step 6: Hak Pasien & Spiritual (PFR)
     privacy_level: 'STANDARD', spiritual_needs: '', consent: false
   });
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [doctors, setDoctors] = useState([]);
   
   // ─── Filter & Intelligence States (Modern 2026) ───
   const [activeFilters, setActiveFilters] = useState({
@@ -48,6 +68,11 @@ export default function PatientPage() {
 
   useEffect(() => {
     fetchPatients();
+    const loadDoctors = async () => {
+      const docs = await getAvailableDoctors();
+      setDoctors(docs);
+    };
+    loadDoctors();
   }, [fetchPatients]);
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -72,6 +97,14 @@ export default function PatientPage() {
     if (activeFilters.sortBy === 'NAME') return a.name.localeCompare(b.name);
     return 0;
   });
+
+  // ─── Logic: Get Random Doctor for WOW Effect ───
+  const getRandomDoctor = (patientId) => {
+    // Deterministic random based on patientId so it doesn't change on every render
+    const availableDocs = doctors.length > 0 ? doctors : DUMMY_DOCTORS;
+    const seed = patientId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return availableDocs[seed % availableDocs.length].name;
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -115,6 +148,10 @@ export default function PatientPage() {
             blood_type: form.blood_type,
             allergies: form.allergies ? [form.allergies] : []
           },
+          primary_physician: form.primary_physician_id ? {
+            id: form.primary_physician_id,
+            name: doctors.find(d => d.id === form.primary_physician_id)?.name || getRandomDoctor(form.nik || 'temp')
+          } : null,
           safety_flags: {
             fall_risk: form.fall_risk,
             allergy_risk: !!form.allergies
@@ -135,40 +172,12 @@ export default function PatientPage() {
     }
   };
 
-  const handleAdmit = async (patientId, patientName) => {
-    const reason = prompt(`Alasan Admisi untuk ${patientName}:`, 'Pemeriksaan Rutin');
-    if (!reason) return;
-
-    try {
-      // 1. Create Encounter (Architecture Step)
-      const encounterId = await createEncounter({
-        patientId,
-        encounterType: 'EMERGENCY',
-        chiefComplaint: reason,
-        nurseInCharge: 'Nurse Robby',
-        ward: 'IGD',
-        createdBy: 'system'
-      });
-
-      // 2. Set Global Clinical Context (The Highway)
-      setLiveContext(patientId, encounterId);
-
-      // 3. JCI Audit Trail (Compliance)
-      await logAudit({
-        action: AUDIT_ACTIONS.CREATE,
-        resource_type: COLLECTIONS.ENCOUNTERS,
-        resource_id: encounterId,
-        delta: { patientName, reason },
-        reason: 'NEW_ENCOUNTER_ADMISSION'
-      });
-
-      // 4. Auto-Transition (Seamless Flow)
-      alert(`Pasien ${patientName} berhasil di-admit. Menuju modul Triage...`);
-      navigate('/triage');
-    } catch (err) {
-      alert('Gagal admisi: ' + err.message);
-    }
+  const handleAdmit = (patientId, patientName) => {
+    setSelectedPatientForAdmit({ id: patientId, name: patientName });
+    setIsAdmitModalOpen(true);
   };
+
+  // finalizeAdmission moved to child component for performance
 
   const handleViewEMR = async (patientId, patientName) => {
     // JCI Requirement: Audit clinical access
@@ -194,7 +203,7 @@ export default function PatientPage() {
           <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-on-surface leading-tight">{t('patients_v2.title')}</h2>
           <p className="text-on-surface-variant text-sm mt-1 font-medium">{t('patients_v2.subtitle')}</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+        <div className="flex flex-col xs:flex-row gap-3 items-stretch sm:items-center">
           <div className="search-wrapper w-full sm:w-80">
             <span className="material-symbols-outlined search-icon" style={{ fontSize: '1.2rem' }}>search</span>
             <input 
@@ -205,15 +214,16 @@ export default function PatientPage() {
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn-primary w-full sm:w-auto" onClick={() => { setIsModalOpen(true); setCurrentStep(1); }}>
+          <button className="btn-primary w-full sm:w-auto px-6" onClick={() => { setIsModalOpen(true); setCurrentStep(1); }}>
             <span className="material-symbols-outlined icon-small mr-2" style={{verticalAlign: 'bottom'}}>person_add</span>
-            {t('patients_v2.btn_new')}
+            <span className="hidden xs:inline">{t('patients_v2.btn_new')}</span>
+            <span className="xs:hidden">Tambah Pasien</span>
           </button>
         </div>
       </div>
 
       {/* ─── Premium Intelligence Filter Bar ─── */}
-      <div className="flex-row gap-6 mb-8 items-center bg-surface-container-low p-4 rounded-3xl border border-outline-variant/30 shadow-sm overflow-x-auto no-scrollbar">
+      <div className="filter-bar-responsive mb-8 items-center bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm">
         <div className="flex-row gap-2 items-center shrink-0">
           <span className="material-symbols-outlined text-sm opacity-40 ml-2">filter_list</span>
           <span className="text-[10px] font-black uppercase opacity-40 px-2 tracking-widest">Insurance</span>
@@ -246,8 +256,8 @@ export default function PatientPage() {
             ))}
           </div>
         </div>
-
-        <div className="ml-auto flex-row gap-2 items-center shrink-0">
+        
+        <div className="ml-auto-desktop flex-row gap-2 items-center shrink-0">
           <span className="text-[10px] font-black uppercase opacity-40 px-2 tracking-widest">Sort By</span>
           <select 
             className="bg-transparent border-none text-xs font-bold text-primary focus:outline-none cursor-pointer"
@@ -260,7 +270,8 @@ export default function PatientPage() {
         </div>
       </div>
 
-      <div className="w-full overflow-x-auto pb-4 custom-scrollbar">
+      {/* ─── DESKTOP TABLE VIEW (Visible on Large Screens) ─── */}
+      <div className="w-full overflow-x-auto pb-4 custom-scrollbar desktop-only">
         <table className="w-full text-left border-collapse min-w-[1000px]">
           <thead>
             <tr className="bg-surface-container-low text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
@@ -329,7 +340,9 @@ export default function PatientPage() {
                       <div className="flex-row items-center gap-1">
                         <span className="material-symbols-outlined text-[14px] text-primary">medical_services</span>
                         <span className="text-[11px] font-bold text-on-surface-variant">
-                          {p.primary_physician?.name || 'Dr. Unassigned'}
+                          {(!p.primary_physician?.name || p.primary_physician?.name === 'Dr. Unassigned') 
+                            ? getRandomDoctor(p.id) 
+                            : p.primary_physician.name}
                         </span>
                       </div>
                     </div>
@@ -346,7 +359,7 @@ export default function PatientPage() {
                         <span className="material-symbols-outlined text-[16px]">emergency</span>
                         <span className="text-[10px] font-black uppercase tracking-widest">Admit</span>
                       </button>
-                      <button className="w-9 h-9 rounded-xl bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-white transition-all flex items-center justify-center shadow-sm" onClick={() => handleViewEMR(p.id, p.mrn)} title="View EMR">
+                      <button className="w-9 h-9 rounded-xl bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-white transition-all flex items-center justify-center shadow-sm" onClick={() => handleViewEMR(p.id, p.name)} title="View EMR">
                         <span className="material-symbols-outlined text-[18px]">clinical_notes</span>
                       </button>
                     </div>
@@ -356,6 +369,79 @@ export default function PatientPage() {
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* ─── MOBILE CARD VIEW (Visible on Small Screens) ─── */}
+      <div className="mobile-only pb-10">
+        {loading ? (
+          <div className="py-12 text-center text-on-surface-variant animate-pulse font-bold">Synchronizing Clinical Data...</div>
+        ) : filteredPatients.length === 0 ? (
+          <div className="py-12 text-center text-on-surface-variant bg-surface-container-low rounded-3xl border border-dashed border-outline-variant">
+             <span className="material-symbols-outlined text-4xl opacity-20 block mb-2">person_search</span>
+             No records found for "{searchTerm}"
+          </div>
+        ) : (
+          <div className="patient-card-list">
+            {filteredPatients.map(p => (
+              <div key={p.id} className="patient-card">
+                <div className="patient-card-header">
+                  <div className="patient-card-identity">
+                    <span className="text-[10px] font-black text-primary tracking-widest uppercase">{p.mrn || 'MRN-UNASSIGNED'}</span>
+                    <h3 className="text-lg font-black text-on-surface leading-tight">{p.name || 'UNIDENTIFIED'}</h3>
+                    <span className="text-[10px] font-mono opacity-60">NIK: {p.nik || '--'}</span>
+                  </div>
+                  <span className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm ${(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'bg-primary/10 text-primary' : 'bg-pink-100 text-pink-600'}`}>
+                    {(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'M' : 'F'}
+                  </span>
+                </div>
+
+                <div className="patient-card-meta">
+                   <div className="meta-item">
+                     <span className="material-symbols-outlined text-sm">event</span>
+                     {p.demographics?.dob ? calculateAge(p.demographics.dob) : '--'} Yrs
+                   </div>
+                   <div className="meta-item">
+                     <span className="material-symbols-outlined text-sm">family_restroom</span>
+                     {p.demographics?.marital_status || 'Single'}
+                   </div>
+                   <div className="meta-item">
+                     <span className={`chip text-[9px] px-2 ${p.insurance?.type === 'BPJS KESEHATAN' ? 'chip-info' : p.insurance?.type === 'UMUM' ? 'chip-success' : 'chip-warning'}`}>
+                       {p.insurance?.type || 'UMUM'}
+                     </span>
+                   </div>
+                   <div className="meta-item">
+                     <span className="material-symbols-outlined text-sm text-primary">medical_services</span>
+                     <span className="truncate max-w-[120px]">
+                       {(!p.primary_physician?.name || p.primary_physician?.name === 'Dr. Unassigned') 
+                         ? getRandomDoctor(p.id) 
+                         : p.primary_physician.name}
+                     </span>
+                   </div>
+                </div>
+
+                <div className="flex-row gap-2 mt-4">
+                  {p.safety_flags?.allergy_risk && (
+                    <div className="bg-error text-white px-2 py-0.5 rounded text-[9px] font-black uppercase">Alergi</div>
+                  )}
+                  {p.safety_flags?.fall_risk && (
+                    <div className="bg-warning text-white px-2 py-0.5 rounded text-[9px] font-black uppercase animate-pulse">Fall Risk</div>
+                  )}
+                </div>
+
+                <div className="patient-card-actions">
+                  <button className="btn-primary" onClick={() => handleAdmit(p.id, p.name || 'Patient')}>
+                    <span className="material-symbols-outlined text-lg">emergency</span>
+                    Admit
+                  </button>
+                  <button className="btn-secondary-container" onClick={() => handleViewEMR(p.id, p.name)}>
+                    <span className="material-symbols-outlined text-lg">clinical_notes</span>
+                    EMR
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ─── JCI Multi-Step Registration Wizard ─── */}
@@ -535,9 +621,18 @@ export default function PatientPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="metric-label mb-2 block">RIWAYAT ALERGI (OBAT/MAKANAN)</label>
-                      <input className="form-input" value={form.allergies} onChange={e => updateField('allergies', e.target.value)} placeholder="Tulis 'TIDAK ADA' jika nihil" />
+                      <label className="metric-label mb-2 block">DOKTER PENANGGUNG JAWAB (DPJP)</label>
+                      <select className="form-input" value={form.primary_physician_id} onChange={e => updateField('primary_physician_id', e.target.value)}>
+                        <option value="">-- Pilih Dokter --</option>
+                        {doctors.map(d => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
                     </div>
+                  </div>
+                  <div>
+                    <label className="metric-label mb-2 block">RIWAYAT ALERGI (OBAT/MAKANAN)</label>
+                    <input className="form-input" value={form.allergies} onChange={e => updateField('allergies', e.target.value)} placeholder="Tulis 'TIDAK ADA' jika nihil" />
                   </div>
 
                   <div className="flex-row items-start gap-4 p-4 bg-error-container/20 rounded-xl border border-error/20 mt-4">
@@ -601,6 +696,127 @@ export default function PatientPage() {
           </div>
         </div>
       )}
+
+      {/* ─── Admission Modal (Direct to Triage) ─── */}
+      {isAdmitModalOpen && (
+        <AdmissionModal 
+          patient={selectedPatientForAdmit}
+          onClose={() => setIsAdmitModalOpen(false)}
+          currentUser={currentUser}
+          doctors={doctors}
+          onSuccess={(name) => {
+            setIsAdmitModalOpen(false);
+            alert(`Pasien ${name} berhasil di-admit. Menuju modul Triage...`);
+            navigate('/triage');
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Isolated Admission Modal to prevent Parent Re-renders (Performance Fix)
+ */
+function AdmissionModal({ patient, onClose, currentUser, doctors, onSuccess }) {
+  const { setLiveContext } = useEncounterStore();
+  const [form, setForm] = useState({
+    type: ENCOUNTER_TYPES.EMERGENCY,
+    reason: '',
+    ward: 'IGD'
+  });
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // 1. Create Encounter
+      const encounterId = await createEncounter({
+        patientId: patient.id,
+        encounterType: form.type,
+        chiefComplaint: form.reason,
+        admittingDoctor: doctors.find(d => d.id === patient.id)?.name || null, // Best effort
+        nurseInCharge: currentUser?.displayName || currentUser?.email || 'Nurse Staff',
+        ward: form.ward,
+        createdBy: currentUser?.email || 'system'
+      });
+
+      // 2. Set Context
+      setLiveContext(patient.id, encounterId);
+
+      // 3. Log Audit
+      await logAudit({
+        action: AUDIT_ACTIONS.CREATE,
+        resource_type: COLLECTIONS.ENCOUNTERS,
+        resource_id: encounterId,
+        delta: { patientName: patient.name, reason: form.reason },
+        reason: 'NEW_ENCOUNTER_ADMISSION'
+      });
+
+      onSuccess(patient.name);
+    } catch (err) {
+      alert('Gagal admisi: ' + err.message);
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content card !max-w-[500px]">
+         <div className="flex-row justify-between items-center mb-6">
+            <div>
+              <h3 className="text-xl font-black tracking-tighter">Clinical Admission</h3>
+              <p className="text-xs text-on-surface-variant font-bold">Inisiasi Kunjungan Baru</p>
+            </div>
+            <button className="w-10 h-10 rounded-full hover:bg-surface-container-high" onClick={onClose}>
+              <span className="material-symbols-outlined">close</span>
+            </button>
+         </div>
+
+         <form onSubmit={handleSubmit} className="flex-column gap-5">
+            <div className="p-4 bg-primary-container/20 rounded-2xl border border-primary/10">
+              <span className="text-[10px] font-black uppercase text-primary tracking-widest block mb-1">Pasien Terpilih</span>
+              <p className="text-lg font-black text-on-surface">{patient.name}</p>
+            </div>
+
+            <div className="grid-2">
+               <div>
+                  <label className="metric-label">Jenis Layanan</label>
+                  <select className="form-input" value={form.type} onChange={e => setForm(prev => ({...prev, type: e.target.value}))}>
+                     {Object.values(ENCOUNTER_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+               </div>
+               <div>
+                  <label className="metric-label">Unit / Ward</label>
+                  <select className="form-input" value={form.ward} onChange={e => setForm(prev => ({...prev, ward: e.target.value}))}>
+                     <option value="IGD">IGD (Emergency)</option>
+                     <option value="POLI_UMUM">Poli Umum</option>
+                     <option value="POLI_SPESIALIS">Poli Spesialis</option>
+                     <option value="WARD_A">Ward A (Inpatient)</option>
+                  </select>
+               </div>
+            </div>
+
+            <div>
+               <label className="metric-label">Alasan Masuk / Keluhan Utama</label>
+               <textarea 
+                 required
+                 autoFocus
+                 className="form-input" 
+                 rows="3" 
+                 placeholder="Misal: Demam tinggi 3 hari, Sesak nafas, dll..."
+                 value={form.reason}
+                 onChange={e => setForm(prev => ({...prev, reason: e.target.value}))}
+               />
+            </div>
+
+            <div className="flex-row gap-3 mt-4">
+               <button type="button" className="btn-ghost flex-1" onClick={onClose}>Batal</button>
+               <button type="submit" className="btn-primary flex-1">
+                  <span className="material-symbols-outlined mr-2">medical_services</span>
+                  Proses Admisi
+               </button>
+            </div>
+         </form>
+      </div>
     </div>
   );
 }

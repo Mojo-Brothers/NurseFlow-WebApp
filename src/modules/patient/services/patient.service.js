@@ -87,3 +87,22 @@ export const getAllPatients = async (maxResults = 50) => {
     throw error;
   }
 };
+/**
+ * Ambil daftar dokter yang aktif dari koleksi users.
+ */
+export const getAvailableDoctors = async () => {
+  try {
+    const q = query(
+      collection(db, COLLECTIONS.USERS),
+      where('role', '==', 'DOCTOR')
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ 
+      id: d.id, 
+      name: d.data().displayName || d.data().name || d.data().email 
+    }));
+  } catch (error) {
+    console.error('[PatientService] Failed to fetch doctors:', error);
+    return []; // Graceful fallback
+  }
+};

@@ -12,6 +12,8 @@ const INITIAL_VITALS = {
   diastolicBP: '',
   spo2:        '',
   temperature: '',
+  respRate:    '',
+  painScale:   0,
 };
 
 export const useTriageStore = create((set, get) => ({
@@ -20,6 +22,9 @@ export const useTriageStore = create((set, get) => ({
   selectedPatientId:   null,
   selectedEncounterId: null,
   selectedBedId:       null,
+  esiLevel:            null, // 1 (Critical) to 5 (Non-Urgent)
+  fallRisk:            false,
+  nutritionalRisk:     false,
   holdProgress:        0,
   isSubmitting:        false,
   submitSuccess:       false,
@@ -43,15 +48,22 @@ export const useTriageStore = create((set, get) => ({
 
   selectBed: (id) => set({ selectedBedId: id }),
 
+  setEsiLevel: (level) => set({ esiLevel: level }),
+  setFallRisk: (risk) => set({ fallRisk: risk }),
+  setNutritionalRisk: (risk) => set({ nutritionalRisk: risk }),
+
   setHoldProgress: (progress) => set({ holdProgress: progress }),
 
   resetForm: () => set({
-    vitals:        { ...INITIAL_VITALS },
-    selectedBedId: null,
-    holdProgress:  0,
-    submitSuccess: false,
-    serverConflict: null,
-    error:         null,
+    vitals:          { ...INITIAL_VITALS },
+    selectedBedId:   null,
+    esiLevel:        null,
+    fallRisk:        false,
+    nutritionalRisk: false,
+    holdProgress:    0,
+    submitSuccess:   false,
+    serverConflict:  null,
+    error:           null,
   }),
 
   /**
@@ -76,6 +88,9 @@ export const useTriageStore = create((set, get) => ({
         encounterId: selectedEncounterId,
         bedId:       get().selectedBedId,
         vitals,
+        esiLevel:    get().esiLevel,
+        fallRisk:    get().fallRisk,
+        nutritionalRisk: get().nutritionalRisk,
         assessedBy:  userEmail,
       });
 
