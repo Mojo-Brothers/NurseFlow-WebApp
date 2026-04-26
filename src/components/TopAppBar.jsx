@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useEncounterStore } from '../modules/encounter/encounter.store.js';
 import { useAuthStore } from '../modules/auth/auth.store.js';
 import { useEffect } from 'react';
+import ThemeToggle from './ui/ThemeToggle';
 
 const TopAppBar = ({ onMenuClick }) => {
   const { stressLevel, classicUI, toggleClassicUI, triggerCrisis } = useStressMonitor();
@@ -28,7 +29,7 @@ const TopAppBar = ({ onMenuClick }) => {
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 1rem'
     }}>
-      <div className="flex items-center gap-6">
+      <div className="flex-row items-center gap-6">
         <button 
           className="material-symbols-outlined md:hidden p-2"
           style={{ display: 'none' }} // Show via CSS media query
@@ -44,19 +45,19 @@ const TopAppBar = ({ onMenuClick }) => {
           }}>Selamat Pagi, Ns. Sarah</h1>
         </div>
         
-        <div className="flex items-center px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant hide-on-mobile">
+        <div className="flex-row items-center px-4 py-1.5 rounded-full bg-surface-container-low border border-outline-variant hide-on-mobile">
           <div className="w-2 h-2 rounded-full bg-success mr-2"></div>
           <span className="text-[10px] font-black uppercase tracking-widest text-primary">UNIT IGD • STATION 1</span>
         </div>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex-row items-center gap-4">
         <div className="nav-links hide-on-focus flex-row gap-4 hide-on-mobile">
           <Link to="/dashboard" className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}>Dashboard</Link>
           <Link to="/ward-monitor" className={`nav-link ${location.pathname === '/ward-monitor' ? 'active' : ''} flex-row items-center gap-1.5`}>
             <span className="material-symbols-outlined text-[16px]">visibility</span>
             Monitor
             {criticalCount > 0 && (
-              <span className="bg-error text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
+              <span className="bg-error text-white text-[8px] font-black w-4 h-4 rounded-full flex-row items-center justify-center animate-pulse">
                 {criticalCount}
               </span>
             )}
@@ -74,7 +75,7 @@ const TopAppBar = ({ onMenuClick }) => {
           <Link to="/worklist" className={`nav-link ${location.pathname === '/worklist' ? 'active' : ''}`}>Worklist</Link>
         </div>
         
-        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hide-on-mobile" style={{ 
+        <div className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full hide-on-mobile" style={{ 
           backgroundColor: 'var(--surface-container-low)', 
           border: '1px solid var(--outline-variant)',
           backdropFilter: 'blur(8px)'
@@ -85,21 +86,7 @@ const TopAppBar = ({ onMenuClick }) => {
           <button onClick={() => triggerCrisis('critical')} className="btn-icon-sm text-error" style={{ opacity: stressLevel === 'critical' ? 1 : 0.4 }} title="Simulate Emergency"><span className="material-symbols-outlined text-[16px]">emergency</span></button>
         </div>
 
-        <button 
-          onClick={() => {
-            const isDark = document.documentElement.classList.toggle('dark');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-          }}
-          className="flex-row items-center gap-2 px-3 py-1.5 rounded-full border bg-surface text-on-surface-variant border-outline-variant transition-all hover:bg-surface-container-high"
-          title="Toggle Dark Mode"
-        >
-          <span className="material-symbols-outlined text-[18px]">
-            dark_mode
-          </span>
-          <span className="text-[10px] font-black uppercase tracking-tighter hide-on-mobile">
-            Tema
-          </span>
-        </button>
+        <ThemeToggle />
 
         <button 
           onClick={toggleClassicUI}

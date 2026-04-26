@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/useAuth.js';
 import LanguageSwitcher from '../components/ui/LanguageSwitcher';
+import ThemeToggle from '../components/ui/ThemeToggle';
 import OfflineStatusIndicator from '../components/ui/OfflineStatusIndicator';
 import { useStressMonitor } from '../core/hooks/useStressMonitor.js';
 
@@ -22,6 +23,7 @@ const NAV_SCHEMA = [
     { name: 'nav.worklist',    path: '/worklist',   icon: 'task_alt',            roles: ['NURSE','ADMIN'] },
     { name: 'nav.pharmacy',    path: '/pharmacy',   icon: 'local_pharmacy',      roles: ['PHARMACIST','DOCTOR','ADMIN'] },
     { name: 'nav.billing',     path: '/billing',    icon: 'receipt_long',        roles: ['DOCTOR','ADMIN'] },
+    { name: 'nav.guide',      path: '/guide',      icon: 'menu_book',           roles: null },
   ]},
   { label: 'nav.administration', admin: true, items: [
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
@@ -38,7 +40,7 @@ const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, role, logout } = useAuth();
-  const { stressLevel } = useStressMonitor();
+  const { stressLevel, focusMode } = useStressMonitor();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const scrollRef = React.useRef(null);
   
@@ -78,74 +80,79 @@ const MainLayout = () => {
   };
 
   return (
-    <div className="bg-surface text-on-surface font-body antialiased flex flex-col lg:flex-row min-h-screen relative overflow-x-hidden">
+    <div className={`bg-background text-on-surface font-body antialiased flex flex-col lg:flex-row min-h-screen relative overflow-x-hidden ${focusMode ? 'focus-mode-active' : ''}`}>
       
+      {/* Simulator Focus Overlay */}
+      <div className="focus-mode-overlay" />
+
       {/* SideNavBar (Desktop/Large Tablet) */}
       <nav 
-        className={`hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-[9999] bg-slate-50 dark:bg-slate-950 border-r border-surface-variant py-8 shadow-[10px_0_40px_rgba(0,0,0,0.08)] ${stressLevel === 'critical' ? 'border-r-red-500' : ''}`}
+        className={`hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low border-r border-outline-variant pt-8 shadow-[10px_0_40px_rgba(0,0,0,0.08)] ${stressLevel === 'critical' ? 'border-r-red-500' : ''} transition-colors duration-500`}
         onMouseMove={handleSidebarMouseMove}
         style={{ overscrollBehavior: 'contain' }}
       >
-        
-        <div className="px-8 mb-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center overflow-hidden">
-              <span className="material-symbols-outlined text-primary text-2xl">medical_services</span>
+        {/* Sidebar Header & Branding */}
+        <div className="px-6 mb-8">
+          <div className="flex-row items-center gap-3 group">
+            <div className="w-10 h-10 bg-primary rounded-xl flex-row items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
+              <span className="material-symbols-outlined text-white text-2xl">emergency</span>
             </div>
             <div>
-              <h1 className="font-headline text-lg font-bold text-blue-900 dark:text-blue-100">NurseFlow HIS</h1>
-              <p className="font-label text-xs text-slate-500">JCI Accredited</p>
+              <h1 className="text-xl font-headline font-bold text-on-surface tracking-tight leading-none mb-1">NurseFlow</h1>
+              <div className="flex-row items-center gap-1.5">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">JCI Command Center</span>
+              </div>
             </div>
           </div>
-          
+
           {/* Role-Based View Indicator */}
-          <div className="p-3 bg-blue-50 dark:bg-slate-900 rounded-lg border border-blue-100 dark:border-slate-800 relative overflow-hidden">
-            <div className="flex justify-between items-center mb-1">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Active Session</p>
-              <span className="flex items-center gap-0.5 text-[9px] font-bold text-green-700 bg-green-100 px-1 rounded border border-green-200">
+          <div className="mt-4 p-3 bg-surface-container rounded-lg border border-outline-variant relative overflow-hidden shadow-sm">
+            <div className="flex-row items-center justify-between mb-1">
+              <p className="text-[10px] font-bold text-on-surface/50 uppercase tracking-wider">Active Session</p>
+              <span className="flex-row items-center gap-0.5 text-[9px] font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-1 rounded border border-green-200 dark:border-green-800">
                 <span className="material-symbols-outlined text-[10px]">fingerprint</span> MFA
               </span>
             </div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-green-500"></span>
-              <span className="text-xs font-semibold text-blue-900 dark:text-blue-100 truncate">{currentUser?.displayName || currentUser?.email}</span>
-            </div>
-            <div className="w-full bg-blue-200 rounded-full h-1 mt-1">
-              <div className="bg-blue-600 h-1 rounded-full" style={{ width: '100%' }}></div>
+            <div className="flex-row items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              <span className="text-xs font-semibold text-on-surface truncate">{currentUser?.displayName || currentUser?.email}</span>
             </div>
           </div>
         </div>
 
-        <div className="px-6 mb-6">
-          <button onClick={() => navigate('/patients')} className="w-full py-2.5 px-4 bg-gradient-to-br from-primary to-primary-container text-white rounded-md font-label text-sm font-semibold flex items-center justify-center gap-2 shadow-[0px_4px_12px_rgba(0,59,130,0.2)] hover:shadow-lg transition-shadow">
-            <span className="material-symbols-outlined text-sm">add</span>
-            New Admission
-          </button>
-        </div>
-
         <div 
-          className="flex-1 overflow-y-auto custom-scrollbar" 
+          className="flex-1 overflow-y-auto custom-scrollbar px-2" 
           ref={scrollRef}
           style={{ overscrollBehavior: 'contain' }}
         >
           <ul className="flex flex-col font-label text-sm font-medium">
             {NAV_SCHEMA.map((section, idx) => {
-              const visibleItems = section.items.filter(isVisible);
-              if (visibleItems.length === 0) return null;
-              
               return (
-                <React.Fragment key={section.label}>
-                  <li className="px-8 mt-4 mb-2 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{t(section.label)}</li>
-                  {visibleItems.map(item => {
-                    const isActive = location.pathname.startsWith(item.path);
+                <React.Fragment key={idx}>
+                  {idx > 0 && <li className="h-px bg-outline-variant/30 my-4 mx-4"></li>}
+                  <li className="px-6 mb-2">
+                    <p className="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">{t(section.label)}</p>
+                  </li>
+                  {section.items.filter(isVisible).map((item) => {
+                    const isActive = location.pathname === item.path;
                     return (
-                      <li key={item.name} className="mb-1">
-                        <Link 
-                          to={item.path} 
-                          className={`flex items-center gap-3 transition-transform ${isActive ? 'bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-300 rounded-l-full ml-4 pl-4 py-3 shadow-sm border-y border-l border-surface-variant' : 'text-slate-600 dark:text-slate-400 px-8 py-3 hover:text-blue-600 dark:hover:text-blue-300 hover:translate-x-1'}`}
+                      <li key={item.name} className="px-2 mb-1">
+                        <Link
+                          to={item.path}
+                          className={`flex-row items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 group relative ${
+                            isActive 
+                              ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]' 
+                              : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-primary'
+                          }`}
                         >
-                          <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>{item.icon}</span>
-                          {t(item.name)}
+                          <span className={`material-symbols-outlined transition-transform duration-300 ${isActive ? '' : 'group-hover:scale-110'}`}>
+                            {item.icon}
+                          </span>
+                          <span className="font-semibold">{t(item.name)}</span>
+                          {isActive && (
+                            <span className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full"></span>
+                          )}
                         </Link>
                       </li>
                     );
@@ -156,25 +163,32 @@ const MainLayout = () => {
           </ul>
         </div>
 
-        <div className="mt-auto flex flex-col font-label text-sm font-medium border-t border-surface-variant pt-4 px-6">
-          <div className="mb-2">
-            <LanguageSwitcher />
+        {/* System & Profile Footer */}
+        <div className="mt-auto flex flex-col font-label text-sm font-medium border-t border-outline-variant py-6 px-4 bg-surface-container-low shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+          
+          {/* Unified System Preferences */}
+          <div className="mb-4 flex-row items-center justify-around p-1.5 bg-surface-container rounded-2xl border border-outline-variant shadow-sm">
+            <LanguageSwitcher compact />
+            <div className="h-4 w-px bg-outline-variant/50"></div>
+            <ThemeToggle />
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-3 text-slate-600 dark:text-slate-400 px-2 py-3 hover:text-red-600 hover:translate-x-1 transition-transform w-full text-left">
+
+          <button onClick={handleLogout} className="flex-row items-center gap-3 text-on-surface-variant px-3 py-2.5 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all w-full text-left font-bold">
             <span className="material-symbols-outlined">logout</span>
-            Logout
+            {t('nav.logout')}
           </button>
         </div>
       </nav>
 
       {/* TopNavBar (Mobile only) */}
-      <header className="lg:hidden flex justify-between items-center w-full px-6 py-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-surface-variant sticky top-0 z-40">
-        <div className="flex items-center gap-4">
+      <header className="lg:hidden flex-row items-center justify-between w-full px-6 py-3 bg-surface/80 backdrop-blur-xl border-b border-outline-variant sticky top-0 z-40">
+        <div className="flex-row items-center gap-4">
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="material-symbols-outlined text-slate-700">menu</button>
           <h1 className="font-headline text-xl font-extrabold tracking-tighter text-blue-800 dark:text-blue-200">NurseFlow</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="text-error font-label text-xs font-bold uppercase flex items-center gap-1 bg-error-container/50 px-2 py-1 rounded">
+        <div className="flex-row items-center gap-3">
+          <ThemeToggle />
+          <button className="text-error font-label text-xs font-bold uppercase flex-row items-center gap-1 bg-error-container/50 px-2 py-1 rounded">
             <span className="material-symbols-outlined text-sm">warning</span> Alert
           </button>
         </div>
@@ -184,23 +198,23 @@ const MainLayout = () => {
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div className="fixed inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}></div>
-          <div className="relative bg-white w-64 h-full shadow-xl flex flex-col overflow-y-auto">
-            <div className="p-4 border-b flex justify-between items-center">
+          <div className="relative bg-surface w-64 h-full shadow-xl flex flex-col overflow-y-auto">
+            <div className="p-4 border-b flex-row items-center justify-between">
               <h2 className="font-headline font-bold text-primary">NurseFlow HIS</h2>
               <button onClick={() => setIsMobileMenuOpen(false)} className="material-symbols-outlined">close</button>
             </div>
             <ul className="flex-1 p-4 font-label text-sm flex flex-col gap-2">
               {NAV_SCHEMA.flatMap(section => section.items.filter(isVisible)).map(item => (
                 <li key={item.name}>
-                  <Link to={item.path} onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-3 p-3 rounded-lg text-slate-700 hover:bg-slate-100">
+                  <Link to={item.path} onClick={() => setIsMobileMenuOpen(false)} className="flex-row items-center gap-3 p-3 rounded-lg text-on-surface hover:bg-surface-container">
                     <span className="material-symbols-outlined">{item.icon}</span>
                     {t(item.name)}
                   </Link>
                 </li>
               ))}
-              <li className="mt-4 pt-4 border-t border-slate-200">
+              <li className="mt-4 pt-4 border-t border-outline-variant">
                 <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-lg text-red-600 hover:bg-red-50 w-full text-left">
-                  <span className="material-symbols-outlined">logout</span> Logout
+                  <span className="material-symbols-outlined">logout</span> {t('nav.logout')}
                 </button>
               </li>
             </ul>
@@ -209,7 +223,7 @@ const MainLayout = () => {
       )}
 
       {/* Main Content Canvas */}
-      <main className="flex-1 lg:ml-64 bg-surface min-w-0 overflow-x-hidden flex flex-col">
+      <main className="flex-1 lg:ml-64 bg-background min-w-0 overflow-x-hidden flex flex-col transition-colors duration-500">
         <Outlet />
       </main>
 

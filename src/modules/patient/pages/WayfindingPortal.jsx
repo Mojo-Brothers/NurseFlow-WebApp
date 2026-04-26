@@ -50,7 +50,7 @@ export default function WayfindingPortal() {
                 key={floor}
                 onClick={() => setCurrentFloor(floor)}
                 className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all
-                  ${currentFloor === floor ? 'bg-primary text-white shadow-lg scale-105' : 'bg-white text-on-surface opacity-60'}`}
+                  ${currentFloor === floor ? 'bg-primary text-white shadow-lg scale-105' : 'bg-surface text-on-surface opacity-60'}`}
              >
                 Level {floor}
              </button>
@@ -58,7 +58,7 @@ export default function WayfindingPortal() {
        </div>
 
        {/* 🗺️ INTERACTIVE MAP */}
-       <div className="relative w-full aspect-square bg-white rounded-[3rem] shadow-xl mb-8 overflow-hidden border-8 border-white">
+       <div className="relative w-full aspect-square bg-surface rounded-[3rem] shadow-xl mb-8 overflow-hidden border-8 border-surface">
           <div className="absolute inset-0 bg-primary/5 opacity-40" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
           
           {/* Floor Labels */}
@@ -112,7 +112,7 @@ export default function WayfindingPortal() {
              <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-black uppercase opacity-40 ml-2">Start From</label>
                 <select 
-                  className="form-input bg-white text-xs font-bold py-3" 
+                  className="form-input bg-surface text-xs font-bold py-3" 
                   value={startPoint} 
                   onChange={e => handleStartPointChange(e.target.value)}
                 >
@@ -121,7 +121,7 @@ export default function WayfindingPortal() {
              </div>
              <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-black uppercase opacity-40 ml-2">Go To</label>
-                <select className="form-input bg-white text-xs font-bold py-3" value={endPoint} onChange={e => setEndPoint(e.target.value)}>
+                <select className="form-input bg-surface text-xs font-bold py-3" value={endPoint} onChange={e => setEndPoint(e.target.value)}>
                    {allPois.map(p => <option key={p.id} value={p.id}>{p.name} (L{p.floor})</option>)}
                 </select>
              </div>
@@ -141,7 +141,7 @@ export default function WayfindingPortal() {
                 <span className="text-[9px] font-bold text-primary uppercase">{route.steps.length} Steps</span>
              </div>
              {route.steps.map((step, i) => (
-                <div key={i} className="flex flex-row items-center gap-4 bg-white p-5 rounded-3xl shadow-sm border border-outline-variant animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
+                <div key={i} className="flex flex-row items-center gap-4 bg-surface p-5 rounded-3xl shadow-sm border border-outline-variant animate-slide-up" style={{ animationDelay: `${i * 100}ms` }}>
                    <div className="w-10 h-10 rounded-2xl bg-primary/5 text-primary flex items-center justify-center font-black text-xs">
                       {i + 1}
                    </div>

@@ -95,13 +95,15 @@ export const prescribeMedications = async (medications, encounterId, prescribedB
  * Farmasi: Dispensing obat (update status PENDING → DISPENSED).
  * @param {string} medicationId
  * @param {string} dispensedBy - email apoteker
+ * @param {string} witnessEmail - email saksi (wajib untuk High Alert)
  */
-export const dispenseMedication = async (medicationId, dispensedBy) => {
+export const dispenseMedication = async (medicationId, dispensedBy, witnessEmail = null) => {
   const ref = doc(db, COLLECTIONS.MEDICATIONS, medicationId);
   await updateDoc(ref, {
     status:       'DISPENSED',
     dispensed_at: serverTimestamp(),
     dispensed_by: dispensedBy,
+    witness_email: witnessEmail,
   });
 
   await createAuditLog({
@@ -109,7 +111,10 @@ export const dispenseMedication = async (medicationId, dispensedBy) => {
     action:       AUDIT_ACTIONS.UPDATE,
     resourceType: COLLECTIONS.MEDICATIONS,
     resourceId:   medicationId,
-    delta:        { status: { before: 'PENDING', after: 'DISPENSED' } },
+    delta:        { 
+      status: { before: 'PENDING', after: 'DISPENSED' },
+      witness: witnessEmail 
+    },
   });
 };
 

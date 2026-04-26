@@ -3,7 +3,7 @@
  * Manages drug stock levels with atomic transaction support.
  */
 import { 
-  collection, getDocs, doc, runTransaction, query, orderBy 
+  collection, getDocs, doc, runTransaction, query, orderBy, where, addDoc, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS } from '../../../core/constants.js';
@@ -23,8 +23,43 @@ export const getInventoryStatus = async () => {
 };
 
 /**
+ * Helper to check and trigger/resolve inventory alerts.
+ * Deterministic ID ensure atomicity and prevents duplicates.
+ */
+const checkAndTriggerAlert = async (transaction, medId, medData, newStock) => {
+  const reorderLevel = medData.reorder_level || 20;
+  const alertId = `stock_vigilance_${medId}`;
+  const alertRef = doc(db, COLLECTIONS.ALERTS, alertId);
+  
+  if (newStock <= reorderLevel) {
+    // Create or update active alert
+    transaction.set(alertRef, {
+      type: 'INVENTORY',
+      severity: newStock === 0 ? 'CRITICAL' : 'HIGH',
+      title: `Low Stock: ${medData.medication_name}`,
+      message: `${medData.medication_name} stock is at ${newStock}, below threshold ${reorderLevel}.`,
+      metadata: {
+        medication_id: medId,
+        current_stock: newStock,
+        reorder_level: reorderLevel
+      },
+      status: 'ACTIVE',
+      updated_at: serverTimestamp()
+    }, { merge: true });
+  } else {
+    // If stock is now healthy, auto-resolve any existing active alert for this item
+    const alertSnap = await transaction.get(alertRef);
+    if (alertSnap.exists() && alertSnap.data().status === 'ACTIVE') {
+      transaction.update(alertRef, {
+        status: 'RESOLVED',
+        resolved_at: serverTimestamp()
+      });
+    }
+  }
+};
+
+/**
  * Pengurangan stok secara atomik saat obat diserahkan (Dispensed).
- * @param {Array} medications - List of items to deduct { id, qty }
  */
 export const deductStockTransaction = async (medications) => {
   return runTransaction(db, async (transaction) => {
@@ -38,7 +73,8 @@ export const deductStockTransaction = async (medications) => {
         throw new Error(`Obat ${med.medication_name} tidak ditemukan di gudang.`);
       }
       
-      const currentStock = medSnap.data().stock_quantity || 0;
+      const medData = medSnap.data();
+      const currentStock = medData.stock_quantity || 0;
       const newStock = currentStock - (med.qty || 1);
       
       if (newStock < 0) {
@@ -47,8 +83,11 @@ export const deductStockTransaction = async (medications) => {
       
       transaction.update(medRef, { 
         stock_quantity: newStock,
-        updated_at: new Date()
+        updated_at: serverTimestamp()
       });
+      
+      // Trigger alert if low stock
+      await checkAndTriggerAlert(transaction, med.id, medData, newStock);
       
       results.push({ id: med.id, medName: med.medication_name, remaining: newStock });
     }
@@ -75,9 +114,16 @@ export const deductByName = async (medName, qty = 1) => {
 export const updateStockLevel = async (medId, newQuantity) => {
   const medRef = doc(db, COLLECTIONS.INVENTORY, medId);
   return runTransaction(db, async (transaction) => {
+    const medSnap = await transaction.get(medRef);
+    if (!medSnap.exists()) throw new Error("Medication not found.");
+    const medData = medSnap.data();
+    
     transaction.update(medRef, { 
       stock_quantity: newQuantity,
-      updated_at: new Date()
+      updated_at: serverTimestamp()
     });
+
+    // Auto-resolve or trigger alert based on new level
+    await checkAndTriggerAlert(transaction, medId, medData, newQuantity);
   });
 };

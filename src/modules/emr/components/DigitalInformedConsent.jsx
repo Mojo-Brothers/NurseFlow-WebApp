@@ -44,7 +44,7 @@ const DigitalInformedConsent = ({ patientId, doctorEmail, onComplete }) => {
           />
         </div>
 
-        <div className="p-4 bg-white rounded-2xl border-2 border-outline-variant flex-column gap-4">
+        <div className="p-4 bg-surface rounded-2xl border-2 border-outline-variant flex-column gap-4">
            <p className="text-[10px] font-black uppercase opacity-40 text-center border-b pb-2">Electronic Signature Verification</p>
            
            <div className="flex-row gap-6">

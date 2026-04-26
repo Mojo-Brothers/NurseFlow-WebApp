@@ -36,31 +36,31 @@ export default function AnalyticsDashboard() {
   return (
     <div className="p-8 flex-column gap-8 animate-fade-in overflow-y-auto max-w-[1600px] mx-auto w-full">
       {/* 👑 EXECUTIVE SUMMARY */}
-      <div className="flex-row justify-between items-end mb-4">
-         <div>
-            <h1 className="text-4xl font-black tracking-tighter text-on-surface uppercase mb-1">
+      <div className="flex-row justify-between items-end mb-4 min-w-0">
+         <div className="min-w-0">
+            <h1 className="text-4xl font-black tracking-tighter text-on-surface uppercase mb-1 truncate">
                Hospital Performance Intelligence
             </h1>
-            <p className="text-sm font-medium text-on-surface-variant opacity-60">
+            <p className="text-sm font-medium text-on-surface-variant opacity-60 truncate">
                Operational & Clinical Command Center • Real-time Data Sync
             </p>
          </div>
-         <div className="flex-row gap-2">
+         <div className="flex-row gap-2 shrink-0 ml-4">
             <button 
               onClick={() => navigate('/quality')}
-              className="btn-ghost text-[10px] font-black uppercase px-4 py-2 border border-secondary/20 text-secondary hover:bg-secondary/5 flex-row items-center gap-2"
+              className="btn-ghost text-[10px] font-black uppercase px-4 py-2 border border-secondary/20 text-secondary hover:bg-secondary/5 flex-row items-center gap-2 shrink-0"
             >
-               <span className="material-symbols-outlined text-sm">workspace_premium</span>
-               Quality & JCI
+               <span className="material-symbols-outlined text-sm shrink-0">workspace_premium</span>
+               <span className="truncate">Quality & JCI</span>
             </button>
             <button 
               onClick={() => navigate('/analytics/predictive')}
-              className="btn-ghost text-[10px] font-black uppercase px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 flex-row items-center gap-2"
+              className="btn-ghost text-[10px] font-black uppercase px-4 py-2 border border-primary/20 text-primary hover:bg-primary/5 flex-row items-center gap-2 shrink-0"
             >
-               <span className="material-symbols-outlined text-sm">psychology</span>
-               Open Predictive Ops
+               <span className="material-symbols-outlined text-sm shrink-0">psychology</span>
+               <span className="truncate">Open Predictive Ops</span>
             </button>
-            <button className="btn-primary text-[10px] font-black uppercase px-6 py-2 shadow-lg">Refresh Data</button>
+            <button className="btn-primary text-[10px] font-black uppercase px-6 py-2 shadow-lg shrink-0">Refresh Data</button>
          </div>
       </div>
 
@@ -104,9 +104,9 @@ export default function AnalyticsDashboard() {
          {/* 🏥 WARD HEATMAP (Occupancy Grid) */}
          <div className="lg:col-span-8">
             <ClinicalCard padding="2rem" className="h-full">
-               <div className="flex-row justify-between items-center mb-8">
-                  <h3 className="text-xl font-black uppercase tracking-tight">Ward Capacity Analysis</h3>
-                  <span className="text-[10px] font-bold opacity-40 uppercase">Facility Heatmap</span>
+               <div className="flex-row justify-between items-center mb-8 min-w-0">
+                  <h3 className="text-xl font-black uppercase tracking-tight truncate">Ward Capacity Analysis</h3>
+                  <span className="text-[10px] font-bold opacity-40 uppercase shrink-0 ml-4">Facility Heatmap</span>
                </div>
                
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -114,9 +114,9 @@ export default function AnalyticsDashboard() {
                      const percent = (ward.occupied / ward.total) * 100;
                      return (
                         <div key={ward.name} className="flex-column gap-3">
-                           <div className="flex-row justify-between items-baseline">
-                              <span className="text-sm font-black uppercase">{ward.name}</span>
-                              <span className="text-xs font-bold tabular-nums">{ward.occupied}/{ward.total} Beds</span>
+                           <div className="flex-row justify-between items-baseline min-w-0">
+                              <span className="text-sm font-black uppercase truncate">{ward.name}</span>
+                              <span className="text-xs font-bold tabular-nums shrink-0 ml-4">{ward.occupied}/{ward.total} Beds</span>
                            </div>
                            <div className="h-6 w-full bg-surface-container rounded-full overflow-hidden border border-outline-variant">
                               <div 
@@ -124,9 +124,9 @@ export default function AnalyticsDashboard() {
                                  style={{ width: `${percent}%`, backgroundColor: ward.color }}
                               />
                            </div>
-                           <div className="flex-row justify-between">
-                              <span className="text-[10px] font-bold opacity-40 uppercase">Utilization</span>
-                              <span className="text-[10px] font-black">{percent.toFixed(0)}%</span>
+                           <div className="flex-row justify-between min-w-0">
+                              <span className="text-[10px] font-bold opacity-40 uppercase truncate">Utilization</span>
+                              <span className="text-[10px] font-black shrink-0 ml-4">{percent.toFixed(0)}%</span>
                            </div>
                         </div>
                      );
@@ -141,15 +141,15 @@ export default function AnalyticsDashboard() {
                <h3 className="text-xl font-black uppercase tracking-tight mb-8">Clinical Safety Mix</h3>
                
                <div className="flex-column gap-6">
-                  <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-error flex-row justify-between items-center">
-                     <div>
-                        <p className="text-[10px] font-black uppercase opacity-40">Critical Patients</p>
-                        <p className="text-2xl font-black text-error">0{metrics.clinicalSafety.critical}</p>
+                  <div className="p-5 bg-surface rounded-3xl shadow-sm border-l-8 border-error flex-row justify-between items-center min-w-0">
+                     <div className="min-w-0">
+                        <p className="text-[10px] font-black uppercase opacity-40 truncate">Critical Patients</p>
+                        <p className="text-2xl font-black text-error truncate">0{metrics.clinicalSafety.critical}</p>
                      </div>
-                     <span className="material-symbols-outlined text-error opacity-20 text-4xl">emergency</span>
+                     <span className="material-symbols-outlined text-error opacity-20 text-4xl shrink-0 ml-4">emergency</span>
                   </div>
 
-                  <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-secondary flex-row justify-between items-center">
+                  <div className="p-5 bg-surface rounded-3xl shadow-sm border-l-8 border-secondary flex-row justify-between items-center">
                      <div>
                         <p className="text-[10px] font-black uppercase opacity-40">Urgent Monitoring</p>
                         <p className="text-2xl font-black text-secondary">0{metrics.clinicalSafety.urgent}</p>
@@ -157,7 +157,7 @@ export default function AnalyticsDashboard() {
                      <span className="material-symbols-outlined text-secondary opacity-20 text-4xl">monitoring</span>
                   </div>
 
-                  <div className="p-5 bg-white rounded-3xl shadow-sm border-l-8 border-success flex-row justify-between items-center">
+                  <div className="p-5 bg-surface rounded-3xl shadow-sm border-l-8 border-success flex-row justify-between items-center">
                      <div>
                         <p className="text-[10px] font-black uppercase opacity-40">Stable Condition</p>
                         <p className="text-2xl font-black text-success">{metrics.clinicalSafety.stable}</p>

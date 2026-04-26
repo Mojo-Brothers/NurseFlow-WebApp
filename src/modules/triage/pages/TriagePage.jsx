@@ -1,270 +1,266 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useTriageStore } from '../triage.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
-import { useTranslation } from 'react-i18next';
-import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
-import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
-import { calculateNEWS2, getTriageColor, calculateAge } from '../../../utils/clinicalCalculators.js';
-import { determineEscalation, calculateVelocity } from '../../../core/domain/clinicalEngine.js';
-import HistorySparkline from '../../../components/HistorySparkline.jsx';
-import KeypadInput from '../../../components/KeypadInput.jsx';
-import { useAuth } from '../../../contexts/useAuth.js';
-import { logAudit } from '../../../core/services/audit.service.js';
-import { AUDIT_ACTIONS, COLLECTIONS } from '../../../core/constants.js';
-import { getAllBeds } from '../../ward/services/bed.service.js';
-import VitalTouchGrid from '../components/VitalTouchGrid.jsx';
+import { useAuthStore } from '../../auth/auth.store.js';
+import { toast } from 'react-hot-toast';
+import { 
+  Bolt, 
+  FileText, 
+  Activity, 
+  Stethoscope, 
+  Bell, 
+  User, 
+  ChevronRight, 
+  AlertCircle,
+  Clock,
+  Save,
+  Send
+} from 'lucide-react';
+
+// Operational Components
+import RapidIntake from '../components/RapidIntake.jsx';
+import DetailedAssessment from '../components/DetailedAssessment.jsx';
+import MonitorCommand from '../components/MonitorCommand.jsx';
+import PoliTriage from '../components/PoliTriage.jsx';
+
+// Styles
+import '../styles/Triage.css';
 
 export default function TriagePage() {
   const { t } = useTranslation();
-  const { metrics, logAction } = useClinicalMetrics('TRIAGE_CONTROL');
-  const { currentUser } = useAuth();
-
-  const { patients, isLoading: patientsLoading, fetchPatients } = usePatientStore();
   const { 
-    selectedEncounterId, 
-    fetchPatientActiveEncounter,
-    selectEncounter,
-    liveContext 
-  } = useEncounterStore();
-
-  const { 
-    esiLevel, setEsiLevel, 
-    fallRisk, setFallRisk, 
-    nutritionalRisk, setNutritionalRisk,
-    vitals, setVital: storeSetVital,
-    selectedPatientId, submitSuccess, serverConflict, error: triageError,
-    executeSubmit, selectPatient, selectBed, selectedBedId, resetForm,
+    operationalMode,
+    setOperationalMode,
+    vitals,
+    esiLevel,
+    executeSubmit,
+    isSubmitting
   } = useTriageStore();
-
-  const setVital = (field, value) => {
-    logAction(`vital_input_${field}`);
-    storeSetVital(field, value);
-  };
-
-  const patient = patients.find(p => p.id === selectedPatientId);
-  const baseline = patient?.baseline_profile;
-  const news2Score  = calculateNEWS2(vitals, baseline);
-  const triageColor = getTriageColor(news2Score);
-
-  const [availableBeds, setAvailableBeds] = useState([]);
-  const [activeField, setActiveField] = useState('heartRate');
-
-  const VITAL_CONFIG = {
-    heartRate:   { label: 'Heart Rate', unit: 'bpm', icon: 'favorite', presets: [60, 80, 100, 120] },
-    systolicBP:  { label: 'Systolic BP', unit: 'mmHg', icon: 'speed', presets: [100, 120, 140, 160] },
-    respRate:    { label: 'Resp Rate', unit: 'bpm', icon: 'air', presets: [16, 20, 24, 28] },
-    spo2:        { label: 'SpO2', unit: '%', icon: 'blood_type', presets: [95, 98, 100] },
-    temperature: { label: 'Temp', unit: '°C', icon: 'thermostat', presets: [36.5, 37.5, 38.5] }
-  };
-
+  const { user } = useAuthStore();
+  
+  const { patients } = usePatientStore();
+  const { liveContext, fetchActiveEncounters } = useEncounterStore();
+  
   useEffect(() => {
-    fetchPatients();
-    const fetchBeds = async () => {
-      const all = await getAllBeds();
-      setAvailableBeds(all.filter(b => !b.is_occupied));
-    };
-    fetchBeds();
-  }, [fetchPatients]);
+    fetchActiveEncounters();
+  }, [fetchActiveEncounters]);
 
-  const handlePatientChange = useCallback(async (patientId) => {
-    selectPatient(patientId);
-    if (patientId) {
-      const active = await fetchPatientActiveEncounter(patientId);
-      if (active) selectEncounter(active.id);
+  const patientId = liveContext?.patientId;
+  const encounterId = liveContext?.encounterId;
+  
+  const selectedPatient = patients.find(p => p.id === patientId) || null;
+
+  const MODES = [
+    { id: 'RAPID', label: t('triage_v2.modes.rapid'), icon: <Bolt className="w-4 h-4" /> },
+    { id: 'DETAIL', label: t('triage_v2.modes.detail'), icon: <FileText className="w-4 h-4" /> },
+    { id: 'MONITOR', label: t('triage_v2.modes.monitor'), icon: <Activity className="w-4 h-4" /> },
+    { id: 'POLI', label: t('triage_v2.modes.poli'), icon: <Stethoscope className="w-4 h-4" /> },
+  ];
+
+  const renderMode = () => {
+    switch (operationalMode) {
+      case 'RAPID': return <RapidIntake />;
+      case 'DETAIL': return <DetailedAssessment />;
+      case 'MONITOR': return <MonitorCommand />;
+      case 'POLI': return <PoliTriage />;
+      default: return <RapidIntake />;
     }
-  }, [selectPatient, fetchPatientActiveEncounter, selectEncounter]);
+  };
 
-  useEffect(() => {
-    if (liveContext?.patientId) {
-      handlePatientChange(liveContext.patientId);
+  const handleProcess = async () => {
+    if (!patientId || !encounterId) {
+      toast.error(t('triage_v2.errors.no_patient_selected'));
       return;
     }
-    if (patients.length > 0 && !selectedPatientId) {
-      handlePatientChange(patients[0].id);
+
+    // Sync context to triage store before execution
+    useTriageStore.getState().selectPatient(patientId);
+    useTriageStore.getState().selectEncounter(encounterId);
+    
+    try {
+      await executeSubmit(user?.email || 'unknown@nurseflow.id');
+      toast.success(t('triage_v2.notifications.submit_success'));
+    } catch (err) {
+      toast.error(err.message || t('triage_v2.notifications.submit_failed'));
     }
-  }, [patients, selectedPatientId, handlePatientChange, liveContext]);
+  };
 
   return (
-    <div className="triage-container p-4 lg:p-8">
-      {/* ─── JCI Clinical Header ─── */}
-      <header className="triage-header glass-card px-6 rounded-3xl mb-8 flex-row justify-between items-center">
-         <div className="flex-row items-center gap-6">
-            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-               <span className="material-symbols-outlined text-3xl text-primary font-black">clinical_notes</span>
+    <div className="min-h-screen bg-background text-on-surface flex flex-col selection:bg-primary/30 transition-colors duration-300">
+      {/* ─── Global Top Navigation / Mode Switcher ─── */}
+      <header className="sticky top-0 z-50 bg-surface-container/80 backdrop-blur-xl border-b border-outline-variant px-8 py-4">
+        <div className="max-w-none flex flex-row flex-wrap justify-between items-center gap-4">
+          <div className="flex flex-row items-center gap-8 min-w-0">
+            <div className="flex flex-col">
+                <h1 className="text-xl font-black text-primary tracking-tighter leading-none">{t('nav.clinical').toUpperCase()}</h1>
+                <span className="text-[10px] font-bold text-on-surface-variant tracking-[0.3em] uppercase">{t('triage_v2.triase')} OS v2.0</span>
             </div>
-            <div>
-               <h2 className="text-2xl font-black tracking-tighter text-on-surface">Clinical Triage</h2>
-               <div className="flex-row items-center gap-2">
-                  <span className="text-[10px] font-black uppercase text-on-surface-variant/60 tracking-widest">Digital Health Record V2026</span>
-                  <span className="w-1 h-1 rounded-full bg-primary/30"></span>
-                  <span className="text-[10px] font-black uppercase text-primary tracking-widest">JCI-AOP-Standard</span>
-               </div>
+            
+            <nav className="flex flex-row bg-surface-container-low p-1 rounded-2xl border border-outline-variant min-w-0 shadow-inner">
+              {MODES.map(mode => (
+                <button
+                  key={mode.id}
+                  onClick={() => setOperationalMode(mode.id)}
+                  className={`flex flex-row items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                    operationalMode === mode.id 
+                    ? 'bg-primary text-on-primary shadow-lg shadow-primary/20' 
+                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50'
+                  }`}
+                >
+                  {mode.icon}
+                  {mode.label}
+                </button>
+              ))}
+            </nav>
+          </div>
+          
+          <div className="flex flex-row gap-4 items-center">
+            <button className="w-10 h-10 rounded-xl bg-surface-container-high text-on-surface-variant flex items-center justify-center hover:text-primary border border-outline-variant transition-all">
+              <Bell className="w-5 h-5" />
+            </button>
+            <div className="h-8 w-px bg-outline-variant"></div>
+            <div className="flex items-center gap-3 pl-2">
+                <div className="flex flex-col items-end">
+                    <span className="text-xs font-bold text-on-surface">{user?.displayName || t('triage_v2.labels.medical_staff')}</span>
+                    <span className="text-[10px] font-medium text-on-surface-variant">{user?.role ? t(`roles.${user.role.toLowerCase()}`) : t('roles.nurse')}</span>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary font-black border border-primary-container/20 shadow-lg shadow-primary/20">
+                    {user?.displayName?.charAt(0) || <User className="w-5 h-5" />}
+                </div>
             </div>
-         </div>
-
-         {patient && (
-            <div className="hidden lg:flex flex-row items-center gap-8 border-l pl-8 border-outline-variant">
-               <div className="flex-column">
-                  <span className="text-[9px] font-black uppercase opacity-40">Identifikasi Pasien (IPSG 1)</span>
-                  <span className="text-lg font-black text-primary">{patient.name}</span>
-               </div>
-               <div className="flex-column">
-                  <span className="text-[9px] font-black uppercase opacity-40">MRN / DOB</span>
-                  <span className="text-sm font-bold tabular-nums">{patient.mrn} • {patient.dob} ({calculateAge(patient.dob)} th)</span>
-               </div>
-            </div>
-         )}
+          </div>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-         {/* LEFT: Assessment Workspace */}
-         <div className="lg:col-span-8 flex-column gap-8">
+      <main className="flex-1 p-8 max-w-none w-full flex flex-col gap-8">
+        {/* ─── Layer 1: Context (Patient & Chief Complaint) ─── */}
+        {selectedPatient ? (
+          <section className="bg-surface-container-low p-6 rounded-[2.5rem] flex flex-row flex-wrap justify-between items-start gap-6 animate-in fade-in slide-in-from-top-4 border border-outline-variant shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-5">
+                <User className="w-32 h-32 text-primary" />
+            </div>
             
-            {/* 1. Priority Selection (ESI Scale) */}
-            <section>
-               <h3 className="text-xs font-black uppercase tracking-widest mb-4 opacity-60">Triage Priority Selection (ESI Scale)</h3>
-               <div className="grid grid-cols-5 gap-3">
-                  {[1, 2, 3, 4, 5].map(level => (
-                     <button 
-                       key={level}
-                       onClick={() => setEsiLevel(level)}
-                       className={`esi-badge esi-${level} flex-column items-center py-4 transition-all hover:scale-105 active:scale-95 ${esiLevel === level ? 'ring-4 ring-offset-4 ring-on-surface' : 'opacity-40 grayscale-[0.5]'}`}
-                     >
-                        <span className="text-xl font-black">ESI {level}</span>
-                        <span className="text-[8px] font-bold opacity-80">
-                           {level === 1 ? 'Resuscitation' : level === 2 ? 'Emergent' : level === 3 ? 'Urgent' : level === 4 ? 'Less Urgent' : 'Non-Urgent'}
-                        </span>
-                     </button>
-                  ))}
-               </div>
-            </section>
-
-            {/* 2. Vital Signs Entry */}
-            <section className="glass-card p-6 rounded-[2.5rem]">
-               <h3 className="text-xs font-black uppercase tracking-widest mb-6 opacity-60">Physiological Assessment</h3>
-               <div className="vital-grid mb-8">
-                  {Object.entries(VITAL_CONFIG).map(([key, cfg]) => (
-                     <button 
-                        key={key}
-                        onClick={() => setActiveField(key)}
-                        className={`vital-button ${activeField === key ? 'active' : ''}`}
-                     >
-                        <div className="glow"></div>
-                        <span className="material-symbols-outlined text-primary mb-2">{cfg.icon}</span>
-                        <span className="text-[9px] font-black uppercase tracking-widest block opacity-40">{cfg.label}</span>
-                        <span className="text-2xl font-black tabular-nums leading-none my-1">{vitals[key] || '--'}</span>
-                        <span className="text-[9px] font-bold opacity-40">{cfg.unit}</span>
-                     </button>
-                  ))}
-               </div>
-
-               <VitalTouchGrid 
-                  label={VITAL_CONFIG[activeField].label}
-                  unit={VITAL_CONFIG[activeField].unit}
-                  value={vitals[activeField]}
-                  presets={VITAL_CONFIG[activeField].presets}
-                  onChange={(val) => setVital(activeField, val)}
-               />
-            </section>
-
-            {/* 3. Pain Assessment & Risk Screening (JCI Mandatory) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <section className="glass-card p-6 rounded-3xl">
-                  <h3 className="text-xs font-black uppercase tracking-widest mb-4 opacity-60">Pain Assessment (Wong-Baker)</h3>
-                  <div className="pain-scale">
-                     {[0, 2, 4, 6, 8, 10].map(val => (
-                        <div 
-                           key={val}
-                           onClick={() => setVital('painScale', val)}
-                           className={`pain-node ${vitals.painScale === val ? 'selected' : ''}`}
-                           style={{ backgroundColor: `hsl(${120 - val * 12}, 70%, 50%)`, color: 'white' }}
-                        >
-                           {val}
-                        </div>
-                     ))}
+            <div className="flex flex-row items-center gap-6 min-w-0 flex-1 relative z-10">
+              <div className="w-20 h-20 rounded-3xl bg-primary/10 flex items-center justify-center text-primary border border-primary-container/20 shadow-inner shrink-0">
+                <User className="w-10 h-10" />
+              </div>
+              <div className="flex flex-col gap-2 min-w-0 flex-1">
+                <div className="flex items-center gap-3">
+                    <h2 className="text-3xl font-black text-on-surface tracking-tight truncate">{selectedPatient.name}</h2>
+                    <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase border border-emerald-500/20">{t('triage_v2.labels.active_session')}</span>
+                </div>
+                <div className="flex flex-row flex-wrap gap-x-6 gap-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{t('patient_form.mrn')}</span>
+                    <span className="text-xs font-bold text-on-surface">{selectedPatient.mrn || selectedPatient.id}</span>
                   </div>
-                  <p className="text-[10px] font-bold text-center mt-3 opacity-40 uppercase tracking-widest">Skala Nyeri 0-10</p>
-               </section>
-
-               <section className="glass-card p-6 rounded-3xl">
-                  <h3 className="text-xs font-black uppercase tracking-widest mb-4 opacity-60">Safety Risk Screening (IPSG 6)</h3>
-                  <div className="flex-column gap-3">
-                     <button 
-                        onClick={() => setFallRisk(!fallRisk)}
-                        className={`flex-row items-center justify-between p-4 rounded-2xl border-2 transition-all ${fallRisk ? 'border-error bg-error/5 text-error font-black' : 'border-outline-variant opacity-60'}`}
-                     >
-                        <div className="flex-row items-center gap-3">
-                           <span className="material-symbols-outlined">falling</span>
-                           <span className="text-xs">High Fall Risk</span>
-                        </div>
-                        {fallRisk && <span className="material-symbols-outlined text-sm">warning</span>}
-                     </button>
-
-                     <button 
-                        onClick={() => setNutritionalRisk(!nutritionalRisk)}
-                        className={`flex-row items-center justify-between p-4 rounded-2xl border-2 transition-all ${nutritionalRisk ? 'border-warning bg-warning/5 text-warning font-black' : 'border-outline-variant opacity-60'}`}
-                     >
-                        <div className="flex-row items-center gap-3">
-                           <span className="material-symbols-outlined">restaurant</span>
-                           <span className="text-xs">Nutritional Screening (MST &gt; 2)</span>
-                        </div>
-                        {nutritionalRisk && <span className="material-symbols-outlined text-sm">priority_high</span>}
-                     </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{t('patient_form.dob')}</span>
+                    <span className="text-xs font-bold text-on-surface">{selectedPatient.dob}</span>
                   </div>
-               </section>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-widest">{t('patient_form.gender')}</span>
+                    <span className="text-xs font-bold text-on-surface uppercase">{selectedPatient.gender}</span>
+                  </div>
+                </div>
+              </div>
             </div>
-         </div>
+            
+            <div className="flex flex-row gap-3 relative z-10">
+              <div className={`px-6 py-3 rounded-2xl border-2 flex flex-col items-center min-w-[100px] transition-all ${
+                esiLevel 
+                ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10' 
+                : 'border-outline-variant bg-surface-container text-on-surface-variant'
+              }`}>
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] mb-1 opacity-60">{t('triage_v2.labels.esi_score')}</span>
+                <span className="text-2xl font-black">{esiLevel || '--'}</span>
+              </div>
+            </div>
+          </section>
+        ) : (
+            <section className="bg-surface-container-low p-16 rounded-[3rem] border border-outline-variant border-dashed flex flex-col items-center justify-center text-center gap-8 animate-in zoom-in-95 duration-500">
+                <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner">
+                    <User className="w-12 h-12" />
+                </div>
+                <div className="flex flex-col gap-2">
+                    <h3 className="text-2xl font-black text-on-surface tracking-tight">{t('triage_v2.errors.no_patient_selected')}</h3>
+                    <p className="text-sm text-on-surface-variant max-w-md leading-relaxed">
+                      {t('triage_v2.errors.no_patient_selected_desc')}
+                    </p>
+                </div>
+                <button 
+                  onClick={() => setOperationalMode('MONITOR')}
+                  className="btn-primary h-14 px-10 rounded-2xl flex flex-row items-center gap-3 text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+                >
+                  <Activity className="w-5 h-5" />
+                  PILIH PASIEN DARI MONITOR
+                </button>
+            </section>
+        )}
 
-         {/* RIGHT: Status & Submission */}
-         <div className="lg:col-span-4 flex-column gap-8">
-            {/* Status Card */}
-            <div className={`glass-card p-8 rounded-[3rem] border-l-8 transition-all flex-column items-center text-center`}
-                 style={{ borderLeftColor: `var(--status-${triageColor})` }}>
-               <span className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2">Calculated Severity</span>
-               <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 bg-${triageColor}/10 border-4 border-${triageColor}`}>
-                  <span className="text-4xl font-black">{news2Score}</span>
-               </div>
-               <h4 className="text-xl font-black uppercase tracking-tighter mb-1">NEWS2 SCORE</h4>
-               <p className="text-xs font-bold opacity-60 leading-tight">National Early Warning Score<br/>Protocol V2 (UK standard)</p>
+        {/* ─── Layer 2: Core Operational View ─── */}
+        <div className="flex-1 min-h-0">
+          {renderMode()}
+        </div>
+      </main>
+
+      {/* ─── Layer 3: Action Bar (Admisi) ─── */}
+      <footer className="sticky bottom-0 bg-surface-container/80 backdrop-blur-xl border-t border-outline-variant p-6 z-50">
+        <div className="max-w-none flex flex-row flex-wrap justify-between items-center gap-6">
+          <div className="flex flex-row flex-wrap items-center gap-12 min-w-0">
+            <div className="flex flex-col min-w-0">
+              <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">{t('triage_v2.labels.current_status')}</span>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">
+                    {t('triage_v2.labels.system_ready')}
+                </span>
+              </div>
+            </div>
+            
+            <div className="h-10 w-px bg-outline-variant"></div>
+            
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">{t('triage_v2.labels.vitals_logged')}</span>
+              <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-bold text-on-surface">
+                    {Object.values(vitals).filter(Boolean).length} / 8 <span className="text-on-surface-variant font-medium">{t('triage_v2.labels.parameters')}</span>
+                  </span>
+              </div>
             </div>
 
-            {/* Bed Allocation */}
-            <section className="glass-card p-6 rounded-3xl">
-               <h3 className="text-xs font-black uppercase tracking-widest mb-4 opacity-60">Clinical Bed Allocation</h3>
-               <div className="grid grid-cols-3 gap-2">
-                  {availableBeds.map(bed => (
-                     <button 
-                       key={bed.id}
-                       onClick={() => selectBed(bed.id)}
-                       className={`py-3 rounded-2xl border-2 text-[10px] font-black transition-all ${selectedBedId === bed.id ? 'bg-primary border-primary text-white shadow-lg' : 'border-outline-variant opacity-60'}`}
-                     >
-                        {bed.bed_name}
-                     </button>
-                  ))}
-               </div>
-            </section>
-
-            {/* Action Bar */}
-            <button 
-               className="w-full h-24 btn-primary rounded-[2rem] flex-row items-center justify-center gap-4 shadow-2xl hover:scale-[1.02] active:scale-95 transition-all"
-               onClick={() => {
-                  if (!selectedPatientId || !selectedEncounterId) return alert("Pilih pasien terlebih dahulu!");
-                  if (esiLevel === null) return alert("Pilih level ESI terlebih dahulu!");
-                  executeSubmit(currentUser.email);
-               }}
-               disabled={!selectedPatientId || !selectedEncounterId}
-            >
-               <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <span className="material-symbols-outlined text-2xl">verified_user</span>
-               </div>
-               <div className="text-left">
-                  <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Submit Assessment</p>
-                  <p className="text-lg font-black uppercase tracking-tighter leading-none">Log Triage & Admit</p>
-               </div>
+            <div className="flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant mb-1">{t('triage_v2.labels.queue_sync')}</span>
+                <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-on-surface-variant" />
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">{t('triage_v2.labels.live_feed')}</span>
+                </div>
+            </div>
+          </div>
+          
+          <div className="flex flex-row gap-4">
+            <button className="flex items-center gap-2 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high border border-transparent hover:border-outline-variant transition-all">
+              <Save className="w-4 h-4" />
+              {t('triage_v2.actions.save_draft')}
             </button>
-         </div>
-      </div>
+            <button 
+              onClick={handleProcess}
+              disabled={isSubmitting}
+              className={`flex items-center gap-3 px-10 py-4 rounded-2xl bg-primary text-on-primary font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-primary/20 transition-all border border-primary-container/30 ${
+                isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-[1.02] active:scale-[0.98] hover:bg-primary-container'
+              }`}
+            >
+              {isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-on-primary/30 border-t-on-primary rounded-full animate-spin"></div>
+              ) : <Send className="w-4 h-4" />}
+              {isSubmitting ? t('common.processing') : t('triage_v2.actions.process')}
+            </button>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

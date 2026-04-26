@@ -25,7 +25,7 @@ export default function LabOrderTracking({ orders = [] }) {
           {orders.length === 0 ? (
             <p className="text-[10px] italic opacity-40 text-center py-4">No active lab orders.</p>
           ) : orders.map((order, i) => (
-             <ClinicalCard key={i} padding="1rem" className="bg-white border-none shadow-sm hover:shadow-md transition-all">
+             <ClinicalCard key={i} padding="1rem" className="bg-surface border-none shadow-sm hover:shadow-md transition-all">
                 <div className="flex-row justify-between items-center mb-4">
                    <div>
                       <p className="text-xs font-black">{order.test_name}</p>
@@ -46,7 +46,7 @@ export default function LabOrderTracking({ orders = [] }) {
                       return (
                          <div key={idx} className="z-10 flex-column items-center gap-1">
                             <div className={`w-3 h-3 rounded-full border-2 transition-all 
-                               ${isActive ? 'bg-primary border-primary scale-150' : isPast ? 'bg-primary border-primary' : 'bg-white border-outline-variant'}`} 
+                               ${isActive ? 'bg-primary border-primary scale-150' : isPast ? 'bg-primary border-primary' : 'bg-surface border-outline-variant'}`} 
                             />
                             <span className={`text-[6px] font-black uppercase ${isPast ? 'text-primary' : 'opacity-20'}`}>{step}</span>
                          </div>

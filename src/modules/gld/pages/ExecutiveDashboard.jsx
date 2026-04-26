@@ -54,7 +54,7 @@ export default function ExecutiveDashboard() {
             <span className="block text-sm font-black uppercase tracking-widest">{currentUser?.displayName || 'Executive User'}</span>
             <span className="text-xs opacity-50 font-bold uppercase tracking-widest">Hospital Administrator</span>
           </div>
-          <div className="w-14 h-14 rounded-full bg-primary-container flex items-center justify-center border-4 border-white shadow-xl">
+          <div className="w-14 h-14 rounded-full bg-primary-container flex-row items-center justify-center border-4 border-surface shadow-xl">
              <span className="material-symbols-outlined text-white text-3xl">shield_person</span>
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function ExecutiveDashboard() {
           <PresentationCard padding="2rem" height="100%">
             <div className="flex-row justify-between items-center mb-8">
               <h2 className="text-xl font-black uppercase tracking-widest">Recent Safety Incidents</h2>
-              <button className="gld-action-btn flex items-center gap-2 px-4 py-2 rounded-full bg-error-container text-on-error-container text-xs font-black uppercase tracking-widest">
+              <button className="gld-action-btn flex-row items-center gap-2 px-4 py-2 rounded-full bg-error-container text-on-error-container text-xs font-black uppercase tracking-widest">
                 <span className="material-symbols-outlined text-sm">warning</span> View All
               </button>
             </div>
@@ -171,11 +171,11 @@ export default function ExecutiveDashboard() {
              <h2 className="text-xl font-black uppercase tracking-widest mb-2">Facility Insights</h2>
              <p className="text-xs opacity-70 mb-6">Aggregate performance across all departments.</p>
              <div className="flex-row gap-4">
-                <div className="flex-column flex-1 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                <div className="flex-column flex-1 p-4 rounded-2xl bg-on-surface/5 backdrop-blur-md border border-on-surface/10">
                    <span className="text-2xl font-black leading-none mb-1">12</span>
                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Active ORs</span>
                 </div>
-                <div className="flex-column flex-1 p-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10">
+                <div className="flex-column flex-1 p-4 rounded-2xl bg-on-surface/5 backdrop-blur-md border border-on-surface/10">
                    <span className="text-2xl font-black leading-none mb-1">84%</span>
                    <span className="text-[10px] font-black uppercase tracking-widest opacity-60">Staff Util</span>
                 </div>

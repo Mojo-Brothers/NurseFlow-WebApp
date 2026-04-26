@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { getInventoryLevels, getPredictiveForecast } from '../services/inventory.service.js';
 
@@ -6,6 +7,7 @@ import { getInventoryLevels, getPredictiveForecast } from '../services/inventory
  * InventoryDashboard — The logistical command center.
  */
 export default function InventoryDashboard() {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,15 +25,15 @@ export default function InventoryDashboard() {
   }, []);
 
   return (
-    <div className="p-8 flex-column gap-10 animate-fade-in max-w-[1600px] mx-auto w-full overflow-y-auto">
-       <header className="flex-row justify-between items-end">
-          <div>
-             <h1 className="text-5xl font-black tracking-tighter uppercase mb-2">Supply Chain Intelligence</h1>
-             <p className="text-on-surface-variant font-medium opacity-60">AI-Powered Inventory Forecasting & Stock Continuity</p>
+    <div className="p-8 flex-column gap-10 animate-fade-in w-full overflow-y-auto">
+       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+          <div className="min-w-0">
+             <h1 className="text-4xl lg:text-5xl font-black tracking-tighter uppercase mb-2 truncate">{t('inventory_v2.title')}</h1>
+             <p className="text-on-surface-variant font-medium opacity-60">{t('inventory_v2.subtitle')}</p>
           </div>
-          <div className="flex-row gap-3">
-             <button className="btn-ghost text-[10px] font-black uppercase px-6 py-3 border border-outline-variant">Stock Audit Log</button>
-             <button className="btn-primary text-[10px] font-black uppercase px-8 py-3 shadow-lg">New Procurement Order</button>
+          <div className="flex-row flex-wrap gap-3 shrink-0">
+             <button className="btn-ghost text-[10px] font-black uppercase px-6 py-3 border border-outline-variant">{t('inventory_v2.actions.audit_log')}</button>
+             <button className="btn-primary text-[10px] font-black uppercase px-8 py-3 shadow-lg">{t('inventory_v2.actions.new_order')}</button>
           </div>
        </header>
 
@@ -39,7 +41,7 @@ export default function InventoryDashboard() {
           {items.map(item => {
              const forecast = getPredictiveForecast(item);
              return (
-                <ClinicalCard key={item.id} padding="1.5rem" className="bg-white border-none shadow-sm relative overflow-hidden group">
+                <ClinicalCard key={item.id} padding="1.5rem" className="bg-surface border-none shadow-sm relative overflow-hidden group">
                    {forecast.status === 'CRITICAL' && (
                       <div className="absolute top-0 right-0 p-2 bg-error text-white rounded-bl-xl animate-pulse">
                          <span className="material-symbols-outlined text-sm">warning</span>
@@ -58,9 +60,9 @@ export default function InventoryDashboard() {
                       ${forecast.status === 'CRITICAL' ? 'bg-error/10 border border-error/20' : 
                         forecast.status === 'WARNING' ? 'bg-warning/10 border border-warning/20' : 'bg-surface-container'}`}>
                       <div className="flex-row justify-between items-center">
-                         <span className="text-[9px] font-black uppercase opacity-60">Est. Continuity</span>
+                         <span className="text-[9px] font-black uppercase opacity-60">{t('inventory_v2.sections.continuity')}</span>
                          <span className={`text-[10px] font-black ${forecast.status === 'CRITICAL' ? 'text-error' : 'text-primary'}`}>
-                            {forecast.daysRemaining} DAYS LEFT
+                            {forecast.daysRemaining} {t('inventory_v2.metrics.days_left')}
                          </span>
                       </div>
                       <div className="h-1 bg-outline-variant rounded-full mt-1 overflow-hidden">
@@ -73,7 +75,7 @@ export default function InventoryDashboard() {
 
                    {forecast.reorderSuggested && (
                       <button className="w-full mt-4 py-3 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:shadow-lg transition-all">
-                         Auto-Reorder Now
+                         {t('inventory_v2.actions.reorder_now')}
                       </button>
                    )}
                 </ClinicalCard>
@@ -83,7 +85,7 @@ export default function InventoryDashboard() {
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <ClinicalCard padding="2rem" className="bg-surface-container border-none">
-             <h3 className="text-sm font-black uppercase mb-6">Usage Trends (Last 7 Days)</h3>
+             <h3 className="text-sm font-black uppercase mb-6">{t('inventory_v2.sections.trends')}</h3>
              <div className="h-[200px] w-full flex-row items-end gap-3 px-4">
                 {[45, 52, 38, 65, 48, 72, 58].map((val, i) => (
                    <div key={i} className="flex-1 bg-primary/20 rounded-t-lg group relative h-full flex flex-col justify-end">
@@ -98,21 +100,27 @@ export default function InventoryDashboard() {
                 ))}
              </div>
              <div className="flex-row justify-between mt-4 px-2 opacity-40 text-[8px] font-black uppercase tracking-widest">
-                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                <span>{t('common.days.mon', { defaultValue: 'Mon' })}</span>
+                <span>{t('common.days.tue', { defaultValue: 'Tue' })}</span>
+                <span>{t('common.days.wed', { defaultValue: 'Wed' })}</span>
+                <span>{t('common.days.thu', { defaultValue: 'Thu' })}</span>
+                <span>{t('common.days.fri', { defaultValue: 'Fri' })}</span>
+                <span>{t('common.days.sat', { defaultValue: 'Sat' })}</span>
+                <span>{t('common.days.sun', { defaultValue: 'Sun' })}</span>
              </div>
           </ClinicalCard>
 
           <ClinicalCard padding="2rem" className="bg-primary/5 border border-primary/20">
-             <h3 className="text-sm font-black uppercase text-primary mb-6">AI Procurement Assistant</h3>
+             <h3 className="text-sm font-black uppercase text-primary mb-6">{t('inventory_v2.sections.ai_procurement')}</h3>
              <div className="space-y-4">
                 {[
                   { item: 'Ceftriaxone 1g', reason: 'High velocity in ER + 2 Days supply left', qty: '50 Vials' },
                   { item: 'Paracetamol 500mg', reason: 'Historical weekend surge predicted', qty: '1000 Tabs' }
                 ].map((task, i) => (
-                   <div key={i} className="p-4 bg-white rounded-2xl border border-primary/10 flex-row justify-between items-center shadow-sm">
-                      <div className="flex-column">
-                         <span className="text-xs font-black">{task.item}</span>
-                         <span className="text-[10px] font-medium opacity-60">{task.reason}</span>
+                   <div key={i} className="p-4 bg-surface rounded-2xl border border-primary/10 flex-row justify-between items-center shadow-sm gap-4 min-w-0">
+                      <div className="flex-column min-w-0">
+                         <span className="text-xs font-black truncate">{task.item}</span>
+                         <span className="text-[10px] font-medium opacity-60 truncate">{task.reason}</span>
                       </div>
                       <div className="text-right">
                          <span className="text-xs font-black text-primary">+{task.qty}</span>

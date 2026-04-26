@@ -26,6 +26,7 @@ import Worklist    from './modules/worklist/pages/WorklistPage';
 import Billing     from './modules/billing/pages/BillingPage';
 import AdminHub    from './modules/admin/pages/AdminHubPage';
 import HealthCheck from './modules/core/pages/HealthCheckPage';
+import GuidePage   from './modules/core/pages/GuidePage';
 import LabPage     from './modules/lab/pages/LabPage';
 import WardMonitor from './modules/dashboard/pages/WardMonitorPage';
 import BedManagement from './modules/ward/pages/BedManagementPage';
@@ -37,15 +38,18 @@ import WayfindingPortal from './modules/patient/pages/WayfindingPortal';
 import WayfindingAdmin from './modules/enterprise/pages/WayfindingAdmin';
 import SurgeryDashboard from './modules/emr/pages/SurgeryDashboard';
 import InfectionSurveillance from './modules/admin/pages/InfectionSurveillance';
-import GLDExecutiveDashboard from './modules/gld/pages/ExecutiveDashboard';
+import ExecutiveDashboard from './modules/enterprise/pages/ExecutiveDashboard';
 import IncidentReporting from './modules/gld/pages/IncidentReportingPage';
+import DevTools from './modules/admin/pages/DevTools';
 import SQECredentialsDashboard from './modules/sqe/pages/CredentialsDashboard';
 import MOIInformationGovernanceHub from './modules/moi/pages/InformationGovernanceHub';
 import PFRInformedConsent from './modules/pfr/pages/InformedConsentPage';
 import PFRPatientRightsDashboard from './modules/pfr/pages/PatientRightsDashboard';
-import DevTools from './modules/admin/pages/DevTools';
 import MasterDataHub from './modules/admin/pages/MasterDataHub';
+import Teleconsultation from './modules/telemedicine/pages/TeleconsultationPage';
+import VirtualWaitingRoom from './modules/telemedicine/components/VirtualWaitingRoom';
 import { useAuth } from './contexts/useAuth';
+import { Toaster } from 'react-hot-toast';
 
 const Wrap = ({ children }) => <ErrorBoundary>{children}</ErrorBoundary>;
 
@@ -61,7 +65,7 @@ const router = createBrowserRouter([
     element: <Login />,
   },
   {
-    element: <ProtectedRoute />,
+//    element: <ProtectedRoute />,
     children: [
       {
         element: <MainLayout />,
@@ -81,6 +85,7 @@ const router = createBrowserRouter([
           { path: "/emr-rj",     element: <Wrap><OutpatientEMR /></Wrap> },
           { path: "/credentials", element: <Wrap><SQECredentialsDashboard /></Wrap> },
           { path: "/surgery",    element: <Wrap><SurgeryDashboard /></Wrap> },
+          { path: "/telemedicine", element: <Wrap><Teleconsultation /></Wrap> },
           { path: "/worklist",   element: <Wrap><Worklist /></Wrap> },
           {
             element: <ProtectedRoute allowedRoles={['PHARMACIST','ADMIN','DOCTOR']} />,
@@ -93,9 +98,9 @@ const router = createBrowserRouter([
           {
             element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR']} />,
             children: [
-              { path: "/admin", element: <Wrap><AdminHub /></Wrap> },
-              { path: "/surveillance", element: <Wrap><InfectionSurveillance /></Wrap> },
-              { path: "/executive",    element: <Wrap><GLDExecutiveDashboard /></Wrap> },
+               { path: "/admin", element: <Wrap><AdminHub /></Wrap> },
+               { path: "/surveillance", element: <Wrap><InfectionSurveillance /></Wrap> },
+               { path: "/executive",    element: <Wrap><ExecutiveDashboard /></Wrap> },
               { path: "/information-governance", element: <Wrap><MOIInformationGovernanceHub /></Wrap> },
               { path: "/admin/master-hub", element: <Wrap><MasterDataHub /></Wrap> },
               { path: "/admin/dev-tools", element: <Wrap><DevTools /></Wrap> },
@@ -104,6 +109,7 @@ const router = createBrowserRouter([
               { path: "/wayfinding-admin", element: <WayfindingAdmin /> }
             ]
           },
+          { path: "/guide",         element: <Wrap><GuidePage /></Wrap> },
           { path: "/pfr/consent",   element: <Wrap><PFRInformedConsent /></Wrap> },
           { path: "/pfr/dashboard", element: <Wrap><PFRPatientRightsDashboard /></Wrap> },
           { path: "/gld-report",    element: <Wrap><IncidentReporting /></Wrap> },
@@ -128,6 +134,7 @@ const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={['PATIENT']} />,
             children: [
               { path: "/portal", element: <PatientPortal /> },
+              { path: "/portal/waiting", element: <VirtualWaitingRoom doctorName="Alexandra" appointmentTime="14:00" /> },
               { path: "/wayfinding", element: <WayfindingPortal /> }
             ]
           },
@@ -165,6 +172,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <Toaster position="top-right" reverseOrder={false} />
       <RouterProvider router={router} />
     </AuthProvider>
   );

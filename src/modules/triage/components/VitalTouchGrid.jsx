@@ -35,7 +35,7 @@ export default function VitalTouchGrid({ value, onChange, unit, label, presets =
                 <button 
                   key={p} 
                   onClick={() => onChange(String(p))}
-                  className="px-3 py-1 bg-white border border-outline-variant rounded-full text-[10px] font-black text-primary hover:bg-primary hover:text-white transition-all"
+                  className="px-3 py-1 bg-surface border border-outline-variant rounded-full text-[10px] font-black text-primary hover:bg-primary hover:text-white transition-all"
                 >
                    {p}
                 </button>
@@ -48,8 +48,8 @@ export default function VitalTouchGrid({ value, onChange, unit, label, presets =
              <button
                 key={k}
                 onClick={() => handleKey(k)}
-                className={`h-14 rounded-2xl font-black text-lg transition-all active:scale-95 flex items-center justify-center
-                  ${k === 'DEL' ? 'bg-error/10 text-error' : 'bg-white text-slate-800 shadow-sm border border-slate-100'}`}
+                className={`h-14 rounded-2xl font-black text-lg transition-all active:scale-95 flex-row items-center justify-center
+                  ${k === 'DEL' ? 'bg-error/10 text-error' : 'bg-surface-container text-on-surface shadow-sm border border-outline-variant/30'}`}
              >
                 {k === 'DEL' ? <span className="material-symbols-outlined">backspace</span> : k}
              </button>

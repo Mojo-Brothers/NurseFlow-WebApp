@@ -42,7 +42,7 @@ export default function QualityAssuranceHub() {
 
        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {gauges.map((g, i) => (
-             <ClinicalCard key={i} padding="2rem" className="bg-white border-none shadow-sm flex-column items-center text-center">
+             <ClinicalCard key={i} padding="2rem" className="bg-surface border-none shadow-sm flex-column items-center text-center">
                 <span className="text-[10px] font-black uppercase opacity-40 mb-4">{g.label}</span>
                 <span className={`text-4xl font-black tabular-nums mb-1 ${g.status}`}>{g.value}</span>
                 <span className="text-[10px] font-bold opacity-60 uppercase">{g.target}</span>
@@ -53,7 +53,7 @@ export default function QualityAssuranceHub() {
        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* 📊 PERFORMANCE TRENDS */}
           <div className="lg:col-span-8 flex-column gap-6">
-             <ClinicalCard padding="2rem" className="bg-white border-none shadow-sm h-full">
+             <ClinicalCard padding="2rem" className="bg-surface border-none shadow-sm h-full">
                 <h3 className="text-sm font-black uppercase mb-8">Performance Longitudinal Trend (2026)</h3>
                 <div className="h-[300px] w-full flex-row items-end gap-6 px-4">
                    {trends.map((t, i) => (
@@ -96,8 +96,8 @@ export default function QualityAssuranceHub() {
                             <span className="text-[10px] font-bold uppercase">{goal.label}</span>
                             <span className="text-[10px] font-black">{goal.score}%</span>
                          </div>
-                         <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-                            <div className="h-full bg-white transition-all duration-1000" style={{ width: `${goal.score}%` }} />
+                         <div className="h-1 bg-on-primary/20 rounded-full overflow-hidden">
+                            <div className="h-full bg-on-primary transition-all duration-1000" style={{ width: `${goal.score}%` }} />
                          </div>
                       </div>
                    ))}

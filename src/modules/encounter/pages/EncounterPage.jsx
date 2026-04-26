@@ -125,7 +125,7 @@ export default function EncounterPage() {
               return (
                 <tr key={enc.id} className="border-b hover-bg-surface" style={{ borderColor: 'var(--outline-variant)' }}>
                   <td className="py-4 px-5 font-bold text-primary text-sm">{getPatientName(enc.patient_id)}</td>
-                  <td className="py-4 px-5 text-sm">{t(`encounter.types.${enc.encounter_type.toLowerCase()}`)}</td>
+                  <td className="py-4 px-5 text-sm">{t(`encounter.types.${(enc.encounter_type || 'EMERGENCY').toLowerCase()}`)}</td>
                   <td className="py-4 px-5 text-sm text-on-surface-variant" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={enc.chief_complaint}>
                     {enc.chief_complaint || '—'}
                   </td>
@@ -182,7 +182,7 @@ export default function EncounterPage() {
                   onChange={e => setForm({ ...form, encounterType: e.target.value })}>
                   {Object.keys(ENCOUNTER_TYPES).map(k => (
                     <option key={k} value={ENCOUNTER_TYPES[k]}>
-                      {t(`encounter.types.${ENCOUNTER_TYPES[k].toLowerCase()}`)}
+                      {t(`encounter.types.${(ENCOUNTER_TYPES[k] || 'EMERGENCY').toLowerCase()}`)}
                     </option>
                   ))}
                 </select>

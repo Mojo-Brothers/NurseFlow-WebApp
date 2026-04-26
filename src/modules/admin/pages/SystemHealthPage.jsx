@@ -42,7 +42,7 @@ export default function SystemHealthPage() {
        </header>
 
        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ClinicalCard padding="2rem" className="bg-white border-l-4 border-primary">
+          <ClinicalCard padding="2rem" className="bg-surface border-l-4 border-primary">
              <p className="text-[10px] font-black uppercase opacity-40 mb-2">Network Status</p>
              <div className="flex-row items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${status.online ? 'bg-success animate-pulse' : 'bg-error'}`} />
@@ -51,7 +51,7 @@ export default function SystemHealthPage() {
              <p className="text-[10px] mt-4 opacity-60 font-medium">Gateway Latency: {status.latency}</p>
           </ClinicalCard>
 
-          <ClinicalCard padding="2rem" className="bg-white border-l-4 border-secondary">
+          <ClinicalCard padding="2rem" className="bg-surface border-l-4 border-secondary">
              <p className="text-[10px] font-black uppercase opacity-40 mb-2">Sync Queue Integrity</p>
              <div className="flex-row items-baseline gap-2">
                 <span className="text-4xl font-black">{status.sync}</span>
@@ -60,7 +60,7 @@ export default function SystemHealthPage() {
              <p className="text-[10px] mt-4 opacity-60 font-medium">Data Consistency Level: 100%</p>
           </ClinicalCard>
 
-          <ClinicalCard padding="2rem" className="bg-white border-l-4 border-tertiary">
+          <ClinicalCard padding="2rem" className="bg-surface border-l-4 border-tertiary">
              <p className="text-[10px] font-black uppercase opacity-40 mb-2">Database Cluster</p>
              <div className="flex-row items-center gap-3">
                 <span className="material-symbols-outlined text-tertiary">database</span>
@@ -71,7 +71,7 @@ export default function SystemHealthPage() {
        </div>
 
        <ClinicalCard padding="0" className="bg-surface-container overflow-hidden border-none">
-          <div className="p-6 bg-white border-b border-outline-variant flex-row justify-between items-center">
+          <div className="p-6 bg-surface border-b border-outline-variant flex-row justify-between items-center">
              <h3 className="text-sm font-black uppercase tracking-tight">Active Security Audit Log</h3>
              <button className="btn-ghost text-[10px] font-black uppercase px-4 py-2 border border-outline-variant">Export Audit CSV</button>
           </div>
@@ -81,7 +81,7 @@ export default function SystemHealthPage() {
                { time: '14:15', event: 'RBAC_ACCESS_DENIED', user: 'nurse.maya@nurseflow.id', status: 'BLOCKED' },
                { time: '14:02', event: 'SYNC_RECOVERY', user: 'SYSTEM', status: 'SUCCESS' },
              ].map((log, i) => (
-                <div key={i} className="flex-row justify-between items-center p-4 bg-white rounded-2xl border border-outline-variant/50">
+                <div key={i} className="flex-row justify-between items-center p-4 bg-surface rounded-2xl border border-outline-variant/50">
                    <div className="flex-row gap-6 items-center">
                       <span className="text-[10px] font-black opacity-40 tabular-nums">{log.time}</span>
                       <span className={`text-[10px] font-black px-2 py-0.5 rounded ${log.status === 'SUCCESS' ? 'bg-success/10 text-success' : 'bg-error/10 text-error'}`}>
@@ -96,7 +96,7 @@ export default function SystemHealthPage() {
        </ClinicalCard>
 
        <div className="p-8 bg-primary/5 rounded-[3rem] border border-primary/20 flex-row gap-6 items-center">
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-16 h-16 bg-surface rounded-2xl flex items-center justify-center shadow-lg">
              <span className="material-symbols-outlined text-primary text-3xl">verified</span>
           </div>
           <div className="flex-1">

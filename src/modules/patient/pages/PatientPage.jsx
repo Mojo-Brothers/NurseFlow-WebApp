@@ -1,5 +1,46 @@
 import React, { useState, useEffect } from 'react';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  MoreVertical, 
+  ExternalLink, 
+  UserPlus, 
+  Activity, 
+  CreditCard, 
+  Clock, 
+  AlertCircle, 
+  CheckCircle2, 
+  FileText, 
+  ChevronRight, 
+  Camera, 
+  MapPin, 
+  Smartphone, 
+  Calendar,
+  Lock,
+  ArrowRight,
+  User,
+  ShieldCheck,
+  History,
+  Fingerprint
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
+import { db } from '../../../core/firebase.js';
+import { 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  getDocs, 
+  serverTimestamp, 
+  orderBy, 
+  limit,
+  doc,
+  updateDoc
+} from 'firebase/firestore';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 import { usePatientStore } from '../patient.store.js';
 import { useNavigate } from 'react-router-dom';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
@@ -9,6 +50,7 @@ import { getAvailableDoctors } from '../services/patient.service.js';
 import { logAudit } from '../../../core/services/audit.service.js';
 import { AUDIT_ACTIONS, COLLECTIONS, ENCOUNTER_TYPES } from '../../../core/constants.js';
 import { useAuth } from '../../../contexts/useAuth.js';
+import AuditTrailModal from '../components/AuditTrailModal.jsx';
 import '../styles/Patients.css';
 
 const DUMMY_DOCTORS = [
@@ -22,11 +64,30 @@ const DUMMY_DOCTORS = [
   { id: 'd8', name: 'dr. Sarah Connor, Sp.Rad' }
 ];
 
+const initialFormState = {
+  // Step 1: Identitas Utama (IPSG 1)
+  name: '', nik: '', dob: '', gender: 'M', pob: '', 
+  nationality: 'WNI', marital_status: 'single',
+  // Step 2: Kontak & Demografi
+  address: '', religion: 'islam', phone: '', 
+  education: 'sma', occupation: 'Private',
+  preferred_language: 'id', interpreter_needed: false,
+  // Step 3: Penanggung Jawab / Wali
+  emergency_name: '', emergency_phone: '', relationship: 'family',
+  guarantor_name: '', guarantor_phone: '',
+  // Step 4: Asuransi & Billing
+  insurance_type: 'umum', insurance_no: '',
+  // Step 5: Medis & Safety (IPSG 6)
+  blood_type: 'o', allergies: '', fall_risk: false, 
+  primary_physician_id: '',
+  // Step 6: Hak Pasien & Spiritual (PFR)
+  privacy_level: 'STANDARD', spiritual_needs: '', consent: false
+};
+
 export default function PatientPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { patients, isLoading: loading, fetchPatients, addPatient, selectPatient } = usePatientStore();
-  const { setLiveContext } = useEncounterStore();
   const { currentUser } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -36,35 +97,47 @@ export default function PatientPage() {
   const [selectedPatientForAdmit, setSelectedPatientForAdmit] = useState(null);
 
   // ─── Local State: Unified Form Data (Super Complete JCI Standard) ───
-  const [form, setForm] = useState({
-    // Step 1: Identitas Utama (IPSG 1)
-    name: '', nik: '', dob: '', gender: 'M', pob: '', 
-    nationality: 'WNI', marital_status: 'Belum Kawin',
-    // Step 2: Kontak & Demografi
-    address: '', religion: 'Islam', phone: '', 
-    education: 'SMA', occupation: 'Swasta',
-    preferred_language: 'Indonesia', interpreter_needed: false,
-    // Step 3: Penanggung Jawab / Wali
-    emergency_name: '', emergency_phone: '', relationship: 'Keluarga',
-    guarantor_name: '', guarantor_phone: '',
-    // Step 4: Asuransi & Billing
-    insurance_type: 'UMUM', insurance_no: '',
-    // Step 5: Medis & Safety (IPSG 6)
-    blood_type: 'O', allergies: '', fall_risk: false, 
-    primary_physician_id: '',
-    // Step 6: Hak Pasien & Spiritual (PFR)
-    privacy_level: 'STANDARD', spiritual_needs: '', consent: false
-  });
+  const [form, setForm] = useState(initialFormState);
+  
+  // Helper for step-by-step form updates
+  const updateField = (key, value) => {
+    setForm(prev => ({ ...prev, [key]: value }));
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [doctors, setDoctors] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [targetPatientId, setTargetPatientId] = useState(null);
+  const [originalData, setOriginalData] = useState(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   
   // ─── Filter & Intelligence States (Modern 2026) ───
   const [activeFilters, setActiveFilters] = useState({
     insurance: 'ALL',
     safety: 'ALL',
+    triage: 'ALL',
+    patientType: 'ALL',
+    status: 'ACTIVE',
     sortBy: 'RECENT'
   });
+
+  const [activeMenuId, setActiveMenuId] = useState(null);
+  
+  // ─── Audit Trail State ───
+  const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [selectedPatientForAudit, setSelectedPatientForAudit] = useState(null);
+
+  // Close menu on click outside
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenuId(null);
+    window.addEventListener('click', handleClickOutside);
+    return () => window.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const toggleMenu = (e, id) => {
+    e.stopPropagation();
+    setActiveMenuId(activeMenuId === id ? null : id);
+  };
 
   useEffect(() => {
     fetchPatients();
@@ -75,7 +148,6 @@ export default function PatientPage() {
     loadDoctors();
   }, [fetchPatients]);
 
-  const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   // ─── Smart Filter Logic (Performance Optimized) ───
   const filteredPatients = patients.filter(p => {
@@ -85,18 +157,30 @@ export default function PatientPage() {
                          p.mrn?.toLowerCase().includes(s) || 
                          p.nik?.includes(s);
     
-    const matchesInsurance = activeFilters.insurance === 'ALL' || p.insurance?.type === activeFilters.insurance;
+    const matchesInsurance = activeFilters.insurance === 'ALL' || p.insurance?.type?.toLowerCase() === activeFilters.insurance.toLowerCase();
     
     const matchesSafety = activeFilters.safety === 'ALL' || 
                          (activeFilters.safety === 'ALLERGY' && p.safety_flags?.allergy_risk) ||
                          (activeFilters.safety === 'FALL_RISK' && p.safety_flags?.fall_risk);
+
+    const matchesTriage = activeFilters.triage === 'ALL' || p.triage_level === activeFilters.triage;
+    const matchesType = activeFilters.patientType === 'ALL' || p.type === activeFilters.patientType;
+    const matchesStatus = activeFilters.status === 'ALL' || (activeFilters.status === 'ACTIVE' ? !p.discharged : p.discharged);
     
-    return matchesSearch && matchesInsurance && matchesSafety;
+    return matchesSearch && matchesInsurance && matchesSafety && matchesTriage && matchesType && matchesStatus;
   }).sort((a, b) => {
     if (activeFilters.sortBy === 'RECENT') return new Date(b.createdAt) - new Date(a.createdAt);
     if (activeFilters.sortBy === 'NAME') return a.name.localeCompare(b.name);
     return 0;
   });
+
+  // Calculate active filter count (excluding defaults)
+  const activeFilterCount = Object.entries(activeFilters).filter(([key, value]) => {
+    if (key === 'sortBy' || key === 'status') return false;
+    return value !== 'ALL';
+  }).length;
+
+  const removeFilter = (key) => setActiveFilters(prev => ({ ...prev, [key]: 'ALL' }));
 
   // ─── Logic: Get Random Doctor for WOW Effect ───
   const getRandomDoctor = (patientId) => {
@@ -108,68 +192,141 @@ export default function PatientPage() {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    if (!form.consent) return alert('Mohon setujui General Consent (JCI Policy).');
+    if (!form.consent) return toast.error(t('patients_v2.errors.consent_required'));
 
     try {
-      await addPatient(
-        { 
-          name: form.name, 
-          nik: form.nik, 
+      const patientData = { 
+        name: form.name, 
+        nik: form.nik, 
+        pob: form.pob,
+        demographics: { 
+          dob: form.dob, 
+          gender: form.gender,
+          address: form.address,
+          religion: form.religion,
           pob: form.pob,
-          demographics: { 
-            dob: form.dob, 
-            gender: form.gender,
-            address: form.address,
-            religion: form.religion,
-            pob: form.pob,
-            nationality: form.nationality,
-            marital_status: form.marital_status,
-            education: form.education,
-            occupation: form.occupation,
-            language: {
-              preferred: form.preferred_language,
-              interpreter: form.interpreter_needed
-            }
-          }, 
-          emergency_contact: {
-            name: form.emergency_name,
-            phone: form.emergency_phone,
-            relationship: form.relationship
-          },
-          guarantor: {
-            name: form.guarantor_name,
-            phone: form.guarantor_phone
-          },
-          insurance: {
-            type: form.insurance_type,
-            card_number: form.insurance_no
-          },
-          clinical_baseline: {
-            blood_type: form.blood_type,
-            allergies: form.allergies ? [form.allergies] : []
-          },
-          primary_physician: form.primary_physician_id ? {
-            id: form.primary_physician_id,
-            name: doctors.find(d => d.id === form.primary_physician_id)?.name || getRandomDoctor(form.nik || 'temp')
-          } : null,
-          safety_flags: {
-            fall_risk: form.fall_risk,
-            allergy_risk: !!form.allergies
-          },
-          legal_consent: {
-            general_consent: true,
-            privacy_level: form.privacy_level,
-            spiritual_requests: form.spiritual_needs,
-            signed_at: new Date().toISOString()
+          nationality: form.nationality,
+          marital_status: form.marital_status,
+          education: form.education,
+          occupation: form.occupation,
+          language: {
+            preferred: form.preferred_language,
+            interpreter: form.interpreter_needed
           }
+        }, 
+        emergency_contact: {
+          name: form.emergency_name,
+          phone: form.emergency_phone,
+          relationship: form.relationship
         },
-        'system'
-      );
+        guarantor: {
+          name: form.guarantor_name,
+          phone: form.guarantor_phone
+        },
+        insurance: {
+          type: form.insurance_type,
+          card_number: form.insurance_no
+        },
+        clinical_baseline: {
+          blood_type: form.blood_type,
+          allergies: form.allergies ? [form.allergies] : []
+        },
+        primary_physician: form.primary_physician_id ? {
+          id: form.primary_physician_id,
+          name: doctors.find(d => d.id === form.primary_physician_id)?.name || getRandomDoctor(form.nik || 'temp')
+        } : null,
+        safety_flags: {
+          fall_risk: form.fall_risk,
+          allergy_risk: !!form.allergies
+        },
+        legal_consent: {
+          general_consent: true,
+          privacy_level: form.privacy_level,
+          spiritual_requests: form.spiritual_needs,
+          signed_at: new Date().toISOString()
+        }
+      };
+
+      if (isEditing) {
+        // JCI Requirement: Track EXACT changes (Delta)
+        const delta = {};
+        Object.keys(patientData).forEach(key => {
+          if (JSON.stringify(patientData[key]) !== JSON.stringify(originalData[key])) {
+            delta[key] = { from: originalData[key], to: patientData[key] };
+          }
+        });
+
+        await addPatient(patientData, currentUser?.email || 'system', targetPatientId);
+        
+        await logAudit({
+          action: AUDIT_ACTIONS.UPDATE,
+          resource_type: COLLECTIONS.PATIENTS,
+          resource_id: targetPatientId,
+          delta,
+          reason: 'DATA_RECTIFICATION'
+        });
+        toast.success(t('patients_v2.success.updated') || 'Data pasien diperbarui');
+      } else {
+        const newPatient = await addPatient(patientData, currentUser?.email || 'system');
+        
+        await logAudit({
+          action: AUDIT_ACTIONS.CREATE,
+          resource_type: COLLECTIONS.PATIENTS,
+          resource_id: newPatient.id,
+          delta: { name: patientData.name, nik: patientData.nik },
+          reason: 'NEW_PATIENT_REGISTRATION'
+        });
+        toast.success(t('patients_v2.success.registered') || 'Pasien berhasil didaftarkan');
+      }
+
       setIsModalOpen(false);
+      setIsEditing(false);
       setCurrentStep(1);
     } catch (error) {
-      alert('Gagal: ' + error.message);
+      console.error("Error during patient registration/update:", error);
+      toast.error(t('patients_v2.errors.operation_failed') || 'Gagal menyimpan data');
     }
+  };
+
+  const handleEditPatient = (patient) => {
+    setTargetPatientId(patient.id);
+    setIsEditing(true);
+    setOriginalData(patient);
+    
+    // Map patient data back to form state
+    setForm({
+      name: patient.name || '',
+      nik: patient.nik || '',
+      dob: patient.demographics?.dob || '',
+      gender: patient.demographics?.gender || 'M',
+      pob: patient.demographics?.pob || '',
+      nationality: patient.demographics?.nationality || 'WNI',
+      marital_status: patient.demographics?.marital_status || 'single',
+      address: patient.demographics?.address || '',
+      religion: patient.demographics?.religion || 'islam',
+      phone: patient.demographics?.phone || '',
+      education: patient.demographics?.education || 'sma',
+      occupation: patient.demographics?.occupation || 'Private',
+      preferred_language: patient.demographics?.language?.preferred || 'id',
+      interpreter_needed: patient.demographics?.language?.interpreter || false,
+      emergency_name: patient.emergency_contact?.name || '',
+      emergency_phone: patient.emergency_contact?.phone || '',
+      relationship: patient.emergency_contact?.relationship || 'family',
+      guarantor_name: patient.guarantor?.name || '',
+      guarantor_phone: patient.guarantor?.phone || '',
+      insurance_type: patient.insurance?.type || 'umum',
+      insurance_no: patient.insurance?.card_number || '',
+      blood_type: patient.clinical_baseline?.blood_type || 'o',
+      allergies: patient.clinical_baseline?.allergies?.[0] || '',
+      fall_risk: patient.safety_flags?.fall_risk || false,
+      primary_physician_id: patient.primary_physician?.id || '',
+      privacy_level: patient.legal_consent?.privacy_level || 'STANDARD',
+      spiritual_needs: patient.legal_consent?.spiritual_requests || '',
+      consent: true // Assume consent persists for edits or re-verify
+    });
+    
+    setIsModalOpen(true);
+    setCurrentStep(1);
   };
 
   const handleAdmit = (patientId, patientName) => {
@@ -197,171 +354,358 @@ export default function PatientPage() {
   };
 
   return (
-    <div className="patients-container p-6 lg:p-10 w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-6">
+    <div className="patients-container p-4 lg:p-6 w-full max-w-full">
+      <div className="flex-row items-center justify-between mb-8 gap-6">
         <div>
           <h2 className="text-2xl md:text-3xl font-black tracking-tighter text-on-surface leading-tight">{t('patients_v2.title')}</h2>
           <p className="text-on-surface-variant text-sm mt-1 font-medium">{t('patients_v2.subtitle')}</p>
         </div>
-        <div className="flex flex-col xs:flex-row gap-3 items-stretch sm:items-center">
-          <div className="search-wrapper w-full sm:w-80">
-            <span className="material-symbols-outlined search-icon" style={{ fontSize: '1.2rem' }}>search</span>
+      </div>
+
+      {/* ─── Modern Unified Command Bar ─── */}
+      <div className="relative mb-6">
+        <div className="command-bar-container">
+          <div className="command-search-group">
+            <span className="material-symbols-outlined text-primary opacity-70">search</span>
             <input 
               type="text" 
-              placeholder={t('patients_v2.search_placeholder')} 
-              className="form-input has-icon w-full"
+              placeholder={t('patients_v2.search_placeholder')}
+              className="command-search-input"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-          <button className="btn-primary w-full sm:w-auto px-6" onClick={() => { setIsModalOpen(true); setCurrentStep(1); }}>
-            <span className="material-symbols-outlined icon-small mr-2" style={{verticalAlign: 'bottom'}}>person_add</span>
-            <span className="hidden xs:inline">{t('patients_v2.btn_new')}</span>
-            <span className="xs:hidden">Tambah Pasien</span>
-          </button>
+          
+          <div className="h-8 w-[1px] bg-outline-variant/50 hidden sm:block"></div>
+          
+          <div className="flex-row items-center gap-2">
+            <button 
+              className={`filter-trigger-btn ${activeFilterCount > 0 ? 'active' : ''}`}
+              onClick={() => setIsFilterOpen(true)}
+            >
+              <span className="material-symbols-outlined text-[20px]">tune</span>
+              <span className="hidden md:inline">{t('patients_v2.btn_filter')}</span>
+              {activeFilterCount > 0 && <span className="filter-badge">{activeFilterCount}</span>}
+            </button>
+
+            <div className="h-8 w-[1px] bg-outline-variant/50 hidden sm:block mx-1"></div>
+
+            <button 
+              id="btn-new-patient-registration"
+              className="btn-primary h-12 px-6 rounded-xl shadow-lg shadow-primary/20 flex flex-row items-center gap-2"
+              onClick={(e) => { 
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Register Button Clicked');
+                setIsEditing(false);
+                setForm(initialFormState);
+                setIsModalOpen(true); 
+                setCurrentStep(1); 
+                toast.success('Membuka Formulir Pendaftaran...');
+              }}
+            >
+              <span className="material-symbols-outlined text-[20px]">person_add</span>
+              <span className="font-black text-[11px] uppercase tracking-wider">{t('patients_v2.btn_new')}</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ─── Premium Intelligence Filter Bar ─── */}
-      <div className="filter-bar-responsive mb-8 items-center bg-surface-container-low rounded-3xl border border-outline-variant/30 shadow-sm">
-        <div className="flex-row gap-2 items-center shrink-0">
-          <span className="material-symbols-outlined text-sm opacity-40 ml-2">filter_list</span>
-          <span className="text-[10px] font-black uppercase opacity-40 px-2 tracking-widest">Insurance</span>
-          <div className="flex-row gap-1">
-            {['ALL', 'UMUM', 'BPJS KESEHATAN', 'ASURANSI SWASTA'].map(type => (
-              <button 
-                key={type}
-                className={`filter-pill ${activeFilters.insurance === type ? 'active' : ''}`}
-                onClick={() => setActiveFilters(prev => ({ ...prev, insurance: type }))}
-              >
-                {type}
-              </button>
-            ))}
+      {/* ─── Centered Filter Panel ─── */}
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 sm:p-6">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsFilterOpen(false)}></div>
+          <div className="filter-modal-content" onClick={e => e.stopPropagation()}>
+              <div className="flex-row justify-between items-center mb-6">
+                <div className="flex-row items-center gap-3">
+                  <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex-row items-center justify-center">
+                    <span className="material-symbols-outlined">tune</span>
+                  </div>
+                  <div>
+                    <h4 className="font-black text-lg tracking-tighter">{t('patients_v2.filter.title')}</h4>
+                    <p className="text-[10px] font-bold text-on-surface-variant uppercase opacity-60">{t('patients_v2.filter.subtitle')}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsFilterOpen(false)} 
+                  className="w-10 h-10 rounded-full hover:bg-surface-container-high flex-row items-center justify-center transition-colors"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="custom-scrollbar max-h-[60vh] overflow-y-auto pr-2">
+                {/* Jenis Pasien */}
+                <div className="filter-section">
+                  <p className="filter-section-title">{t('patients_v2.filters.patient_type')}</p>
+                  <div className="filter-option-grid">
+                    {['ALL', 'IGD', 'RAWAT JALAN', 'RAWAT INAP'].map(type => (
+                      <button 
+                        key={type}
+                        className={`filter-option-btn ${activeFilters.patientType === type ? 'active' : ''}`}
+                        onClick={() => setActiveFilters(prev => ({ ...prev, patientType: type }))}
+                      >
+                        {type === 'ALL' ? t('patients_v2.filters.all') : type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Penjamin */}
+                <div className="filter-section">
+                  <p className="filter-section-title">{t('patients_v2.filters.insurance')}</p>
+                  <div className="filter-option-grid">
+                    {['ALL', 'umum', 'bpjs', 'swasta'].map(type => (
+                      <button 
+                        key={type}
+                        className={`filter-option-btn ${activeFilters.insurance.toLowerCase() === type ? 'active' : ''}`}
+                        onClick={() => setActiveFilters(prev => ({ ...prev, insurance: type }))}
+                      >
+                        {type === 'ALL' ? t('patients_v2.filters.all') : t('patient_form.insurance_types.' + type)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Safety Flags */}
+                <div className="filter-section">
+                  <p className="filter-section-title">{t('patients_v2.filters.safety')}</p>
+                  <div className="filter-option-grid">
+                    {['ALL', 'ALLERGY', 'FALL_RISK'].map(risk => (
+                      <button 
+                        key={risk}
+                        className={`filter-option-btn ${activeFilters.safety === risk ? 'active' : ''}`}
+                        onClick={() => setActiveFilters(prev => ({ ...prev, safety: risk }))}
+                      >
+                        {risk === 'ALL' ? t('patients_v2.filters.all') : risk === 'ALLERGY' ? t('patients_v2.filters.allergy') : t('patients_v2.filters.fall_risk')}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Triage Level */}
+                <div className="filter-section">
+                  <p className="filter-section-title">{t('patients_v2.filters.triage')}</p>
+                  <div className="filter-option-grid">
+                    {[
+                      { id: 'ALL', label: t('patients_v2.filters.all') },
+                      { id: 'P1', label: t('patients_v2.filters.triage_levels.p1'), color: '#ef4444' },
+                      { id: 'P2', label: t('patients_v2.filters.triage_levels.p2'), color: '#f97316' },
+                      { id: 'P3', label: t('patients_v2.filters.triage_levels.p3'), color: '#eab308' },
+                      { id: 'P4', label: t('patients_v2.filters.triage_levels.p4'), color: '#22c55e' },
+                      { id: 'P5', label: t('patients_v2.filters.triage_levels.p5'), color: '#3b82f6' }
+                    ].map(tLevel => (
+                      <button 
+                        key={tLevel.id}
+                        className={`filter-option-btn ${activeFilters.triage === tLevel.id ? 'active' : ''}`}
+                        style={activeFilters.triage === tLevel.id ? { backgroundColor: tLevel.color, borderColor: tLevel.color, color: 'white' } : {}}
+                        onClick={() => setActiveFilters(prev => ({ ...prev, triage: tLevel.id }))}
+                      >
+                        {tLevel.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lokasi / Ruang */}
+                <div className="filter-section">
+                  <p className="filter-section-title">{t('patients_v2.filters.location')}</p>
+                  <div className="filter-option-grid">
+                    {['ALL', 'igd', 'icu', 'ward_a', 'poli'].map(loc => (
+                      <button 
+                        key={loc}
+                        className={`filter-option-btn ${activeFilters.location === loc ? 'active' : ''}`}
+                        onClick={() => setActiveFilters(prev => ({ ...prev, location: loc }))}
+                      >
+                        {loc === 'ALL' ? t('patients_v2.filters.all') : t('patients_v2.admission.wards.' + loc, { defaultValue: loc })}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="filter-panel-footer border-t pt-6 mt-4">
+                <button 
+                  className="btn-ghost text-error"
+                  onClick={() => setActiveFilters({ insurance: 'ALL', safety: 'ALL', triage: 'ALL', patientType: 'ALL', status: 'ACTIVE', sortBy: 'RECENT', location: 'ALL' })}
+                >
+                  {t('patients_v2.filters.reset')}
+                </button>
+                <div className="flex-row items-center gap-4">
+                  <div className="flex-row items-center gap-2">
+                    <span className="text-[10px] font-black uppercase opacity-40">{t('patients_v2.filters.sort_label')}</span>
+                    <select 
+                      className="text-[11px] font-black bg-surface-container-low px-2 py-1 rounded-lg border-none text-primary cursor-pointer focus:ring-0"
+                      value={activeFilters.sortBy}
+                      onChange={e => setActiveFilters(prev => ({ ...prev, sortBy: e.target.value }))}
+                    >
+                      <option value="RECENT">{t('patients_v2.filters.sort_recent')}</option>
+                      <option value="NAME">{t('patients_v2.filters.sort_name')}</option>
+                    </select>
+                  </div>
+                  <button 
+                    className="btn-primary px-8"
+                    onClick={() => setIsFilterOpen(false)}
+                  >
+                    {t('patients_v2.filters.apply')}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-        
-        <div className="w-[1px] h-6 bg-outline-variant/50 shrink-0"></div>
-        
-        <div className="flex-row gap-2 items-center shrink-0">
-          <span className="text-[10px] font-black uppercase opacity-40 px-2 tracking-widest">Clinical Safety</span>
-          <div className="flex-row gap-1">
-            {['ALL', 'ALLERGY', 'FALL_RISK'].map(risk => (
-              <button 
-                key={risk}
-                className={`filter-pill ${activeFilters.safety === risk ? 'active' : ''}`}
-                onClick={() => setActiveFilters(prev => ({ ...prev, safety: risk }))}
-              >
-                {risk === 'ALL' ? 'Show All' : risk.replace('_', ' ')}
-              </button>
-            ))}
+        )}
+
+      {/* Active Filter Chips */}
+      <div className="active-filters-row">
+        {activeFilters.patientType !== 'ALL' && (
+          <div className="filter-chip">
+            <span>{t('patients_v2.filters.type_label')}: {activeFilters.patientType}</span>
+            <button onClick={() => removeFilter('patientType')}><span className="material-symbols-outlined text-[14px]">close</span></button>
           </div>
-        </div>
-        
-        <div className="ml-auto-desktop flex-row gap-2 items-center shrink-0">
-          <span className="text-[10px] font-black uppercase opacity-40 px-2 tracking-widest">Sort By</span>
-          <select 
-            className="bg-transparent border-none text-xs font-bold text-primary focus:outline-none cursor-pointer"
-            value={activeFilters.sortBy}
-            onChange={e => setActiveFilters(prev => ({ ...prev, sortBy: e.target.value }))}
-          >
-            <option value="RECENT">Recently Added</option>
-            <option value="NAME">Name (A-Z)</option>
-          </select>
-        </div>
+        )}
+        {activeFilters.insurance !== 'ALL' && (
+          <div className="filter-chip">
+            <span>{t('patients_v2.filters.insurance_label')}: {activeFilters.insurance}</span>
+            <button onClick={() => removeFilter('insurance')}><span className="material-symbols-outlined text-[14px]">close</span></button>
+          </div>
+        )}
+        {activeFilters.safety !== 'ALL' && (
+          <div className="filter-chip">
+            <span>{t('patients_v2.filters.safety_label')}: {activeFilters.safety}</span>
+            <button onClick={() => removeFilter('safety')}><span className="material-symbols-outlined text-[14px]">close</span></button>
+          </div>
+        )}
       </div>
 
-      {/* ─── DESKTOP TABLE VIEW (Visible on Large Screens) ─── */}
-      <div className="w-full overflow-x-auto pb-4 custom-scrollbar desktop-only">
-        <table className="w-full text-left border-collapse min-w-[1000px]">
+      {/* ─── DESKTOP TABLE VIEW ─── */}
+      <div className="clinical-table-wrapper">
+        <table className="clinical-table">
           <thead>
-            <tr className="bg-surface-container-low text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-              <th className="py-4 px-6">{t('patients_v2.table.identity')}</th>
-              <th className="py-4 px-6">{t('patients_v2.table.bio')}</th>
-              <th className="py-4 px-6">{t('patients_v2.table.safety')}</th>
-              <th className="py-4 px-6">{t('patients_v2.table.insurance')}</th>
-              <th className="py-4 px-6 text-center">{t('patients_v2.table.reg_date')}</th>
-              <th className="py-4 px-6 text-right">{t('patients_v2.table.actions')}</th>
+            <tr>
+              <th className="col-id">MRN / No. RM</th>
+              <th className="col-identity">{t('patients_v2.table.identity')}</th>
+              <th className="col-age">{t('patients_v2.table.age_gender')}</th>
+              <th className="col-complaint">{t('patients_v2.table.complaint')}</th>
+              <th className="col-vitals">{t('patients_v2.table.vitals')}</th>
+              <th className="col-status">{t('patients_v2.table.status')}</th>
+              <th className="col-actions">{t('patients_v2.table.actions')}</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan="6" className="py-8 text-center text-on-surface-variant animate-pulse">Synchronizing with Clinical Backend...</td></tr>
+              <tr>
+                <td colSpan="7" className="py-20 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                    <span className="font-bold text-on-surface-variant/60">{t('patients_v2.table.syncing')}</span>
+                  </div>
+                </td>
+              </tr>
             ) : filteredPatients.length === 0 ? (
-              <tr><td colSpan="6" className="py-8 text-center text-on-surface-variant">No records found matching "{searchTerm}".</td></tr>
+              <tr>
+                <td colSpan="7" className="py-24 text-center">
+                  <div className="flex flex-col items-center gap-4 opacity-40">
+                    <div className="w-20 h-20 bg-surface-container-high rounded-full flex items-center justify-center mb-2">
+                      <span className="material-symbols-outlined text-5xl">person_off</span>
+                    </div>
+                    <h3 className="text-xl font-black tracking-tight">{t('patients_v2.table.no_records')}</h3>
+                    <p className="text-sm max-w-[300px] mx-auto">{t('patients_v2.table.no_records_match', { term: searchTerm })}</p>
+                    <button 
+                      className="btn-ghost text-primary font-black uppercase text-[10px] tracking-widest mt-4"
+                      onClick={() => setSearchTerm('')}
+                    >
+                      {t('patients_v2.filters.reset_search')}
+                    </button>
+                  </div>
+                </td>
+              </tr>
             ) : (
-              filteredPatients.map(p => (
-                <tr key={p.id} className="border-b hover-bg-surface transition-colors group">
-                  <td className="py-4 px-6">
-                    <div className="flex-column">
-                      <p className="text-[10px] font-black text-primary mb-0.5 tracking-wider">{p.mrn || 'MRN-UNASSIGNED'}</p>
-                      <p className="font-black text-base text-on-surface group-hover:text-primary transition-colors leading-tight">
-                        {p.name || <span className="text-error uppercase">UNIDENTIFIED PATIENT</span>}
-                      </p>
-                      <div className="flex-row gap-3 mt-1.5 opacity-80">
-                        <span className="text-[10px] font-mono bg-surface-container px-1.5 py-0.5 rounded">NIK: {p.nik || 'Not Registered'}</span>
-                        <span className="text-[10px] font-bold text-secondary">DOB: {p.demographics?.dob || 'Unknown'}</span>
-                      </div>
+              filteredPatients.map(patient => (
+                <tr key={patient.id} className="hover:bg-surface-container-low transition-all">
+                  <td className="col-id">
+                    <span className="patient-id-label">{patient.mrn || 'PENDING'}</span>
+                  </td>
+                  <td className="col-identity">
+                    <div className="flex flex-col">
+                      <span className="patient-name-cell font-black tracking-tight">{patient.name || 'TANPA NAMA'}</span>
+                      <span className="text-[10px] font-mono font-bold opacity-50">NIK: {patient.nik || '---------'}</span>
                     </div>
                   </td>
-                  <td className="py-4 px-6">
-                    <div className="flex-row items-center gap-3">
-                      <span className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-[12px] shadow-sm ${(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-pink-100 text-pink-600 border border-pink-200'}`}>
-                        {(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'M' : 'F'}
+                  <td className="col-age">
+                    <div className="flex flex-col">
+                      <span className="text-xs font-black">{patient.demographics?.dob ? `${calculateAge(patient.demographics.dob)} Thn` : '--'}</span>
+                      <span className="text-[10px] font-bold opacity-50 uppercase">{patient.demographics?.gender === 'M' ? 'Laki-laki' : 'Perempuan'}</span>
+                    </div>
+                  </td>
+                  <td className="col-complaint">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex flex-wrap gap-1">
+                        {patient.safety_flags?.allergy_risk && (
+                          <span className="px-1.5 py-0.5 bg-error text-white text-[8px] font-black rounded uppercase">Allergy</span>
+                        )}
+                        {patient.safety_flags?.fall_risk && (
+                          <span className="px-1.5 py-0.5 bg-warning text-white text-[8px] font-black rounded uppercase animate-pulse">Fall Risk</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-on-surface-variant font-medium line-clamp-1">
+                        {patient.medical_summary?.chief_complaint || patient.clinical_baseline?.allergies?.[0] || 'Kunjungan Rutin'}
                       </span>
-                      <div className="flex-column">
-                        <span className="font-black text-sm">{p.demographics?.dob ? calculateAge(p.demographics.dob) : '--'} Yrs</span>
-                        <span className="text-[10px] opacity-60 uppercase font-black tracking-widest">{p.demographics?.marital_status || 'Single'}</span>
+                    </div>
+                  </td>
+                  <td className="col-vitals">
+                    <div className="flex flex-row items-center gap-3">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black opacity-40 uppercase">TD</span>
+                        <span className="text-xs font-bold">{patient.vitals?.bp || '--'}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black opacity-40 uppercase">HR</span>
+                        <span className="text-xs font-bold">{patient.vitals?.hr || '--'}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-black opacity-40 uppercase">SPO2</span>
+                        <span className="text-xs font-bold text-primary">{patient.vitals?.spo2 ? `${patient.vitals.spo2}%` : '--'}</span>
                       </div>
                     </div>
                   </td>
-                  <td className="py-4 px-6">
-                    <div className="flex-row gap-2 flex-wrap">
-                      {p.safety_flags?.allergy_risk ? (
-                        <div className="flex-row items-center gap-1 bg-error text-white px-2.5 py-1 rounded-md text-[10px] font-black uppercase shadow-sm">
-                          <span className="material-symbols-outlined text-[14px]">warning</span> Alergi
-                        </div>
-                      ) : (
-                        <div className="bg-surface-container-high text-on-surface-variant px-2.5 py-1 rounded-md text-[10px] font-black uppercase border border-outline-variant/30">No Allergy</div>
-                      )}
-                      {p.safety_flags?.fall_risk ? (
-                        <div className="flex-row items-center gap-1 bg-warning text-white px-2.5 py-1 rounded-md text-[10px] font-black uppercase shadow-sm animate-pulse">
-                          <span className="material-symbols-outlined text-[14px]">potted_plant</span> Fall Risk
-                        </div>
-                      ) : (
-                        <div className="bg-surface-container-high text-on-surface-variant px-2.5 py-1 rounded-md text-[10px] font-black uppercase border border-outline-variant/30">Stable</div>
-                      )}
-                    </div>
+                  <td className="col-status">
+                    <span className={`chip text-[10px] ${patient.status === 'EMERGENCY' ? 'chip-error' : 'chip-info'}`}>
+                      {patient.status || 'STABLE'}
+                    </span>
                   </td>
-                  <td className="py-4 px-6">
-                    <div className="flex-column gap-1.5">
-                      <span className={`chip text-[10px] px-2 py-0.5 ${p.insurance?.type === 'BPJS KESEHATAN' ? 'chip-info' : p.insurance?.type === 'UMUM' ? 'chip-success' : 'chip-warning'}`}>
-                        {p.insurance?.type || 'UMUM'}
-                      </span>
-                      <div className="flex-row items-center gap-1">
-                        <span className="material-symbols-outlined text-[14px] text-primary">medical_services</span>
-                        <span className="text-[11px] font-bold text-on-surface-variant">
-                          {(!p.primary_physician?.name || p.primary_physician?.name === 'Dr. Unassigned') 
-                            ? getRandomDoctor(p.id) 
-                            : p.primary_physician.name}
-                        </span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 text-center">
-                    <div className="flex-column items-center">
-                      <span className="text-xs font-black text-on-surface">{p.registered_at ? new Date(p.registered_at.seconds * 1000).toLocaleDateString() : 'Today'}</span>
-                      <span className="text-[9px] font-black uppercase opacity-60 tracking-widest">Registered</span>
-                    </div>
-                  </td>
-                  <td className="py-4 px-6 text-right">
-                    <div className="flex-row gap-2 justify-end items-center">
-                      <button className="btn-primary rounded-xl px-3 py-2 flex-row items-center gap-1.5 shadow-md hover:shadow-lg transition-all" onClick={() => handleAdmit(p.id, p.name || 'Unidentified Patient')} title="Admission">
-                        <span className="material-symbols-outlined text-[16px]">emergency</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Admit</span>
+                  <td className="col-actions">
+                    <div className="action-menu-container">
+                      <button className="btn-action-trigger" onClick={(e) => toggleMenu(e, patient.id)}>
+                        <span className="material-symbols-outlined">more_horiz</span>
                       </button>
-                      <button className="w-9 h-9 rounded-xl bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-white transition-all flex items-center justify-center shadow-sm" onClick={() => handleViewEMR(p.id, p.name)} title="View EMR">
-                        <span className="material-symbols-outlined text-[18px]">clinical_notes</span>
-                      </button>
+                      {activeMenuId === patient.id && (
+                        <div className="action-menu-dropdown">
+                          <button className="action-menu-item" onClick={() => handleViewEMR(patient.id, patient.name)}>
+                            <span className="material-symbols-outlined">clinical_notes</span>
+                            {t('patients_v2.actions.view_emr')}
+                          </button>
+                          <button className="action-menu-item" onClick={() => handleEditPatient(patient)}>
+                            <span className="material-symbols-outlined">edit</span>
+                            {t('patients_v2.actions.edit')}
+                          </button>
+                          <button 
+                            className="action-menu-item" 
+                            onClick={() => {
+                              setSelectedPatientForAudit(patient);
+                              setIsAuditModalOpen(true);
+                              setActiveMenuId(null);
+                            }}
+                          >
+                            <span className="material-symbols-outlined">history</span>
+                            {t('patients_v2.actions.history') || 'Riwayat Audit'}
+                          </button>
+                          <div className="border-t border-outline-variant/30 my-1"></div>
+                          <button className="action-menu-item danger">
+                            <span className="material-symbols-outlined">delete</span>
+                            {t('patients_v2.actions.deactivate')}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -374,11 +718,11 @@ export default function PatientPage() {
       {/* ─── MOBILE CARD VIEW (Visible on Small Screens) ─── */}
       <div className="mobile-only pb-10">
         {loading ? (
-          <div className="py-12 text-center text-on-surface-variant animate-pulse font-bold">Synchronizing Clinical Data...</div>
+          <div className="py-12 text-center text-on-surface-variant animate-pulse font-bold">{t('patients_v2.table.syncing')}</div>
         ) : filteredPatients.length === 0 ? (
           <div className="py-12 text-center text-on-surface-variant bg-surface-container-low rounded-3xl border border-dashed border-outline-variant">
              <span className="material-symbols-outlined text-4xl opacity-20 block mb-2">person_search</span>
-             No records found for "{searchTerm}"
+             {t('patients_v2.table.no_records_match', { term: searchTerm })}
           </div>
         ) : (
           <div className="patient-card-list">
@@ -386,11 +730,11 @@ export default function PatientPage() {
               <div key={p.id} className="patient-card">
                 <div className="patient-card-header">
                   <div className="patient-card-identity">
-                    <span className="text-[10px] font-black text-primary tracking-widest uppercase">{p.mrn || 'MRN-UNASSIGNED'}</span>
-                    <h3 className="text-lg font-black text-on-surface leading-tight">{p.name || 'UNIDENTIFIED'}</h3>
-                    <span className="text-[10px] font-mono opacity-60">NIK: {p.nik || '--'}</span>
+                    <span className="text-[10px] font-black text-primary tracking-widest uppercase">{p.mrn || t('patients_v2.table.mrn_pending')}</span>
+                    <h3 className="text-lg font-black text-on-surface leading-tight">{p.name || t('common.unidentified')}</h3>
+                    <span className="text-[10px] font-mono opacity-60">{t('patient_form.nik')}: {p.nik || '--'}</span>
                   </div>
-                  <span className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shadow-sm ${(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'bg-primary/10 text-primary' : 'bg-pink-100 text-pink-600'}`}>
+                  <span className={`w-12 h-12 rounded-2xl flex-row items-center justify-center font-black text-sm shadow-sm ${(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'bg-primary/10 text-primary' : 'bg-pink-100 text-pink-600'}`}>
                     {(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'M' : 'F'}
                   </span>
                 </div>
@@ -398,11 +742,11 @@ export default function PatientPage() {
                 <div className="patient-card-meta">
                    <div className="meta-item">
                      <span className="material-symbols-outlined text-sm">event</span>
-                     {p.demographics?.dob ? calculateAge(p.demographics.dob) : '--'} Yrs
+                     {p.demographics?.dob ? `${calculateAge(p.demographics.dob)} ${t('common.years')}` : '--'}
                    </div>
                    <div className="meta-item">
                      <span className="material-symbols-outlined text-sm">family_restroom</span>
-                     {p.demographics?.marital_status || 'Single'}
+                     {p.demographics?.marital_status ? t('patient_form.marital_options.' + p.demographics.marital_status.toLowerCase(), { defaultValue: p.demographics.marital_status }) : t('patient_form.marital_options.single')}
                    </div>
                    <div className="meta-item">
                      <span className={`chip text-[9px] px-2 ${p.insurance?.type === 'BPJS KESEHATAN' ? 'chip-info' : p.insurance?.type === 'UMUM' ? 'chip-success' : 'chip-warning'}`}>
@@ -421,22 +765,48 @@ export default function PatientPage() {
 
                 <div className="flex-row gap-2 mt-4">
                   {p.safety_flags?.allergy_risk && (
-                    <div className="bg-error text-white px-2 py-0.5 rounded text-[9px] font-black uppercase">Alergi</div>
+                    <div className="bg-error text-white px-2 py-0.5 rounded text-[9px] font-black uppercase">{t('patients_v2.safety.allergy')}</div>
                   )}
                   {p.safety_flags?.fall_risk && (
-                    <div className="bg-warning text-white px-2 py-0.5 rounded text-[9px] font-black uppercase animate-pulse">Fall Risk</div>
+                    <div className="bg-warning text-white px-2 py-0.5 rounded text-[9px] font-black uppercase animate-pulse">{t('patients_v2.safety.fall_risk')}</div>
                   )}
                 </div>
 
                 <div className="patient-card-actions">
-                  <button className="btn-primary" onClick={() => handleAdmit(p.id, p.name || 'Patient')}>
-                    <span className="material-symbols-outlined text-lg">emergency</span>
-                    Admit
-                  </button>
-                  <button className="btn-secondary-container" onClick={() => handleViewEMR(p.id, p.name)}>
-                    <span className="material-symbols-outlined text-lg">clinical_notes</span>
-                    EMR
-                  </button>
+                  <div className="action-menu-container w-full">
+                    <button 
+                      className="btn-primary w-full justify-between" 
+                      onClick={(e) => toggleMenu(e, p.id)}
+                    >
+                      <div className="flex-row items-center gap-2">
+                        <span className="material-symbols-outlined">menu_open</span>
+                        {t('patients_v2.table.actions')}
+                      </div>
+                      <span className="material-symbols-outlined">expand_more</span>
+                    </button>
+
+                    {activeMenuId === p.id && (
+                      <div className="action-menu-dropdown !left-0 !right-0 !bottom-full !top-auto mb-2 !w-full">
+                        <button className="action-menu-item" onClick={() => { handleViewEMR(p.id, p.name); setActiveMenuId(null); }}>
+                          <span className="material-symbols-outlined text-primary">clinical_notes</span>
+                          <span>{t('patients_v2.actions.view_emr')}</span>
+                        </button>
+                        <button className="action-menu-item" onClick={() => { handleAdmit(p.id, p.name || t('common.unidentified')); setActiveMenuId(null); }}>
+                          <span className="material-symbols-outlined text-error">emergency</span>
+                          <span>{t('patients_v2.actions.admit')}</span>
+                        </button>
+                        <div className="border-t border-outline-variant/30 my-1"></div>
+                        <button className="action-menu-item" onClick={() => { handleEditPatient(p); setActiveMenuId(null); }}>
+                          <span className="material-symbols-outlined">edit</span>
+                          <span>{t('patients_v2.actions.edit')}</span>
+                        </button>
+                        <button className="action-menu-item" onClick={() => { toast.success('Audit Log Feature Coming Soon'); setActiveMenuId(null); }}>
+                          <span className="material-symbols-outlined">history</span>
+                          <span>{t('patients_v2.actions.history') || 'Riwayat Audit'}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -448,14 +818,14 @@ export default function PatientPage() {
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content card !max-w-[95vw] sm:!max-w-[650px]">
-            <div className="flex-row justify-between items-start mb-4">
+            <div className="flex-row items-center justify-between mb-6">
               <div>
-                <h3 className="font-bold text-xl">{t('patients_v2.wizard.title')}</h3>
+                <h3 className="font-bold text-xl">{isEditing ? t('patients_v2.wizard.title_edit') || 'Edit Data Pasien' : t('patients_v2.wizard.title')}</h3>
                 <span className="text-sm font-bold text-on-surface-variant">{t('patients_v2.wizard.step', { current: currentStep })}</span>
               </div>
               <button 
                 type="button" 
-                className="w-10 h-10 rounded-full hover:bg-surface-container-high flex items-center justify-center transition-colors text-on-surface-variant"
+                className="w-10 h-10 rounded-full hover:bg-surface-container-high flex-row items-center justify-center transition-colors text-on-surface-variant"
                 onClick={() => setIsModalOpen(false)}
               >
                 <span className="material-symbols-outlined">close</span>
@@ -474,41 +844,44 @@ export default function PatientPage() {
               {/* STEP 1: IDENTITAS UTAMA (IPSG 1) */}
               {currentStep === 1 && (
                 <div className="flex-column gap-4">
-                  <p className="section-divider">Identitas Utama (IPSG 1 Compliance)</p>
+                  <p className="section-divider">{t('patient_form.emergency_contact')}</p>
                   <div>
-                    <label className="metric-label mb-2 block">NAMA LENGKAP (SESUAI IDENTITAS)</label>
+                    <label className="metric-label mb-2 block">{t('patient_form.name')}</label>
                     <input required className="form-input" value={form.name} onChange={e => updateField('name', e.target.value)} />
                   </div>
                   <div>
-                    <label className="metric-label mb-2 block">NIK / PASSPORT / ID NUMBER</label>
+                    <label className="metric-label mb-2 block">{t('patient_form.nik')}</label>
                     <input required className="form-input" value={form.nik} onChange={e => updateField('nik', e.target.value)} />
                   </div>
                   <div className="grid-2">
                     <div>
-                      <label className="metric-label mb-2 block">TEMPAT LAHIR</label>
+                      <label className="metric-label mb-2 block">{t('patient_form.pob')}</label>
                       <input className="form-input" value={form.pob} onChange={e => updateField('pob', e.target.value)} />
                     </div>
                     <div>
-                      <label className="metric-label mb-2 block">TANGGAL LAHIR</label>
+                      <label className="metric-label mb-2 block">{t('patient_form.dob')}</label>
                       <input required type="date" className="form-input" value={form.dob} onChange={e => updateField('dob', e.target.value)} />
                     </div>
                   </div>
                   <div className="grid-3">
                     <div>
-                      <label className="metric-label mb-2 block">GENDER</label>
+                      <label className="metric-label mb-2 block">{t('patient_form.gender')}</label>
                       <select className="form-input" value={form.gender} onChange={e => updateField('gender', e.target.value)}>
-                        <option value="M">Laki-laki</option>
-                        <option value="F">Perempuan</option>
+                        <option value="M">{t('patient_form.gender_m')}</option>
+                        <option value="F">{t('patient_form.gender_f')}</option>
                       </select>
                     </div>
                     <div>
-                      <label className="metric-label mb-2 block">KEWARGANEGARAAN</label>
+                      <label className="metric-label mb-2 block">{t('patient_form.nationality')}</label>
                       <input className="form-input" value={form.nationality} onChange={e => updateField('nationality', e.target.value)} />
                     </div>
                     <div>
-                      <label className="metric-label mb-2 block">STATUS KAWIN</label>
+                      <label className="metric-label mb-2 block">{t('patient_form.marital_status')}</label>
                       <select className="form-input" value={form.marital_status} onChange={e => updateField('marital_status', e.target.value)}>
-                        <option>Belum Kawin</option><option>Kawin</option><option>Cerai Hidup</option><option>Cerai Mati</option>
+                        <option value="single">{t('patient_form.marital_options.single')}</option>
+                        <option value="married">{t('patient_form.marital_options.married')}</option>
+                        <option value="divorced">{t('patient_form.marital_options.divorced')}</option>
+                        <option value="widowed">{t('patient_form.marital_options.widowed')}</option>
                       </select>
                     </div>
                   </div>
@@ -518,35 +891,41 @@ export default function PatientPage() {
               {/* STEP 2: DEMOGRAFI & KOMUNIKASI */}
               {currentStep === 2 && (
                 <div className="flex-column gap-4">
-                  <p className="section-divider">Demografi & Preferensi Komunikasi (PFR Standard)</p>
+                  <p className="section-divider">{t('patients_v2.wizard.step2')}</p>
                   <div>
-                    <label className="metric-label mb-2 block">ALAMAT DOMISILI LENGKAP</label>
+                    <label className="metric-label mb-2 block">{t('patient_form.address')}</label>
                     <textarea className="form-input" value={form.address} onChange={e => updateField('address', e.target.value)} rows="2" />
                   </div>
                   <div className="grid-2">
                     <div>
-                      <label className="metric-label mb-2 block">PEKERJAAN</label>
+                      <label className="metric-label mb-2 block">{t('patient_form.occupation')}</label>
                       <input className="form-input" value={form.occupation} onChange={e => updateField('occupation', e.target.value)} />
                     </div>
                     <div>
-                      <label className="metric-label mb-2 block">PENDIDIKAN TERAKHIR</label>
+                      <label className="metric-label mb-2 block">{t('patient_form.education')}</label>
                       <select className="form-input" value={form.education} onChange={e => updateField('education', e.target.value)}>
-                        <option>SD</option><option>SMP</option><option>SMA</option><option>D3</option><option>S1</option><option>S2/S3</option><option>Tidak Sekolah</option>
+                        <option value="sd">{t('patient_form.education_options.sd')}</option>
+                        <option value="smp">{t('patient_form.education_options.smp')}</option>
+                        <option value="sma">{t('patient_form.education_options.sma')}</option>
+                        <option value="d3">{t('patient_form.education_options.d3')}</option>
+                        <option value="s1">{t('patient_form.education_options.s1')}</option>
+                        <option value="s2_s3">{t('patient_form.education_options.s2_s3')}</option>
+                        <option value="none">{t('patient_form.education_options.none')}</option>
                       </select>
                     </div>
                   </div>
                   <div className="grid-2">
                     <div>
-                      <label className="metric-label mb-2 block">BAHASA SEHARI-HARI</label>
+                      <label className="metric-label mb-2 block">{t('patient_form.preferred_lang')}</label>
                       <input className="form-input" value={form.preferred_language} onChange={e => updateField('preferred_language', e.target.value)} />
                     </div>
                     <div className="flex-row items-center gap-2 mt-6">
                       <input type="checkbox" id="interpreter" checked={form.interpreter_needed} onChange={e => updateField('interpreter_needed', e.target.checked)} />
-                      <label htmlFor="interpreter" className="text-xs font-bold">Butuh Penerjemah?</label>
+                      <label htmlFor="interpreter" className="text-xs font-bold">{t('patient_form.interpreter')}</label>
                     </div>
                   </div>
                   <div>
-                    <label className="metric-label mb-2 block">NOMOR TELEPON AKTIF</label>
+                    <label className="metric-label mb-2 block">{t('patient_form.phone')}</label>
                     <input className="form-input" value={form.phone} onChange={e => updateField('phone', e.target.value)} />
                   </div>
                 </div>
@@ -555,33 +934,33 @@ export default function PatientPage() {
               {/* STEP 3: WALI & PENANGGUNG JAWAB */}
               {currentStep === 3 && (
                 <div className="flex-column gap-4">
-                  <p className="section-divider">Kontak Darurat & Penanggung Jawab</p>
+                  <p className="section-divider">{t('patients_v2.wizard.step3')}</p>
                   <div className="p-4 bg-surface-container-low rounded-lg border border-dashed border-outline-variant">
-                    <p className="text-[10px] font-black uppercase text-primary mb-3">Kontak Darurat (Emergency Contact)</p>
+                    <p className="text-[10px] font-black uppercase text-primary mb-3">{t('patient_form.emergency_contact')}</p>
                     <div className="grid-2 gap-4">
                       <div>
-                        <label className="metric-label mb-1 block">NAMA KONTAK</label>
+                        <label className="metric-label mb-1 block">{t('patient_form.emergency_name')}</label>
                         <input className="form-input" value={form.emergency_name} onChange={e => updateField('emergency_name', e.target.value)} />
                       </div>
                       <div>
-                        <label className="metric-label mb-1 block">HUBUNGAN</label>
+                        <label className="metric-label mb-1 block">{t('patient_form.relationship')}</label>
                         <input className="form-input" value={form.relationship} onChange={e => updateField('relationship', e.target.value)} />
                       </div>
                     </div>
                     <div className="mt-3">
-                      <label className="metric-label mb-1 block">HP KONTAK DARURAT</label>
+                      <label className="metric-label mb-1 block">{t('patient_form.emergency_phone')}</label>
                       <input className="form-input" value={form.emergency_phone} onChange={e => updateField('emergency_phone', e.target.value)} />
                     </div>
                   </div>
                   <div className="p-4 bg-surface-container-low rounded-lg border border-dashed border-outline-variant">
-                    <p className="text-[10px] font-black uppercase text-secondary mb-3">Penanggung Jawab Biaya (Guarantor)</p>
+                    <p className="text-[10px] font-black uppercase text-secondary mb-3">{t('patient_form.guarantor')}</p>
                     <div className="grid-2 gap-4">
                       <div>
-                        <label className="metric-label mb-1 block">NAMA PENANGGUNG JAWAB</label>
+                        <label className="metric-label mb-1 block">{t('patient_form.guarantor_name')}</label>
                         <input className="form-input" value={form.guarantor_name} onChange={e => updateField('guarantor_name', e.target.value)} />
                       </div>
                       <div>
-                        <label className="metric-label mb-1 block">HP PENANGGUNG JAWAB</label>
+                        <label className="metric-label mb-1 block">{t('patient_form.guarantor_phone')}</label>
                         <input className="form-input" value={form.guarantor_phone} onChange={e => updateField('guarantor_phone', e.target.value)} />
                       </div>
                     </div>
@@ -592,19 +971,19 @@ export default function PatientPage() {
               {/* STEP 4: DATA ASURANSI */}
               {currentStep === 4 && (
                 <div className="flex-column gap-4">
-                  <p className="section-divider">Data Penjamin / Asuransi</p>
+                  <p className="section-divider">{t('patients_v2.wizard.sections.insurance')}</p>
                   <div>
-                    <label className="metric-label mb-2 block">JENIS PENJAMIN</label>
+                    <label className="metric-label">{t('patients_v2.wizard.fields.guarantor_type')}</label>
                     <select className="form-input" value={form.insurance_type} onChange={e => updateField('insurance_type', e.target.value)}>
-                      <option>UMUM</option>
-                      <option>BPJS KESEHATAN</option>
-                      <option>ASURANSI SWASTA</option>
-                      <option>CORPORATE</option>
+                      <option value="UMUM">{t('patient_form.insurance_types.umum')}</option>
+                      <option value="BPJS KESEHATAN">{t('patient_form.insurance_types.bpjs')}</option>
+                      <option value="ASURANSI SWASTA">{t('patient_form.insurance_types.swasta')}</option>
+                      <option value="CORPORATE">{t('patient_form.insurance_types.corporate')}</option>
                     </select>
                   </div>
                   <div>
-                    <label className="metric-label mb-2 block">NOMOR KARTU / POLIS / SEP</label>
-                    <input className="form-input" value={form.insurance_no} onChange={e => updateField('insurance_no', e.target.value)} placeholder="Contoh: 000123456789" />
+                    <label className="metric-label">{t('patients_v2.wizard.fields.card_number')}</label>
+                    <input className="form-input" value={form.insurance_no} onChange={e => updateField('insurance_no', e.target.value)} placeholder={t('patients_v2.wizard.fields.card_number_placeholder')} />
                   </div>
                 </div>
               )}
@@ -612,18 +991,20 @@ export default function PatientPage() {
               {/* STEP 5: MEDIS & SAFETY */}
               {currentStep === 5 && (
                 <div className="flex-column gap-4">
-                  <p className="section-divider">Screening Klinis & Safety (IPSG)</p>
+                  <p className="section-divider">{t('patients_v2.wizard.sections.safety')}</p>
                   <div className="grid-2">
                     <div>
-                      <label className="metric-label mb-2 block">GOLONGAN DARAH</label>
+                      <label className="metric-label">{t('patients_v2.wizard.fields.blood_type')}</label>
                       <select className="form-input" value={form.blood_type} onChange={e => updateField('blood_type', e.target.value)}>
-                        <option>A</option><option>B</option><option>AB</option><option>O</option><option>Tidak Tahu</option>
+                        {['a', 'b', 'ab', 'o', 'unknown'].map(bt => (
+                          <option key={bt} value={bt.toUpperCase()}>{t('patient_form.blood_types.' + bt)}</option>
+                        ))}
                       </select>
                     </div>
                     <div>
-                      <label className="metric-label mb-2 block">DOKTER PENANGGUNG JAWAB (DPJP)</label>
+                      <label className="metric-label">{t('patients_v2.wizard.fields.dpjp')}</label>
                       <select className="form-input" value={form.primary_physician_id} onChange={e => updateField('primary_physician_id', e.target.value)}>
-                        <option value="">-- Pilih Dokter --</option>
+                        <option value="">{t('patient_form.select_doctor')}</option>
                         {doctors.map(d => (
                           <option key={d.id} value={d.id}>{d.name}</option>
                         ))}
@@ -631,8 +1012,8 @@ export default function PatientPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="metric-label mb-2 block">RIWAYAT ALERGI (OBAT/MAKANAN)</label>
-                    <input className="form-input" value={form.allergies} onChange={e => updateField('allergies', e.target.value)} placeholder="Tulis 'TIDAK ADA' jika nihil" />
+                    <label className="metric-label">{t('patients_v2.wizard.fields.allergy_history')}</label>
+                    <input className="form-input" value={form.allergies} onChange={e => updateField('allergies', e.target.value)} placeholder={t('patients_v2.wizard.fields.allergy_placeholder')} />
                   </div>
 
                   <div className="flex-row items-start gap-4 p-4 bg-error-container/20 rounded-xl border border-error/20 mt-4">
@@ -640,10 +1021,10 @@ export default function PatientPage() {
                       <span className="material-symbols-outlined text-sm">warning</span>
                     </div>
                     <div>
-                      <label className="text-sm font-black text-error block mb-1">IPSG 6: RISIKO JATUH</label>
+                      <label className="text-sm font-black text-error block mb-1">{t('patients_v2.wizard.fields.fall_risk_title')}</label>
                       <div className="flex-row items-center gap-2">
                         <input type="checkbox" id="fall" checked={form.fall_risk} onChange={e => updateField('fall_risk', e.target.checked)} />
-                        <label htmlFor="fall" className="text-xs font-bold text-on-surface">Pasien memiliki risiko jatuh tinggi / butuh bantuan alat jalan</label>
+                        <label htmlFor="fall" className="text-xs font-bold text-on-surface">{t('patients_v2.wizard.fields.fall_risk_desc')}</label>
                       </div>
                     </div>
                   </div>
@@ -653,26 +1034,26 @@ export default function PatientPage() {
               {/* STEP 6: HAK PASIEN & LEGAL */}
               {currentStep === 6 && (
                 <div className="flex-column gap-4">
-                  <p className="section-divider">Hak Pasien (PFR) & Persetujuan Umum</p>
+                  <p className="section-divider">{t('patients_v2.wizard.sections.rights')}</p>
                   <div>
-                    <label className="text-[10px] font-black uppercase text-on-surface-variant mb-2 block">Privacy Preference (JCI PFR.1)</label>
+                    <label className="text-[10px] font-black uppercase text-on-surface-variant mb-2 block">{t('patients_v2.wizard.fields.privacy')}</label>
                     <select className="form-input text-xs" value={form.privacy_level} onChange={e => updateField('privacy_level', e.target.value)}>
-                      <option value="STANDARD">Standard Privacy (Dapat dikunjungi)</option>
-                      <option value="VIP">VIP Status (Nama tidak muncul di monitor publik)</option>
-                      <option value="ANONYMOUS">Anonymous / High Security (Kerahasiaan Total)</option>
+                      {['standard', 'vip', 'anonymous'].map(opt => (
+                        <option key={opt} value={opt.toUpperCase()}>{t(`patients_v2.wizard.fields.privacy_options.${opt}`)}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black uppercase text-on-surface-variant mb-2 block">Kebutuhan Khusus / Spiritual (Misal: Doa Khusus)</label>
-                    <textarea className="form-input" value={form.spiritual_needs} onChange={e => updateField('spiritual_needs', e.target.value)} rows="2" placeholder="Kosongkan jika tidak ada" />
+                    <label className="text-[10px] font-black uppercase text-on-surface-variant mb-2 block">{t('patients_v2.wizard.fields.spiritual')}</label>
+                    <textarea className="form-input" value={form.spiritual_needs} onChange={e => updateField('spiritual_needs', e.target.value)} rows="2" placeholder={t('patients_v2.wizard.fields.spiritual_placeholder')} />
                   </div>
 
                   <div className="p-5 border-2 border-primary/20 rounded-2xl bg-primary-container/5 mt-4">
                     <div className="flex-row items-start gap-3">
                       <input type="checkbox" id="consent" checked={form.consent} onChange={e => updateField('consent', e.target.checked)} required style={{ marginTop: '4px' }} />
                       <label htmlFor="consent" className="text-xs leading-relaxed font-medium">
-                        <strong>PERSETUJUAN UMUM (GENERAL CONSENT):</strong> Dengan menandatangani secara digital, saya memahami hak dan kewajiban saya sebagai pasien, menyetujui asuhan medis sesuai standar RS, dan mengizinkan penggunaan data medis saya untuk kepentingan klinis & asuransi sesuai standar akreditasi JCI/KARS.
+                        {t('patients_v2.wizard.consent_label')}
                       </label>
                     </div>
                   </div>
@@ -681,15 +1062,18 @@ export default function PatientPage() {
 
               <div className="flex-row justify-between mt-8 pt-4 border-t">
                 {currentStep > 1 ? (
-                  <button type="button" className="btn-ghost" onClick={() => setCurrentStep(prev => prev - 1)}>Kembali</button>
+                  <button type="button" className="btn-ghost" onClick={() => setCurrentStep(prev => prev - 1)}>{t('patients_v2.wizard.back')}</button>
                 ) : (
-                  <button type="button" className="btn-ghost" onClick={() => setIsModalOpen(false)}>Batal</button>
-                )}
+                  <button type="button" className="btn-ghost" onClick={() => setIsModalOpen(false)}>{t('patients_v2.wizard.cancel')}</button>
+                )
+                }
                 
                 {currentStep < 6 ? (
-                  <button type="button" className="btn-primary" onClick={() => setCurrentStep(prev => prev + 1)}>Lanjut Step {currentStep + 1}</button>
+                  <button type="button" className="btn-primary" onClick={() => setCurrentStep(prev => prev + 1)}>
+                    {t('patients_v2.wizard.next', { next: currentStep + 1 })}
+                  </button>
                 ) : (
-                  <button type="submit" className="btn-primary">Finalize & Register</button>
+                  <button type="submit" className="btn-primary">{isEditing ? t('patients_v2.wizard.save_changes') || 'Simpan Perubahan' : t('patients_v2.wizard.finalize')}</button>
                 )}
               </div>
             </form>
@@ -706,9 +1090,17 @@ export default function PatientPage() {
           doctors={doctors}
           onSuccess={(name) => {
             setIsAdmitModalOpen(false);
-            alert(`Pasien ${name} berhasil di-admit. Menuju modul Triage...`);
+            toast.success(t('patients_v2.admission.success_alert', { name }));
             navigate('/triage');
           }}
+        />
+      )}
+
+      {/* ─── Audit Trail Modal ─── */}
+      {isAuditModalOpen && (
+        <AuditTrailModal 
+          patient={selectedPatientForAudit}
+          onClose={() => setIsAuditModalOpen(false)}
         />
       )}
     </div>
@@ -719,6 +1111,7 @@ export default function PatientPage() {
  * Isolated Admission Modal to prevent Parent Re-renders (Performance Fix)
  */
 function AdmissionModal({ patient, onClose, currentUser, doctors, onSuccess }) {
+  const { t } = useTranslation();
   const { setLiveContext } = useEncounterStore();
   const [form, setForm] = useState({
     type: ENCOUNTER_TYPES.EMERGENCY,
@@ -729,21 +1122,18 @@ function AdmissionModal({ patient, onClose, currentUser, doctors, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // 1. Create Encounter
       const encounterId = await createEncounter({
         patientId: patient.id,
         encounterType: form.type,
         chiefComplaint: form.reason,
-        admittingDoctor: doctors.find(d => d.id === patient.id)?.name || null, // Best effort
-        nurseInCharge: currentUser?.displayName || currentUser?.email || 'Nurse Staff',
+        admittingDoctor: doctors.find(d => d.id === patient.id)?.name || null,
+        nurseInCharge: currentUser?.displayName || currentUser?.email || t('patients_v2.admission.nurse_staff'),
         ward: form.ward,
         createdBy: currentUser?.email || 'system'
       });
 
-      // 2. Set Context
       setLiveContext(patient.id, encounterId);
 
-      // 3. Log Audit
       await logAudit({
         action: AUDIT_ACTIONS.CREATE,
         resource_type: COLLECTIONS.ENCOUNTERS,
@@ -754,65 +1144,69 @@ function AdmissionModal({ patient, onClose, currentUser, doctors, onSuccess }) {
 
       onSuccess(patient.name);
     } catch (err) {
-      alert('Gagal admisi: ' + err.message);
+      toast.error(`${t('patients_v2.admission.fail')}${err.message}`);
     }
   };
 
   return (
     <div className="modal-overlay">
       <div className="modal-content card !max-w-[500px]">
-         <div className="flex-row justify-between items-center mb-6">
-            <div>
-              <h3 className="text-xl font-black tracking-tighter">Clinical Admission</h3>
-              <p className="text-xs text-on-surface-variant font-bold">Inisiasi Kunjungan Baru</p>
+         <div className="flex-row items-center justify-between mb-10 gap-6">
+            <div className="flex-column">
+              <h3 className="text-2xl font-black tracking-tighter leading-none">{t('patients_v2.admission.title')}</h3>
+              <p className="text-xs text-on-surface-variant font-bold mt-1 opacity-70">{t('patients_v2.admission.subtitle')}</p>
             </div>
-            <button className="w-10 h-10 rounded-full hover:bg-surface-container-high" onClick={onClose}>
-              <span className="material-symbols-outlined">close</span>
+            <button className="w-12 h-12 rounded-xl flex-row items-center justify-center bg-surface-container-high hover:bg-primary-container hover:text-primary transition-all" onClick={onClose}>
+              <span className="material-symbols-outlined !text-2xl">close</span>
             </button>
          </div>
 
-         <form onSubmit={handleSubmit} className="flex-column gap-5">
-            <div className="p-4 bg-primary-container/20 rounded-2xl border border-primary/10">
-              <span className="text-[10px] font-black uppercase text-primary tracking-widest block mb-1">Pasien Terpilih</span>
-              <p className="text-lg font-black text-on-surface">{patient.name}</p>
+         <form onSubmit={handleSubmit} className="flex-column gap-8">
+            <div className="p-4 bg-surface-container rounded-2xl border border-outline-variant overflow-hidden">
+              <span className="text-[10px] font-black uppercase text-on-surface-variant tracking-widest block mb-1 opacity-60">{t('patients_v2.admission.selected_patient')}</span>
+              <p className="text-xl font-black text-primary break-words">{patient.name}</p>
+              <p className="text-[10px] text-on-surface-variant font-bold mt-1 opacity-50">MRN: {patient.mrn} • {t('patients_v2.admission.insurance_active')}</p>
             </div>
 
-            <div className="grid-2">
-               <div>
-                  <label className="metric-label">Jenis Layanan</label>
-                  <select className="form-input" value={form.type} onChange={e => setForm(prev => ({...prev, type: e.target.value}))}>
-                     {Object.values(ENCOUNTER_TYPES).map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-               </div>
-               <div>
-                  <label className="metric-label">Unit / Ward</label>
-                  <select className="form-input" value={form.ward} onChange={e => setForm(prev => ({...prev, ward: e.target.value}))}>
-                     <option value="IGD">IGD (Emergency)</option>
-                     <option value="POLI_UMUM">Poli Umum</option>
-                     <option value="POLI_SPESIALIS">Poli Spesialis</option>
-                     <option value="WARD_A">Ward A (Inpatient)</option>
-                  </select>
-               </div>
+            <div className="flex-column gap-6">
+              <div className="grid-2">
+                 <div>
+                    <label className="metric-label">{t('patients_v2.admission.service_type')}</label>
+                    <select className="form-input" value={form.type} onChange={e => setForm(prev => ({...prev, type: e.target.value}))}>
+                       {Object.values(ENCOUNTER_TYPES).map(et => (
+                         <option key={et} value={et}>{t('encounter.types.' + et.toLowerCase())}</option>
+                       ))}
+                    </select>
+                 </div>
+                 <div>
+                    <label className="metric-label">{t('patients_v2.admission.ward')}</label>
+                    <select className="form-input" value={form.ward} onChange={e => setForm(prev => ({...prev, ward: e.target.value}))}>
+                       {['igd', 'poli_umum', 'poli_spesialis', 'ward_a'].map(w => (
+                         <option key={w} value={w.toUpperCase()}>{t('patients_v2.admission.wards.' + w)}</option>
+                       ))}
+                    </select>
+                 </div>
+              </div>
+
+              <div>
+                 <label className="metric-label">{t('patients_v2.admission.reason')}</label>
+                 <textarea 
+                   required
+                   autoFocus
+                   className="form-input" 
+                   rows="4" 
+                   placeholder={t('patients_v2.admission.reason_placeholder')}
+                   value={form.reason}
+                   onChange={e => setForm(prev => ({...prev, reason: e.target.value}))}
+                 />
+              </div>
             </div>
 
-            <div>
-               <label className="metric-label">Alasan Masuk / Keluhan Utama</label>
-               <textarea 
-                 required
-                 autoFocus
-                 className="form-input" 
-                 rows="3" 
-                 placeholder="Misal: Demam tinggi 3 hari, Sesak nafas, dll..."
-                 value={form.reason}
-                 onChange={e => setForm(prev => ({...prev, reason: e.target.value}))}
-               />
-            </div>
-
-            <div className="flex-row gap-3 mt-4">
-               <button type="button" className="btn-ghost flex-1" onClick={onClose}>Batal</button>
-               <button type="submit" className="btn-primary flex-1">
-                  <span className="material-symbols-outlined mr-2">medical_services</span>
-                  Proses Admisi
+            <div className="flex-row gap-3 pt-6 border-t border-outline-variant">
+               <button type="button" className="btn-ghost flex-1" onClick={onClose}>{t('common.cancel')}</button>
+               <button type="submit" className="btn-primary flex-[1.5]">
+                  <span className="material-symbols-outlined mr-1">check_circle</span>
+                  {t('patients_v2.admission.btn_process')}
                </button>
             </div>
          </form>

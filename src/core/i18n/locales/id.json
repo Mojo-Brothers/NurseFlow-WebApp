@@ -1,4 +1,76 @@
 {
+  "common": {
+    "save": "Simpan",
+    "cancel": "Batal",
+    "delete": "Hapus",
+    "edit": "Ubah",
+    "search": "Cari...",
+    "category": "Kategori",
+    "status": {
+      "excellent": "Sangat Baik",
+      "risk": "RISIKO",
+      "normal": "NORMAL",
+      "abnormal": "ABNORMAL",
+      "overdue": "TERLAMBAT",
+      "wait_time": "Waktu Tunggu",
+      "signed": "Ditandatangani",
+      "draft": "Draf",
+      "offline": "LURING"
+    },
+    "status_label": "Status",
+    "general": "UMUM",
+    "na": "N/A",
+    "success": "Operasi berhasil",
+    "resource_type": "Tipe Sumber Daya",
+    "details": "Detail",
+    "alerts": {
+      "sepsis_alert": "⚠️ PERINGATAN SEPSIS (qSOFA >= 2)",
+      "surveillance_insight": "Wawasan Surveilans",
+      "ack_risk": "Konfirmasi Risiko"
+    },
+    "sync": {
+      "synchronizing": "Sinkronisasi...",
+      "offline_mode": "Mode Offline",
+      "pending_count": "{{count}} Asesmen Tertunda",
+      "continuity_active": "Kontinuitas Aktif"
+    },
+    "theme": {
+      "toggle": "Ganti Mode Gelap/Terang",
+      "switch_light": "Ganti ke Mode Terang",
+      "switch_dark": "Ganti ke Mode Gelap"
+    },
+    "years": "thn",
+    "unidentified": "PASIEN TIDAK TERIDENTIFIKASI",
+    "yes": "YA",
+    "no": "TIDAK",
+    "today": "Hari Ini",
+    "errors": {
+      "generic": "Kesalahan Sistem"
+    },
+    "units": {
+      "bpm": "BPM",
+      "mmhg": "mmHg",
+      "per_min": "x/mnt",
+      "percent": "%",
+      "kg": "kg",
+      "cm": "cm",
+      "celcius": "°C",
+      "minute_short": "m"
+    },
+    "user": "Pengguna",
+    "just_now": "Baru Saja",
+    "refresh": "Segarkan Data"
+  },
+  "clinical_alerts": {
+    "title": "Pusat Kewaspadaan Klinis",
+    "news2_escalation": "ESKALASI NEWS2",
+    "critical": "KRITIS: Dibutuhkan Tim Medis Reaksi Cepat (MET)",
+    "urgent": "URGEN: Dibutuhkan Tinjauan Medis Senior",
+    "watch": "WATCH: Tingkatkan Frekuensi Monitoring",
+    "ack": "KONFIRMASI PERINGATAN",
+    "resolved": "PERINGATAN DISELESAIKAN",
+    "witness_added": "Saksi terverifikasi untuk penyiapan."
+  },
   "nav": {
     "clinical": "Klinis",
     "operational": "Operasional",
@@ -6,7 +78,7 @@
     "dashboard": "Dashboard Utama",
     "patients": "Data Pasien",
     "encounters": "Manajemen Kunjungan",
-    "triage": "Triage IGD",
+    "triage": "Triase IGD",
     "emr": "Rekam Medis (SOAP)",
     "emr_rj": "EMR Rawat Jalan",
     "credentials": "Kredensial Saya",
@@ -24,7 +96,8 @@
     "master_hub": "Pusat Master Data",
     "settings": "Pengaturan",
     "language": "Bahasa",
-    "logout": "Keluar"
+    "logout": "Keluar",
+    "guide": "Panduan Pengguna"
   },
   "dashboard": {
     "overview": "Ikhtisar Klinis",
@@ -115,7 +188,9 @@
       "temp": "SUHU",
       "weight": "Berat Badan",
       "height": "Tinggi Badan",
-      "bmi": "Indeks Massa Tubuh"
+      "bmi": "Indeks Massa Tubuh",
+      "normal": "NORMAL",
+      "abnormal": "ABNORMAL"
     },
     "escalation": {
       "none": "Normal",
@@ -147,15 +222,21 @@
     "eta_trauma": "Kasus trauma masuk ETA 10 mnt. Kesiapan ESI Level 1 di Area Trauma 1-4.",
     "escalation_notice": "Eskalasi ke Kepala Perawat dalam 45 detik",
     "time_to_ack": "Waktu Konfirmasi",
-    "ack_form": {
+    "escalation_flow": {
       "select_role": "1. Pilih Peran",
       "select_action": "2. Pilih Tindakan",
-      "confirm": "Konfirmasi"
+      "confirm": "Konfirmasi",
+      "rn": "Charge Nurse (Perawat Jaga)",
+      "md": "Attending MD (Dokter DPJP)",
+      "triage": "Kerahkan Tim Triage",
+      "surge": "Aktifkan Kapasitas Lonjakan"
     },
     "metrics": {
       "triage_active": "Triage Aktif",
       "ventilators": "Ketersediaan Ventilator",
-      "bor": "Okupansi Tempat Tidur (BOR)"
+      "bor": "Okupansi Tempat Tidur (BOR)",
+      "active": "Aktif",
+      "available": "Tersedia"
     },
     "triage_board": {
       "title": "Papan Triage Aktif",
@@ -163,26 +244,171 @@
       "identity": "Identitas Pasien",
       "timeline": "Status / Linimasa",
       "vitals": "Data Vital",
-      "cds_action": "Rekomendasi CDS"
+      "cds_action": "Rekomendasi CDS",
+      "syncing": "Sinkronisasi HL7...",
+      "full_timeline": "Linimasa Lengkap",
+      "source_hl7": "Sumber: HL7 Live",
+      "filter": "Filter",
+      "no_cases": "Tidak ada kasus triage aktif.",
+      "overdue": "TERLAMBAT",
+      "rising_risk": "Risiko Meningkat",
+      "execute": "Eksekusi"
+    },
+    "audit": {
+      "title": "Log Audit Live",
+      "subtitle": "Peristiwa Sistem Patuh JCI",
+      "no_logs": "Tidak ada log tercatat.",
+      "view_full": "Lihat Linimasa Audit Lengkap"
+    },
+    "footer": {
+      "primary_server": "Server Utama: SG-01",
+      "backup_node": "Node Cadangan Aktif",
+      "failover_ready": "Siap Failover (99.9% Uptime)",
+      "db_health": "Kesehatan DB: Terdistribusi (42ms)",
+      "version": "v2.4.1 (Validasi JCI)"
+    }
+  },
+  "emr_v2": {
+    "title": "Rekam Medis Elektronik",
+    "subtitle": "Integrasi Data Klinis JCI",
+    "switch_context": "-- Ganti Konteks --",
+    "select_patient": "Pilih Pasien",
+    "handover": "Handover SBAR",
+    "history": "Riwayat",
+    "diagnostics": "Diagnostik",
+    "surgery": "Bedah",
+    "education": "Edukasi",
+    "consent": "Persetujuan",
+    "workspace": {
+      "title": "Ruang Kerja Aktif",
+      "subtitle": "Entri Profesional Baru",
+      "site": "Lokasi",
+      "save_draft": "Simpan Draf",
+      "sign_off": "✓ Tanda Tangan",
+      "doctor_only": "Hanya Dokter",
+      "start_tele": "Mulai Tele-Konsultasi"
+    },
+    "alerts": {
+      "critical_lab": "NILAI LAB KRITIS TERDETEKSI",
+      "ack_details": "Acknowledge & Lihat Detail",
+      "forbidden_terms": "Istilah Terlarang Terdeteksi",
+      "allergy_conflict": "Konflik Alergi Terdeteksi",
+      "sign_blocked": "Tanda Tangan Diblokir",
+      "soap_mandatory": "Subjektif & Asesmen wajib diisi untuk tanda tangan klinis.",
+      "allergy_conflict_msg": "Konflik alergi terdeteksi untuk {{meds}}. Harap perbaiki resep.",
+      "privilege_denied": "{{reason}}. Harap verifikasi kredensial Anda.",
+      "forbidden_terms_msg": "Singkatan terlarang terdeteksi ({{terms}}). Gunakan istilah standar (mis. {{replacement}}) sesuai JCI MOI.2.",
+      "no_encounter": "Tidak ada kunjungan klinis aktif yang ditemukan."
+    },
+    "soap": {
+      "subjective": "Subjektif (S)",
+      "objective": "Objektif (O)",
+      "assessment": "Asesmen (A)",
+      "plan": "Instruksi Rencana (P)",
+      "pharmacy": "Rencana Farmasi",
+      "claim_ready": "Siap Klaim",
+      "claim_risk": "Risiko Klaim: Data Minim"
+    },
+    "receipt": {
+      "title": "Ringkasan Transaksi Klinis",
+      "subtitle": "Rekam EMR telah diamankan. Status operasional:",
+      "record_locked": "TERKUNCI",
+      "billing": "Stasiun Billing",
+      "pharmacy": "Stasiun Farmasi",
+      "success": "BERHASIL",
+      "retry_billing": "⚠ COBA LAGI BILLING",
+      "retry_pharmacy": "⚠ COBA LAGI FARMASI",
+      "handover_complete": "Handover Profesional Selesai",
+      "view_summary": "Lihat Ringkasan Medis"
+    },
+    "discharge": {
+      "title": "Discharge Pasien",
+      "subtitle": "Menutup perjalanan klinis akan melepaskan tempat tidur pasien dan mengunci rekam medis.",
+      "execute": "Eksekusi Discharge Final",
+      "restricted": "Discharge Terbatas (Hanya Dokter)"
+    },
+    "lock": {
+      "title": "Akses Rekam Terbatas",
+      "subtitle": "Sesi ini telah di-discharge atau difinalisasi. Hubungi supervisor jika ini kesalahan.",
+      "locked_by": "Dikunci Oleh",
+      "return_worklist": "Kembali ke Worklist",
+      "open_print": "Buka Ringkasan Siap Cetak"
+    },
+    "confirm": {
+      "title": "Kunci Tanda Tangan Klinis",
+      "certify": "\"Saya menyatakan bahwa dokumentasi klinis di atas akurat dan lengkap.\"",
+      "entity": "Entitas Tanda Tangan",
+      "legal_force": "Kekuatan Hukum",
+      "execute": "✓ Eksekusi Tanda Tangan Final",
+      "review": "Tinjau Perubahan"
+    },
+    "unsaved": {
+      "title": "Penemuan Klinis Belum Disimpan",
+      "subtitle": "Anda telah melakukan perubahan pada catatan SOAP. Membuangnya akan menghilangkan data sesi klinis ini secara permanen.",
+      "discard": "Buang & Keluar",
+      "stay": "Tetap & Selesaikan"
     }
   },
   "patients_v2": {
     "title": "Direktori Pasien",
     "subtitle": "Rekam Medis Induk Klinis JCI",
     "search_placeholder": "Cari Nama / No. RM / NIK...",
-    "btn_new": "Pendaftaran Baru",
-    "filters": {
-      "insurance": "Asuransi",
-      "safety": "Keselamatan Klinis",
-      "sort": "Urutkan"
+    "btn_filter": "Filter",
+    "filter": {
+      "title": "Filter & Navigasi Cepat",
+      "subtitle": "Kustomisasi Tampilan Data Pasien"
     },
+    "btn_new": "Pendaftaran Baru",
     "table": {
+      "mrn": "No. RM / MRN",
+      "registered": "Terdaftar",
+      "no_records": "Data tidak ditemukan untuk \"{{term}}\"",
       "identity": "Identitas Pasien (IPSG 1)",
-      "bio": "Bio & Gender",
-      "safety": "Indikator Keselamatan (IPSG 3/6)",
-      "insurance": "Penjamin & DPJP",
-      "reg_date": "Tgl. Daftar",
-      "actions": "Tindakan Klinis"
+      "age_gender": "Usia & Gender",
+      "complaint": "Keselamatan (IPSG)",
+      "vitals": "Penjamin & DPJP",
+      "status": "Tgl. Daftar",
+      "actions": "Aksi Klinis",
+      "syncing": "Menyinkronkan dengan Backend Klinis...",
+      "no_records_match": "Tidak ada data ditemukan untuk \"{{term}}\".",
+      "mrn_pending": "MRN-TERTUNDA",
+      "not_registered": "Belum Terdaftar"
+    },
+    "safety": {
+      "allergy": "Alergi",
+      "no_allergy": "Bebas Alergi",
+      "fall_risk": "Risiko Jatuh",
+      "stable": "Stabil"
+    },
+    "filters": {
+      "insurance": "Asuransi / Penjamin",
+      "safety": "Keselamatan Klinis (IPSG)",
+      "sort": "Urutkan",
+      "patient_type": "Jenis Pasien",
+      "triage": "Clinical Triage (ATS/ESI)",
+      "location": "Lokasi / Ruang",
+      "all": "Semua",
+      "allergy": "Risiko Alergi",
+      "fall_risk": "Risiko Jatuh",
+      "reset": "Reset Filter",
+      "apply": "Terapkan",
+      "sort_label": "Sort:",
+      "sort_recent": "Terbaru",
+      "sort_name": "Nama A-Z",
+      "triage_levels": {
+        "p1": "P1 - Resusitasi",
+        "p2": "P2 - Emergency",
+        "p3": "P3 - Urgent",
+        "p4": "P4 - Semi-Urgent",
+        "p5": "P5 - Non-Urgent"
+      }
+    },
+    "actions": {
+      "view_emr": "Lihat EMR",
+      "admit": "Admisi / Admit",
+      "edit": "Ubah Data",
+      "history": "Riwayat Audit",
+      "archive": "Arsip Data"
     },
     "wizard": {
       "title": "Registrasi Klinis Lengkap JCI",
@@ -193,23 +419,697 @@
       "step4": "Penjamin & Asuransi",
       "step5": "Skrining Safety",
       "step6": "Persetujuan Umum",
+      "sections": {
+        "insurance": "Data Penjamin / Asuransi",
+        "safety": "Skrining Klinis & Safety (IPSG)",
+        "rights": "Hak Pasien (PFR) & Persetujuan Umum"
+      },
+      "fields": {
+        "guarantor_type": "JENIS PENJAMIN",
+        "card_number": "NOMOR KARTU / POLIS / SEP",
+        "blood_type": "GOLONGAN DARAH",
+        "dpjp": "DOKTER PENANGGUNG JAWAB (DPJP)",
+        "allergy_history": "RIWAYAT ALERGI (OBAT/MAKANAN)",
+        "allergy_placeholder": "Tulis 'TIDAK ADA' jika nihil",
+        "card_number_placeholder": "Contoh: 000123456789",
+        "fall_risk_title": "IPSG 6: RISIKO JATUH",
+        "fall_risk_desc": "Pasien memiliki risiko jatuh tinggi / butuh bantuan alat jalan",
+        "privacy": "Privacy Preference (JCI PFR.1)",
+        "privacy_options": {
+          "standard": "Standard Privacy (Dapat dikunjungi)",
+          "vip": "VIP Status (Nama tidak muncul di monitor publik)",
+          "anonymous": "Anonymous / High Security (Kerahasiaan Total)"
+        },
+        "spiritual": "Kebutuhan Khusus / Spiritual (Misal: Doa Khusus)",
+        "spiritual_placeholder": "Kosongkan jika tidak ada"
+      },
+      "back": "Kembali",
+      "cancel": "Batal",
+      "next": "Lanjutkan ke Langkah {{next}}",
+      "finalize": "Finalisasi & Daftarkan Pasien",
       "consent_label": "Dengan menandatangani secara digital, saya memahami hak dan kewajiban saya sebagai pasien, menyetujui asuhan medis sesuai standar RS, dan mengizinkan penggunaan data medis saya untuk kepentingan klinis & asuransi sesuai standar akreditasi JCI/KARS."
+    },
+    "admission": {
+      "title": "Admisi Klinis",
+      "subtitle": "Inisiasi Kunjungan Baru & Triage",
+      "selected_patient": "Pasien Terpilih",
+      "insurance_active": "BPJS Aktif",
+      "service_type": "Jenis Layanan",
+      "ward": "Unit / Ward",
+      "reason": "Keluhan Utama / Alasan Masuk",
+      "reason_placeholder": "Contoh: Demam 3 hari, sesak napas tiba-tiba, nyeri dada...",
+      "nurse_staff": "Petugas Perawat",
+      "btn_process": "Proses Admisi Pasien",
+      "fail": "Admisi gagal: ",
+      "success_alert": "Pasien {{name}} berhasil diadmisi. Mengalihkan ke Triage...",
+      "wards": {
+        "igd": "IGD (Gawat Darurat)",
+        "poli_umum": "Poli Umum",
+        "poli_spesialis": "Poli Spesialis",
+        "ward_a": "Bangsal A (Rawat Inap)"
+      }
+    }
+  },
+  "admin_cc": {
+    "title": "Pusat Komando Admin",
+    "subtitle": "Tata Kelola & Intelijen",
+    "desc": "Dashboard Audit JCI · Observabilitas Real-time · Penegakan RBAC",
+    "active_alerts": "{{count}} PERINGATAN AKTIF",
+    "secure_status": "V5.7 AMAN",
+    "syncing": "Menyinkronkan Data Terenkripsi...",
+    "tabs": {
+      "audit": "Audit Trail",
+      "observability": "Observabilitas",
+      "master_indices": "Indeks Master",
+      "conflicts": "Konflik Data",
+      "users": "Direktori Staf"
+    },
+    "stock_vigilance": {
+      "title": "Vigilansi Stok Klinis",
+      "desc": "Pemantauan Risiko Rantai Pasok",
+      "alert_title": "Peringatan Stok Aktif",
+      "low_stock": "STOK RENDAH",
+      "critical_stock": "KRITIS: STOK HABIS",
+      "no_alerts": "Kontinuitas Rantai Pasok Terkonfirmasi",
+      "btn_restock": "MENUJU FARMASI",
+      "metrics": {
+        "low_count": "Risiko Pasokan",
+        "stock_out": "Stok Kosong Kritis"
+      }
+    },
+    "banner": {
+      "degraded": "SISTEM TERGRADASI: Latensi Tinggi Terdeteksi. Harap batasi pendaftaran baru.",
+      "failover": "FAILOVER KRITIS: Mode Offline Aktif."
+    },
+    "observability": {
+      "pipeline_title": "Pipeline Alur Pasien Real-time",
+      "pipeline_desc": "Pemantauan pergerakan fase klinis secara langsung",
+      "total_patients": "{{count}} TOTAL PASIEN",
+      "phases": {
+        "waiting": "MENUNGGU / ADMISI",
+        "triage": "TRIAGE / ANTREAN DOKTER",
+        "treatment": "DALAM PERAWATAN / EMR"
+      },
+      "metrics": {
+        "latency": "Server Latency",
+        "sync_rate": "Tingkat Keberhasilan Sinkronisasi",
+        "persistence": "Persistensi Firestore",
+        "persistence_mem": "Fallback Memori",
+        "persistence_ok": "Persisten",
+        "active_sessions": "Sesi Klinis Aktif",
+        "status_good": "BAIK",
+        "status_slow": "LAMBAT",
+        "status_caution": "WASPADA"
+      },
+      "master_hub": {
+        "title": "Pusat Data Master",
+        "desc": "Kelola standarisasi Profesi, Ruangan, dan Indeks Klinis (Siap JCI/KARS).",
+        "btn": "Buka Pusat Data Master"
+      },
+      "alerts": {
+        "title": "Peringatan Klinis Aktif",
+        "no_alerts": "Tidak ada anomali kritis terdeteksi.",
+        "btn_ack": "KONFIRMASI"
+      },
+      "telemetry": {
+        "title": "Telemetri Keamanan",
+        "stream": "Intelijen Aliran Real-time",
+        "val_accuracy": "Akurasi Validasi (JCI)",
+        "identity_check": "Keberhasilan Pemeriksaan Silang Identitas",
+        "unauthorized": "Upaya Akses Tidak Sah",
+        "audit_sync": "Sinkronisasi Audit Server-side",
+        "diagnostic_title": "Auto-Diagnostik Sistem",
+        "diagnostic_desc": "Sistem saat ini menjalankan protokol **News2-Hardened** dengan validasi sisi server aktif. Tidak ada upaya bypass yang terdeteksi dalam 24 jam terakhir."
+      }
+    },
+    "audit": {
+      "title": "Audit Trail Global",
+      "btn_export": "EKSPOR CSV",
+      "actions": {
+        "create": "BUAT",
+        "update": "UBAH",
+        "delete": "HAPUS",
+        "view": "LIHAT",
+        "login": "MASUK",
+        "logout": "KELUAR",
+        "medical_action": "TINDAKAN MEDIS",
+        "alert_ack": "KONFIRMASI ALERTI",
+        "conflict_resolve": "RESOLUSI KONFLIK",
+        "credential_verify": "VERIFIKASI KREDENSIAL",
+        "terminology_audit": "AUDIT TERMINOLOGI",
+        "consent_signed": "PERSETUJUAN DITANDATANGANI",
+        "privacy_update": "PERUBAHAN PRIVASI"
+      },
+      "table": {
+        "ts": "Timestamp",
+        "identity": "Identitas",
+        "operation": "Operasi",
+        "obj_id": "ID Objek",
+        "analysis": "Analisis Mendalam",
+        "verified": "Token Terverifikasi"
+      }
+    },
+    "users": {
+      "search_placeholder": "Cari Tenaga Medis (Nama, NIP, Email)...",
+      "filter_profession": "SEMUA PROFESI",
+      "filter_dept": "SEMUA DEPARTEMEN",
+      "total_staff": "Total Staf",
+      "not_found": "Data staf tidak ditemukan dengan kriteria ini.",
+      "unnamed": "Staf Tanpa Nama",
+      "str_verified": "STR Terverifikasi",
+      "table": {
+        "identity": "Identitas & Kredensial Staf",
+        "dept": "Departemen",
+        "role": "Keamanan & Peran",
+        "status": "Status",
+        "actions": "Aksi",
+        "no_nip": "TANPA-NIP",
+        "unit_label": "Unit Operasional",
+        "btn_intel": "Intelijen Staf"
+      },
+      "limit_warning": "Menampilkan 50 data teratas. Gunakan pencarian untuk spesifikasi data JCI.",
+      "modal": {
+        "metadata": "Metadata Profesional",
+        "metadata_desc": "Data Akreditasi JCI & Portofolio Lisensi",
+        "id_label": "NIP / ID Karyawan",
+        "unit_label": "Unit Medis",
+        "id_verified": "ID DIGITAL TERVERIFIKASI",
+        "item_exp": "Pengalaman",
+        "item_hire": "Tanggal Bergabung",
+        "item_str": "Nomor STR",
+        "item_sip": "Nomor SIP",
+        "not_registered": "TIDAK TERDAFTAR",
+        "status_none": "NIHIL",
+        "years": "Tahun",
+        "competency": "Kompetensi & Keterampilan",
+        "btn_edit": "UBAH PROFIL",
+        "btn_perms": "KELOLA IZIN"
+      }
+    },
+    "conflicts": {
+      "title": "Konflik & Karantina Data",
+      "pending": "{{count}} PERLU RESOLUSI",
+      "integrity_ok": "Integritas Data Terpelihara",
+      "desc": "Tidak ada konflik versi data klinis saat ini. Semua sinkronisasi offline-ke-online diverifikasi secara otomatis."
     }
   },
   "admin_hub": {
     "title": "Pusat Intelijen Data Master",
     "governance": "Tata Kelola Administratif",
-    "diagnostic_title": "Diagnostik Persistensi Data",
-    "diagnostic_desc": "Uji kemampuan Read/Write Firestore menggunakan sesi aktif Anda (Audit-Ready).",
-    "btn_test": "Jalankan Uji Konektivitas",
-    "categories": {
-      "professions": "Profesi & Kredensial",
-      "rooms": "Struktur Ruangan & Bed",
-      "roles": "Role & Kewenangan (RBAC)",
-      "categorization": "Pengkategorian Klinis"
+    "module_meta": "Modul Tata Kelola",
+    "btn_test": "Jalankan Tes Konektivitas",
+    "confirm_seed": "Apakah Anda yakin? Ini akan mengisi data master default. Data yang ada tidak akan dihapus tetapi duplikasi mungkin terjadi.",
+    "seed_success": "Data master berhasil diisi.",
+    "loading": "Memuat Data Enterprise...",
+    "prompt_edit": "Ubah entri:",
+    "confirm_delete_item": "Apakah Anda yakin ingin menghapus '{{item}}'?",
+    "metrics": {
+      "local_persistence": "Local Persistence",
+      "sync_queue": "Antrian Sinkronisasi",
+      "pending_actions": "Aksi Tertunda",
+      "sync_ok": "Basis data lokal sinkron sepenuhnya",
+      "traceability": "Traceability Index",
+      "audit_score": "Skor Integritas Audit",
+      "audit_score_desc": "Log audit mencakup 100% transaksi 24 jam terakhir.",
+      "deployment": "Deployment Status",
+      "his_readiness": "Kesiapan Modul HIS"
     },
-    "prompt_add": "Masukkan nama entri baru untuk kategori ini:",
-    "prompt_edit": "Ubah nama entri menjadi:",
-    "confirm_delete": "Apakah Anda yakin ingin menghapus entri ini? Tindakan ini akan tercatat dalam audit log."
+    "error": {
+      "op_failed": "Gagal Operasional Data",
+      "admin_required": "Pastikan akun Anda memiliki role ADMIN atau periksa aturan keamanan Firestore."
+    },
+    "tabs": {
+      "general": "Konfigurasi Umum",
+      "catalog": "Katalog Layanan",
+      "safety": "Keselamatan Obat"
+    },
+    "modal": {
+      "add_title": "Tambah Entri Baru",
+      "placeholder": "Ketik nama entri (contoh: Poli Jantung)...",
+      "btn_cancel": "Batal",
+      "btn_save": "Simpan Entri"
+    },
+    "log": {
+      "title": "Log Aktivitas Terbaru"
+    },
+    "table": {
+      "id": "ID",
+      "item": "Layanan / Tindakan",
+      "price": "Tarif Dasar (IDR)",
+      "status": "Status",
+      "active": "Aktif"
+    },
+    "safety": {
+      "high_alert": "Obat Kewaspadaan Tinggi (High Alert)",
+      "lasa": "Obat LASA (Look-Alike Sound-Alike)"
+    }
+  },
+  "worklist": {
+    "title": "Nursing Worklist",
+    "subtitle": "Shift Board",
+    "btn_add": "Tambah Tugas",
+    "progress_title": "Progress Shift",
+    "task_summary": "Tugas shift · {{pending}} pending · {{done}}/{{total}} selesai",
+    "no_tasks": "Tidak ada tugas dengan filter ini.",
+    "modal_title": "Tambah Tugas Baru",
+    "label_patient": "PASIEN",
+    "label_task_type": "TIPE TUGAS",
+    "label_description": "DESKRIPSI",
+    "label_due_time": "WAKTU PELAKSANAAN",
+    "placeholder_description": "Detail tugas...",
+    "btn_cancel": "Batal",
+    "actions": {
+      "start": "▶ Mulai",
+      "done": "✓ Tandai Selesai",
+      "skip": "Skip"
+    },
+    "statuses": {
+      "all": "Semua",
+      "pending": "Pending",
+      "in_progress": "Dalam Proses",
+      "done": "Selesai",
+      "skipped": "Dilewati"
+    },
+    "task_types": {
+      "medication": "Pemberian Obat",
+      "vital_check": "Cek Vital",
+      "wound_care": "Perawatan Luka",
+      "lab_draw": "Ambil Darah",
+      "custom": "Tugas Lain"
+    }
+  },
+  "billing": {
+    "title": "Billing & Discharge",
+    "subtitle": "Keuangan & Administrasi",
+    "summary": "Tagihan aktif · {{draft}} draft · {{finalized}} menunggu pelunasan",
+    "list_title": "Daftar Tagihan",
+    "no_active_bills": "Tidak ada tagihan aktif.",
+    "edit_title": "Kalkulasi & Edit Tagihan",
+    "add_service": "Tambah Layanan",
+    "select_service": "-- Tambah Layanan --",
+    "btn_add": "+ Tambah",
+    "no_items": "Belum ada item. Tambah layanan di atas.",
+    "total_label": "TOTAL TAGIHAN",
+    "save_draft": "💾 Simpan Draft",
+    "finalize_btn": "✓ Finalize & Discharge",
+    "authorize_btn": "Authorize Settlement",
+    "saving": "Menyimpan...",
+    "confirm_finalize": "Finalize tagihan? Tidak bisa diedit setelah ini.",
+    "confirm_paid": "Tandai tagihan sebagai LUNAS?",
+    "item_count": "{{count}} item",
+    "item_count_plural": "{{count}} item",
+    "errors": {
+      "load_failed": "Gagal memuat data tagihan"
+    },
+    "success": {
+      "saved": "Draf tagihan berhasil disimpan",
+      "finalized": "Tagihan difinalisasi dan rekam dikunci"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "finalized": "Finalized",
+      "paid": "Lunas ✓",
+      "waived": "Diwaiver"
+    },
+    "table": {
+      "item": "Layanan",
+      "qty": "Qty",
+      "price": "Harga",
+      "total": "Total",
+      "action": "Aksi"
+    },
+    "payment_modal": {
+      "title": "Stasiun Pembayaran",
+      "consolidated_charges": "Rincian Biaya Terkonsolidasi",
+      "grand_total": "Total Keseluruhan",
+      "select_method": "Pilih Metode Pembayaran",
+      "processing": "Memproses Transaksi...",
+      "authorize": "Otorisasi Pembayaran",
+      "secure_note": "\"Modul Transaksi Terenkripsi 256-bit Aman\"",
+      "success_alert": "Pembayaran Berhasil! Rekening Telah Diselesaikan.",
+      "fail_alert": "Pembayaran Gagal: ",
+      "methods": {
+        "e_wallet": "E-WALLET",
+        "va": "VIRTUAL ACCOUNT",
+        "cc": "KARTU KREDIT",
+        "cash": "TUNAI"
+      }
+    }
+  },
+  "triage_v2": {
+    "triase": "Triase",
+    "mode": "Mode",
+    "vitals": {
+      "hr": "Detak Jantung",
+      "bp": "Tekanan Darah",
+      "rr": "Laju Napas",
+      "spo2": "Saturasi O2",
+      "weight": "Berat Badan",
+      "height": "Tinggi Badan",
+      "temp": "Suhu"
+    },
+    "modes": {
+      "rapid": "⚡ Intake Cepat",
+      "detail": "🧾 Asesmen Detail",
+      "monitor": "📊 Monitor Komando",
+      "poli": "🏥 Skrining Poliklinik"
+    },
+    "monitor": {
+      "avg_wait": "Rerata Waktu Tunggu",
+      "active_admissions": "Admisi Aktif",
+      "critical_cases": "Kasus Kritis (ESI 1/2)",
+      "emergency_board": "Papan Darurat Live",
+      "table": {
+        "patient_mrn": "Pasien / MRN",
+        "esi": "ESI",
+        "status": "Status",
+        "wait_time": "Waktu Tunggu"
+      },
+      "surge_protocol": "Aktifkan Protokol Lonjakan",
+      "export_report": "Ekspor Laporan Harian",
+      "empty_queue": "Antrean kosong. Tidak ada pasien menunggu triase.",
+      "surveillance_active": "Surveilans Global Aktif",
+      "audit_reporting": "Audit & Pelaporan",
+      "pending": "MENUNGGU"
+    },
+    "labels": {
+      "chief_complaint": "Keluhan Utama",
+      "esi_score": "SKOR ESI",
+      "esi_level": "LEVEL ESI",
+      "current_status": "Status Saat Ini",
+      "system_ready": "SISTEM SIAP",
+      "vitals_logged": "Tanda Vital Tercatat",
+      "parameters": "Parameter",
+      "queue_sync": "Sinkronisasi Antrean",
+      "live_feed": "UMPAN DATA LIVE",
+      "neurological": "Neurologis",
+      "integumentary": "Integumen",
+      "musculoskeletal": "Muskuloskeletal",
+      "gastrointestinal": "Gastrointestinal",
+      "survey_primer": "Survei Primer (Fase 0)",
+      "survey_airway": "Airway (Jalan Napas)",
+      "survey_breathing": "Breathing (Pernapasan)",
+      "survey_circulation": "Circulation (Sirkulasi)",
+      "survey_disability": "Disability (Neurologis)",
+      "safety_check": "Pemeriksaan Keamanan",
+      "physiological_status": "Status Fisiologis",
+      "additional_assessment": "Asesmen Tambahan",
+      "pain_scale": "Skala Nyeri (0-10)",
+      "current_meds": "Obat yang Sedang Dikonsumsi",
+      "current_meds_placeholder": "Sebutkan obat rutin dan dosisnya...",
+      "escalation_trigger": "Pemicu Eskalasi",
+      "wait_time_elapsed": "Waktu Tunggu Berjalan",
+      "jci_evidence": "JCI AOP.1.1 · Bukti Klinis",
+      "emergency_protocol": "Protokol Darurat",
+      "phase_1_active": "Fase 1 AKTIF",
+      "active_session": "Sesi Aktif",
+      "medical_staff": "Staf Medis",
+      "entry": "Masuk",
+      "clr": "Bersihkan"
+    },
+    "screening": {
+      "title": "Skrining Infeksi & Jantung",
+      "fever": "Riwayat Demam (>3 hari)?",
+      "travel": "Perjalanan Luar Negeri Baru-baru ini (14 hari)?",
+      "contact": "Kontak dengan Kasus Infeksi?",
+      "chest_pain": "Nyeri Dada / Berdebar Baru-baru ini?",
+      "protocol_active": "Protokol AKTIF",
+      "escalation_desc": "Transfer otomatis ke Triage Darurat jika ada jawaban \"YA\" di atas."
+    },
+    "actions": {
+      "save_draft": "Simpan Draf",
+      "process": "Proses Admisi & Triage"
+    },
+    "notifications": {
+      "submit_success": "Triage berhasil dikirim",
+      "submit_failed": "Gagal mengirim triage"
+    },
+    "errors": {
+      "no_patient_selected": "Silakan pilih pasien terlebih dahulu",
+      "no_patient_selected_desc": "Pilih pasien dari daftar monitor untuk memulai proses triase."
+    },
+    "tags": {
+      "chest_pain": "Nyeri Dada",
+      "shortness_of_breath": "Sesak Napas",
+      "bleeding": "Pendarahan",
+      "major_trauma": "Trauma Berat",
+      "seizure": "Kejang",
+      "unconscious": "Penurunan Kesadaran"
+    },
+    "options": {
+      "airway": {
+        "PATENT": "PATEN",
+        "OBSTRUCTED": "TERSUMBAT",
+        "STRIDOR": "STRIDOR"
+      },
+      "breathing": {
+        "ADEQUATE": "ADEKUAT",
+        "LABORED": "SESAK",
+        "APNEIC": "APNEA"
+      },
+      "circulation": {
+        "PRESENT": "ADA",
+        "WEAK": "LEMAH",
+        "ABSENT": "TIDAK ADA"
+      },
+      "neurological": {
+        "ALERT": "SADAR",
+        "VERBAL": "VERBAL",
+        "PAIN": "NYERI",
+        "UNRESPONSIVE": "TIDAK RESPON"
+      }
+    },
+    "news2": {
+      "risk": {
+        "low": "RENDAH",
+        "medium": "SEDANG",
+        "high": "TINGGI"
+      },
+      "freq": {
+        "12_hourly": "Setiap 12 Jam",
+        "4_6_hourly": "Setiap 4-6 Jam",
+        "1_hourly": "Setiap Jam",
+        "continuous": "Kontinu / Bedside"
+      }
+    }
+  },
+  "emr_v2": {
+    "workspace": {
+      "title": "Ruang Kerja SOAP",
+      "subtitle": "Pendokumentasian Klinis Terstruktur",
+      "recent_lock": "Terkunci Baru-baru Ini",
+      "save_success": "Draf Berhasil Disimpan.",
+      "save_failed": "TRANSAKSI GAGAL: ",
+      "append_final": "TAMBAHAN FINAL",
+      "no_prior_records": "Tidak ada rekam medis sebelumnya ditemukan.",
+      "signed": "✅ Ditandatangani",
+      "draft": "📝 Draf",
+      "doctor_prefix": "Dok: ",
+      "items_sent": " ITEM TERKIRIM"
+    },
+    "discharge": {
+      "confirm_msg": "DISCHARGE FINAL: Anda yakin? Ini akan menutup pertemuan secara medis, melepaskan tempat tidur, dan memfinalisasi penagihan.",
+      "success": "Pasien Berhasil Di-discharge. Tempat Tidur Dilepaskan.",
+      "failed": "DISCHARGE GAGAL: "
+    },
+    "sections": {
+      "subjective": "Subjektif",
+      "objective": "Objektif",
+      "assessment": "Asesmen",
+      "plan": "Instruksi & Rencana"
+    }
+  },
+  "patient_form": {
+    "name": "NAMA LENGKAP (SESUAI IDENTITAS)",
+    "nik": "NIK / PASSPORT / ID NUMBER",
+    "pob": "TEMPAT LAHIR",
+    "dob": "TANGGAL LAHIR",
+    "gender": "GENDER",
+    "gender_m": "Laki-laki",
+    "gender_f": "Perempuan",
+    "nationality": "KEWARGANEGARAAN",
+    "marital_status": "STATUS KAWIN",
+    "address": "ALAMAT DOMISILI LENGKAP",
+    "occupation": "PEKERJAAN",
+    "education": "PENDIDIKAN TERAKHIR",
+    "preferred_lang": "BAHASA SEHARI-HARI",
+    "interpreter": "Butuh Penerjemah?",
+    "phone": "NOMOR TELEPON AKTIF",
+    "emergency_contact": "Kontak Darurat (Emergency Contact)",
+    "emergency_name": "NAMA KONTAK",
+    "relationship": "HUBUNGAN",
+    "emergency_phone": "HP KONTAK DARURAT",
+    "guarantor": "Penanggung Jawab Biaya (Guarantor)",
+    "guarantor_name": "NAMA PENANGGUNG JAWAB",
+    "guarantor_phone": "HP PENANGGUNG JAWAB",
+    "marital_options": {
+      "single": "Belum Kawin",
+      "married": "Kawin",
+      "divorced": "Cerai Hidup",
+      "widowed": "Cerai Mati"
+    },
+    "education_options": {
+      "sd": "SD",
+      "smp": "SMP",
+      "sma": "SMA",
+      "d3": "D3",
+      "s1": "S1",
+      "s2_s3": "S2/S3",
+      "none": "Tidak Sekolah"
+    },
+    "insurance_types": {
+      "umum": "UMUM",
+      "bpjs": "BPJS KESEHATAN",
+      "swasta": "ASURANSI SWASTA",
+      "corporate": "CORPORATE"
+    },
+    "blood_types": {
+      "a": "A",
+      "b": "B",
+      "ab": "AB",
+      "o": "O",
+      "unknown": "Tidak Tahu"
+    },
+    "religion_options": {
+      "islam": "Islam",
+      "protestant": "Protestan",
+      "catholic": "Katolik",
+      "hindu": "Hindu",
+      "buddha": "Buddha",
+      "confucian": "Konghucu"
+    },
+    "relationship_options": {
+      "family": "Keluarga",
+      "parent": "Orang Tua",
+      "spouse": "Suami/Istri",
+      "child": "Anak",
+      "other": "Lainnya"
+    },
+    "select_doctor": "-- Pilih Dokter --",
+    "mrn": "NO. RM"
+  },
+  "pharmacy_v2": {
+    "routes": {
+      "oral": "Oral",
+      "iv": "Intravena",
+      "sc": "Subkutan",
+      "im": "Intramuskular"
+    },
+    "labels": {
+      "unknown": "Tidak Diketahui",
+      "standard_dosage": "Dosis Standar",
+      "confused_with": "Bingung dengan"
+    },
+    "metrics": {
+      "pending_queue": "Antrean Farmasi",
+      "high_alert": "Obat Kewaspadaan Tinggi",
+      "impacted_patients": "Pasien Terdampak",
+      "current_session": "Sesi Aktif",
+      "pharmacist": "APOTEKER"
+    },
+    "queue_title": "Antrean Penyiapan Obat Aktif",
+    "refresh_queue": "PERBARUI ANTREAN",
+    "zero_pending": "Tidak ada antrean tertunda. Semua resep telah diproses.",
+    "patient_id_label": "Identitas Pasien",
+    "prescribed_by": "Diresepkan Oleh",
+    "dispensing_btn": "✓ Penyiapan",
+    "ipsg": {
+      "title": "Verifikasi IPSG",
+      "subtitle": "Sasaran 1: Pastikan identitas pasien sebelum memberikan obat.",
+      "patient_name": "Nama Pasien",
+      "order": "Pesanan Obat",
+      "mrn_label": "Ketik No. RM Pasien untuk Konfirmasi:",
+      "placeholder": "Masukkan No. RM...",
+      "mismatch": "Ketidakcocokan Identitas! Verifikasi gelang identitas pasien.",
+      "high_alert_protocol": "PROTOKOL HIGH-ALERT JCI",
+      "double_check_msg": "Verifikasi ganda diperlukan. Rekan kerja harus menyaksikan penyiapan ini.",
+      "witness_placeholder": "Email Saksi (Apoteker/Perawat)...",
+      "confirm_btn": "KONFIRMASI & SERAHKAN",
+      "cancel_btn": "Batal Verifikasi",
+      "witness_mandatory": "VALIDASI MMU JCI: Email saksi (berbeda dari Anda) wajib untuk obat High-Alert."
+    },
+    "alerts": {
+      "inventory_failure": "Kegagalan Inventaris/Penyiapan",
+      "out_of_stock": "STOK HABIS"
+    },
+    "inventory": {
+      "title": "Pusat Komando Stok",
+      "subtitle": "Rantai Pasok Klinis Waktu-Nyata",
+      "sync_btn": "Sinkron Stok",
+      "init_btn": "Inisialisasi Gudang",
+      "reorder_level": "Level Reorder",
+      "update_btn": "Perbarui Level Inventaris",
+      "empty_title": "Gudang Kosong",
+      "empty_desc": "Klik 'Inisialisasi Gudang' untuk memuat data stok klinis.",
+      "legend": {
+        "critical": "Stok Kritis",
+        "low": "Level Rendah",
+        "stocked": "Tersedia"
+      },
+      "alerts": {
+        "confirm_init": "Inisialisasi inventaris dengan stok default?",
+        "init_failed": "Inisialisasi gagal: ",
+        "prompt_qty": "Masukkan jumlah stok baru:",
+        "update_failed": "Pembaruan gagal: "
+      },
+      "footer": "Mesin Logistik NurseFlow V1.0 • Sinkronisasi Cloud Terverifikasi"
+    }
+  },
+  "insurance": {
+    "title": "Intelegensi Pendapatan",
+    "subtitle": "Siklus Klaim Asuransi & Optimasi Casemix",
+    "btn_batch": "Kirim Batch BPJS",
+    "btn_new": "Entri Klaim Baru",
+    "stats": {
+      "draft": "Draf Klaim",
+      "pending": "Menunggu Verifikasi",
+      "approved": "Disetujui Hari Ini",
+      "rejections": "Penolakan"
+    },
+    "tabs": {
+      "draft": "DRAF",
+      "submitted": "TERKIRIM",
+      "verified": "TERVERIFIKASI",
+      "rejected": "DITOLAK"
+    },
+    "table": {
+      "entity": "Entitas Klaim",
+      "diagnosis": "Diagnosis (ICD-10)",
+      "reimbursement": "Estimasi Reimbursement",
+      "risk": "Risiko Audit",
+      "actions": "Aksi"
+    },
+    "risk_label": "RISIKO {{risk}}",
+    "process_claim": "Proses Klaim",
+    "insights": {
+      "title": "Wawasan Penolakan",
+      "missing_icd": "ICD-10 Hilang",
+      "no_signature": "Tanpa Tanda Tangan",
+      "scrubbing_msg": "\"Scrubbing klaim otomatis saat ini mengurangi potensi kerugian sebesar {{amount}} per bulan.\""
+    }
+  },
+  "inventory_v2": {
+    "title": "Logistik & Inventaris",
+    "subtitle": "Prakiraan Inventaris & Kontinuitas Stok Berbasis AI",
+    "btn_audit": "Audit Log Stok",
+    "btn_new_order": "Buat Pesanan Baru",
+    "metrics": {
+      "continuity": "Est. Kontinuitas",
+      "days_left": "{{count}} HARI TERSISA",
+      "reorder_now": "Auto-Reorder Sekarang",
+      "usage_trends": "Tren Penggunaan (7 Hari Terakhir)",
+      "units_label": "{{count}} unit",
+      "ai_assistant": "Asisten Pengadaan AI",
+      "add_to_cart": "Tambah ke Keranjang"
+    },
+    "days": {
+      "mon": "Sen",
+      "tue": "Sel",
+      "wed": "Rab",
+      "thu": "Kam",
+      "fri": "Jum",
+      "sat": "Sab",
+      "sun": "Min"
+    }
   }
 }

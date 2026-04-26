@@ -8,10 +8,10 @@ export default function StaffingOptimizationCard({ recommendation }) {
 
   return (
     <div className={`p-8 rounded-[3rem] border shadow-2xl transition-all relative overflow-hidden
-      ${isCritical ? 'bg-error text-white border-error shadow-error/20' : 'bg-white border-outline-variant text-on-surface'}`}>
+      ${isCritical ? 'bg-error text-white border-error shadow-error/20' : 'bg-surface border-outline-variant text-on-surface'}`}>
        
        {isCritical && (
-          <div className="absolute top-0 right-0 p-4 bg-white/20 backdrop-blur-md rounded-bl-3xl">
+          <div className="absolute top-0 right-0 p-4 bg-on-error/20 backdrop-blur-md rounded-bl-3xl">
              <span className="material-symbols-outlined text-white animate-pulse">warning</span>
           </div>
        )}
@@ -35,7 +35,7 @@ export default function StaffingOptimizationCard({ recommendation }) {
        </div>
 
        <div className={`p-4 rounded-2xl flex-row gap-3 items-center
-         ${isCritical ? 'bg-white/10' : 'bg-surface-container'}`}>
+         ${isCritical ? 'bg-on-error/10' : 'bg-surface-container'}`}>
           <span className="material-symbols-outlined">analytics</span>
           <div className="flex-1">
              <p className="text-[10px] font-black uppercase leading-none mb-1">Intelligence Insight</p>
@@ -44,7 +44,7 @@ export default function StaffingOptimizationCard({ recommendation }) {
        </div>
 
        <button className={`w-full mt-6 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg transition-all
-         ${isCritical ? 'bg-white text-error hover:bg-white/90' : 'bg-primary text-white hover:shadow-primary/20'}`}>
+         ${isCritical ? 'bg-surface text-error hover:bg-surface/90' : 'bg-primary text-white hover:shadow-primary/20'}`}>
           Apply Staffing Plan
        </button>
     </div>

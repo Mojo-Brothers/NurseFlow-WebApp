@@ -41,7 +41,7 @@ export default function PatientPortal() {
        </header>
 
        {/* 🎫 ACTIVE TICKET */}
-       <PresentationCard padding="2rem" className="bg-white border-none shadow-xl rounded-[3rem] mb-8 relative overflow-hidden">
+       <PresentationCard padding="2rem" className="bg-surface border-none shadow-xl rounded-[3rem] mb-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100%] -mr-8 -mt-8" />
           
           <div className="flex flex-col items-center text-center mb-8">
@@ -82,7 +82,7 @@ export default function PatientPortal() {
        <div className="flex-1 space-y-4 overflow-y-auto pr-1">
           <h3 className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">Next Steps</h3>
           
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-outline-variant flex flex-row items-center gap-4">
+          <div className="bg-surface p-5 rounded-3xl shadow-sm border border-outline-variant flex flex-row items-center gap-4">
              <div className="w-12 h-12 rounded-2xl bg-secondary/10 text-secondary flex items-center justify-center">
                 <span className="material-symbols-outlined">description</span>
              </div>
@@ -93,7 +93,7 @@ export default function PatientPortal() {
              <span className="material-symbols-outlined ml-auto opacity-20">chevron_right</span>
           </div>
 
-          <div className="bg-white p-5 rounded-3xl shadow-sm border border-outline-variant flex flex-row items-center gap-4 cursor-pointer hover:bg-primary/5 transition-all" onClick={() => navigate('/wayfinding?to=lab')}>
+          <div className="bg-surface p-5 rounded-3xl shadow-sm border border-outline-variant flex flex-row items-center gap-4 cursor-pointer hover:bg-primary/5 transition-all" onClick={() => navigate('/wayfinding?to=lab')}>
              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
                 <span className="material-symbols-outlined">explore</span>
              </div>
@@ -107,7 +107,7 @@ export default function PatientPortal() {
           <h3 className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2 mt-8">My Learning Center</h3>
           {getAssignedMaterials('MOCK_PID').map((item, idx) => (
             <div key={idx} className="bg-surface-container-highest p-5 rounded-3xl flex flex-row items-center gap-4">
-               <div className="w-12 h-12 rounded-2xl bg-white text-secondary flex items-center justify-center shadow-sm">
+               <div className="w-12 h-12 rounded-2xl bg-surface text-secondary flex items-center justify-center shadow-sm">
                   <span className="material-symbols-outlined">{item.type === 'VIDEO' ? 'play_circle' : 'article'}</span>
                </div>
                <div className="flex flex-col">

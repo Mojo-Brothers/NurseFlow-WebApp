@@ -106,3 +106,25 @@ export const getAvailableDoctors = async () => {
     return []; // Graceful fallback
   }
 };
+
+/**
+ * Memperbarui data pasien dengan pelacakan integritas (JCI Requirement).
+ */
+export const updatePatient = async (id, patientData, staffEmail) => {
+  const patientRef = doc(db, COLLECTIONS.PATIENTS, id);
+  const timestamp = serverTimestamp();
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      transaction.update(patientRef, {
+        ...patientData,
+        last_updated_at: timestamp,
+        last_updated_by: staffEmail
+      });
+    });
+    return true;
+  } catch (error) {
+    console.error('[PatientService] Update failed:', error);
+    throw error;
+  }
+};

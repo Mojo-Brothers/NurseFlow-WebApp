@@ -44,7 +44,7 @@ export default function PredictiveCommandCenter() {
        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* 📈 SURGE FORECAST VISUALIZATION */}
           <div className="lg:col-span-8 flex-column gap-6">
-             <ClinicalCard padding="2.5rem" className="bg-white">
+             <ClinicalCard padding="2.5rem" className="bg-surface">
                 <div className="flex-row justify-between items-center mb-10">
                    <h3 className="text-xl font-black uppercase tracking-tight">24h Patient Volume Forecast</h3>
                    <div className="flex-row gap-4">

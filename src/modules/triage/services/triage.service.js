@@ -22,7 +22,10 @@ export const submitTriage = async ({
   encounterId, 
   bedId = null,
   vitals, 
+  secondaryAssessment = {},
+  screeningQuestions = {},
   esiLevel = null,
+  chiefComplaint = '',
   fallRisk = false,
   nutritionalRisk = false,
   assessedBy,
@@ -47,7 +50,6 @@ export const submitTriage = async ({
     const lastTriageQuery = query(
       collection(db, COLLECTIONS.TRIAGE_LOGS),
       where('patientId', '==', patientId),
-      orderBy('timestamp', 'desc'),
       limit(1)
     );
     const prevSnap = await getDocs(lastTriageQuery);
@@ -97,6 +99,27 @@ export const submitTriage = async ({
         });
       }
 
+      // 3.2 🔔 Clinical Alert Integration (NEWS2 Automation)
+      if (currentNews2 >= 5) {
+        const alertRef = doc(collection(db, COLLECTIONS.ALERTS));
+        transaction.set(alertRef, {
+          patient_id:   patientId,
+          encounter_id: encounterId,
+          type:         'NEWS2_ESCALATION',
+          severity:     currentNews2 >= 7 ? 'CRITICAL' : 'HIGH',
+          status:       'ACTIVE',
+          message:      `🚨 NEWS2 Score: ${currentNews2}. Patient condition ${currentNews2 >= 7 ? 'Critical' : 'Urgent'}.`,
+          timestamp,
+          triggered_by: assessedBy,
+          vitals_snapshot: {
+            heartRate: Number(vitals.heartRate),
+            respRate:  Number(vitals.respRate || 0),
+            spo2:      Number(vitals.spo2),
+            temp:      Number(vitals.temperature)
+          }
+        });
+      }
+
       // 4. Save Triage Log (Spark-Safe V5)
       transaction.set(logRef, {
         patientId,
@@ -110,6 +133,9 @@ export const submitTriage = async ({
           temperature:    Number(vitals.temperature),
           painScale:      Number(vitals.painScale || 0),
         },
+        secondaryAssessment,
+        screeningQuestions,
+        chiefComplaint,
         esi_level:        esiLevel,
         fall_risk:        fallRisk,
         nutritional_risk: nutritionalRisk,

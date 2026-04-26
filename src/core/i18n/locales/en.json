@@ -1,4 +1,76 @@
 {
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search...",
+    "category": "Category",
+    "status": {
+      "excellent": "Excellent",
+      "risk": "RISK",
+      "normal": "NORMAL",
+      "abnormal": "ABNORMAL",
+      "overdue": "OVERDUE",
+      "wait_time": "Wait Time",
+      "signed": "Signed",
+      "draft": "Draft",
+      "offline": "OFFLINE"
+    },
+    "status_label": "Status",
+    "general": "GENERAL",
+    "na": "N/A",
+    "success": "Operation successful",
+    "resource_type": "Resource Type",
+    "details": "Details",
+    "alerts": {
+      "sepsis_alert": "⚠️ SEPSIS ALERT (qSOFA >= 2)",
+      "surveillance_insight": "Surveillance Insight",
+      "ack_risk": "Acknowledge Risk"
+    },
+    "sync": {
+      "synchronizing": "Synchronizing...",
+      "offline_mode": "Offline Mode",
+      "pending_count": "{{count}} Pending Assessment(s)",
+      "continuity_active": "Continuity Active"
+    },
+    "theme": {
+      "toggle": "Toggle Dark/Light Mode",
+      "switch_light": "Switch to Light Mode",
+      "switch_dark": "Switch to Dark Mode"
+    },
+    "years": "yrs",
+    "unidentified": "UNIDENTIFIED PATIENT",
+    "yes": "YES",
+    "no": "NO",
+    "today": "Today",
+    "errors": {
+      "generic": "System Error"
+    },
+    "units": {
+      "bpm": "BPM",
+      "mmhg": "mmHg",
+      "per_min": "/min",
+      "percent": "%",
+      "kg": "kg",
+      "cm": "cm",
+      "celcius": "°C",
+      "minute_short": "m"
+    },
+    "user": "User",
+    "just_now": "Just Now",
+    "refresh": "Refresh Data"
+  },
+  "clinical_alerts": {
+    "title": "Clinical Vigilance Center",
+    "news2_escalation": "NEWS2 ESCALATION",
+    "critical": "CRITICAL: Urgent Medical Team (MET) required",
+    "urgent": "URGENT: Senior Medical Review required",
+    "watch": "WATCH: Increased Monitoring frequency",
+    "ack": "ACKNOWLEDGE ALERT",
+    "resolved": "ALERT RESOLVED",
+    "witness_added": "Witness verified for dispensing."
+  },
   "nav": {
     "clinical": "Clinical",
     "operational": "Operational",
@@ -8,6 +80,7 @@
     "encounters": "Encounters Management",
     "triage": "Triage ED",
     "emr": "EMR (SOAP)",
+    "emr_rj": "Outpatient EMR",
     "credentials": "My Credentials",
     "worklist": "Worklist",
     "pharmacy": "Pharmacy",
@@ -16,13 +89,15 @@
     "surveillance": "Infection Surveillance (PCI)",
     "executive": "Executive Command (GLD)",
     "gld_report": "Incident Reporting (GLD)",
+    "governance": "Information Governance",
     "moi": "Information Governance",
     "pfr": "Patient Rights",
     "admin": "Admin Center",
     "master_hub": "Master Data Hub",
     "settings": "Settings",
     "language": "Language",
-    "logout": "Logout"
+    "logout": "Logout",
+    "guide": "User Guide"
   },
   "dashboard": {
     "overview": "Clinical Overview",
@@ -113,7 +188,9 @@
       "temp": "TEMPERATURE",
       "weight": "Weight",
       "height": "Height",
-      "bmi": "Body Mass Index"
+      "bmi": "Body Mass Index",
+      "normal": "NORMAL",
+      "abnormal": "ABNORMAL"
     },
     "escalation": {
       "none": "Nominal",
@@ -135,5 +212,896 @@
     "discharge": "Patient Discharge",
     "handover": "Shift Handover (SBAR)",
     "diagnostics": "Diagnostic Results"
+  },
+  "dashboard_v2": {
+    "title": "Main Dashboard",
+    "subtitle": "Real-time facility overview.",
+    "privacy_shield": "Privacy Shield",
+    "emergency_toggle": "Emergency Mode",
+    "critical_incident": "CRITICAL: Mass Casualty Incident Protocol Activated",
+    "eta_trauma": "Trauma cases incoming ETA 10 min. ESI Level 1 readiness at Trauma Area 1-4.",
+    "escalation_notice": "Escalation to Charge Nurse in 45 seconds",
+    "time_to_ack": "Time to Acknowledge",
+    "escalation_flow": {
+      "select_role": "1. Select Role",
+      "select_action": "2. Select Action",
+      "confirm": "Confirm",
+      "rn": "Charge Nurse",
+      "md": "Attending MD",
+      "triage": "Deploy Triage Team",
+      "surge": "Activate Surge Capacity"
+    },
+    "metrics": {
+      "triage_active": "Active Triage",
+      "ventilators": "Ventilator Availability",
+      "bor": "Bed Occupancy Rate (BOR)",
+      "active": "Active",
+      "available": "Available"
+    },
+    "triage_board": {
+      "title": "Active Triage Board",
+      "subtitle": "Real-time CDS and NEWS2 integration.",
+      "identity": "Patient Identity",
+      "timeline": "Status / Timeline",
+      "vitals": "Vitals Data",
+      "cds_action": "CDS Action",
+      "syncing": "Syncing HL7 Feeds...",
+      "full_timeline": "Full Timeline",
+      "source_hl7": "Source: HL7 Live",
+      "filter": "Filter",
+      "no_cases": "No active triage cases.",
+      "overdue": "OVERDUE",
+      "rising_risk": "Rising Risk",
+      "execute": "Execute"
+    },
+    "audit": {
+      "title": "Live Audit Log",
+      "subtitle": "JCI Compliant System Events",
+      "no_logs": "No logs recorded.",
+      "view_full": "View Full Audit Timeline"
+    },
+    "footer": {
+      "primary_server": "Primary Server: SG-01",
+      "backup_node": "Backup Node Active",
+      "failover_ready": "Failover Ready (99.9% Uptime)",
+      "db_health": "DB Health: Distributed (42ms)",
+      "version": "v2.4.1 (JCI Validation)"
+    }
+  },
+  "emr_v2": {
+    "title": "Electronic Medical Record",
+    "subtitle": "JCI Clinical Data Integration",
+    "switch_context": "-- Switch Context --",
+    "select_patient": "Select Patient",
+    "handover": "Handover SBAR",
+    "history": "History",
+    "diagnostics": "Diagnostics",
+    "surgery": "Surgery",
+    "education": "Education",
+    "consent": "Consent",
+    "workspace": {
+      "title": "Active Workspace",
+      "subtitle": "New Professional Entry",
+      "site": "Site",
+      "save_draft": "Save Draft",
+      "sign_off": "✓ Sign-off",
+      "doctor_only": "Doctor Only",
+      "start_tele": "Start Tele-Consult"
+    },
+    "alerts": {
+      "critical_lab": "CRITICAL LAB VALUE DETECTED",
+      "ack_details": "Acknowledge & View Details",
+      "forbidden_terms": "Forbidden Terms Detected",
+      "allergy_conflict": "Allergy Conflict Detected",
+      "sign_blocked": "Sign-off Blocked",
+      "soap_mandatory": "Subjective & Assessment mandatory for clinical signature.",
+      "allergy_conflict_msg": "Allergy conflict detected for {{meds}}. Please correct the prescription.",
+      "privilege_denied": "{{reason}}. Please verify your credentials.",
+      "forbidden_terms_msg": "Forbidden abbreviations detected ({{terms}}). Use standard terms (e.g. {{replacement}}) per JCI MOI.2.",
+      "no_encounter": "No active clinical encounter found."
+    },
+    "soap": {
+      "subjective": "Subjective (S)",
+      "objective": "Objective (O)",
+      "assessment": "Assessment (A)",
+      "plan": "Plan Instructions (P)",
+      "pharmacy": "Pharmacy Plan",
+      "claim_ready": "Claim Ready",
+      "claim_risk": "Claim Risk: Low Data"
+    },
+    "receipt": {
+      "title": "Clinical Transaction Summary",
+      "subtitle": "EMR record is secured. Operational status follows:",
+      "record_locked": "LOCKED",
+      "billing": "Billing Station",
+      "pharmacy": "Pharmacy Station",
+      "success": "SUCCESS",
+      "retry_billing": "⚠ RETRY BILLING",
+      "retry_pharmacy": "⚠ RETRY PHARMACY",
+      "handover_complete": "Professional Handover Complete",
+      "view_summary": "View Medical Summary"
+    },
+    "discharge": {
+      "title": "Patient Discharge",
+      "subtitle": "Closing the clinical journey will release the patient's bed and lock the medical record.",
+      "execute": "Execute Final Discharge",
+      "restricted": "Discharge Restricted (Doctor Only)"
+    },
+    "lock": {
+      "title": "Record Access Restricted",
+      "subtitle": "This session was discharged or finalized. Contact your clinical supervisor if this is an error.",
+      "locked_by": "Locked By",
+      "return_worklist": "Return to Worklist",
+      "open_print": "Open Print-Ready Medical Summary"
+    },
+    "confirm": {
+      "title": "Clinical Signature Lock",
+      "certify": "\"I certify that the clinical documentation above is accurate and complete.\"",
+      "entity": "Signature Entity",
+      "legal_force": "Legal Force",
+      "execute": "✓ Execute Final Sign-off",
+      "review": "Review Changes"
+    },
+    "unsaved": {
+      "title": "Unsaved Clinical Discovery",
+      "subtitle": "You have made changes to the patient SOAP note. Discarding will permanently lose this clinical session data.",
+      "discard": "Discard & Exit",
+      "stay": "Stay & Finish"
+    }
+  },
+  "patients_v2": {
+    "title": "Patient Directory",
+    "subtitle": "JCI Master Clinical Record",
+    "search_placeholder": "Search Name / RM / NIK...",
+    "btn_new": "New Registration",
+    "table": {
+      "registered": "Registered",
+      "mrn": "No. RM / MRN",
+      "no_records": "No records found for \"{{term}}\"",
+      "identity": "Patient Identity (IPSG 1)",
+      "bio": "Bio & Gender",
+      "safety": "Safety Indicators (IPSG 3/6)",
+      "insurance": "Payer & Doctor",
+      "reg_date": "Reg. Date",
+      "actions": "Clinical Actions",
+      "syncing": "Synchronizing with Clinical Backend...",
+      "no_records_match": "No records found matching \"{{term}}\".",
+      "mrn_pending": "MRN-PENDING",
+      "not_registered": "Not Registered"
+    },
+    "safety": {
+      "allergy": "Allergy",
+      "no_allergy": "No Allergy",
+      "fall_risk": "Fall Risk",
+      "stable": "Stable"
+    },
+    "filters": {
+      "insurance": "Insurance / Payer",
+      "safety": "Clinical Safety (IPSG)",
+      "sort": "Sort",
+      "patient_type": "Patient Type",
+      "triage": "Clinical Triage (ATS/ESI)",
+      "location": "Location / Ward",
+      "all": "All",
+      "allergy": "Allergy Risk",
+      "fall_risk": "Fall Risk",
+      "reset": "Reset Filter",
+      "apply": "Apply",
+      "sort_label": "Sort:",
+      "sort_recent": "Recent",
+      "sort_name": "Name A-Z",
+      "triage_levels": {
+        "p1": "P1 - Resuscitation",
+        "p2": "P2 - Emergency",
+        "p3": "P3 - Urgent",
+        "p4": "P4 - Semi-Urgent",
+        "p5": "P5 - Non-Urgent"
+      }
+    },
+    "actions": {
+      "view_emr": "View EMR",
+      "admit": "Admission / Admit",
+      "edit": "Edit Data",
+      "archive": "Archive Record"
+    },
+    "wizard": {
+      "title": "Complete JCI Clinical Registration",
+      "step": "Step {{current}} of 6",
+      "step1": "Primary Identity",
+      "step2": "Demographics & Contact",
+      "step3": "Emergency Contact",
+      "step4": "Payer & Insurance",
+      "step5": "Safety Screening",
+      "step6": "General Consent",
+      "sections": {
+        "insurance": "Payer & Insurance Data",
+        "safety": "Clinical Screening & Safety (IPSG)",
+        "rights": "Patient Rights (PFR) & General Consent"
+      },
+      "fields": {
+        "guarantor_type": "PAYER TYPE",
+        "card_number": "CARD NUMBER / POLICY / SEP",
+        "blood_type": "BLOOD TYPE",
+        "dpjp": "ATTENDING PHYSICIAN (DPJP)",
+        "allergy_history": "ALLERGY HISTORY (DRUG/FOOD)",
+        "allergy_placeholder": "Write 'NONE' if no allergies",
+        "card_number_placeholder": "Example: 000123456789",
+        "fall_risk_title": "IPSG 6: FALL RISK",
+        "fall_risk_desc": "Patient has high fall risk / needs walking assistance",
+        "privacy": "Privacy Preference (JCI PFR.1)",
+        "privacy_options": {
+          "standard": "Standard Privacy (Visitable)",
+          "vip": "VIP Status (Hidden from public monitors)",
+          "anonymous": "Anonymous / High Security (Total Confidentiality)"
+        },
+        "spiritual": "Special Needs / Spiritual (e.g. Specific Prayer)",
+        "spiritual_placeholder": "Leave blank if none"
+      },
+      "back": "Back",
+      "cancel": "Cancel",
+      "next": "Continue to Step {{next}}",
+      "finalize": "Finalize & Register Patient",
+      "consent_label": "By signing digitally, I understand my rights and obligations as a patient, agree to medical care according to hospital standards, and allow the use of my medical data for clinical & insurance purposes in accordance with JCI/KARS accreditation standards."
+    },
+    "admission": {
+      "title": "Clinical Admission",
+      "subtitle": "Initialize New Encounter & Triage",
+      "selected_patient": "Selected Patient",
+      "insurance_active": "Insurance Active",
+      "service_type": "Service Type",
+      "ward": "Unit / Ward",
+      "reason": "Chief Complaint / Admission Reason",
+      "reason_placeholder": "Example: Fever for 3 days, sudden shortness of breath, chest pain...",
+      "nurse_staff": "Nurse Staff",
+      "btn_process": "Process Patient Admission",
+      "fail": "Admission failed: ",
+      "success_alert": "Patient {{name}} successfully admitted. Redirecting to Triage...",
+      "wards": {
+        "igd": "ER (Emergency)",
+        "poli_umum": "General Clinic",
+        "poli_spesialis": "Specialist Clinic",
+        "ward_a": "Ward A (Inpatient)"
+      }
+    }
+  },
+  "admin_cc": {
+    "title": "Admin Command Center",
+    "subtitle": "Governance & Intelligence",
+    "desc": "JCI Audit Dashboard · Real-time Observability · RBAC Enforcement",
+    "active_alerts": "{{count}} ACTIVE ALERTS",
+    "secure_status": "V5.7 SECURE",
+    "syncing": "Synchronizing Encrypted Data...",
+    "tabs": {
+      "audit": "Audit Trail",
+      "observability": "Observability",
+      "master_indices": "Master Indices",
+      "conflicts": "Data Conflicts",
+      "users": "Staff Directory"
+    },
+    "stock_vigilance": {
+      "title": "Clinical Stock Vigilance",
+      "desc": "Supply Chain Risk Monitoring",
+      "alert_title": "Active Stock Alerts",
+      "low_stock": "LOW STOCK",
+      "critical_stock": "CRITICAL: STOCK OUT",
+      "no_alerts": "Supply Chain Continuity Confirmed",
+      "btn_restock": "GO TO PHARMACY",
+      "metrics": {
+        "low_count": "Supply Risks",
+        "stock_out": "Critical Stock Out"
+      }
+    },
+    "banner": {
+      "degraded": "SYSTEM DEGRADED: High Latency Detected. Please limit new registrations.",
+      "failover": "CRITICAL FAILOVER: Offline Mode Active."
+    },
+    "observability": {
+      "pipeline_title": "Real-time Patient Flow Pipeline",
+      "pipeline_desc": "Live clinical phase movement monitoring",
+      "total_patients": "{{count}} TOTAL PATIENTS",
+      "phases": {
+        "waiting": "WAITING / ADMITTED",
+        "triage": "TRIAGE / DOCTOR QUEUE",
+        "treatment": "IN TREATMENT / EMR"
+      },
+      "metrics": {
+        "latency": "Server Latency",
+        "sync_rate": "Sync Success Rate",
+        "persistence": "Firestore Persistence",
+        "persistence_mem": "Memory Fallback",
+        "persistence_ok": "Persistent",
+        "active_sessions": "Active Clinical Sessions",
+        "status_good": "GOOD",
+        "status_slow": "SLOW",
+        "status_caution": "CAUTION"
+      },
+      "master_hub": {
+        "title": "Master Data Hub",
+        "desc": "Manage standardization of Professions, Rooms, and Clinical Indices (JCI/KARS Ready).",
+        "btn": "Open Master Data Hub"
+      },
+      "alerts": {
+        "title": "Active Clinical Alerts",
+        "no_alerts": "No critical anomalies detected.",
+        "btn_ack": "ACKNOWLEDGE"
+      },
+      "telemetry": {
+        "title": "Security Telemetry",
+        "stream": "Real-time Stream Intelligence",
+        "val_accuracy": "Validation Accuracy (JCI)",
+        "identity_check": "Identity Cross-Check Success",
+        "unauthorized": "Unauthorized Access Attempts",
+        "audit_sync": "Server-side Audit Sync",
+        "diagnostic_title": "System Auto-Diagnostic",
+        "diagnostic_desc": "The system is currently running the **News2-Hardened** protocol with active server-side validation. No bypass attempts detected in the last 24 hours."
+      }
+    },
+    "audit": {
+      "title": "Global Audit Trail",
+      "btn_export": "EXPORT CSV",
+      "actions": {
+        "create": "CREATE",
+        "update": "UPDATE",
+        "delete": "DELETE",
+        "view": "VIEW",
+        "login": "LOGIN",
+        "logout": "LOGOUT",
+        "medical_action": "MEDICAL ACTION",
+        "alert_ack": "ALERT ACK",
+        "conflict_resolve": "CONFLICT RESOLVE",
+        "credential_verify": "CREDENTIAL VERIFY",
+        "terminology_audit": "TERMINOLOGY AUDIT",
+        "consent_signed": "CONSENT SIGNED",
+        "privacy_update": "PRIVACY UPDATE"
+      },
+      "table": {
+        "ts": "Timestamp",
+        "identity": "Identity",
+        "operation": "Operation",
+        "obj_id": "Object ID",
+        "analysis": "Deep Analysis",
+        "verified": "Verified Token"
+      }
+    },
+    "users": {
+      "search_placeholder": "Search Medical Staff (Name, Employee ID, Email)...",
+      "filter_profession": "ALL PROFESSIONS",
+      "filter_dept": "ALL DEPARTMENTS",
+      "total_staff": "Total Staff",
+      "not_found": "Staff data not found with these criteria.",
+      "unnamed": "Unnamed Staff",
+      "str_verified": "STR Verified",
+      "table": {
+        "identity": "Staff Identity & Credentials",
+        "dept": "Department",
+        "role": "Security & Role",
+        "status": "Status",
+        "actions": "Actions",
+        "no_nip": "NO-EID",
+        "unit_label": "Operational Unit",
+        "btn_intel": "Staff Intelligence"
+      },
+      "limit_warning": "Showing top 50 records. Use search for JCI data specification.",
+      "modal": {
+        "metadata": "Professional Metadata",
+        "metadata_desc": "JCI Accreditation Data & Licensing Portfolio",
+        "id_label": "Employee ID / NIP",
+        "unit_label": "Medical Unit",
+        "id_verified": "DIGITAL ID VERIFIED",
+        "item_exp": "Experience",
+        "item_hire": "Hire Date",
+        "item_str": "STR Number",
+        "item_sip": "SIP Number",
+        "not_registered": "NOT REGISTERED",
+        "status_none": "NONE",
+        "years": "Years",
+        "competency": "Competency & Skills",
+        "btn_edit": "EDIT PROFILE",
+        "btn_perms": "MANAGE PERMISSIONS"
+      }
+    },
+    "conflicts": {
+      "title": "Conflicts & Data Quarantine",
+      "pending": "{{count}} PENDING RESOLUTION",
+      "integrity_ok": "Data Integrity Maintained",
+      "desc": "No clinical data version conflicts at this time. All offline-to-online synchronizations automatically verified."
+    }
+  },
+  "admin_hub": {
+    "title": "Master Data Intelligence Hub",
+    "governance": "Administrative Governance",
+    "module_meta": "Governance Module",
+    "btn_test": "Run Connectivity Test",
+    "confirm_seed": "Are you sure? This will seed default master data. Existing data won't be deleted but duplicates might occur.",
+    "seed_success": "Master data successfully seeded.",
+    "loading": "Loading Enterprise Data...",
+    "prompt_edit": "Change entry:",
+    "confirm_delete_item": "Are you sure you want to delete '{{item}}'?",
+    "metrics": {
+      "local_persistence": "Local Persistence",
+      "sync_queue": "Sync Queue",
+      "pending_actions": "Pending Actions",
+      "sync_ok": "Local database fully synchronized",
+      "traceability": "Traceability Index",
+      "audit_score": "Audit Integrity Score",
+      "audit_score_desc": "Audit logs cover 100% of transactions in the last 24 hours.",
+      "deployment": "Deployment Status",
+      "his_readiness": "HIS Module Readiness"
+    },
+    "error": {
+      "op_failed": "Data Operation Failed",
+      "admin_required": "Ensure your account has the ADMIN role or check Firestore security rules."
+    },
+    "tabs": {
+      "general": "General Configuration",
+      "catalog": "Service Catalog",
+      "safety": "Medication Safety"
+    },
+    "modal": {
+      "add_title": "Add New Entry",
+      "placeholder": "Type entry name (e.g., Cardiac Clinic)...",
+      "btn_cancel": "Cancel",
+      "btn_save": "Save Entry"
+    },
+    "log": {
+      "title": "Recent Activity Log"
+    },
+    "table": {
+      "id": "ID",
+      "item": "Service / Action",
+      "price": "Base Rate (IDR)",
+      "status": "Status",
+      "active": "Active"
+    },
+    "safety": {
+      "high_alert": "High Alert Medication",
+      "lasa": "LASA Drugs (Look-Alike Sound-Alike)"
+    }
+  },
+  "worklist": {
+    "title": "Nursing Worklist",
+    "subtitle": "Shift Board",
+    "btn_add": "Add Task",
+    "progress_title": "Shift Progress",
+    "task_summary": "Shift tasks · {{pending}} pending · {{done}}/{{total}} completed",
+    "no_tasks": "No tasks found for this filter.",
+    "modal_title": "Add New Task",
+    "label_patient": "PATIENT",
+    "label_task_type": "TASK TYPE",
+    "label_description": "DESCRIPTION",
+    "label_due_time": "DUE TIME",
+    "placeholder_description": "Task details...",
+    "btn_cancel": "Cancel",
+    "actions": {
+      "start": "▶ Start",
+      "done": "✓ Mark Done",
+      "skip": "Skip"
+    },
+    "statuses": {
+      "all": "All",
+      "pending": "Pending",
+      "in_progress": "In Progress",
+      "done": "Completed",
+      "skipped": "Skipped"
+    },
+    "task_types": {
+      "medication": "Medication Admin",
+      "vital_check": "Vital Check",
+      "wound_care": "Wound Care",
+      "lab_draw": "Lab Draw",
+      "custom": "Other Task"
+    }
+  },
+  "billing": {
+    "title": "Billing & Discharge",
+    "subtitle": "Finance & Administration",
+    "summary": "Active bills · {{draft}} drafts · {{finalized}} awaiting settlement",
+    "list_title": "Billing List",
+    "no_active_bills": "No active bills found.",
+    "edit_title": "Bill Calculation & Edit",
+    "add_service": "Add Service",
+    "select_service": "-- Add Service --",
+    "btn_add": "+ Add",
+    "no_items": "No items added yet. Add a service above.",
+    "total_label": "TOTAL BILL",
+    "save_draft": "💾 Save Draft",
+    "finalize_btn": "✓ Finalize & Discharge",
+    "authorize_btn": "Authorize Settlement",
+    "saving": "Saving...",
+    "confirm_finalize": "Finalize bill? This cannot be edited after finalizing.",
+    "confirm_paid": "Mark bill as PAID?",
+    "item_count": "{{count}} item",
+    "item_count_plural": "{{count}} items",
+    "errors": {
+      "load_failed": "Failed to load billing data"
+    },
+    "success": {
+      "saved": "Bill draft saved successfully",
+      "finalized": "Bill finalized and record locked"
+    },
+    "table": {
+      "item": "Service",
+      "qty": "Qty",
+      "price": "Price",
+      "total": "Total",
+      "action": "Action"
+    },
+    "payment_modal": {
+      "title": "Checkout Station",
+      "consolidated_charges": "Consolidated Charges Breakdown",
+      "grand_total": "Grand Total",
+      "select_method": "Select Payment Method",
+      "processing": "Processing Transaction...",
+      "authorize": "Authorize Payment",
+      "secure_note": "\"Secure 256-bit Encrypted Transaction Module\"",
+      "success_alert": "Payment Successful! Account Settle.",
+      "fail_alert": "Payment Failed: ",
+      "methods": {
+        "e_wallet": "E-WALLET",
+        "va": "VIRTUAL ACCOUNT",
+        "cc": "CREDIT CARD",
+        "cash": "CASH"
+      }
+    },
+    "statuses": {
+      "draft": "Draft",
+      "finalized": "Finalized",
+      "paid": "Paid ✓",
+      "waived": "Waived"
+    }
+  },
+  "triage_v2": {
+    "vitals": {
+      "hr": "Heart Rate",
+      "bp": "Blood Pressure",
+      "rr": "Resp. Rate",
+      "spo2": "SpO2",
+      "weight": "Weight",
+      "height": "Height",
+      "temp": "Temp"
+    },
+    "modes": {
+      "rapid": "⚡ Rapid Intake",
+      "detail": "🧾 Detailed Assessment",
+      "monitor": "📊 Monitor Command",
+      "poli": "🏥 Outpatient Screening"
+    },
+    "monitor": {
+      "avg_wait": "Avg. Wait Time",
+      "active_admissions": "Active Admissions",
+      "critical_cases": "Critical (ESI 1/2)",
+      "emergency_board": "Live Emergency Board",
+      "table": {
+        "patient_mrn": "Patient / MRN",
+        "esi": "ESI",
+        "status": "Status",
+        "wait_time": "Wait Time"
+      },
+      "surge_protocol": "Activate Surge Protocol",
+      "export_report": "Export Daily Report",
+      "empty_queue": "Queue empty. No patients waiting for triage.",
+      "surveillance_active": "Global Surveillance Active",
+      "audit_reporting": "Audit & Reporting",
+      "pending": "PENDING"
+    },
+    "labels": {
+      "chief_complaint": "Chief Complaint",
+      "esi_score": "ESI SCORE",
+      "esi_level": "ESI LEVEL",
+      "current_status": "Current Status",
+      "system_ready": "SYSTEM READY",
+      "vitals_logged": "Vitals Logged",
+      "parameters": "Parameters",
+      "queue_sync": "Queue Sync",
+      "live_feed": "LIVE DATA FEED",
+      "neurological": "Neurological",
+      "integumentary": "Integumentary",
+      "musculoskeletal": "Musculoskeletal",
+      "gastrointestinal": "Gastrointestinal",
+      "survey_primer": "Primary Survey (Phase 0)",
+      "survey_airway": "Airway",
+      "survey_breathing": "Breathing",
+      "survey_circulation": "Circulation",
+      "survey_disability": "Disability",
+      "safety_check": "Safety Check",
+      "physiological_status": "Physiological Status",
+      "additional_assessment": "Additional Assessment",
+      "pain_scale": "Pain Scale (0-10)",
+      "current_meds": "Current Medications",
+      "current_meds_placeholder": "List routine medications and dosages...",
+      "escalation_trigger": "Escalation Trigger",
+      "wait_time_elapsed": "Wait Time Elapsed",
+      "jci_evidence": "JCI AOP.1.1 · Clinical Evidence",
+      "emergency_protocol": "Emergency Protocol",
+      "phase_1_active": "Phase 1 ACTIVE",
+      "active_session": "Active Session",
+      "medical_staff": "Medical Staff",
+      "entry": "Entry",
+      "clr": "Clear"
+    },
+    "screening": {
+      "title": "Infectious & Cardiac Screening",
+      "fever": "History of Fever (>3 days)?",
+      "travel": "Recent Int. Travel (14 days)?",
+      "contact": "Contact with Infectious Case?",
+      "chest_pain": "Recent Chest Pain / Palpitations?",
+      "protocol_active": "Protocol ACTIVE",
+      "escalation_desc": "Automatic transfer to Emergency Triage if any \"YES\" is selected above."
+    },
+    "actions": {
+      "save_draft": "Save Draft",
+      "process": "Process Admission & Triage"
+    },
+    "notifications": {
+      "submit_success": "Triage submitted successfully",
+      "submit_failed": "Failed to submit triage"
+    },
+    "errors": {
+      "no_patient_selected": "Please select a patient first",
+      "no_patient_selected_desc": "Select a patient from the monitor list to start the triage process."
+    },
+    "tags": {
+      "chest_pain": "Chest Pain",
+      "shortness_of_breath": "Shortness of Breath",
+      "bleeding": "Bleeding",
+      "major_trauma": "Major Trauma",
+      "seizure": "Seizure",
+      "unconscious": "Unconscious"
+    },
+    "options": {
+      "airway": {
+        "PATENT": "PATENT",
+        "OBSTRUCTED": "OBSTRUCTED",
+        "STRIDOR": "STRIDOR"
+      },
+      "breathing": {
+        "ADEQUATE": "ADEQUATE",
+        "LABORED": "LABORED",
+        "APNEIC": "APNEIC"
+      },
+      "circulation": {
+        "PRESENT": "PRESENT",
+        "WEAK": "WEAK",
+        "ABSENT": "ABSENT"
+      },
+      "neurological": {
+        "ALERT": "ALERT",
+        "VERBAL": "VERBAL",
+        "PAIN": "PAIN",
+        "UNRESPONSIVE": "UNRESPONSIVE"
+      }
+    },
+    "news2": {
+      "risk": {
+        "low": "LOW",
+        "medium": "MEDIUM",
+        "high": "HIGH"
+      },
+      "freq": {
+        "12_hourly": "12 Hourly",
+        "4_6_hourly": "4-6 Hourly",
+        "1_hourly": "1 Hourly",
+        "continuous": "Continuous / Bedside"
+      }
+    }
+  },
+  "emr_v2": {
+    "workspace": {
+      "title": "SOAP Workspace",
+      "subtitle": "Structured Clinical Documentation",
+      "recent_lock": "Recent",
+      "save_success": "Draft Saved Successfully.",
+      "save_failed": "TRANSACTION FAILED: ",
+      "append_final": "APPEND-ONLY FINAL",
+      "no_prior_records": "No prior records found.",
+      "signed": "✅ Signed",
+      "draft": "📝 Draft",
+      "doctor_prefix": "Doc: ",
+      "items_sent": " ITEMS SENT"
+    },
+    "discharge": {
+      "confirm_msg": "FINAL DISCHARGE: Are you sure? This will medically close the encounter, release the bed, and finalize billing.",
+      "success": "Patient Discharged Successfully. Bed Released.",
+      "failed": "DISCHARGE FAILED: "
+    },
+    "sections": {
+      "subjective": "Subjective",
+      "objective": "Objective",
+      "assessment": "Assessment",
+      "plan": "Instructions & Plan"
+    }
+  },
+  "patient_form": {
+    "name": "FULL NAME (PER IDENTITY)",
+    "nik": "NIK / PASSPORT / ID NUMBER",
+    "pob": "PLACE OF BIRTH",
+    "dob": "DATE OF BIRTH",
+    "gender": "GENDER",
+    "gender_m": "Male",
+    "gender_f": "Female",
+    "nationality": "NATIONALITY",
+    "marital_status": "MARITAL STATUS",
+    "address": "FULL DOMICILE ADDRESS",
+    "occupation": "OCCUPATION",
+    "education": "LATEST EDUCATION",
+    "preferred_lang": "DAILY LANGUAGE",
+    "interpreter": "Interpreter Needed?",
+    "phone": "ACTIVE PHONE NUMBER",
+    "emergency_contact": "Emergency Contact",
+    "emergency_name": "CONTACT NAME",
+    "relationship": "RELATIONSHIP",
+    "emergency_phone": "EMERGENCY HP",
+    "guarantor": "Guarantor",
+    "guarantor_name": "GUARANTOR NAME",
+    "guarantor_phone": "GUARANTOR HP",
+    "marital_options": {
+      "single": "Single",
+      "married": "Married",
+      "divorced": "Divorced",
+      "widowed": "Widowed"
+    },
+    "education_options": {
+      "sd": "Elementary School",
+      "smp": "Junior High",
+      "sma": "Senior High",
+      "d3": "Associate Degree",
+      "s1": "Bachelor's",
+      "s2_s3": "Master's/PhD",
+      "none": "No Formal Education"
+    },
+    "insurance_types": {
+      "umum": "PUBLIC / GENERAL",
+      "bpjs": "NATIONAL HEALTH (BPJS)",
+      "swasta": "PRIVATE INSURANCE",
+      "corporate": "CORPORATE"
+    },
+    "blood_types": {
+      "a": "A",
+      "b": "B",
+      "ab": "AB",
+      "o": "O",
+      "unknown": "Unknown"
+    },
+    "religion_options": {
+      "islam": "Islam",
+      "protestant": "Protestant",
+      "catholic": "Catholic",
+      "hindu": "Hindu",
+      "buddha": "Buddha",
+      "confucian": "Confucian"
+    },
+    "relationship_options": {
+      "family": "Family",
+      "parent": "Parent",
+      "spouse": "Spouse",
+      "child": "Child",
+      "other": "Other"
+    },
+    "select_doctor": "-- Select Doctor --",
+    "mrn": "MRN"
+  },
+  "pharmacy_v2": {
+    "routes": {
+      "oral": "Oral",
+      "iv": "Intravenous",
+      "sc": "Subcutaneous",
+      "im": "Intramuscular"
+    },
+    "labels": {
+      "unknown": "Unknown",
+      "standard_dosage": "Standard Dosage",
+      "confused_with": "Confused with"
+    },
+    "metrics": {
+      "pending_queue": "Pending Queue",
+      "high_alert": "High Alert (Parenteral)",
+      "impacted_patients": "Impacted Patients",
+      "current_session": "Current Session",
+      "pharmacist": "PHARMACIST"
+    },
+    "queue_title": "Active Dispensing Queue",
+    "refresh_queue": "REFRESH QUEUE",
+    "zero_pending": "Zero Pending Orders. The bridge is clear.",
+    "patient_id_label": "Patient Identity",
+    "prescribed_by": "Prescribed By",
+    "dispensing_btn": "✓ Dispensing",
+    "ipsg": {
+      "title": "IPSG Verification",
+      "subtitle": "Goal 1: Confirm patient identity before dispensing medication.",
+      "patient_name": "Patient Name",
+      "order": "Order",
+      "mrn_label": "Type Patient MRN to Confirm:",
+      "placeholder": "Enter MRN...",
+      "mismatch": "Identity Mismatch! Verify the patient identity bracelet.",
+      "high_alert_protocol": "JCI HIGH-ALERT PROTOCOL",
+      "double_check_msg": "Double verification required. A colleague must witness this dispense.",
+      "witness_placeholder": "Witness Email Address...",
+      "confirm_btn": "CONFIRM & DISPENSE",
+      "cancel_btn": "Cancel Verification",
+      "witness_mandatory": "JCI MMU VALIDATION: A witness email (different from yours) is mandatory for High-Alert drugs."
+    },
+    "alerts": {
+      "inventory_failure": "Inventory/Dispensing Failure",
+      "out_of_stock": "OUT OF STOCK"
+    },
+    "inventory": {
+      "title": "Stock Command Center",
+      "subtitle": "Real-Time Clinical Supply Chain",
+      "sync_btn": "Sync Stock",
+      "init_btn": "Initialize Warehouse",
+      "reorder_level": "Reorder Level",
+      "update_btn": "Update Inventory Level",
+      "empty_title": "Warehouse is Empty",
+      "empty_desc": "Click 'Initialize Warehouse' to seed clinical supply data.",
+      "legend": {
+        "critical": "Critical Stock",
+        "low": "Low Level",
+        "stocked": "Stocked"
+      },
+      "alerts": {
+        "confirm_init": "Initialize inventory with default stock?",
+        "init_failed": "Bootstrap failed: ",
+        "prompt_qty": "Enter new stock quantity:",
+        "update_failed": "Update failed: "
+      },
+      "footer": "NurseFlow Logistics Engine V1.0 • Verified Cloud Sync"
+    }
+  },
+  "insurance": {
+    "title": "Revenue Intelligence",
+    "subtitle": "Insurance Claim Lifecycle & Casemix Optimization",
+    "btn_batch": "Batch Submit BPJS",
+    "btn_new": "New Claim Entry",
+    "stats": {
+      "draft": "Draft Claims",
+      "pending": "Awaiting Verification",
+      "approved": "Approved Today",
+      "rejections": "Rejections"
+    },
+    "tabs": {
+      "draft": "DRAFT",
+      "submitted": "SUBMITTED",
+      "verified": "VERIFIED",
+      "rejected": "REJECTED"
+    },
+    "table": {
+      "entity": "Claim Entity",
+      "diagnosis": "Diagnosis (ICD-10)",
+      "reimbursement": "Est. Reimbursement",
+      "risk": "Audit Risk",
+      "actions": "Actions"
+    },
+    "risk_label": "{{risk}} RISK",
+    "process_claim": "Process Claim",
+    "insights": {
+      "title": "Rejection Insights",
+      "missing_icd": "Missing ICD-10",
+      "no_signature": "No Signature",
+      "scrubbing_msg": "\"Automated claim scrubbing is currently reducing potential losses by {{amount}} per month.\""
+    }
+  },
+  "inventory_v2": {
+    "title": "Logistics & Inventory",
+    "subtitle": "AI-Powered Inventory Forecasting & Stock Continuity",
+    "btn_audit": "Stock Audit Log",
+    "btn_new_order": "Create New Order",
+    "metrics": {
+      "continuity": "Est. Continuity",
+      "days_left": "{{count}} DAYS LEFT",
+      "reorder_now": "Auto-Reorder Now",
+      "usage_trends": "Usage Trends (Last 7 Days)",
+      "units_label": "{{count}} units",
+      "ai_assistant": "AI Procurement Assistant",
+      "add_to_cart": "Add to Cart"
+    },
+    "days": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   }
 }

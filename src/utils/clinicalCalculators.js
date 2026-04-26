@@ -38,13 +38,28 @@ export const calculateNEWS2 = (vitals) => {
     else if (temp <= 36.0 || temp >= 38.1) score += 1;
   }
 
-  return score;
+  let riskLevel = 'LOW';
+  let frequency = '12_hourly';
+
+  if (score >= 7) {
+    riskLevel = 'HIGH';
+    frequency = 'continuous';
+  } else if (score >= 5) {
+    riskLevel = 'MEDIUM';
+    frequency = '1_hourly';
+  } else if (score >= 1) {
+    riskLevel = 'LOW';
+    frequency = '4_6_hourly';
+  }
+
+  return { score, riskLevel, frequency };
 };
 
-export const getTriageColor = (news2Score) => {
-  if (news2Score >= 7) return 'error';   // High clinical risk (Red)
-  if (news2Score >= 5) return 'warning'; // Medium clinical risk (Orange/Yellow)
-  if (news2Score >= 1) return 'warning'; // Low clinical risk (Yellow)
+export const getTriageColor = (news2Result) => {
+  const score = typeof news2Result === 'object' ? news2Result.score : news2Result;
+  if (score >= 7) return 'error';   // High clinical risk (Red)
+  if (score >= 5) return 'warning'; // Medium clinical risk (Orange/Yellow)
+  if (score >= 1) return 'warning'; // Low clinical risk (Yellow)
   return 'success';                      // Normal (Green)
 };
 

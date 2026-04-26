@@ -30,7 +30,7 @@ export default function EncounterSummaryPage() {
   const { encounter, patient, triageLogs, soapRecords, billing } = data;
 
   return (
-    <div className="min-h-screen bg-white text-black p-4 md:p-12 font-serif print:p-0">
+    <div className="min-h-screen bg-surface text-on-surface p-4 md:p-12 font-serif print:p-0 print:bg-white print:text-black">
       {/* 🛡️ CONTROL BAR (Hidden on Print) */}
       <div className="flex-row justify-between items-center mb-12 pb-6 border-b border-gray-100 print:hidden">
          <button onClick={() => navigate(-1)} className="flex-row items-center gap-2 text-xs font-bold uppercase opacity-60 hover:opacity-100">
@@ -44,7 +44,7 @@ export default function EncounterSummaryPage() {
       </div>
 
       {/* 🏛️ OFFICIAL MEDICAL REPORT HEADER */}
-      <header className="flex-row justify-between items-start mb-12 border-b-4 border-black pb-8">
+      <header className="flex-row justify-between items-start mb-12 border-b-4 border-on-surface print:border-black pb-8">
          <div className="flex-column gap-2">
             <h1 className="text-4xl font-black tracking-tighter uppercase mb-1">NurseFlow HIS</h1>
             <p className="text-xs font-bold uppercase tracking-widest opacity-60">Clinical Intelligence & Medical Summary</p>
@@ -61,7 +61,7 @@ export default function EncounterSummaryPage() {
       </header>
 
       {/* 📋 PATIENT DEMOGRAPHICS */}
-      <section className="mb-12 grid grid-cols-2 gap-12 p-8 bg-gray-50 border border-gray-200">
+      <section className="mb-12 grid grid-cols-2 gap-12 p-8 bg-surface-container border border-outline-variant print:bg-gray-50 print:border-gray-200">
          <div className="flex-column gap-4">
             <span className="text-[10px] font-black uppercase opacity-40 border-b border-gray-300 pb-1">Patient Identity</span>
             <div>
@@ -95,7 +95,7 @@ export default function EncounterSummaryPage() {
 
       {/* 🌡️ CLINICAL VITAL SIGNS (TRIAGE) */}
       <section className="mb-12">
-         <h3 className="text-xs font-black uppercase tracking-widest mb-6 pb-2 border-b-2 border-black">Initial Triage Assessment</h3>
+         <h3 className="text-xs font-black uppercase tracking-widest mb-6 pb-2 border-b-2 border-on-surface print:border-black">Initial Triage Assessment</h3>
          {triageLogs.length > 0 ? (
            <table className="w-full text-left text-xs">
               <thead>
@@ -130,11 +130,11 @@ export default function EncounterSummaryPage() {
 
       {/* 📝 MEDICAL PROGRESS NOTES (SOAP) */}
       <section className="mb-12 page-break-before">
-         <h3 className="text-xs font-black uppercase tracking-widest mb-6 pb-2 border-b-2 border-black">Clinical Progress Notes (SOAP)</h3>
+         <h3 className="text-xs font-black uppercase tracking-widest mb-6 pb-2 border-b-2 border-on-surface print:border-black">Clinical Progress Notes (SOAP)</h3>
          <div className="space-y-12">
             {soapRecords.map((rec, idx) => (
-              <div key={rec.id} className="relative pl-8 border-l border-gray-200">
-                 <div className="absolute -left-1 top-0 w-2 h-2 bg-black rounded-full"></div>
+              <div key={rec.id} className="relative pl-8 border-l border-outline-variant">
+                 <div className="absolute -left-1 top-0 w-2 h-2 bg-on-surface print:bg-black rounded-full"></div>
                  <header className="flex-row justify-between mb-4">
                     <span className="text-xs font-black uppercase tracking-tight">Record Entry #{idx + 1} — {rec.created_at?.toDate().toLocaleString()}</span>
                     <span className="text-[10px] font-bold italic opacity-40">Doc: {rec.doctor}</span>
@@ -179,7 +179,7 @@ export default function EncounterSummaryPage() {
             <p>© 2026 Clinical Intelligence Engine</p>
          </div>
          <div className="flex-column items-center gap-2">
-            <div className="w-48 h-12 border-b-2 border-black border-dashed mb-1 flex items-center justify-center italic text-xs opacity-20">Doctor Signature / Stamp</div>
+            <div className="w-48 h-12 border-b-2 border-on-surface print:border-black border-dashed mb-1 flex items-center justify-center italic text-xs opacity-20">Doctor Signature / Stamp</div>
             <p className="text-[10px] font-black uppercase tracking-tight">{encounter.updated_by || 'Unauthorized'}</p>
          </div>
       </footer>

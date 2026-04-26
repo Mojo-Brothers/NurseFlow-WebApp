@@ -55,7 +55,7 @@ export default function DiagnosticViewer({ encounterId }) {
       {labs.length > 0 && (
         <div className="flex-column gap-3">
            <h4 className="text-[10px] font-black uppercase tracking-widest text-primary px-2">Clinical Laboratory Results</h4>
-           <div className="bg-white rounded-2xl border border-outline-variant overflow-hidden shadow-sm">
+           <div className="bg-surface rounded-2xl border border-outline-variant overflow-hidden shadow-sm">
               <table className="w-full text-left border-collapse">
                  <thead>
                     <tr className="bg-surface-container text-[9px] font-black uppercase opacity-60">

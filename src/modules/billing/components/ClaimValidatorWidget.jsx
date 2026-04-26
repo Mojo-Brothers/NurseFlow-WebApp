@@ -31,7 +31,7 @@ export default function ClaimValidatorWidget({ readiness }) {
           {readiness.issues.length === 0 ? (
              <p className="text-xs font-bold text-success">✓ Documentation meets all payer compliance rules.</p>
           ) : readiness.issues.map((issue, i) => (
-             <div key={i} className="flex-row gap-3 items-start p-3 bg-white/40 rounded-xl">
+             <div key={i} className="flex-row gap-3 items-start p-3 bg-on-surface/5 rounded-xl">
                 <span className={`material-symbols-outlined text-sm ${issue.level === 'CRITICAL' ? 'text-error' : 'text-warning'}`}>
                    {issue.level === 'CRITICAL' ? 'cancel' : 'info'}
                 </span>

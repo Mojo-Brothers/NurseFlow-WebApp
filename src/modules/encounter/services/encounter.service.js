@@ -164,8 +164,6 @@ export const getActiveEncounters = async (maxResults = 24) => {
         ENCOUNTER_STATUSES.IN_TREATMENT,
         ENCOUNTER_STATUSES.TRANSFER_INTERNAL
       ]),
-      orderBy('escalation_level', 'desc'), // Prioritize Critical/Urgent
-      orderBy('admitted_at', 'asc'), 
     limit(maxResults)
   );
   const snap = await getDocs(q);

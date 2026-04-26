@@ -60,20 +60,20 @@ export default function HandoverModal({ patient, encounter, onClose }) {
   return (
     <div className="fixed inset-0 bg-surface-lowest-transparent backdrop-blur-md z-[300] flex items-center justify-center p-8">
        <ClinicalCard maxWidth="700px" padding="2.5rem" className="shadow-2xl border-t-8 border-primary animate-scale-in flex-column gap-6">
-          <header className="flex-row justify-between items-center mb-2">
-             <div>
-                <h3 className="text-2xl font-black text-primary">Shift Handover (SBAR)</h3>
-                <p className="text-xs font-bold opacity-40 uppercase tracking-widest mt-1">Safe Clinical Transition Context</p>
+          <header className="flex-row justify-between items-center mb-2 min-w-0">
+             <div className="min-w-0">
+                <h3 className="text-2xl font-black text-primary truncate">Shift Handover (SBAR)</h3>
+                <p className="text-xs font-bold opacity-40 uppercase tracking-widest mt-1 truncate">Safe Clinical Transition Context</p>
              </div>
-             <button onClick={() => onClose(false)} className="btn-icon-sm opacity-40 hover:opacity-100"><span className="material-symbols-outlined">close</span></button>
+             <button onClick={() => onClose(false)} className="btn-icon-sm opacity-40 hover:opacity-100 shrink-0"><span className="material-symbols-outlined">close</span></button>
           </header>
 
-          <div className="bg-surface-container p-4 rounded-xl flex-row justify-between items-center">
-             <div className="flex-column">
+          <div className="bg-surface-container p-4 rounded-xl flex-row justify-between items-center min-w-0">
+             <div className="flex-column min-w-0">
                 <span className="text-[10px] font-black uppercase opacity-60">Patient</span>
-                <span className="text-sm font-bold">{patient?.name} ({patient?.mrn})</span>
+                <span className="text-sm font-bold truncate">{patient?.name} ({patient?.mrn})</span>
              </div>
-             <div className="flex-column text-right">
+             <div className="flex-column text-right shrink-0">
                 <span className="text-[10px] font-black uppercase opacity-60">Sender</span>
                 <span className="text-xs font-black">{currentUser?.email.split('@')[0].toUpperCase()}</span>
              </div>
@@ -120,14 +120,14 @@ export default function HandoverModal({ patient, encounter, onClose }) {
              </div>
           </div>
 
-          <div className="flex-row gap-4 pt-4 border-t border-outline-variant">
-             <button onClick={() => onClose(false)} className="btn-ghost flex-1 py-4 font-black uppercase text-xs">Cancel</button>
+          <div className="flex-row gap-4 pt-4 border-t border-outline-variant min-w-0">
+             <button onClick={() => onClose(false)} className="btn-ghost flex-1 py-4 font-black uppercase text-xs shrink-0">Cancel</button>
              <button 
                disabled={isSaving} 
                onClick={handleSubmit} 
-               className="btn-primary flex-1 py-4 font-black uppercase text-xs shadow-lg flex-row items-center justify-center gap-2"
+               className="btn-primary flex-[2] py-4 font-black uppercase text-xs shadow-lg flex-row items-center justify-center gap-2 min-w-0"
              >
-                {isSaving ? 'Securing...' : <><span className="material-symbols-outlined text-sm">verified_user</span> Execute Handover</>}
+                {isSaving ? 'Securing...' : <><span className="material-symbols-outlined text-sm shrink-0">verified_user</span> <span className="truncate">Execute Handover</span></>}
              </button>
           </div>
        </ClinicalCard>

@@ -53,7 +53,7 @@ const DataGovernanceHub = () => {
         {/* Terminology Standardization */}
         <div style={{ gridColumn: 'span 12' }} className="mt-8">
            <h4 className="text-xl font-black uppercase tracking-tight mb-6">Standard Clinical Terminology</h4>
-           <div className="bg-white rounded-3xl border border-outline-variant overflow-hidden">
+           <div className="bg-surface rounded-3xl border border-outline-variant overflow-hidden">
               <table className="w-full text-left border-collapse">
                  <thead>
                     <tr className="bg-surface-container text-[10px] font-black uppercase tracking-widest">

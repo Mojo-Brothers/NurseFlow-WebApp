@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import PresentationCard from '../../../components/ui/PresentationCard.jsx';
 import { db } from '../../../core/firebase.js';
-import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import { COLLECTIONS, ROLES } from '../../../core/constants.js';
+import { doc, updateDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore';
+import { COLLECTIONS, ROLES, ENCOUNTER_STATUSES } from '../../../core/constants.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 
 /**
@@ -36,6 +36,41 @@ export default function DevTools() {
     } catch (err) {
       console.error('[DevTools] Sync error:', err);
       setMessage(`Error: ${err.message}. Ensure the user exists in 'users' collection.`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSeedTriage = async () => {
+    setLoading(true);
+    setMessage('');
+    try {
+      // 1. Create Patient
+      const patientRef = await addDoc(collection(db, COLLECTIONS.PATIENTS), {
+        name: "Budi Santoso (Demo)",
+        nik: "327501010190000" + Math.floor(Math.random() * 10),
+        dob: "1990-01-01",
+        gender: "M",
+        mrn: "100" + Math.floor(Math.random() * 900 + 100),
+        registered_at: serverTimestamp(),
+        is_active: true
+      });
+
+      // 2. Create Encounter in WAITING status
+      await addDoc(collection(db, COLLECTIONS.ENCOUNTERS), {
+        patient_id: patientRef.id,
+        patient_name: "Budi Santoso (Demo)",
+        status: ENCOUNTER_STATUSES.WAITING,
+        admitted_at: serverTimestamp(),
+        chief_complaint: "Nyeri dada hebat (Suspected MI)",
+        escalation_level: 'NONE',
+        ward: 'IGD'
+      });
+
+      setMessage('Triage Seed Success! Patient Budi Santoso created and added to queue.');
+    } catch (err) {
+      console.error('[DevTools] Seed error:', err);
+      setMessage(`Error: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -87,6 +122,17 @@ export default function DevTools() {
             >
                {loading ? 'Syncing...' : 'Update & Sync Role'}
             </button>
+
+            <div className="pt-6 border-t border-outline-variant">
+               <h3 className="text-sm font-black mb-4 uppercase tracking-tighter">Emergency Seeder</h3>
+               <button 
+                 onClick={handleSeedTriage}
+                 disabled={loading}
+                 className="w-full py-4 bg-error text-white font-black rounded-2xl uppercase tracking-widest text-xs hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50"
+               >
+                  {loading ? 'Seeding...' : 'Seed Triage Queue (1 Patient)'}
+               </button>
+            </div>
 
             {message && (
                <div className={`p-4 rounded-xl text-xs font-bold ${message.includes('Error') ? 'bg-error/10 text-error' : 'bg-success/10 text-success'}`}>

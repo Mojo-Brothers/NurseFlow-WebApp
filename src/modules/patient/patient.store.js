@@ -3,7 +3,7 @@
  * State global untuk patient context, shared antar halaman.
  */
 import { create } from 'zustand';
-import { getAllPatients, registerPatient } from './services/patient.service.js';
+import { getAllPatients, registerPatient, updatePatient } from './services/patient.service.js';
 
 export const usePatientStore = create((set, get) => ({
   // ─── State ───────────────────────────────
@@ -31,17 +31,28 @@ export const usePatientStore = create((set, get) => ({
 
   selectPatient: (id) => set({ selectedPatientId: id }),
 
-  addPatient: async (patientData, registeredBy) => {
+  addPatient: async (patientData, registeredBy, id = null) => {
     set({ isLoading: true, error: null });
     try {
-      const newPatient = await registerPatient(patientData, registeredBy);
-      set(state => ({
-        patients:  [newPatient, ...state.patients],
-        isLoading: false,
-      }));
-      return newPatient;
+      if (id) {
+        // Mode Update
+        await updatePatient(id, patientData, registeredBy);
+        set(state => ({
+          patients: state.patients.map(p => p.id === id ? { ...p, ...patientData } : p),
+          isLoading: false
+        }));
+        return { id, ...patientData };
+      } else {
+        // Mode Create
+        const newPatient = await registerPatient(patientData, registeredBy);
+        set(state => ({
+          patients:  [newPatient, ...state.patients],
+          isLoading: false,
+        }));
+        return newPatient;
+      }
     } catch (err) {
-      console.error('[PatientStore] addPatient error:', err);
+      console.error('[PatientStore] savePatient error:', err);
       set({ error: err.message, isLoading: false });
       throw err;
     }

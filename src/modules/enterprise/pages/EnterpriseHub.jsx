@@ -54,7 +54,7 @@ export default function EnterpriseHub() {
              </div>
           </ClinicalCard>
 
-          <ClinicalCard padding="2.5rem" className="bg-white border-none shadow-sm flex-column justify-center text-center">
+          <ClinicalCard padding="2.5rem" className="bg-surface border-none shadow-sm flex-column justify-center text-center">
              <span className="text-[10px] font-black uppercase tracking-widest opacity-40 mb-2">Network Capacity (Avg BOR)</span>
              <div className="text-7xl font-black text-primary tabular-nums tracking-tighter mb-4">{avgGroupBOR}%</div>
              <div className="h-2 w-full bg-surface-container rounded-full overflow-hidden">
@@ -68,7 +68,7 @@ export default function EnterpriseHub() {
           
           <div className="grid grid-cols-1 gap-4">
              {facilities.map((site, i) => (
-                <div key={i} className="bg-white p-8 rounded-[2.5rem] border border-outline-variant shadow-sm hover:shadow-lg transition-all flex-row justify-between items-center group">
+                <div key={i} className="bg-surface p-8 rounded-[2.5rem] border border-outline-variant shadow-sm hover:shadow-lg transition-all flex-row justify-between items-center group">
                    <div className="flex-row items-center gap-6">
                       <div className={`w-16 h-16 rounded-3xl flex items-center justify-center 
                          ${site.status === 'CRITICAL_LOAD' ? 'bg-error text-white' : 'bg-surface-container text-on-surface'}`}>

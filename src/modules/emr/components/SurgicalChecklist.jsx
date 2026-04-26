@@ -99,7 +99,7 @@ const SurgicalChecklist = ({ encounterId, patientId, userEmail, onComplete }) =>
             key={item.id} 
             onClick={() => handleToggle(item.id)}
             className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex-row items-center gap-4
-              ${data[item.id] ? 'bg-primary/5 border-primary' : 'bg-white border-outline-variant opacity-60'}`}
+              ${data[item.id] ? 'bg-primary/5 border-primary' : 'bg-surface border-outline-variant opacity-60'}`}
           >
             <span className={`material-symbols-outlined text-xl ${data[item.id] ? 'text-primary' : 'opacity-20'}`}>
               {data[item.id] ? 'check_box' : 'check_box_outline_blank'}

@@ -36,10 +36,10 @@ export default function PatientPortalPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex-row items-center justify-center">
          <div className="text-center">
             <span className="material-symbols-outlined text-primary text-6xl anim-spin mb-4">clinical_notes</span>
-            <p className="text-lg font-bold text-slate-400 uppercase tracking-widest">Securing your health data...</p>
+            <p className="text-lg font-bold opacity-40 uppercase tracking-widest">Securing your health data...</p>
          </div>
       </div>
     );
@@ -50,14 +50,14 @@ export default function PatientPortalPage() {
   const { profile, latestEncounter, activeMeds, billingSummary, diagnostics } = data;
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans pb-20">
+    <div className="min-h-screen bg-background font-sans pb-20">
       {/* 📱 PORTAL HEADER */}
-      <header className="bg-white px-8 py-6 shadow-sm flex-row justify-between items-center sticky top-0 z-50">
+      <header className="bg-surface px-8 py-6 shadow-sm flex-row justify-between items-center sticky top-0 z-50">
          <div className="flex-row items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-black">NF</div>
-            <h1 className="text-xl font-black tracking-tight text-slate-800">NurseFlow <span className="text-primary">Patient</span></h1>
+            <div className="w-10 h-10 bg-primary rounded-full flex-row items-center justify-center text-white font-black">NF</div>
+            <h1 className="text-xl font-black tracking-tight">NurseFlow <span className="text-primary">Patient</span></h1>
          </div>
-         <button onClick={logout} className="btn-ghost flex-row items-center gap-2 text-xs font-bold text-slate-400 hover:text-error transition-all">
+         <button onClick={logout} className="btn-ghost flex-row items-center gap-2 text-xs font-bold opacity-40 hover:text-error transition-all">
             <span className="material-symbols-outlined text-sm">logout</span>
             Sign Out
          </button>
@@ -67,13 +67,13 @@ export default function PatientPortalPage() {
          <div className="lg:col-span-8">
             {/* 👋 WELCOME HERO */}
             <section className="mb-12">
-               <h2 className="text-4xl font-black text-slate-900 mb-2">Hello, {profile?.name?.split(' ')[0]}!</h2>
-               <p className="text-slate-500 font-medium text-lg">Your health journey is in safe hands. Here is your current status.</p>
+               <h2 className="text-4xl font-black mb-2">Hello, {profile?.name?.split(' ')[0]}!</h2>
+               <p className="opacity-60 font-medium text-lg">Your health journey is in safe hands. Here is your current status.</p>
                
                <div className="flex-row gap-4 mt-8">
                   <button 
                     onClick={() => setInLobby(true)}
-                    className="flex-1 btn-primary py-6 rounded-[2rem] text-lg font-black uppercase tracking-widest flex items-center justify-center gap-4 shadow-2xl"
+                    className="flex-1 btn-primary py-6 rounded-[2rem] text-lg font-black uppercase tracking-widest flex-row items-center justify-center gap-4 shadow-2xl"
                   >
                      <span className="material-symbols-outlined text-3xl">videocam</span>
                      Join Consultation
@@ -86,20 +86,20 @@ export default function PatientPortalPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                {/* 💊 MEDICATION TRACKER */}
-               <ClinicalCard padding="2rem" className="bg-white border-t-8 border-primary shadow-xl">
+               <ClinicalCard padding="2rem" className="bg-surface border-t-8 border-primary shadow-xl">
                   <div className="flex-row justify-between items-center mb-6">
-                     <h3 className="text-lg font-black text-slate-800 uppercase tracking-tight">Active Medications</h3>
+                     <h3 className="text-lg font-black uppercase tracking-tight">Active Medications</h3>
                      <span className="material-symbols-outlined text-primary">pill</span>
                   </div>
                   <div className="space-y-4">
                      {activeMeds.length > 0 ? activeMeds.map((med, i) => (
-                        <div key={i} className="p-4 bg-slate-50 rounded-2xl flex-row items-center gap-4 border border-slate-100">
-                           <div className="w-10 h-10 bg-white shadow-sm rounded-xl flex items-center justify-center text-primary">
+                        <div key={i} className="p-4 bg-surface-container-low rounded-2xl flex-row items-center gap-4 border border-outline-variant">
+                           <div className="w-10 h-10 bg-surface shadow-sm rounded-xl flex-row items-center justify-center text-primary">
                               <span className="material-symbols-outlined text-xl">medication</span>
                            </div>
                            <div>
-                              <p className="text-sm font-black text-slate-800">{med.medication_name}</p>
-                              <p className="text-[10px] font-bold text-slate-400 uppercase">{med.dosage} • {med.route}</p>
+                              <p className="text-sm font-black">{med.medication_name}</p>
+                              <p className="text-[10px] font-bold opacity-40 uppercase">{med.dosage} • {med.route}</p>
                            </div>
                         </div>
                      )) : (
@@ -128,7 +128,7 @@ export default function PatientPortalPage() {
                   {latestEncounter?.status === 'DISCHARGED' && (
                      <button 
                         onClick={() => navigate(`/reporting/${latestEncounter.id}`)}
-                        className="mt-8 w-full py-4 bg-white text-slate-900 font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg flex-row items-center justify-center gap-2"
+                        className="mt-8 w-full py-4 bg-surface text-on-surface font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg flex-row items-center justify-center gap-2"
                      >
                         <span className="material-symbols-outlined text-sm">download</span>
                         Get Discharge Summary
@@ -140,30 +140,30 @@ export default function PatientPortalPage() {
             {/* 🧪 TEST RESULTS SECTION */}
             <section className="mt-12">
                <div className="flex-row justify-between items-center mb-6">
-                  <h3 className="text-xl font-black text-slate-800 tracking-tight">My Test Results</h3>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-200 px-3 py-1 rounded-full">Validated by Clinical Team</span>
+                  <h3 className="text-xl font-black tracking-tight">My Test Results</h3>
+                  <span className="text-[10px] font-bold opacity-40 uppercase tracking-widest bg-surface-container-high px-3 py-1 rounded-full">Validated by Clinical Team</span>
                </div>
                
                {diagnostics.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      {diagnostics.map((res, i) => (
-                        <ClinicalCard key={i} padding="1.5rem" className="bg-white border-2 border-slate-100 shadow-sm hover:border-primary transition-all">
+                        <ClinicalCard key={i} padding="1.5rem" className="bg-surface border-2 border-outline-variant shadow-sm hover:border-primary transition-all">
                            <div className="flex-row items-center gap-4">
-                              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center 
+                              <div className={`w-12 h-12 rounded-2xl flex-row items-center justify-center 
                                  ${res.type === 'LAB' ? 'bg-primary/10 text-primary' : 'bg-secondary/10 text-secondary'}`}>
                                  <span className="material-symbols-outlined">{res.type === 'LAB' ? 'biotech' : 'image'}</span>
                               </div>
                               <div className="flex-1">
-                                 <p className="text-sm font-black text-slate-800">{res.test_name}</p>
-                                 <p className="text-[10px] font-bold text-slate-400 uppercase">{res.type === 'LAB' ? 'Laboratory Report' : 'Radiology Image'}</p>
+                                 <p className="text-sm font-black">{res.test_name}</p>
+                                 <p className="text-[10px] font-bold opacity-40 uppercase">{res.type === 'LAB' ? 'Laboratory Report' : 'Radiology Image'}</p>
                               </div>
                            </div>
                         </ClinicalCard>
                      ))}
                   </div>
                ) : (
-                  <div className="p-12 text-center bg-slate-100/50 rounded-3xl border-2 border-dashed border-slate-200">
-                     <p className="text-sm font-medium text-slate-400">No diagnostic reports available yet for this visit.</p>
+                  <div className="p-12 text-center bg-surface-container/50 rounded-3xl border-2 border-dashed border-outline-variant">
+                     <p className="text-sm font-medium opacity-40">No diagnostic reports available yet for this visit.</p>
                   </div>
                )}
             </section>
@@ -171,9 +171,9 @@ export default function PatientPortalPage() {
 
          {/* 🌡️ REMOTE HEALTH LOG (SIDEBAR) */}
          <div className="lg:col-span-4 flex-column gap-8">
-            <ClinicalCard padding="2rem" className="bg-white border-l-8 border-secondary shadow-lg">
+            <ClinicalCard padding="2rem" className="bg-surface border-l-8 border-secondary shadow-lg">
                <div className="flex-row justify-between items-center mb-4">
-                  <p className="text-xl font-black text-slate-800 uppercase">
+                  <p className="text-xl font-black uppercase">
                      {billingSummary?.status === 'PAID' ? 'Account Balanced' : 'Awaiting Settlement'}
                   </p>
                   <span className="material-symbols-outlined text-secondary text-3xl">account_balance_wallet</span>

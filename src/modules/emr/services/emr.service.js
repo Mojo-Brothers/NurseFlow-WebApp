@@ -20,7 +20,7 @@ import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES } from '../../../core/co
  * Separated from main EMR transaction to allow for targeted retries.
  */
 
-export const triggerBillingItem = async ({ encounterId, patientId, doctorEmail }) => {
+export const triggerBillingItem = async ({ encounterId, doctorEmail }) => {
   const billingQuery = query(
     collection(db, COLLECTIONS.BILLING),
     where('encounter_id', '==', encounterId),
@@ -83,6 +83,47 @@ export const triggerPharmacyOrder = async ({ medications, patientId, encounterId
   return { ok: true, count };
 };
 
+export const triggerLabOrder = async ({ labs, patientId, encounterId, doctorEmail }) => {
+  if (!labs?.length) return { ok: true, count: 0 };
+  const timestamp = serverTimestamp();
+  let count = 0;
+  for (const lab of labs) {
+    const labRef = doc(collection(db, COLLECTIONS.DIAGNOSTICS)); // Reuse diagnostics or new collection
+    await setDoc(labRef, {
+      ...lab,
+      type: 'LABORATORY',
+      patient_id: patientId,
+      encounter_id: encounterId,
+      ordered_by: doctorEmail,
+      status: 'PENDING',
+      ordered_at: timestamp
+    });
+    count++;
+  }
+  return { ok: true, count };
+};
+
+export const triggerRadOrder = async ({ rads, patientId, encounterId, doctorEmail }) => {
+  if (!rads?.length) return { ok: true, count: 0 };
+  const timestamp = serverTimestamp();
+  let count = 0;
+  for (const rad of rads) {
+    const radRef = doc(collection(db, COLLECTIONS.DIAGNOSTICS));
+    await setDoc(radRef, {
+      ...rad,
+      type: 'RADIOLOGY',
+      patient_id: patientId,
+      encounter_id: encounterId,
+      ordered_by: doctorEmail,
+      status: 'PENDING',
+      ordered_at: timestamp
+    });
+    count++;
+  }
+  return { ok: true, count };
+};
+
+
 /**
  * CORE EMR TRANSACTION
  * Saves the soap note and audit log. Operational effects are returned for external triggering.
@@ -115,7 +156,10 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
         subjective:       soapData.subjective,
         objective:        soapData.objective,
         assessment:       soapData.assessment,
+        icd10:            soapData.icd10 || [],
         plan_medications: soapData.plan_medications || [],
+        plan_labs:        soapData.plan_labs || [],
+        plan_rads:        soapData.plan_rads || [],
         plan_instructions: soapData.plan_instructions || '',
         created_at:       timestamp,
         signed_at:        status === 'SIGNED' ? timestamp : null,
@@ -143,7 +187,9 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
     const receipt = { 
       ...coreResult, 
       billing: { ok: false }, 
-      pharmacy: { ok: false } 
+      pharmacy: { ok: false },
+      lab: { ok: false },
+      rad: { ok: false }
     };
 
     if (status === 'SIGNED') {
@@ -163,6 +209,28 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
       } catch (e) {
         receipt.pharmacy = { ok: false, error: e.message };
       }
+
+      try {
+        receipt.lab = await triggerLabOrder({ 
+          labs: soapData.plan_labs, 
+          patientId, 
+          encounterId, 
+          doctorEmail 
+        });
+      } catch (e) {
+        receipt.lab = { ok: false, error: e.message };
+      }
+
+      try {
+        receipt.rad = await triggerRadOrder({ 
+          rads: soapData.plan_rads, 
+          patientId, 
+          encounterId, 
+          doctorEmail 
+        });
+      } catch (e) {
+        receipt.rad = { ok: false, error: e.message };
+      }
     }
 
     return receipt;
@@ -175,8 +243,7 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
 export const getPatientRecords = async (patientId) => {
   const q = query(
     collection(db, COLLECTIONS.MEDICAL_RECORDS),
-    where('patientId', '==', patientId),
-    orderBy('created_at', 'desc')
+    where('patientId', '==', patientId)
   );
   const snapshot = await getDocs(q);
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

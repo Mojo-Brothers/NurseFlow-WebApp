@@ -1,6 +1,8 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 export default function ClinicalAlertBanner({ riskProfile, trendAlerts }) {
+  const { t } = useTranslation();
   if (!riskProfile && (!trendAlerts || trendAlerts.length === 0)) return null;
 
   const isHighRisk = riskProfile?.level === 'HIGH';
@@ -22,7 +24,7 @@ export default function ClinicalAlertBanner({ riskProfile, trendAlerts }) {
           
           <div>
              <h3 className="text-sm font-black uppercase tracking-widest">
-                {isHighRisk ? '⚠️ SEPSIS ALERT (qSOFA >= 2)' : 'Surveillance Insight'}
+                {isHighRisk ? t('common.alerts.sepsis_alert') : t('common.alerts.surveillance_insight')}
              </h3>
              <div className="flex-row flex-wrap gap-2 mt-1">
                 {riskProfile?.indicators.map((ind, i) => (
@@ -39,7 +41,7 @@ export default function ClinicalAlertBanner({ riskProfile, trendAlerts }) {
        </div>
 
        <button className="px-6 py-2 bg-black/10 hover:bg-black/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all">
-          Acknowledge Risk
+          {t('common.alerts.ack_risk')}
        </button>
     </div>
   );

@@ -27,7 +27,7 @@ export default function PublicQueueDisplay() {
 
        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 flex-1">
           {departments.map((dept, i) => (
-             <ClinicalCard key={i} padding="3rem" className="bg-white/5 border border-white/10 rounded-[4rem] flex-row justify-between items-center group hover:bg-white/10 transition-all">
+             <ClinicalCard key={i} padding="3rem" className="bg-on-surface/5 border border-on-surface/10 rounded-[4rem] flex-row justify-between items-center group hover:bg-on-surface/10 transition-all">
                 <div className="flex-column gap-4">
                    <h2 className="text-2xl font-black opacity-60 uppercase leading-none">{dept.name}</h2>
                    <div className="flex-row items-baseline gap-4">

@@ -3,6 +3,7 @@
  * Didesain untuk perawat: cepat, satu-klik update status.
  */
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getShiftTasks, updateTaskStatus, createTask } from '../services/worklist.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
@@ -15,22 +16,26 @@ const TASK_ICONS = {
   CUSTOM:       'task_alt',
 };
 
-const STATUS_COLORS = {
-  PENDING:     { bg: '#fef9c3', text: '#92400e', label: 'Pending'     },
-  IN_PROGRESS: { bg: '#dbeafe', text: '#1e40af', label: 'Dalam Proses'},
-  DONE:        { bg: '#dcfce7', text: '#166534', label: 'Selesai'     },
-  SKIPPED:     { bg: '#f3f4f6', text: '#6b7280', label: 'Dilewati'   },
-};
+const getStatusConfig = (t) => ({
+  PENDING:     { bg: '#fef9c3', text: '#92400e', label: t('worklist.statuses.pending')     },
+  IN_PROGRESS: { bg: '#dbeafe', text: '#1e40af', label: t('worklist.statuses.in_progress') },
+  DONE:        { bg: '#dcfce7', text: '#166534', label: t('worklist.statuses.done')        },
+  SKIPPED:     { bg: '#f3f4f6', text: '#6b7280', label: t('worklist.statuses.skipped')     },
+});
 
-const TASK_TYPE_LABELS = {
-  MEDICATION:  'Pemberian Obat',
-  VITAL_CHECK: 'Cek Vital',
-  WOUND_CARE:  'Perawatan Luka',
-  LAB_DRAW:    'Ambil Darah',
-  CUSTOM:      'Tugas Lain',
-};
+const getTaskTypeLabels = (t) => ({
+  MEDICATION:  t('worklist.task_types.medication'),
+  VITAL_CHECK: t('worklist.task_types.vital_check'),
+  WOUND_CARE:  t('worklist.task_types.wound_care'),
+  LAB_DRAW:    t('worklist.task_types.lab_draw'),
+  CUSTOM:      t('worklist.task_types.custom'),
+});
 
 export default function WorklistPage() {
+  const { t } = useTranslation();
+  const STATUS_COLORS = getStatusConfig(t);
+  const TASK_TYPE_LABELS = getTaskTypeLabels(t);
+
   const { currentUser } = useAuth();
   const { patients, fetchPatients } = usePatientStore();
   const [tasks, setTasks]           = useState([]);
@@ -89,17 +94,17 @@ export default function WorklistPage() {
 
   return (
     <div className="p-8 w-full">
-      <div className="flex-row items-start justify-between mb-8">
+      <div className="flex-row items-center justify-between mb-8">
         <div>
-          <p className="subtitle">Shift Board</p>
-          <h2 className="title">Nursing Worklist</h2>
+          <p className="subtitle">{t('worklist.subtitle')}</p>
+          <h2 className="title">{t('worklist.title')}</h2>
           <p className="text-on-surface-variant text-sm mt-1">
-            Tugas shift · {pending} pending · {done}/{tasks.length} selesai
+            {t('worklist.task_summary', { pending, done, total: tasks.length })}
           </p>
         </div>
         <button className="btn-primary flex-row items-center gap-2" onClick={() => setIsModalOpen(true)}>
           <span className="material-symbols-outlined" style={{ fontSize: '1.1rem' }}>add_task</span>
-          Tambah Tugas
+          {t('worklist.btn_add')}
         </button>
       </div>
 
@@ -107,7 +112,7 @@ export default function WorklistPage() {
         <div className="flex-row items-center justify-between mb-3">
           <div className="flex-row items-center gap-2">
             <span className="material-symbols-outlined text-primary" style={{ fontSize: '1.1rem' }}>trending_up</span>
-            <p className="font-bold text-sm">Progress Shift</p>
+            <p className="font-bold text-sm">{t('worklist.progress_title')}</p>
           </div>
           <p style={{ fontFamily: 'var(--font-headline)', fontWeight: '800', fontSize: '1.5rem', color: 'var(--secondary)', margin: 0 }}>
             {progress}%
@@ -131,7 +136,7 @@ export default function WorklistPage() {
               backgroundColor: filter === f ? 'var(--primary)' : 'var(--surface-container)',
               color: filter === f ? 'white' : 'var(--on-surface-variant)',
             }}>
-            {f === 'ALL' ? `Semua (${tasks.length})` : STATUS_COLORS[f]?.label || f}
+            {f === 'ALL' ? `${t('worklist.statuses.all')} (${tasks.length})` : STATUS_COLORS[f]?.label || f}
           </button>
         ))}
       </div>
@@ -144,7 +149,7 @@ export default function WorklistPage() {
         ) : filtered.length === 0 ? (
           <div className="card" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1/-1' }}>
             <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', opacity: 0.3, display: 'block', marginBottom: '0.75rem' }}>task_alt</span>
-            <p style={{ color: 'var(--on-surface-variant)' }}>Tidak ada tugas dengan filter ini.</p>
+            <p style={{ color: 'var(--on-surface-variant)' }}>{t('worklist.no_tasks')}</p>
           </div>
         ) : filtered.map(task => {
           const sc = STATUS_COLORS[task.status] || STATUS_COLORS.PENDING;
@@ -155,7 +160,7 @@ export default function WorklistPage() {
               opacity: task.status === 'DONE' || task.status === 'SKIPPED' ? 0.7 : 1,
               transition: 'all 0.2s',
             }}>
-              <div className="flex-row items-start justify-between mb-3">
+              <div className="flex-row items-center justify-between mb-3">
                 <div className="flex-row items-center gap-2">
                   <div style={{
                     width: '36px', height: '36px', borderRadius: 'var(--radius-md)',
@@ -196,18 +201,18 @@ export default function WorklistPage() {
                 <div className="flex-row gap-2 mt-auto">
                   <button disabled={isUpdating} onClick={() => handleStatusUpdate(task.id, 'IN_PROGRESS')}
                     style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-md)', border: 'none', backgroundColor: 'var(--primary)', color: 'white', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer' }}>
-                    {isUpdating ? '...' : '▶ Mulai'}
+                    {isUpdating ? '...' : t('worklist.actions.start')}
                   </button>
                   <button disabled={isUpdating} onClick={() => handleStatusUpdate(task.id, 'SKIPPED')}
                     style={{ padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)', backgroundColor: 'transparent', color: 'var(--on-surface-variant)', fontWeight: '600', fontSize: '0.8rem', cursor: 'pointer' }}>
-                    Skip
+                    {t('worklist.actions.skip')}
                   </button>
                 </div>
               )}
               {task.status === 'IN_PROGRESS' && (
                 <button disabled={isUpdating} onClick={() => handleStatusUpdate(task.id, 'DONE')}
                   style={{ width: '100%', padding: '0.5rem', borderRadius: 'var(--radius-md)', border: 'none', backgroundColor: 'var(--secondary)', color: 'white', fontWeight: '700', fontSize: '0.8rem', cursor: 'pointer', marginTop: 'auto' }}>
-                  {isUpdating ? '...' : '✓ Tandai Selesai'}
+                  {isUpdating ? '...' : t('worklist.actions.done')}
                 </button>
               )}
             </div>
@@ -219,41 +224,41 @@ export default function WorklistPage() {
         <div className="modal-overlay">
           <div className="modal-content card" style={{ width: '480px', maxWidth: '95vw' }}>
             <div className="flex-row items-center justify-between mb-6">
-              <h3 className="font-bold text-xl">Tambah Tugas Baru</h3>
+              <h3 className="font-bold text-xl">{t('worklist.modal_title')}</h3>
               <button onClick={() => setIsModalOpen(false)} className="btn-ghost" style={{ padding: '4px' }}>
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
             <form onSubmit={handleCreateTask} className="flex-column gap-4">
               <div>
-                <label className="metric-label mb-2 block">PASIEN *</label>
+                <label className="metric-label">{t('worklist.label_patient')} *</label>
                 <select required className="form-input" value={newTask.patientId}
                   onChange={e => setNewTask({ ...newTask, patientId: e.target.value })}>
-                  <option value="">-- Pilih Pasien --</option>
+                  <option value="">-- {t('patients_v2.search_placeholder')} --</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.mrn} — {p.name}</option>)}
                 </select>
               </div>
               <div>
-                <label className="metric-label mb-2 block">TIPE TUGAS *</label>
+                <label className="metric-label">{t('worklist.label_task_type')} *</label>
                 <select required className="form-input" value={newTask.taskType}
                   onChange={e => setNewTask({ ...newTask, taskType: e.target.value })}>
                   {Object.entries(TASK_TYPE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
                 </select>
               </div>
               <div>
-                <label className="metric-label mb-2 block">DESKRIPSI *</label>
-                <textarea required rows={2} className="form-input" placeholder="Detail tugas..."
+                <label className="metric-label">{t('worklist.label_description')} *</label>
+                <textarea required rows={2} className="form-input" placeholder={t('worklist.placeholder_description')}
                   value={newTask.description}
                   onChange={e => setNewTask({ ...newTask, description: e.target.value })} />
               </div>
               <div>
-                <label className="metric-label mb-2 block">WAKTU PELAKSANAAN</label>
+                <label className="metric-label">{t('worklist.label_due_time')}</label>
                 <input type="time" className="form-input" value={newTask.dueTime}
                   onChange={e => setNewTask({ ...newTask, dueTime: e.target.value })} />
               </div>
               <div className="flex-row justify-between mt-4 pt-4" style={{ borderTop: '1px solid var(--outline-variant)' }}>
-                <button type="button" className="btn-ghost" onClick={() => setIsModalOpen(false)}>Batal</button>
-                <button type="submit" className="btn-primary">Tambah Tugas</button>
+                <button type="button" className="btn-ghost" onClick={() => setIsModalOpen(false)}>{t('worklist.btn_cancel')}</button>
+                <button type="submit" className="btn-primary">{t('worklist.btn_add')}</button>
               </div>
             </form>
           </div>

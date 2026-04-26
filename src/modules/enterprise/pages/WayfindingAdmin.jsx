@@ -45,7 +45,7 @@ export default function WayfindingAdmin() {
                   key={poi.id} 
                   onClick={() => setSelectedPoi(poi)}
                   className={`p-6 rounded-[2rem] border transition-all cursor-pointer flex-row justify-between items-center
-                    ${selectedPoi?.id === poi.id ? 'bg-primary text-white border-primary shadow-xl scale-105' : 'bg-white border-outline-variant hover:bg-primary/5'}`}
+                    ${selectedPoi?.id === poi.id ? 'bg-primary text-white border-primary shadow-xl scale-105' : 'bg-surface border-outline-variant hover:bg-primary/5'}`}
                 >
                    <div className="flex-column">
                       <span className="text-xs font-black uppercase tracking-tighter">{poi.name}</span>
@@ -58,7 +58,7 @@ export default function WayfindingAdmin() {
 
           {/* 🗺️ MAP CANVAS */}
           <div className="lg:col-span-8">
-             <PresentationCard padding="3rem" className="bg-white border-none shadow-sm h-full flex-column gap-8">
+             <PresentationCard padding="3rem" className="bg-surface border-none shadow-sm h-full flex-column gap-8">
                 <div className="flex-row justify-between items-center">
                    <h3 className="text-sm font-black uppercase">Facility Visual Editor — Level {currentFloor}</h3>
                    <div className="flex-row gap-4">
@@ -80,7 +80,7 @@ export default function WayfindingAdmin() {
                    ))}
 
                    {selectedPoi && selectedPoi.floor === currentFloor && (
-                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur p-6 rounded-3xl shadow-2xl border border-primary/20 w-64 animate-fade-in">
+                      <div className="absolute top-4 right-4 bg-surface/90 backdrop-blur p-6 rounded-3xl shadow-2xl border border-primary/20 w-64 animate-fade-in">
                          <h4 className="text-xs font-black uppercase mb-4 border-b pb-2">Location Data</h4>
                          <div className="space-y-4">
                             <div className="flex-column gap-1">

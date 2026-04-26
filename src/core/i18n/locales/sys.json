@@ -106,5 +106,91 @@
       "height": "SYS:DIM_HT",
       "bmi": "SYS:CALC_INDEX_BMI"
     }
+  },
+  "worklist": {
+    "title": "SYS:TASK_QUEUE_MGR",
+    "btn_add": "SYS:EVT_TASK_CREATE",
+    "modal_title": "SYS:UI_MODAL_TASK",
+    "label_task": "SYS:ATTR_TASK_ID",
+    "label_assignee": "SYS:ATTR_UID_REF",
+    "label_priority": "SYS:ATTR_PRIORITY",
+    "label_status": "SYS:ATTR_STATUS",
+    "status_pending": "SYS:STATE_WAIT",
+    "status_progress": "SYS:STATE_BUSY",
+    "status_done": "SYS:STATE_OK"
+  },
+  "billing": {
+    "title": "SYS:FIN_BILLING_SRV",
+    "add_service": "SYS:EVT_ITEM_ADD",
+    "select_service": "SYS:PTR_ITEM_NULL",
+    "no_items": "SYS:COL_BILL_EMPTY",
+    "save_draft": "SYS:EVT_DRAFT_SAVE",
+    "saving": "SYS:STATE_IO_PENDING",
+    "table": {
+      "item": "SYS:FIELD_ITEM",
+      "qty": "SYS:FIELD_QTY",
+      "price": "SYS:FIELD_UNIT_PRICE",
+      "total": "SYS:FIELD_SUBTOTAL",
+      "action": "SYS:INTENT_TRIGGER"
+    }
+  },
+  "triage_v2": {
+    "modes": {
+      "rapid": "SYS:MODE_RAPID",
+      "detail": "SYS:MODE_DETAIL",
+      "monitor": "SYS:MODE_MONITOR",
+      "poli": "SYS:MODE_POLI"
+    },
+    "labels": {
+      "chief_complaint": "SYS:FIELD_CHIEF_COMPLAINT",
+      "esi_score": "SYS:SCORE_ESI_L6",
+      "current_status": "SYS:STATE_OBS",
+      "system_ready": "SYS:CORE_READY",
+      "vitals_logged": "SYS:METRIC_LOGGED_PARAM",
+      "parameters": "SYS:ATTR_PARAMS"
+    },
+    "actions": {
+      "save_draft": "SYS:EVT_IO_DRAFT",
+      "process": "SYS:EVT_COMMIT_ALL"
+    }
+  },
+  "patient_form": {
+    "name": "SYS:ID_NAME",
+    "nik": "SYS:ID_NIK",
+    "pob": "SYS:ID_POB",
+    "dob": "SYS:ID_DOB",
+    "gender": "SYS:ID_GENDER",
+    "gender_m": "SYS_ENUM_G_M",
+    "gender_f": "SYS_ENUM_G_F",
+    "nationality": "SYS:ID_NATIONALITY",
+    "marital_status": "SYS:ID_MARITAL",
+    "address": "SYS:ID_ADDR",
+    "occupation": "SYS:ID_OCCU",
+    "education": "SYS:ID_EDU",
+    "preferred_lang": "SYS:ID_LANG",
+    "interpreter": "SYS:FLAG_INTERPRETER",
+    "phone": "SYS:ID_PHONE",
+    "emergency_contact": "SYS:GRP_EMERGENCY",
+    "emergency_name": "SYS:ID_E_NAME",
+    "relationship": "SYS:ID_E_REL",
+    "emergency_phone": "SYS:ID_E_PHONE",
+    "guarantor": "SYS:GRP_GUARANTOR",
+    "guarantor_name": "SYS:ID_G_NAME",
+    "guarantor_phone": "SYS:ID_G_PHONE",
+    "marital_options": {
+      "single": "SYS_ENUM_M_S",
+      "married": "SYS_ENUM_M_M",
+      "divorced": "SYS_ENUM_M_D",
+      "widowed": "SYS_ENUM_M_W"
+    },
+    "education_options": {
+      "sd": "SYS_EDU_SD",
+      "smp": "SYS_EDU_SMP",
+      "sma": "SYS_EDU_SMA",
+      "d3": "SYS_EDU_D3",
+      "s1": "SYS_EDU_S1",
+      "s2_s3": "SYS_EDU_GRAD",
+      "none": "SYS_EDU_NULL"
+    }
   }
 }

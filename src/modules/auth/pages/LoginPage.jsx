@@ -134,7 +134,7 @@ export default function LoginPage() {
                   Email & Password
                 </button>
               </div>
-              <p style={{ textAlign: 'center', fontSize: '10px', color: 'rgba(66, 71, 82, 0.7)', marginTop: '0.5rem', fontWeight: 500 }}>Last access from Station-04 (Terminal)</p>
+              <p style={{ textAlign: 'center', fontSize: '10px', color: 'var(--l-on-surface-variant)', opacity: 0.7, marginTop: '0.5rem', fontWeight: 500 }}>Last access from Station-04 (Terminal)</p>
             </div>
 
             <div className="flx flx-row gap-6" style={{ marginTop: '2.5rem', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(66, 71, 82, 0.6)', borderTop: '1px solid rgba(194, 198, 212, 0.3)', paddingTop: '1.5rem' }}>
@@ -145,7 +145,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <footer className="flx flx-row justify-between items-center" style={{ width: '100%', padding: '1rem 2rem', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(66, 71, 82, 0.5)', borderTop: '1px solid var(--l-outline-variant)', backgroundColor: '#ffffff' }}>
+        <footer className="flx flx-row justify-between items-center" style={{ width: '100%', padding: '1rem 2rem', fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--l-on-surface-variant)', borderTop: '1px solid var(--l-outline-variant)', backgroundColor: 'var(--l-surface)' }}>
           <div className="flx flx-row items-center gap-4">
             <p style={{ margin: 0 }}>© 2024 NurseFlow Enterprise Infrastructure.</p>
             <span style={{ color: 'rgba(194, 198, 212, 0.3)' }} className="hidden-sm">|</span>
@@ -176,7 +176,7 @@ export default function LoginPage() {
             
             <div className="flx-col gap-3">
               {/* Compliance & Accreditations */}
-              <div className="trust-card flx flx-row items-center gap-4" style={{ backgroundColor: 'rgba(0, 59, 130, 0.05)', border: '1px solid rgba(0, 59, 130, 0.2)' }}>
+              <div className="trust-card flx flx-row items-center gap-4" style={{ backgroundColor: 'var(--l-surface-variant)', border: '1px solid var(--l-outline-variant)' }}>
                 <span className="material-symbols-outlined text-primary f-bold">verified</span>
                 <div className="flx-col">
                   <span className="text-primary" style={{ fontSize: '0.75rem', fontWeight: 800 }}>Compliance & Accreditations</span>
@@ -185,7 +185,7 @@ export default function LoginPage() {
               </div>
 
               {/* Data Integrity */}
-              <div className="trust-card flx flx-row items-center gap-4" style={{ backgroundColor: '#ffffff', border: '1px solid rgba(194, 198, 212, 0.5)', opacity: 0.9 }}>
+              <div className="trust-card flx flx-row items-center gap-4" style={{ backgroundColor: 'var(--l-surface)', border: '1px solid var(--l-outline-variant)', opacity: 1 }}>
                 <span className="material-symbols-outlined f-bold" style={{ color: 'var(--l-secondary)' }}>enhanced_encryption</span>
                 <div className="flx-col">
                   <span className="text-on-surface" style={{ fontSize: '0.75rem', fontWeight: 800 }}>Data Integrity</span>
@@ -194,7 +194,7 @@ export default function LoginPage() {
               </div>
 
               {/* Active Monitoring */}
-              <div className="trust-card flx flx-row items-center gap-4" style={{ backgroundColor: '#ffffff', border: '1px solid rgba(194, 198, 212, 0.5)', opacity: 0.9 }}>
+              <div className="trust-card flx flx-row items-center gap-4" style={{ backgroundColor: 'var(--l-surface)', border: '1px solid var(--l-outline-variant)', opacity: 1 }}>
                 <span className="material-symbols-outlined f-bold" style={{ color: 'var(--l-secondary)' }}>monitor_heart</span>
                 <div className="flx-col">
                   <span className="text-on-surface" style={{ fontSize: '0.75rem', fontWeight: 800 }}>Active Monitoring</span>

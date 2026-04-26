@@ -34,7 +34,7 @@ export default function BedManagementPage() {
       const patient = patients.find(p => p.id === bed.patient_id);
       return {
         ...bed,
-        patientName: patient?.name || 'Empty',
+        patientName: patient?.name || 'Kosong',
         news2: encounter?.last_news2 || 0,
         status: encounter?.status || 'N/A'
       };
@@ -42,7 +42,7 @@ export default function BedManagementPage() {
   }, [beds, activeEncounters, patients]);
 
   const handleRelease = async (bedId) => {
-    if (!window.confirm("Release this bed? Patient data will remain in EMR but location will be cleared.")) return;
+    if (!window.confirm("Kosongkan bed ini? Data pasien tetap ada di EMR tetapi lokasi akan dihapus.")) return;
     try {
       await releaseBed(bedId, currentUser.email);
       const updated = await getAllBeds();
@@ -77,15 +77,15 @@ export default function BedManagementPage() {
     }
   };
 
-  if (isLoading) return <div className="p-20 text-center opacity-40 font-black uppercase">Loading Ward Map...</div>;
+  if (isLoading) return <div className="p-20 text-center opacity-40 font-black uppercase">Memuat Peta Bangsal...</div>;
 
   return (
     <div className="p-8 w-full">
       <header className="mb-10 flex-row justify-between items-end">
-         <div>
-            <h2 className="title text-primary">Ward Spatial Management</h2>
-            <p className="text-on-surface-variant text-sm mt-1">Real-time bed occupancy and clinical risk localization.</p>
-         </div>
+          <div>
+            <h2 className="title text-primary">Manajemen Spasial Bangsal</h2>
+            <p className="text-on-surface-variant text-sm mt-1">Okupansi bed real-time dan lokalisasi risiko klinis.</p>
+          </div>
          <div className="flex-row gap-4 items-end">
             <button 
               onClick={handleBootstrap} 
@@ -94,9 +94,9 @@ export default function BedManagementPage() {
               Bootstrap Ward A
             </button>
             <div className="flex-row gap-6 text-[10px] font-black uppercase tracking-widest opacity-60 mb-2">
-               <div className="flex-row items-center gap-2"><div className="w-3 h-3 bg-primary/20 rounded"></div> Available</div>
-               <div className="flex-row items-center gap-2"><div className="w-3 h-3 bg-success rounded"></div> Stable</div>
-               <div className="flex-row items-center gap-2"><div className="w-3 h-3 bg-error animate-pulse rounded"></div> High Risk</div>
+               <div className="flex-row items-center gap-2"><div className="w-3 h-3 bg-primary/20 rounded"></div> Tersedia</div>
+               <div className="flex-row items-center gap-2"><div className="w-3 h-3 bg-success rounded"></div> Stabil</div>
+               <div className="flex-row items-center gap-2"><div className="w-3 h-3 bg-error animate-pulse rounded"></div> Risiko Tinggi</div>
             </div>
          </div>
       </header>
@@ -111,7 +111,7 @@ export default function BedManagementPage() {
               key={bed.id} 
               className={`p-4 rounded-3xl border-2 transition-all flex-column gap-3 relative
                 ${!isOccupied ? 'bg-surface-container-low border-outline-variant opacity-60' : 
-                  isHighRisk ? 'bg-error-container border-error shadow-lg animate-pulse' : 'bg-white border-success shadow-sm'}`}
+                  isHighRisk ? 'bg-error-container border-error shadow-lg animate-pulse' : 'bg-surface border-outline-variant shadow-sm'}`}
             >
                <div className="flex-row justify-between items-center">
                   <span className="text-xs font-black opacity-40">{bed.bed_name}</span>
@@ -120,14 +120,14 @@ export default function BedManagementPage() {
                   )}
                </div>
 
-               <div className="flex-column items-center justify-center py-4">
-                  <span className={`material-symbols-outlined text-4xl ${!isOccupied ? 'opacity-10' : isHighRisk ? 'text-error' : 'text-success'}`}>
-                    {isOccupied ? 'person' : 'bed'}
-                  </span>
-                  <span className={`text-[10px] font-black uppercase mt-2 ${!isOccupied ? 'opacity-20' : ''}`}>
-                    {bed.patientName}
-                  </span>
-               </div>
+                <div className="flex-column items-center justify-center py-4 min-w-0">
+                   <span className={`material-symbols-outlined text-4xl ${!isOccupied ? 'opacity-10' : isHighRisk ? 'text-error' : 'text-success'}`}>
+                     {isOccupied ? 'person' : 'bed'}
+                   </span>
+                   <span className={`text-[10px] font-black uppercase mt-2 w-full text-center truncate px-2 ${!isOccupied ? 'opacity-20' : ''}`} title={bed.patientName}>
+                     {bed.patientName}
+                   </span>
+                </div>
 
                {isOccupied && (
                  <div className="pt-2 border-t border-outline-variant border-dashed flex-row justify-between items-center">
@@ -142,7 +142,7 @@ export default function BedManagementPage() {
         })}
 
         {/* MOCK ADD BED (For Demo) */}
-        <button className="p-4 rounded-3xl border-2 border-dashed border-outline-variant flex items-center justify-center opacity-20 hover:opacity-100 transition-all">
+        <button className="p-4 rounded-3xl border-2 border-dashed border-outline-variant flex-row items-center justify-center opacity-20 hover:opacity-100 transition-all">
            <span className="material-symbols-outlined text-2xl">add</span>
         </button>
       </div>

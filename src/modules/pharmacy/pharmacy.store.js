@@ -22,9 +22,9 @@ export const usePharmacyStore = create((set) => ({
     }
   },
 
-  dispense: async (medicationId, dispensedBy) => {
+  dispense: async (medicationId, dispensedBy, witness) => {
     try {
-      await dispenseMedication(medicationId, dispensedBy);
+      await dispenseMedication(medicationId, dispensedBy, witness);
       set(s => ({
         pendingQueue: s.pendingQueue.filter(m => m.id !== medicationId)
       }));

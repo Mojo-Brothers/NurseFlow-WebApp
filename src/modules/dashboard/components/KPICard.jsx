@@ -8,7 +8,7 @@ export default function KPICard({ label, value, unit, trend, icon, color = 'var(
   const trendColor = isUp ? 'text-success' : 'text-error';
 
   return (
-    <div className="flex-column gap-2 p-6 bg-white rounded-[2rem] border border-outline-variant shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+    <div className="flex-column gap-2 p-6 bg-surface rounded-[2rem] border border-outline-variant shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
        {/* Background Decoration */}
        <div 
           className="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:scale-125 transition-transform duration-700"

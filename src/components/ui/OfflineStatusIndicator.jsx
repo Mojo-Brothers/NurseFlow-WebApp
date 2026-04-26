@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getPendingCount, isOnline } from '../../core/services/syncQueue.service.js';
 
 /**
@@ -6,6 +7,7 @@ import { getPendingCount, isOnline } from '../../core/services/syncQueue.service
  * Alerts clinicians to network status and pending sync items.
  */
 export default function OfflineStatusIndicator() {
+  const { t } = useTranslation();
   const [online, setOnline] = useState(isOnline());
   const [pending, setPending] = useState(0);
 
@@ -42,7 +44,7 @@ export default function OfflineStatusIndicator() {
                 {online ? 'cloud_sync' : 'cloud_off'}
              </span>
              {pending > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-error text-white text-[8px] font-black rounded-full flex-row items-center justify-center border-2 border-white">
                    {pending}
                 </span>
              )}
@@ -50,10 +52,12 @@ export default function OfflineStatusIndicator() {
 
           <div className="flex-column leading-none">
              <span className="text-[10px] font-black uppercase tracking-widest">
-                {online ? 'Synchronizing' : 'Offline Mode'}
+                {online ? t('common.sync.synchronizing') : t('common.sync.offline_mode')}
              </span>
              <span className="text-[8px] font-bold opacity-60 mt-1 uppercase">
-                {pending > 0 ? `${pending} Pending Assessment(s)` : 'Continuity Active'}
+                {pending > 0 
+                  ? t('common.sync.pending_count', { count: pending }) 
+                  : t('common.sync.continuity_active')}
              </span>
           </div>
        </div>
