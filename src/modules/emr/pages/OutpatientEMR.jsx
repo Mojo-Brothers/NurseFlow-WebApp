@@ -10,10 +10,12 @@ import {
   Heart, Scale, ClipboardCheck, BookOpen, UserCheck, ShieldCheck, 
   HelpCircle, Thermometer, Info, Scissors, Microscope, Settings, 
   Workflow, PlusSquare, ScrollText, AlertCircle, UserPlus, ClipboardList,
-  FileSignature, LogOut, Share2, Clipboard, Zap, History, Eye, Plus, Edit2
+  FileSignature, LogOut, Share2, Clipboard, Zap, History, Eye, Plus, Edit2, RefreshCw
 } from 'lucide-react';
 import PatientSearchModal from '../components/PatientSearchModal.jsx';
 import ClinicalModuleModal from '../components/ClinicalModuleModal.jsx';
+import IPSGDashboard from '../components/IPSGDashboard.jsx';
+import SafetyDashboard from '../components/SafetyDashboard.jsx';
 import { saveSoapNote, getPatientRecords, saveClinicalRecord } from '../services/emr.service.js';
 
 const JCI_MODULE_GROUPS = [
@@ -56,6 +58,24 @@ const JCI_MODULE_GROUPS = [
       { id: 'discharge', name: 'RESUME MEDIS (DISCHARGE SUMMARY)', icon: <ScrollText size={18} />, standard: 'ACC.4.2' },
       { id: 'lab-order', name: 'ORDER LABORATORIUM & RADIOLOGI', icon: <Microscope size={18} />, standard: 'AOP.5' },
     ]
+  },
+  {
+    title: 'PENGELOLAAN OBAT (MMU)',
+    modules: [
+      { id: 'cpoe', name: 'ORDER RESEP / CPOE (IPSG.3)', icon: <Pill size={18} />, standard: 'MMU.4', highlight: true },
+      { id: 'emar', name: 'PEMBERIAN OBAT (eMAR)', icon: <Zap size={18} />, standard: 'MMU.6' },
+      { id: 'reconciliation-mmu', name: 'REKONSILIASI OBAT', icon: <Workflow size={18} />, standard: 'MMU.4.1' },
+      { id: 'drug-interaction', name: 'INTERAKSI & ALERGI OBAT', icon: <ShieldAlert size={18} />, standard: 'MMU.1' },
+    ]
+  },
+  {
+    title: 'MANAJEMEN MUTU & KESELAMATAN (QPS)',
+    modules: [
+      { id: 'incident', name: 'PELAPORAN INSIDEN (KNC/KTD/KTC)', icon: <ShieldAlert size={18} />, standard: 'QPS.7', highlight: true },
+      { id: 'sentinel', name: 'LAPORAN SENTINEL', icon: <AlertCircle size={18} />, standard: 'QPS.7' },
+      { id: 'kpi-unit', name: 'INDIKATOR MUTU UNIT', icon: <Activity size={18} />, standard: 'QPS.3' },
+      { id: 'hand-hygiene', name: 'AUDIT KEPATUHAN CUCI TANGAN', icon: <CheckCircle2 size={18} />, standard: 'IPSG.5' },
+    ]
   }
 ];
 
@@ -71,6 +91,7 @@ export default function OutpatientEMR() {
   const [soapRecords, setSoapRecords] = useState([]);
   const [editingSoapRecord, setEditingSoapRecord] = useState(null);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
+  const [activeView, setActiveView] = useState('emr'); // 'emr' or 'safety'
 
   const handlePatientSelect = (patientId, encounterId) => {
     selectPatient(patientId);
@@ -336,118 +357,140 @@ export default function OutpatientEMR() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[100dvh] lg:h-screen bg-[var(--surface-container-lowest)] overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-[var(--surface-container-lowest)] overflow-hidden">
       
-      <div className="flex-none bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--outline-variant)] px-6 py-4 z-50 flex flex-row justify-between items-center shadow-sm">
-         <div className="flex flex-row items-center gap-4">
-            <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 text-[var(--primary)] flex items-center justify-center border border-[var(--primary)]/20">
-              <Stethoscope size={24} />
+      {/* 🚀 CLINICAL COCKPIT: FROZEN HEADER BLOCK */}
+      <div className="flex-none bg-[var(--surface)] border-b border-[var(--outline-variant)] shadow-xl z-50">
+        
+        {/* Row 1: Global Actions & Branding */}
+        <div className="px-6 py-2 bg-[var(--surface)]/95 backdrop-blur-md flex flex-row justify-between items-center border-b border-[var(--outline-variant)]/30">
+          <div className="flex flex-row items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-[var(--primary)] text-white flex items-center justify-center shadow-lg shadow-[var(--primary)]/20">
+              <Activity size={20} />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-[var(--on-surface)] m-0 leading-tight">Command Center</h1>
-              <p className="text-xs font-bold text-[var(--on-surface-variant)] uppercase tracking-widest">Outpatient EMR • RJ</p>
+              <h1 className="text-base font-black tracking-tighter text-[var(--on-surface)] m-0 leading-none uppercase">Command Center</h1>
+              <p className="text-[8px] font-black text-[var(--primary)] uppercase tracking-[0.2em] mt-0.5">Outpatient EMR • RJ</p>
             </div>
-         </div>
-         <div className="flex flex-row gap-4 items-center">
+          </div>
+
+          <div className="flex flex-row gap-3 items-center">
+            {/* View Switcher Toggle */}
+            <div className="bg-[var(--surface-container-high)] p-1 rounded-2xl flex items-center gap-1 border border-[var(--outline-variant)] shadow-inner">
+               <button 
+                  onClick={() => setActiveView('emr')}
+                  className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeView === 'emr' ? 'bg-[var(--primary)] text-white shadow-md' : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)]'}`}
+               >
+                  Clinical EMR
+               </button>
+               <button 
+                  onClick={() => setActiveView('safety')}
+                  className={`px-4 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${activeView === 'safety' ? 'bg-amber-500 text-white shadow-md' : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-highest)]'}`}
+               >
+                  Safety Analytics
+               </button>
+            </div>
+
             <button 
               onClick={() => setIsSearchModalOpen(true)}
-              className="bg-[var(--primary)] hover:brightness-110 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-[var(--primary)]/20 flex items-center gap-2"
+              className="bg-[var(--surface-container-highest)] hover:bg-[var(--primary)] hover:text-white text-[var(--on-surface)] px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border border-[var(--outline-variant)] flex items-center gap-2 group"
             >
-               <Search size={16} /> Cari Pasien
+               <Search size={14} className="group-hover:scale-110 transition-transform" /> Cari Pasien
             </button>
-         </div>
+          </div>
+        </div>
+
+        {/* Row 2: Patient Context (Only in EMR View) */}
+        {activeView === 'emr' && (
+          <div className="bg-[var(--surface-container-lowest)]">
+            <div className="px-6 lg:px-10 py-2.5 grid grid-cols-12 gap-6 items-center">
+              
+              {/* Identity Block */}
+              <div className="col-span-4 flex flex-row items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary)] to-blue-700 flex items-center justify-center text-white shadow-lg relative overflow-hidden shrink-0">
+                  <User size={24} />
+                  <div className="absolute inset-0 bg-white/10 opacity-50"></div>
+                </div>
+                <div className="flex flex-col gap-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="bg-blue-500/10 text-blue-600 border border-blue-500/20 px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest flex items-center gap-1">
+                      <CheckCircle2 size={8} /> JCI VERIFIED
+                    </span>
+                    <span className="text-[9px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest opacity-60">MRN: {noRM}</span>
+                  </div>
+                  <h2 className="text-xl font-black text-[var(--on-surface)] tracking-tighter leading-tight uppercase">{patientName}</h2>
+                  <div className="flex items-center gap-3 text-[9px] font-black text-[var(--on-surface-variant)] opacity-70 uppercase tracking-widest">
+                    <span>{gender} • {dob} ({age})</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Encounter Details */}
+              <div className="col-span-5 grid grid-cols-3 gap-4 border-l border-r border-[var(--outline-variant)]/30 px-6">
+                <div>
+                  <p className="text-[8px] font-bold text-[var(--on-surface-variant)] uppercase tracking-[0.15em] mb-0.5 opacity-50">No. Registrasi</p>
+                  <p className="text-[11px] font-black text-red-600 tracking-tight leading-none uppercase">{noReg}</p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-bold text-[var(--on-surface-variant)] uppercase tracking-[0.15em] mb-0.5 opacity-50">Departemen / Poli</p>
+                  <p className="text-[10px] font-black text-[var(--on-surface)] truncate leading-none uppercase">{poli}</p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-bold text-[var(--on-surface-variant)] uppercase tracking-[0.15em] mb-0.5 opacity-50">Penjamin</p>
+                  <p className="text-[10px] font-black text-[var(--primary)] uppercase truncate leading-none" title={guarantor}>{guarantor}</p>
+                </div>
+                <div className="col-span-3 mt-2 pt-2 border-t border-[var(--outline-variant)]/10 flex items-center gap-2">
+                   <p className="text-[8px] font-bold text-[var(--on-surface-variant)] uppercase tracking-[0.15em] opacity-50">DPJP</p>
+                   <p className="text-[9px] font-black text-[var(--on-surface)] truncate uppercase">{doctor}</p>
+                </div>
+              </div>
+
+              {/* High Alerts */}
+              <div className="col-span-3 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between bg-red-500/5 px-3 py-1.5 rounded-lg border border-red-500/10">
+                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest">Alergi Terdaftar</span>
+                  <span className="text-[9px] font-bold text-red-700 opacity-40">Tidak Ada Alergi</span>
+                </div>
+                <div className="flex items-center justify-between bg-amber-500/5 px-3 py-1.5 rounded-lg border border-amber-500/10">
+                  <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Status Penanda</span>
+                  <span className="text-[9px] font-bold text-amber-700 uppercase opacity-40">Pasien Standar</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Row 3: IPSG Monitor (Critical for Compliance) */}
+            <div className="px-6 lg:px-10 pb-3">
+              <IPSGDashboard />
+            </div>
+
+            {/* Row 4: Navigation Tabs */}
+            <div className="px-6 lg:px-10 pb-3 flex flex-row items-center gap-1 overflow-x-auto no-scrollbar border-t border-[var(--outline-variant)]/20 pt-3">
+              {tabs.map(tab => (
+                <button 
+                  key={tab.id}
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    if (tab.id !== 'MODUL E-MR') setSelectedModule(null);
+                  }}
+                  className={`
+                    flex flex-row items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] whitespace-nowrap transition-all duration-300
+                    ${activeTab === tab.id 
+                      ? 'bg-[var(--primary)] text-white shadow-xl shadow-[var(--primary)]/20' 
+                      : 'bg-[var(--surface-container-low)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] border border-[var(--outline-variant)]'}
+                  `}
+                >
+                  {tab.id}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-8 space-y-8 scroll-smooth">
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-5 relative overflow-hidden bg-gradient-to-br from-[var(--surface-container)] to-[var(--surface-container-low)] rounded-3xl border border-[var(--outline-variant)] shadow-lg shadow-black/5 p-6 flex flex-col justify-between">
-            <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
-              <User size={120} />
-            </div>
-            <div className="flex flex-col gap-1 z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                  <CheckCircle2 size={12} /> JCI Verified
-                </span>
-                <span className="bg-[var(--surface-container-highest)] text-[var(--on-surface-variant)] px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-                  MRN: {noRM}
-                </span>
-              </div>
-              <h2 className="text-3xl font-black text-[var(--on-surface)] tracking-tight leading-none">{patientName}</h2>
-              <div className="flex items-center gap-3 mt-3 text-sm font-bold text-[var(--on-surface-variant)]">
-                <span className="flex items-center gap-1"><User size={16}/> {gender}</span>
-                <span>•</span>
-                <span className="flex items-center gap-1"><CalendarDays size={16}/> {dob} ({age})</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-4 bg-[var(--surface-container-lowest)] rounded-3xl border border-[var(--outline-variant)] p-6 flex flex-col justify-center gap-4">
-            <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-               <div>
-                  <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest mb-1">No. Registrasi</p>
-                  <p className="text-sm font-black text-[var(--error)]">{noReg}</p>
-               </div>
-               <div>
-                  <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest mb-1">Penjamin</p>
-                  <p className="text-xs font-bold text-[var(--on-surface)] uppercase truncate" title={guarantor}>{guarantor}</p>
-               </div>
-               <div>
-                  <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest mb-1">Departemen / Poli</p>
-                  <p className="text-sm font-black text-[var(--on-surface)]">{poli}</p>
-               </div>
-               <div>
-                  <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest mb-1">DPJP</p>
-                  <p className="text-sm font-bold text-[var(--on-surface)]">{doctor}</p>
-               </div>
-            </div>
-          </div>
-
-          <div className="lg:col-span-3 flex flex-col gap-4">
-            <div className="flex-1 bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex flex-row items-center gap-4">
-               <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 shrink-0">
-                 <ShieldAlert size={20} />
-               </div>
-               <div>
-                 <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Alergi Terdaftar</p>
-                 <p className="text-sm font-bold text-red-100">Tidak Ada Alergi</p>
-               </div>
-            </div>
-            <div className="flex-1 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-row items-center gap-4">
-               <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
-                 <BadgeInfo size={20} />
-               </div>
-               <div>
-                 <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Status Penanda</p>
-                 <p className="text-sm font-bold text-amber-100">Pasien Standar</p>
-               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="sticky top-0 z-40 bg-[var(--surface-container-lowest)]/90 backdrop-blur-xl py-3 border-y border-[var(--outline-variant)] -mx-6 px-6 lg:-mx-10 lg:px-10">
-           <div className="flex flex-row overflow-x-auto gap-2 no-scrollbar pb-2">
-              {tabs.map(tab => (
-                 <button 
-                   key={tab.id}
-                   onClick={() => {
-                     setActiveTab(tab.id);
-                     if (tab.id !== 'MODUL E-MR') setSelectedModule(null);
-                   }}
-                   className={`
-                     flex flex-row items-center gap-2 px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-300
-                     ${activeTab === tab.id 
-                        ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/25 scale-105' 
-                        : 'bg-[var(--surface-container)] text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] border border-[var(--outline-variant)]'}
-                   `}
-                 >
-                    {tab.icon} {tab.id}
-                 </button>
-              ))}
-           </div>
-        </div>
-
+      <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-8 scroll-smooth">
+        {activeView === 'safety' ? (
+           <SafetyDashboard />
+        ) : (
         <div className="min-h-[500px]">
            {activeTab === 'MODUL E-MR' ? (
               selectedModule ? renderModuleWorkspace() : (
@@ -512,12 +555,22 @@ export default function OutpatientEMR() {
               )
            ) : activeTab === 'LIST PEMERIKSAAN' ? (
               <div className="animate-in slide-in-from-bottom-4 fade-in duration-500 space-y-6">
-                <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                <History className="text-blue-600" />
-                Riwayat Pemeriksaan Pasien
-              </h2>
-              </div>
+               <div className="flex justify-between items-center mb-6">
+                 <h2 className="text-xl font-black text-[var(--on-surface)] tracking-tight flex items-center gap-3">
+                   <div className="w-10 h-10 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-600">
+                     <History size={24} />
+                   </div>
+                   RIWAYAT PEMERIKSAAN
+                 </h2>
+                 <button 
+                   onClick={fetchClinicalRecords}
+                   disabled={isLoadingRecords}
+                   className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[var(--primary)]/10 text-[var(--primary)] border border-[var(--primary)]/20 text-[10px] font-black uppercase tracking-widest hover:bg-[var(--primary)] hover:text-white transition-all disabled:opacity-50 group"
+                 >
+                   <RefreshCw size={16} className={`${isLoadingRecords ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-500`} />
+                   Refresh Data
+                 </button>
+               </div>
               
               {isLoadingRecords ? (
                   <div className="flex items-center justify-center p-20">
@@ -580,10 +633,10 @@ export default function OutpatientEMR() {
                  <h3 className="text-xl font-black mb-2">Modul {activeTab}</h3>
                  <p className="text-sm font-bold opacity-60 text-center max-w-md">Modul ini sudah siap digunakan dan terintegrasi dengan data rekam medis elektronik.</p>
               </div>
-           )}
-        </div>
-
-      </div>
+            )}
+          </div>
+       )}
+    </div>
       
       {/* Search Modal */}
       <PatientSearchModal 

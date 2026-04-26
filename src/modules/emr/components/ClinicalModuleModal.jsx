@@ -7,6 +7,13 @@ import {
   Microscope, ScrollText, Workflow, Scale, LogOut, UserPlus,
   AlertCircle
 } from 'lucide-react';
+import PatientVerificationModal from './PatientVerificationModal.jsx';
+import MedicationOrderForm from './MedicationOrderForm.jsx';
+import IncidentReportForm from './IncidentReportForm.jsx';
+import EarlyWarningSystem from './EarlyWarningSystem.jsx';
+import EMARForm from './EMARForm.jsx';
+import LabAlertSystem from './LabAlertSystem.jsx';
+import HandHygieneAudit from './HandHygieneAudit.jsx';
 
 export default function ClinicalModuleModal({ 
   isOpen, 
@@ -18,8 +25,8 @@ export default function ClinicalModuleModal({
   onSave 
 }) {
   const [formData, setFormData] = useState({});
-  const [isVerifying, setIsVerifying] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
   // Reset form when module changes
   useEffect(() => {
@@ -30,34 +37,98 @@ export default function ClinicalModuleModal({
         notes: '',
         verification: false
       });
-      setIsVerifying(false);
+      setShowVerificationModal(false);
     }
   }, [isOpen, moduleName, currentUser]);
 
   if (!isOpen) return null;
 
   const handleSave = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!formData.verification) {
       alert("Harap centang verifikasi data sesuai standar JCI.");
       return;
     }
 
-    setIsSaving(true);
-    // Simulate save delay
-    setTimeout(() => {
-      onSave({
-        module: moduleName,
-        patientId: patient?.id,
-        encounterId: encounter?.id,
-        ...formData
-      });
-      setIsSaving(false);
-    }, 1000);
+    // IPSG.1 Requirement: Verify identity before committing record
+    setShowVerificationModal(true);
   };
+
+  const handleFinalVerified = () => {
+    setShowVerificationModal(false);
+    setIsSaving(true);
+    
+    onSave({
+      module: moduleName,
+      patientId: patient?.id,
+      encounterId: encounter?.id,
+      ...formData,
+      verified_by: currentUser?.email,
+      verification_timestamp: new Date().toISOString()
+    });
+    
+    setIsSaving(false);
+  };
+
 
   const renderModuleContent = () => {
     // Specialized forms based on module name or ID
+    if (moduleName.includes('CPOE') || moduleName.includes('RESEP')) {
+       return (
+         <MedicationOrderForm 
+            formData={formData} 
+            setFormData={setFormData}
+            patient={patient}
+         />
+       );
+    }
+
+    if (moduleName.includes('INCIDENT') || moduleName.includes('INSIDEN')) {
+       return (
+         <IncidentReportForm 
+            formData={formData} 
+            setFormData={setFormData}
+         />
+       );
+    }
+
+    if (moduleName.includes('EWS') || moduleName.includes('WARNING')) {
+       return (
+         <EarlyWarningSystem 
+            formData={formData} 
+            setFormData={setFormData}
+         />
+       );
+    }
+
+    if (moduleName.includes('eMAR') || moduleName.includes('PEMBERIAN OBAT')) {
+       return (
+         <EMARForm 
+            formData={formData} 
+            setFormData={setFormData}
+            patient={patient}
+         />
+       );
+    }
+
+    if (moduleName.includes('LABORATORIUM') || moduleName.includes('LAB ALERT')) {
+       return (
+         <LabAlertSystem 
+            formData={formData} 
+            setFormData={setFormData}
+         />
+       );
+    }
+
+    if (moduleName.includes('CUCI TANGAN') || moduleName.includes('HAND HYGIENE')) {
+       return (
+         <HandHygieneAudit 
+            formData={formData} 
+            setFormData={setFormData}
+         />
+       );
+    }
+
     if (moduleName.includes('SOAP')) {
        return (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -911,6 +982,12 @@ export default function ClinicalModuleModal({
            </div>
         </div>
       </div>
+      <PatientVerificationModal 
+         isOpen={showVerificationModal}
+         onClose={() => setShowVerificationModal(false)}
+         onVerified={handleFinalVerified}
+         patientData={patient}
+      />
     </div>
   );
 }

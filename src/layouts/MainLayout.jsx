@@ -80,7 +80,7 @@ const MainLayout = () => {
   };
 
   return (
-    <div className={`bg-background text-on-surface font-body antialiased flex flex-col lg:flex-row min-h-screen relative overflow-x-hidden ${focusMode ? 'focus-mode-active' : ''}`}>
+    <div className={`bg-background text-on-surface font-body antialiased flex flex-col lg:flex-row h-screen relative overflow-hidden ${focusMode ? 'focus-mode-active' : ''}`}>
       
       {/* Simulator Focus Overlay */}
       <div className="focus-mode-overlay" />
@@ -223,7 +223,7 @@ const MainLayout = () => {
       )}
 
       {/* Main Content Canvas */}
-      <main className="flex-1 lg:ml-64 bg-background min-w-0 overflow-x-hidden flex flex-col transition-colors duration-500">
+      <main className="flex-1 lg:ml-64 bg-background min-w-0 h-screen overflow-hidden flex flex-col transition-colors duration-500 relative">
         <Outlet />
       </main>
 

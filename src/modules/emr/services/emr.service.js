@@ -9,7 +9,6 @@ import {
   where, 
   limit, 
   getDocs, 
-  orderBy,
   updateDoc,
   setDoc
 } from 'firebase/firestore';
@@ -238,6 +237,8 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
     console.error('[EmrService] SOAP transaction failed:', err);
     throw err;
   }
+};
+
 export const saveClinicalRecord = async ({ patientId, encounterId, author, moduleName, data, status = 'SIGNED' }) => {
   if (!encounterId) throw new Error('Encounter ID wajib disediakan.');
 
