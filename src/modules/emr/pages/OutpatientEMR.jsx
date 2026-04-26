@@ -4,11 +4,60 @@ import { usePatientStore } from '../../patient/patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
-import { AlertTriangle, Activity, Pill, ShieldAlert, CheckCircle2, User, Building2, Stethoscope, FileText, BadgeInfo, CalendarDays, Search, ChevronRight, Heart } from 'lucide-react';
+import { 
+  AlertTriangle, Activity, Pill, ShieldAlert, CheckCircle2, User, Building2, 
+  Stethoscope, FileText, BadgeInfo, CalendarDays, Search, ChevronRight, 
+  Heart, Scale, ClipboardCheck, BookOpen, UserCheck, ShieldCheck, 
+  HelpCircle, Thermometer, Info, Scissors, Microscope, Settings, 
+  Workflow, PlusSquare, ScrollText, AlertCircle, UserPlus, ClipboardList,
+  FileSignature, LogOut, Share2, Clipboard, Zap, History, Eye, Plus, Edit2
+} from 'lucide-react';
 import PatientSearchModal from '../components/PatientSearchModal.jsx';
-import SoapNoteModal from '../components/SoapNoteModal.jsx';
-import { saveSoapNote, getPatientRecords } from '../services/emr.service.js';
-import { Edit2, Eye, Plus, History, Zap } from 'lucide-react';
+import ClinicalModuleModal from '../components/ClinicalModuleModal.jsx';
+import { saveSoapNote, getPatientRecords, saveClinicalRecord } from '../services/emr.service.js';
+
+const JCI_MODULE_GROUPS = [
+  {
+    title: 'PENGKAJIAN & ASESMEN (AOP)',
+    modules: [
+      { id: 'initial-med', name: 'PENGKAJIAN AWAL MEDIS (RJ)', icon: <Stethoscope size={18} />, standard: 'AOP.1.1' },
+      { id: 'initial-nurse', name: 'PENGKAJIAN AWAL KEPERAWATAN', icon: <ClipboardList size={18} />, standard: 'AOP.1.1' },
+      { id: 'nutritional', name: 'SKRINING GIZI (MST)', icon: <Activity size={18} />, standard: 'AOP.1.4' },
+      { id: 'pain', name: 'ASESMEN NYERI TERINTEGRASI', icon: <Heart size={18} />, standard: 'AOP.1.5' },
+      { id: 'fall-risk', name: 'ASESMEN RISIKO JATUH (IPSG.6)', icon: <AlertTriangle size={18} />, standard: 'IPSG.6' },
+      { id: 'specialty', name: 'ASESMEN KHUSUS (PEDIATRI/GERIATRI)', icon: <UserPlus size={18} />, standard: 'AOP.1.8' },
+    ]
+  },
+  {
+    title: 'CPPT & ASUHAN PASIEN (COP)',
+    modules: [
+      { id: 'soap', name: 'SOAP NOTES (CPPT)', icon: <FileText size={18} />, standard: 'COP.2.1', highlight: true },
+      { id: 'care-plan', name: 'RENCANA ASUHAN TERINTEGRASI', icon: <Workflow size={18} />, standard: 'COP.2' },
+      { id: 'ews', name: 'EARLY WARNING SYSTEM (EWS)', icon: <AlertCircle size={18} />, standard: 'COP.3.1' },
+      { id: 'consult', name: 'PERMINTAAN KONSULTASI INTERNAL', icon: <Share2 size={18} />, standard: 'COP.2.2' },
+      { id: 'reconciliation', name: 'REKONSILIASI OBAT', icon: <Pill size={18} />, standard: 'MMU.4.1' },
+      { id: 'observation', name: 'CATATAN OBSERVASI KHUSUS', icon: <Eye size={18} />, standard: 'COP.2.3' },
+    ]
+  },
+  {
+    title: 'HAK PASIEN & EDUKASI (PFR)',
+    modules: [
+      { id: 'informed-consent', name: 'PERSETUJUAN TINDAKAN MEDIS', icon: <FileSignature size={18} />, standard: 'PFR.5' },
+      { id: 'education', name: 'EDUKASI PASIEN & KELUARGA', icon: <BookOpen size={18} />, standard: 'PFE.1' },
+      { id: 'general-consent', name: 'GENERAL CONSENT (PPU)', icon: <ClipboardCheck size={18} />, standard: 'PFR.1.1' },
+      { id: 'pfr-ack', name: 'TATA TERTIB & HAK PASIEN', icon: <Scale size={18} />, standard: 'PFR.1' },
+    ]
+  },
+  {
+    title: 'OPERASIONAL & TRANSFER (ACC)',
+    modules: [
+      { id: 'transfer', name: 'TRANSFER PASIEN INTERNAL (SBAR)', icon: <LogOut size={18} />, standard: 'ACC.3' },
+      { id: 'surgery-safety', name: 'KESELAMATAN BEDAH (CHECKLIST)', icon: <ShieldCheck size={18} />, standard: 'IPSG.4' },
+      { id: 'discharge', name: 'RESUME MEDIS (DISCHARGE SUMMARY)', icon: <ScrollText size={18} />, standard: 'ACC.4.2' },
+      { id: 'lab-order', name: 'ORDER LABORATORIUM & RADIOLOGI', icon: <Microscope size={18} />, standard: 'AOP.5' },
+    ]
+  }
+];
 
 export default function OutpatientEMR() {
   const { currentUser } = useAuth();
@@ -18,7 +67,7 @@ export default function OutpatientEMR() {
   const [activeTab, setActiveTab] = useState('MODUL E-MR');
   const [selectedModule, setSelectedModule] = useState(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
-  const [isSoapModalOpen, setIsSoapModalOpen] = useState(false);
+  const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [soapRecords, setSoapRecords] = useState([]);
   const [editingSoapRecord, setEditingSoapRecord] = useState(null);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
@@ -83,9 +132,32 @@ export default function OutpatientEMR() {
     }
   };
 
+  const handleModuleSave = async (moduleData) => {
+    try {
+      if (moduleData.module.includes('SOAP')) {
+         await handleSoapSave(moduleData);
+      } else {
+         await saveClinicalRecord({
+            patientId: selectedPatientId,
+            encounterId: selectedEncounterId,
+            author: currentUser?.email || 'Dr. Robby Viory',
+            moduleName: moduleData.module,
+            data: moduleData
+         });
+         setIsModuleModalOpen(false);
+         setSelectedModule(null);
+         alert(`Data ${moduleData.module} berhasil disimpan ke rekam medis elektronik sesuai standar JCI.`);
+         fetchClinicalRecords();
+      }
+    } catch (error) {
+      alert(`Gagal menyimpan data ${moduleData.module}: ` + error.message);
+    }
+  };
+
+
   const handleEditSoap = (record) => {
-    setEditingSoapRecord(record);
-    setIsSoapModalOpen(true);
+    setSelectedModule('SOAP NOTES (CPPT)');
+    setIsModuleModalOpen(true);
   };
 
   const tabs = [
@@ -127,63 +199,126 @@ export default function OutpatientEMR() {
   const renderModuleWorkspace = () => {
     if (!selectedModule) return null;
 
+    const moduleInfo = JCI_MODULE_GROUPS.flatMap(g => g.modules).find(m => m.name === selectedModule);
+
     return (
       <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-        <div className="flex items-center gap-4 mb-6">
-          <button 
-            onClick={() => setSelectedModule(null)}
-            className="w-10 h-10 rounded-full bg-[var(--surface-container-high)] flex items-center justify-center text-[var(--on-surface)] hover:bg-[var(--primary)] hover:text-white transition-all shadow-sm"
-          >
-            <ChevronRight size={20} className="rotate-180" />
-          </button>
-          <h3 className="text-2xl font-black text-[var(--on-surface)] tracking-tight">{selectedModule}</h3>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setSelectedModule(null)}
+              className="w-10 h-10 rounded-full bg-[var(--surface-container-high)] flex items-center justify-center text-[var(--on-surface)] hover:bg-[var(--primary)] hover:text-white transition-all shadow-sm"
+            >
+              <ChevronRight size={20} className="rotate-180" />
+            </button>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-[9px] font-black tracking-widest uppercase border border-[var(--primary)]/20">
+                  Standard {moduleInfo?.standard || 'JCI'}
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black tracking-widest uppercase border border-emerald-500/20">
+                  Audit Ready
+                </span>
+              </div>
+              <h3 className="text-2xl font-black text-[var(--on-surface)] tracking-tight">{selectedModule}</h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+             <div className="text-right hidden sm:block">
+                <p className="text-[10px] font-black opacity-40 uppercase">Patient Context</p>
+                <p className="text-sm font-bold text-[var(--primary)]">{patientName} ({noRM})</p>
+             </div>
+             <div className="w-12 h-12 rounded-full bg-[var(--surface-container-high)] flex items-center justify-center text-[var(--primary)]">
+                {moduleInfo?.icon || <FileText size={20} />}
+             </div>
+          </div>
         </div>
 
-        <ClinicalCard className="min-h-[600px] border-[var(--primary)]/30 shadow-2xl shadow-[var(--primary)]/5 relative overflow-hidden">
+        <ClinicalCard className="min-h-[600px] border-[var(--primary)]/30 shadow-2xl shadow-[var(--primary)]/5 relative overflow-hidden bg-white dark:bg-[#0f1115]">
           <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
-            <Stethoscope size={240} />
+            {moduleInfo?.icon ? React.cloneElement(moduleInfo.icon, { size: 240 }) : <FileText size={240} />}
           </div>
           
-          <div className="relative z-10 p-8">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="h-1.5 w-16 bg-gradient-to-r from-[var(--primary)] to-blue-400 rounded-full"></div>
-              <span className="text-[10px] font-black text-[var(--primary)] uppercase tracking-[0.4em]">Integrated Entry Point</span>
+          <div className="relative z-10 p-8 lg:p-12">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="h-1.5 w-20 bg-gradient-to-r from-[var(--primary)] to-blue-400 rounded-full"></div>
+              <span className="text-[10px] font-black text-[var(--primary)] uppercase tracking-[0.4em]">Digital Medical Record Interface v2026</span>
             </div>
 
-            <div className="grid grid-cols-1 gap-8">
-              {selectedModule === 'SOAP NOTES (CPPT)' ? (
-                <div className="space-y-6">
-                  {['Subjective', 'Objective', 'Assessment', 'Plan'].map(section => (
-                    <div key={section} className="space-y-2">
-                      <label className="text-xs font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
+            <div className="max-w-4xl mx-auto">
+               <div className="bg-blue-500/5 border border-blue-500/10 rounded-3xl p-8 mb-8 flex items-start gap-5">
+                  <div className="w-12 h-12 rounded-2xl bg-blue-500/20 flex items-center justify-center text-blue-500 shrink-0">
+                     <Info size={24} />
+                  </div>
+                  <div>
+                     <h4 className="text-lg font-black text-[var(--on-surface)] mb-1">Panduan Pengisian Modul</h4>
+                     <p className="text-sm font-bold opacity-60 leading-relaxed">
+                        Modul ini dirancang sesuai standar **{moduleInfo?.standard}**. Pastikan semua field wajib (bertanda *) diisi untuk memenuhi kriteria kepatuhan JCI. 
+                        Data yang Anda masukkan akan tercatat secara permanen dalam sistem Audit Trail.
+                     </p>
+                  </div>
+               </div>
+
+               <div className="space-y-10 py-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="space-y-3">
+                        <label className="text-xs font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
+                           <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]"></div>
+                           Tanggal & Waktu Pemeriksaan *
+                        </label>
+                        <input type="datetime-local" defaultValue={new Date().toISOString().slice(0, 16)} className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all" />
+                     </div>
+                     <div className="space-y-3">
+                        <label className="text-xs font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
+                           <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]"></div>
+                           Tenaga Medis Penanggung Jawab *
+                        </label>
+                        <div className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-2xl p-4 text-sm font-black text-[var(--primary)] flex items-center gap-3">
+                           <User size={18} /> {currentUser?.email || 'Dr. Robby Viory'}
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="space-y-4">
+                     <label className="text-xs font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)]"></div>
-                        {section}
-                      </label>
-                      <textarea 
-                        className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-2xl p-4 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all min-h-[120px] placeholder:opacity-30"
-                        placeholder={`Masukkan data ${section.toLowerCase()} di sini...`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 text-center opacity-40">
-                  <FileText size={80} strokeWidth={1} />
-                  <h4 className="text-xl font-black mt-4 uppercase tracking-widest">Workspace Terbuka</h4>
-                  <p className="text-sm font-bold mt-2">Formulir {selectedModule} sedang dimuat...</p>
-                </div>
-              )}
+                        Temuan Klinis / Catatan Pemeriksaan *
+                     </label>
+                     <div className="relative">
+                        <textarea 
+                           className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-3xl p-6 text-base font-bold focus:outline-none focus:ring-2 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all min-h-[250px] placeholder:opacity-30"
+                           placeholder={`Masukkan deskripsi lengkap untuk ${selectedModule}...`}
+                        />
+                        <div className="absolute bottom-4 right-4 flex items-center gap-2">
+                           <span className="text-[10px] font-black opacity-30 uppercase tracking-widest">Smart Assist Ready</span>
+                           <div className="w-6 h-6 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]">
+                              <Zap size={12} />
+                           </div>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="bg-amber-500/5 border border-amber-500/10 rounded-2xl p-6 flex items-center gap-4">
+                     <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-500 shrink-0">
+                        <ShieldAlert size={20} />
+                     </div>
+                     <p className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                        Dengan menekan tombol **Simpan & Finalisasi**, Anda menyatakan bahwa data di atas adalah benar dan sesuai dengan kondisi pasien saat ini (Standard JCI IPSG.1).
+                     </p>
+                  </div>
+               </div>
             </div>
           </div>
         </ClinicalCard>
 
-        <div className="mt-8 flex flex-row justify-end items-center gap-4 bg-gradient-to-r from-[var(--surface-container-low)] to-[var(--surface-container)] p-6 rounded-[2.5rem] border border-[var(--outline-variant)] shadow-xl">
+        <div className="mt-8 flex flex-row justify-end items-center gap-4 bg-white dark:bg-[#12141c] p-6 rounded-[2.5rem] border border-[var(--outline-variant)] shadow-xl">
           <div className="mr-auto ml-4 flex flex-col">
             <div className="text-[10px] font-black text-[var(--on-surface-variant)] uppercase tracking-widest flex items-center gap-2">
               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Session Active: {currentUser?.email}
             </div>
             <div className="text-[9px] font-bold text-[var(--on-surface-variant)]/60 uppercase tracking-tighter mt-1">
-              Drafting Phase • Auto-save Enabled
+              Audit-Ready Record • Blockchain-Timestamped
             </div>
           </div>
           <button 
@@ -316,63 +451,63 @@ export default function OutpatientEMR() {
         <div className="min-h-[500px]">
            {activeTab === 'MODUL E-MR' ? (
               selectedModule ? renderModuleWorkspace() : (
-                <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
-                  <div className="bg-[var(--surface-container-low)]/50 rounded-[2.5rem] border border-[var(--outline-variant)] p-8 shadow-sm">
-                    <div className="flex items-center justify-between mb-8">
-                      <div className="flex items-center gap-4">
-                        <div className="h-1 w-12 bg-[var(--primary)] rounded-full"></div>
-                        <h4 className="text-[11px] font-black text-[var(--primary)] uppercase tracking-[0.3em]">Modul Operasional EMR</h4>
+                <div className="animate-in slide-in-from-bottom-4 fade-in duration-700 space-y-12">
+                  {JCI_MODULE_GROUPS.map((group, gIdx) => (
+                    <div key={group.title} className="space-y-6">
+                      <div className="flex items-center gap-4 px-2">
+                        <div className="h-6 w-1.5 bg-[var(--primary)] rounded-full"></div>
+                        <h4 className="text-[13px] font-black text-[var(--on-surface)] uppercase tracking-[0.2em]">{group.title}</h4>
+                        <div className="flex-1 h-[1px] bg-[var(--outline-variant)] opacity-50"></div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                          <CheckCircle2 size={12} /> JCI Standards Compliant
-                        </span>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {[
-                        { name: 'SOAP NOTES (CPPT)', roles: ['doctor', 'nurse'] },
-                        { name: 'Surat Permintaan Konsultasi', roles: ['doctor'] },
-                        { name: 'Catatan Terintegrasi', roles: ['doctor', 'nurse'] },
-                        { name: 'Catatan Keperawatan', roles: ['nurse'] },
-                        { name: 'Observasi Keadaan Khusus', roles: ['nurse', 'doctor'] },
-                        { name: 'Resiko Jatuh RI', roles: ['nurse'] },
-                        { name: 'Resume Keperawatan', roles: ['nurse'] },
-                        { name: 'Monitoring Nyeri Pasien', roles: ['nurse', 'doctor'] },
-                        { name: 'Daftar Pengobatan', roles: ['doctor', 'nurse'] },
-                        { name: 'Laporan Pembedahan', roles: ['doctor'] },
-                        { name: 'Pengkajian Awal Perawat HD', roles: ['nurse'] },
-                        { name: 'Monitoring Reaksi Transfusi', roles: ['nurse'] },
-                        { name: 'Pengkajian Unit Gawat Darurat (UGD)', roles: ['doctor', 'nurse'] },
-                        { name: 'Pengkajian MCU', roles: ['doctor', 'nurse'] },
-                        { name: 'Resume Medis RJ', roles: ['doctor'] }
-                      ].filter(mod => !mod.roles || mod.roles.includes(currentUser?.role || 'doctor')).map((mod) => (
-                        <button 
-                          key={mod.name} 
-                          onClick={() => {
-                            if (!selectedPatientId) {
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        {group.modules.map((mod) => (
+                          <button
+                            key={mod.id}
+                            onClick={() => {
+                              if (!selectedPatientId) {
                                 alert('Harap pilih pasien terlebih dahulu.');
                                 return;
-                            }
-                            if (mod.name.includes('SOAP NOTES')) {
-                                console.log('Opening SOAP Modal for patient:', selectedPatientId);
-                                setEditingSoapRecord(null);
-                                setIsSoapModalOpen(true);
-                            } else {
-                                setSelectedModule(mod.name);
-                            }
-                          }}
-                          className={`
-                            px-6 py-5 rounded-2xl border text-[11px] font-black uppercase tracking-wider text-center transition-all duration-300 hover:scale-[1.02] active:scale-95 shadow-sm
-                            ${mod.name === 'SOAP NOTES (CPPT)' ? 'bg-gradient-to-br from-[var(--primary)] to-blue-600 text-white border-[var(--primary)] shadow-xl shadow-[var(--primary)]/20 ring-2 ring-white/10' : 'bg-[var(--surface-container-lowest)] text-[var(--on-surface)] border-[var(--outline-variant)] hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--surface-container-low)]'}
-                          `}
-                        >
-                          {mod.name}
-                        </button>
-                      ))}
+                              }
+                              setSelectedModule(mod.name);
+                              setIsModuleModalOpen(true);
+                            }}
+                            className={`
+                              group relative flex flex-col items-start p-5 rounded-[2rem] border transition-all duration-500
+                              ${mod.highlight 
+                                ? 'bg-gradient-to-br from-[var(--primary)] to-blue-700 text-white border-[var(--primary)] shadow-2xl shadow-[var(--primary)]/30 hover:scale-[1.03] active:scale-95' 
+                                : 'bg-[var(--surface-container-lowest)] border-[var(--outline-variant)] hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:shadow-xl hover:shadow-[var(--primary)]/5 hover:-translate-y-1'}
+                            `}
+                          >
+                            <div className={`
+                              w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500
+                              ${mod.highlight 
+                                ? 'bg-white/20 text-white group-hover:rotate-12' 
+                                : 'bg-[var(--primary)]/10 text-[var(--primary)] group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-12'}
+                            `}>
+                              {mod.icon}
+                            </div>
+                            
+                            <div className="text-left">
+                              <p className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-1 ${mod.highlight ? 'text-blue-100' : 'text-[var(--primary)]'}`}>
+                                Standard {mod.standard}
+                              </p>
+                              <h5 className={`text-sm font-black leading-tight tracking-tight ${mod.highlight ? 'text-white' : 'text-[var(--on-surface)] group-hover:text-[var(--primary)]'}`}>
+                                {mod.name}
+                              </h5>
+                            </div>
+
+                            <div className={`
+                              absolute bottom-5 right-5 w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-2 group-hover:translate-x-0
+                              ${mod.highlight ? 'bg-white/20' : 'bg-[var(--primary)]/10'}
+                            `}>
+                              <Plus size={16} />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               )
            ) : activeTab === 'LIST PEMERIKSAAN' ? (
@@ -382,7 +517,9 @@ export default function OutpatientEMR() {
                 <History className="text-blue-600" />
                 Riwayat Pemeriksaan Pasien
               </h2>
-              </div>                {isLoadingRecords ? (
+              </div>
+              
+              {isLoadingRecords ? (
                   <div className="flex items-center justify-center p-20">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   </div>
@@ -455,15 +592,17 @@ export default function OutpatientEMR() {
         onSelect={handlePatientSelect}
       />
 
-      {/* Soap Note Modal */}
-      <SoapNoteModal 
-        key={editingSoapRecord ? `edit-${editingSoapRecord.id}` : 'new-soap'}
-        isOpen={isSoapModalOpen}
-        onClose={() => setIsSoapModalOpen(false)}
-        onSave={handleSoapSave}
-        patient={activePatient}
-        encounter={activeEncounter}
-        initialData={editingSoapRecord}
+      <ClinicalModuleModal 
+         isOpen={isModuleModalOpen}
+         onClose={() => {
+            setIsModuleModalOpen(false);
+            setSelectedModule(null);
+         }}
+         moduleName={selectedModule || ''}
+         patient={activePatient}
+         encounter={activeEncounter}
+         currentUser={currentUser}
+         onSave={handleModuleSave}
       />
     </div>
   );

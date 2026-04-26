@@ -238,7 +238,49 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
     console.error('[EmrService] SOAP transaction failed:', err);
     throw err;
   }
+export const saveClinicalRecord = async ({ patientId, encounterId, author, moduleName, data, status = 'SIGNED' }) => {
+  if (!encounterId) throw new Error('Encounter ID wajib disediakan.');
+
+  const recordRef = doc(collection(db, COLLECTIONS.MEDICAL_RECORDS));
+  const timestamp = serverTimestamp();
+
+  try {
+    await runTransaction(db, async (transaction) => {
+      // Core Record Payload
+      const payload = {
+        patientId,
+        encounterId,
+        moduleName,
+        signed_by: author,
+        status: status,
+        data: data,
+        assessment: moduleName, // For backward compatibility in list view
+        created_at: timestamp,
+        signed_at: status === 'SIGNED' ? timestamp : null,
+      };
+
+      transaction.set(recordRef, payload);
+
+      // Audit Log
+      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
+      transaction.set(auditRef, {
+        timestamp,
+        user: author,
+        action: AUDIT_ACTIONS.CREATE,
+        resource_type: COLLECTIONS.MEDICAL_RECORDS,
+        resource_id: recordRef.id,
+        reason: 'JCI_CLINICAL_DOCUMENTATION',
+        delta: { moduleName, status }
+      });
+    });
+
+    return { recordId: recordRef.id, status };
+  } catch (err) {
+    console.error('[EmrService] Clinical record save failed:', err);
+    throw err;
+  }
 };
+
 
 export const getPatientRecords = async (patientId) => {
   const q = query(
