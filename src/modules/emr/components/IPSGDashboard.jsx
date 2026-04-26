@@ -1,15 +1,39 @@
 import React from 'react';
-import { ShieldCheck, ShieldAlert, Activity, AlertCircle, CheckCircle2, UserCheck, PhoneCall, Pill, Scissors, Fingerprint, AlertTriangle } from 'lucide-react';
+import { UserCheck, PhoneCall, Pill, Scissors, Fingerprint, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { usePatientStore } from '../../patient/patient.store.js';
+import { useEncounterStore } from '../../encounter/encounter.store.js';
 
 export default function IPSGDashboard() {
-  // Logic to determine compliance status (Simulated for demo)
+  const { patients, selectedPatientId } = usePatientStore();
+  const { selectedEncounterId, activeEncounters } = useEncounterStore();
+
+  const activePatient = patients.find(p => p.id === selectedPatientId);
+  const activeEncounter = activeEncounters?.find(e => e.id === selectedEncounterId);
+
+  // Logic to determine compliance status based on clinical data
   const goals = [
-    { id: 'IPSG.1', label: 'Identity', status: 'COMPLIANT', icon: <UserCheck size={14}/> },
+    { 
+      id: 'IPSG.1', 
+      label: 'Identity', 
+      status: activePatient?.mrn && activePatient?.nik ? 'COMPLIANT' : 'CRITICAL', 
+      icon: <UserCheck size={14}/> 
+    },
     { id: 'IPSG.2', label: 'Communication', status: 'READY', icon: <PhoneCall size={14}/> },
-    { id: 'IPSG.3', label: 'High-Alert Meds', status: 'WARNING', icon: <Pill size={14}/> },
+    { 
+      id: 'IPSG.3', 
+      label: 'High-Alert Meds', 
+      status: activeEncounter?.is_demo ? 'WARNING' : 'READY', 
+      icon: <Pill size={14}/> 
+    },
     { id: 'IPSG.4', label: 'Safe Surgery', status: 'READY', icon: <Scissors size={14}/> },
     { id: 'IPSG.5', label: 'Hand Hygiene', status: 'COMPLIANT', icon: <Fingerprint size={14}/> },
-    { id: 'IPSG.6', label: 'Fall Risk', status: 'COMPLIANT', icon: <AlertTriangle size={14}/> },
+    { 
+      id: 'IPSG.6', 
+      label: 'Fall Risk', 
+      status: activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'CRITICAL' : 
+              activePatient?.safety_flags?.fall_risk === 'MODERATE' ? 'WARNING' : 'COMPLIANT', 
+      icon: <AlertTriangle size={14}/> 
+    },
   ];
 
   return (

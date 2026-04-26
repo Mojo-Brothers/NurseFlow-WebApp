@@ -4,10 +4,11 @@
  */
 import { create } from 'zustand';
 import { getAllPatients, registerPatient, updatePatient } from './services/patient.service.js';
+import { DEMO_PATIENTS } from '../../core/demoData.js';
 
 export const usePatientStore = create((set, get) => ({
   // ─── State ───────────────────────────────
-  patients:          [],
+  patients:          DEMO_PATIENTS,
   selectedPatientId: null,
   isLoading:         false,
   error:             null,

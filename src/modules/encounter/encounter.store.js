@@ -9,10 +9,11 @@ import {
   getPatientEncounters,
   getPatientActiveEncounter,
 } from './services/encounter.service.js';
+import { DEMO_ENCOUNTERS } from '../../core/demoData.js';
 
 export const useEncounterStore = create((set, get) => ({
   // ─── State ───────────────────────────────
-  activeEncounters:  [],
+  activeEncounters:  DEMO_ENCOUNTERS,
   patientEncounters: [],
   selectedEncounterId: null,
   liveContext:       null, // { patientId, encounterId }

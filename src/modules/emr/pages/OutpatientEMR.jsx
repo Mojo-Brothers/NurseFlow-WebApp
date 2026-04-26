@@ -89,18 +89,17 @@ export default function OutpatientEMR() {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [soapRecords, setSoapRecords] = useState([]);
-  const [editingSoapRecord, setEditingSoapRecord] = useState(null);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
   const [activeView, setActiveView] = useState('emr'); // 'emr' or 'safety'
 
-  const handlePatientSelect = (patientId, encounterId) => {
+  const handlePatientSelect = React.useCallback((patientId, encounterId) => {
     selectPatient(patientId);
     if (encounterId) {
       setLiveContext(patientId, encounterId);
     }
     setIsSearchModalOpen(false);
     setSelectedModule(null);
-  };
+  }, [selectPatient, setLiveContext]);
 
   const fetchClinicalRecords = React.useCallback(async (isMounted = { current: true }) => {
     if (!selectedPatientId) return;
@@ -124,7 +123,12 @@ export default function OutpatientEMR() {
     const isMounted = { current: true };
     
     if (activeTab === 'LIST PEMERIKSAAN') {
-      fetchClinicalRecords(isMounted);
+      // Defer to avoid cascading renders warning
+      Promise.resolve().then(() => {
+        if (isMounted.current) {
+          fetchClinicalRecords(isMounted);
+        }
+      });
     }
 
     return () => {
@@ -140,8 +144,7 @@ export default function OutpatientEMR() {
         doctorEmail: currentUser?.email || 'system@hospital.com',
         soapData: formData
       });
-      setIsSoapModalOpen(false);
-      setEditingSoapRecord(null);
+      setIsModuleModalOpen(false);
       setSelectedModule(null);
       if (activeTab === 'LIST PEMERIKSAAN') {
         fetchClinicalRecords();
@@ -176,7 +179,7 @@ export default function OutpatientEMR() {
   };
 
 
-  const handleEditSoap = (record) => {
+  const handleEditSoap = () => {
     setSelectedModule('SOAP NOTES (CPPT)');
     setIsModuleModalOpen(true);
   };
@@ -197,6 +200,17 @@ export default function OutpatientEMR() {
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
+
+  // JCI MASTERPIECE: Auto-select first patient for demonstration if none selected
+  useEffect(() => {
+    if (!selectedPatientId && patients.length > 0) {
+      const firstPatient = patients[0];
+      // Defer to avoid cascading renders warning
+      Promise.resolve().then(() => {
+        handlePatientSelect(firstPatient.id, null);
+      });
+    }
+  }, [patients, selectedPatientId, handlePatientSelect]);
 
   useEffect(() => {
     if (selectedPatientId) {
@@ -447,13 +461,21 @@ export default function OutpatientEMR() {
 
               {/* High Alerts */}
               <div className="col-span-3 flex flex-col gap-1.5">
-                <div className="flex items-center justify-between bg-red-500/5 px-3 py-1.5 rounded-lg border border-red-500/10">
-                  <span className="text-[8px] font-black text-red-500 uppercase tracking-widest">Alergi Terdaftar</span>
-                  <span className="text-[9px] font-bold text-red-700 opacity-40">Tidak Ada Alergi</span>
+                <div className={`flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all ${activePatient?.allergies?.length > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-red-500/5 border-red-500/10'}`}>
+                  <span className={`text-[8px] font-black uppercase tracking-widest ${activePatient?.allergies?.length > 0 ? 'text-red-600' : 'text-red-500'}`}>Alergi Terdaftar</span>
+                  {activePatient?.allergies?.length > 0 ? (
+                    <span className="text-[9px] font-black text-red-700 uppercase animate-pulse">
+                      {activePatient.allergies[0].agent} ({activePatient.allergies[0].severity})
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-bold text-red-700 opacity-40">Tidak Ada Alergi</span>
+                  )}
                 </div>
-                <div className="flex items-center justify-between bg-amber-500/5 px-3 py-1.5 rounded-lg border border-amber-500/10">
+                <div className={`flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all ${activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'bg-amber-500/20 border-amber-500/40 animate-pulse' : 'bg-amber-500/5 border-amber-500/10'}`}>
                   <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Status Penanda</span>
-                  <span className="text-[9px] font-bold text-amber-700 uppercase opacity-40">Pasien Standar</span>
+                  <span className={`text-[9px] font-black uppercase ${activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'text-amber-700' : 'text-amber-700 opacity-40'}`}>
+                    {activePatient?.safety_flags?.fall_risk === 'HIGH' ? '⚠️ RISIKO JATUH TINGGI' : 'Pasien Standar'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -495,7 +517,7 @@ export default function OutpatientEMR() {
            {activeTab === 'MODUL E-MR' ? (
               selectedModule ? renderModuleWorkspace() : (
                 <div className="animate-in slide-in-from-bottom-4 fade-in duration-700 space-y-12">
-                  {JCI_MODULE_GROUPS.map((group, gIdx) => (
+                  {JCI_MODULE_GROUPS.map((group) => (
                     <div key={group.title} className="space-y-6">
                       <div className="flex items-center gap-4 px-2">
                         <div className="h-6 w-1.5 bg-[var(--primary)] rounded-full"></div>
