@@ -75,7 +75,7 @@ import { DEMO_PATIENTS } from '../../../core/demoData.js';
 /**
  * Get all patients with cursor pagination support.
  */
-export const getAllPatients = async (maxResults = 50) => {
+export const getAllPatients = async (maxResults = 100) => {
   try {
     const q = query(
       collection(db, COLLECTIONS.PATIENTS),
@@ -84,19 +84,14 @@ export const getAllPatients = async (maxResults = 50) => {
     );
     const snapshot = await getDocs(q);
     
-    // JCI MASTERPIECE: If Firestore is empty, inject high-fidelity demo data
-    if (snapshot.empty) {
-      console.log('[PatientService] Collection empty. Injecting Masterpiece Demo Data.');
-      return DEMO_PATIENTS;
-    }
-
+    // Return empty array if no patients found
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('[PatientService] Failed to fetch patients:', error);
-    // Fallback to demo data even on error during development phase
-    return DEMO_PATIENTS;
+    return [];
   }
 };
+
 /**
  * Ambil daftar dokter yang aktif dari koleksi users.
  */

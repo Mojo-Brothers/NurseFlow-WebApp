@@ -22,24 +22,48 @@ export default function ClinicalModuleModal({
   patient, 
   encounter, 
   currentUser,
-  onSave 
+  onSave,
+  initialData = null // New prop for viewing existing records
 }) {
   const [formData, setFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
 
-  // Reset form when module changes
+  // Reset form when module changes or initialData is provided
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        timestamp: new Date().toISOString().slice(0, 16),
-        author: currentUser?.email || 'Dr. Robby Viory',
-        notes: '',
-        verification: false
-      });
+      if (initialData) {
+        // JCI: Map Firestore fields to UI fields
+        const recordData = initialData.data || initialData;
+        const mappedData = { ...recordData };
+        
+        // Map SOAP fields
+        if (initialData.subjective) mappedData['Subjective (S)'] = initialData.subjective;
+        if (initialData.objective) mappedData['Objective (O)'] = initialData.objective;
+        if (initialData.assessment) mappedData['Assessment (A)'] = initialData.assessment;
+        if (initialData.plan_instructions) mappedData['Plan (P)'] = initialData.plan_instructions;
+        
+        // Map general notes / assessment summary
+        if (initialData.assessment && !initialData.subjective) {
+           mappedData.notes = initialData.assessment;
+        }
+
+        setFormData({
+          ...mappedData,
+          verification: true // Auto-verify for viewed records
+        });
+      } else {
+        // New record initialization
+        setFormData({
+          timestamp: new Date().toISOString().slice(0, 16),
+          author: currentUser?.email || 'Dr. Robby Viory',
+          notes: '',
+          verification: false
+        });
+      }
       setShowVerificationModal(false);
     }
-  }, [isOpen, moduleName, currentUser]);
+  }, [isOpen, moduleName, currentUser, initialData]);
 
   if (!isOpen) return null;
 
@@ -72,8 +96,10 @@ export default function ClinicalModuleModal({
 
 
   const renderModuleContent = () => {
+    const name = moduleName.toUpperCase();
+
     // Specialized forms based on module name or ID
-    if (moduleName.includes('CPOE') || moduleName.includes('RESEP')) {
+    if (name.includes('CPOE') || name.includes('RESEP')) {
        return (
          <MedicationOrderForm 
             formData={formData} 
@@ -83,7 +109,7 @@ export default function ClinicalModuleModal({
        );
     }
 
-    if (moduleName.includes('INCIDENT') || moduleName.includes('INSIDEN')) {
+    if (name.includes('INCIDENT') || name.includes('INSIDEN')) {
        return (
          <IncidentReportForm 
             formData={formData} 
@@ -92,7 +118,7 @@ export default function ClinicalModuleModal({
        );
     }
 
-    if (moduleName.includes('EWS') || moduleName.includes('WARNING')) {
+    if (name.includes('EWS') || name.includes('WARNING')) {
        return (
          <EarlyWarningSystem 
             formData={formData} 
@@ -101,7 +127,7 @@ export default function ClinicalModuleModal({
        );
     }
 
-    if (moduleName.includes('eMAR') || moduleName.includes('PEMBERIAN OBAT')) {
+    if (name.includes('EMAR') || name.includes('PEMBERIAN OBAT')) {
        return (
          <EMARForm 
             formData={formData} 
@@ -111,7 +137,7 @@ export default function ClinicalModuleModal({
        );
     }
 
-    if (moduleName.includes('LABORATORIUM') || moduleName.includes('LAB ALERT')) {
+    if (name.includes('LABORATORIUM') || name.includes('LAB ALERT')) {
        return (
          <LabAlertSystem 
             formData={formData} 
@@ -120,7 +146,7 @@ export default function ClinicalModuleModal({
        );
     }
 
-    if (moduleName.includes('CUCI TANGAN') || moduleName.includes('HAND HYGIENE')) {
+    if (name.includes('CUCI TANGAN') || name.includes('HAND HYGIENE')) {
        return (
          <HandHygieneAudit 
             formData={formData} 
@@ -129,7 +155,7 @@ export default function ClinicalModuleModal({
        );
     }
 
-    if (moduleName.includes('SOAP')) {
+    if (name.includes('SOAP') || name.includes('CPPT')) {
        return (
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {['Subjective (S)', 'Objective (O)', 'Assessment (A)', 'Plan (P)'].map(section => (
@@ -150,7 +176,7 @@ export default function ClinicalModuleModal({
        );
     }
 
-    if (moduleName.includes('NYERI')) {
+    if (name.includes('NYERI')) {
        return (
          <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

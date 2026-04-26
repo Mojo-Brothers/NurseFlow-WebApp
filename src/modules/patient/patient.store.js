@@ -8,7 +8,7 @@ import { DEMO_PATIENTS } from '../../core/demoData.js';
 
 export const usePatientStore = create((set, get) => ({
   // ─── State ───────────────────────────────
-  patients:          DEMO_PATIENTS,
+  patients:          [],
   selectedPatientId: null,
   isLoading:         false,
   error:             null,

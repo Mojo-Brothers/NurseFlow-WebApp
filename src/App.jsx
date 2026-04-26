@@ -83,6 +83,7 @@ const router = createBrowserRouter([
           { path: "/triage",     element: <Wrap><Triage /></Wrap> },
           { path: "/emr",        element: <Wrap><EMR /></Wrap> },
           { path: "/emr-rj",     element: <Wrap><OutpatientEMR /></Wrap> },
+          { path: "/emr-ri",     element: <Wrap><OutpatientEMR /></Wrap> },
           { path: "/credentials", element: <Wrap><SQECredentialsDashboard /></Wrap> },
           { path: "/surgery",    element: <Wrap><SurgeryDashboard /></Wrap> },
           { path: "/telemedicine", element: <Wrap><Teleconsultation /></Wrap> },

@@ -5,7 +5,7 @@ import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import { format } from 'date-fns';
 
-export default function PatientSearchModal({ isOpen, onClose, onSelect }) {
+export default function PatientSearchModal({ isOpen, onClose, onSelect, initialCareType = 'ALL' }) {
   const { patients, fetchPatients } = usePatientStore();
   const { activeEncounters, fetchActiveEncounters, isLoading } = useEncounterStore();
 
@@ -15,8 +15,15 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect }) {
     nama: '',
     departemen: '',
     penjamin: '',
-    tanggal: ''
+    tanggal: '',
+    careType: initialCareType
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      setFilters(prev => ({ ...prev, careType: initialCareType }));
+    }
+  }, [isOpen, initialCareType]);
 
   useEffect(() => {
     if (isOpen) {
@@ -37,8 +44,14 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect }) {
       nama: '',
       departemen: '',
       penjamin: '',
-      tanggal: ''
+      tanggal: '',
+      careType: 'ALL'
     });
+  };
+
+  const handleSearch = () => {
+    fetchPatients();
+    fetchActiveEncounters();
   };
 
   const mergedData = useMemo(() => {
@@ -46,17 +59,18 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect }) {
       const p = patients.find(pat => pat.id === enc.patient_id) || {};
       return {
         encounterId: enc.id,
-        patientId: p.id,
+        patientId: enc.patient_id,
         noReg: enc.id.slice(-8).toUpperCase(),
         noRM: p.mrn || '-',
-        nama: p.name || 'UNKNOWN',
+        nama: p.name || enc.patient_name || 'UNKNOWN',
         kelamin: p.demographics?.gender === 'M' ? 'Laki-laki' : p.demographics?.gender === 'F' ? 'Perempuan' : '-',
         tglLahir: p.demographics?.dob || '-',
         umur: p.demographics?.dob ? calculateAge(p.demographics.dob) : '-',
         departemen: enc.department || enc.ward || '-',
         dokter: enc.admitting_doctor || '-',
         penjamin: enc.insurance_provider || enc.guarantor || 'Umum',
-        tanggalMasuk: enc.admitted_at?.toDate ? format(enc.admitted_at.toDate(), 'yyyy-MM-dd') : ''
+        tanggalMasuk: enc.admitted_at?.toDate ? format(enc.admitted_at.toDate(), 'yyyy-MM-dd') : '',
+        encounterType: enc.encounter_type || 'OPD' // Fallback to OPD
       };
     });
   }, [activeEncounters, patients]);
@@ -69,6 +83,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect }) {
       if (filters.departemen && filters.departemen !== '' && !item.departemen.includes(filters.departemen)) return false;
       if (filters.penjamin && filters.penjamin !== '' && item.penjamin !== filters.penjamin) return false;
       if (filters.tanggal && item.tanggalMasuk !== filters.tanggal) return false;
+      if (filters.careType !== 'ALL' && item.encounterType !== filters.careType) return false;
       return true;
     });
   }, [mergedData, filters]);
@@ -84,7 +99,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect }) {
       />
       
       {/* Content Area Centered Container */}
-      <div className="flex-1 ml-[280px] flex items-center justify-center p-4 relative z-10 pointer-events-none">
+      <div className="flex-1 flex items-center justify-center p-4 relative z-10 pointer-events-none">
         <div className="bg-[var(--surface-container-lowest)] backdrop-blur-3xl rounded-[3rem] w-full max-w-[1550px] h-[95vh] flex flex-col shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] border border-[var(--outline-variant)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-700 pointer-events-auto">
         
         {/* Modal Header */}
@@ -300,15 +315,43 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect }) {
 
           {/* Filter Actions Row */}
           <div className="flex items-center justify-between gap-4 relative z-10 border-t border-[var(--outline-variant)] pt-2.5 bg-[var(--surface-container-low)]">
-            <div className="flex items-center gap-2 text-[8px] font-black text-[var(--on-surface-variant)] uppercase tracking-tighter opacity-60">
-              <div className="w-1.5 h-1.5 rounded-full bg-[var(--primary)] animate-pulse"></div>
-              Enterprise Patient Directory • Double ID Validation (NIK/MRN)
+            <div className="flex bg-[var(--surface-container-high)] p-1 rounded-2xl border border-[var(--outline-variant)] shadow-inner relative w-[320px] h-[36px]">
+              {/* Animated Background Indicator */}
+              <div 
+                className="absolute top-1 bottom-1 w-[calc(33.33%-4px)] bg-[var(--primary)] rounded-xl transition-all duration-500 ease-out shadow-lg shadow-[var(--primary)]/30 z-0"
+                style={{
+                  transform: `translateX(${
+                    filters.careType === 'ALL' ? '0%' : 
+                    filters.careType === 'OPD' ? '100.5%' : 
+                    '201%'
+                  })`
+                }}
+              />
+              <button 
+                onClick={() => setFilters(prev => ({ ...prev, careType: 'ALL' }))}
+                className={`flex-1 relative z-10 text-[9px] font-black uppercase tracking-wider transition-colors duration-300 ${filters.careType === 'ALL' ? 'text-white' : 'text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]'}`}
+              >
+                Semua
+              </button>
+              <button 
+                onClick={() => setFilters(prev => ({ ...prev, careType: 'OPD' }))}
+                className={`flex-1 relative z-10 text-[9px] font-black uppercase tracking-wider transition-colors duration-300 ${filters.careType === 'OPD' ? 'text-white' : 'text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]'}`}
+              >
+                RJ
+              </button>
+              <button 
+                onClick={() => setFilters(prev => ({ ...prev, careType: 'IPD' }))}
+                className={`flex-1 relative z-10 text-[9px] font-black uppercase tracking-wider transition-colors duration-300 ${filters.careType === 'IPD' ? 'text-white' : 'text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]'}`}
+              >
+                RI
+              </button>
             </div>
+
             <div className="flex items-center gap-2">
               <button onClick={resetFilters} className="bg-[var(--surface-container-high)] hover:bg-[var(--outline-variant)] hover:-translate-y-0.5 border border-[var(--outline-variant)] text-[var(--on-surface)] h-[36px] px-5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 group shadow-sm">
                 <RotateCcw size={12} className="group-hover:-rotate-180 transition-transform duration-500" /> Reset
               </button>
-              <button className="bg-[var(--primary)] hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-[0_10px_20px_rgba(var(--primary-rgb),0.3)] text-white h-[36px] px-6 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 group ring-2 ring-[var(--primary-container)]">
+              <button onClick={handleSearch} className="bg-[var(--primary)] hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-[0_10px_20px_rgba(var(--primary-rgb),0.3)] text-white h-[36px] px-6 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 group ring-2 ring-[var(--primary-container)]">
                 <Search size={14} className="group-hover:scale-110 transition-transform" /> Mulai Pencarian
               </button>
             </div>
@@ -364,7 +407,12 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect }) {
                           <User size={20} />
                         </div>
                         <div>
-                          <div className="text-sm font-black text-[var(--on-surface)] group-hover:text-[var(--primary)] transition-colors uppercase tracking-tight">{item.nama}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="text-sm font-black text-[var(--on-surface)] group-hover:text-[var(--primary)] transition-colors uppercase tracking-tight">{item.nama}</div>
+                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${item.encounterType === 'IPD' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'}`}>
+                              {item.encounterType === 'IPD' ? 'RI' : 'RJ'}
+                            </span>
+                          </div>
                           <div className="text-[11px] text-[var(--on-surface-variant)] mt-1 flex items-center gap-2">
                             <span className={item.kelamin === 'Perempuan' ? 'text-pink-500' : 'text-blue-500'}>{item.kelamin}</span>
                             <span className="w-1 h-1 rounded-full bg-[var(--outline-variant)]"></span>

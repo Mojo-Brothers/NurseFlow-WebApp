@@ -152,12 +152,7 @@ export const transitionEncounter = async ({
   }
 };
 
-import { DEMO_ENCOUNTERS } from '../../../core/demoData.js';
-
-/**
- * Get active patient encounters using cursor-based pagination (ready for scale).
- */
-export const getActiveEncounters = async (maxResults = 24) => {
+export const getActiveEncounters = async (maxResults = 100) => {
   try {
     const q = query(
       collection(db, COLLECTIONS.ENCOUNTERS),
@@ -171,16 +166,10 @@ export const getActiveEncounters = async (maxResults = 24) => {
     );
     const snap = await getDocs(q);
     
-    // JCI MASTERPIECE: Fallback to demo encounters if empty
-    if (snap.empty) {
-      console.log('[EncounterService] Collection empty. Injecting Masterpiece Demo Data.');
-      return DEMO_ENCOUNTERS;
-    }
-
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (error) {
     console.error('[EncounterService] Failed to fetch encounters:', error);
-    return DEMO_ENCOUNTERS;
+    return [];
   }
 };
 
@@ -196,14 +185,10 @@ export const getPatientEncounters = async (patientId) => {
     );
     const snap = await getDocs(q);
     
-    if (snap.empty && patientId.startsWith('demo-')) {
-      return DEMO_ENCOUNTERS.filter(e => e.patient_id === patientId);
-    }
-
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (error) {
     console.error('[EncounterService] Failed to fetch patient encounters:', error);
-    return DEMO_ENCOUNTERS.filter(e => e.patient_id === patientId);
+    return [];
   }
 };
 
@@ -225,14 +210,10 @@ export const getPatientActiveEncounter = async (patientId) => {
     );
     const snap = await getDocs(q);
     
-    if (snap.empty && patientId.startsWith('demo-')) {
-      return DEMO_ENCOUNTERS.find(e => e.patient_id === patientId) || null;
-    }
-
     return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
   } catch (error) {
     console.error('[EncounterService] Failed to fetch patient active encounter:', error);
-    return DEMO_ENCOUNTERS.find(e => e.patient_id === patientId) || null;
+    return null;
   }
 };
 

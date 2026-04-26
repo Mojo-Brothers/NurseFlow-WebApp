@@ -13,7 +13,7 @@ import { DEMO_ENCOUNTERS } from '../../core/demoData.js';
 
 export const useEncounterStore = create((set, get) => ({
   // ─── State ───────────────────────────────
-  activeEncounters:  DEMO_ENCOUNTERS,
+  activeEncounters:  [],
   patientEncounters: [],
   selectedEncounterId: null,
   liveContext:       null, // { patientId, encounterId }

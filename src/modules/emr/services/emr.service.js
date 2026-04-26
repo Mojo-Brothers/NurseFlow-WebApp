@@ -293,15 +293,10 @@ export const getPatientRecords = async (patientId) => {
     );
     const snapshot = await getDocs(q);
     
-    // JCI MASTERPIECE: Fallback to demo records if empty or demo patient
-    if (snapshot.empty && (patientId.startsWith('demo-') || true)) {
-       const demoRecs = DEMO_RECORDS.filter(r => r.patientId === patientId);
-       if (demoRecs.length > 0) return demoRecs;
-    }
-
+    // Return empty array if no records found
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.error('[EmrService] Failed to fetch records:', error);
-    return DEMO_RECORDS.filter(r => r.patientId === patientId);
+    return [];
   }
 };
