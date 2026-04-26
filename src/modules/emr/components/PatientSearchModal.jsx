@@ -19,6 +19,9 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
     careType: initialCareType
   });
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
   useEffect(() => {
     if (isOpen) {
       setFilters(prev => ({ ...prev, careType: initialCareType }));
@@ -87,6 +90,17 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
       return true;
     });
   }, [mergedData, filters]);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredData.slice(start, start + pageSize);
+  }, [filteredData, currentPage, pageSize]);
 
   if (!isOpen) return null;
 
@@ -394,7 +408,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
                 </tr>
               </thead>
               <tbody className="text-sm font-bold divide-y divide-[var(--outline-variant)]">
-                {filteredData.map((item) => (
+                {paginatedData.map((item) => (
                   <tr 
                     key={item.encounterId} 
                     onClick={() => onSelect(item.patientId, item.encounterId)}
@@ -465,15 +479,31 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
         {/* Modal Footer */}
         <div className="bg-[var(--surface-container)] border-t border-[var(--outline-variant)] px-12 py-4 flex justify-between items-center shadow-[0_-10px_30px_rgba(0,0,0,0.05)] relative z-20">
           <div className="flex items-center gap-2 text-[10px] font-black text-[var(--on-surface-variant)] uppercase tracking-widest">
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-white hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] transition-all">&laquo;</button>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-white hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] transition-all">&lsaquo;</button>
+            <button 
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage === 1}
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-white hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] transition-all disabled:opacity-30 disabled:pointer-events-none"
+            >&laquo;</button>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-white hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] transition-all disabled:opacity-30 disabled:pointer-events-none"
+            >&lsaquo;</button>
             <span className="mx-3 flex items-center gap-2">
-              Page <input type="text" defaultValue="1" className="w-12 text-center bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-md py-1.5 font-bold text-[var(--on-surface)] focus:border-[var(--primary)] outline-none transition-colors" /> of 1
+              Page <span className="font-bold text-[var(--on-surface)]">{currentPage}</span> of <span className="font-bold text-[var(--on-surface)]">{totalPages}</span>
             </span>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-white hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] transition-all">&rsaquo;</button>
-            <button className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-white hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] transition-all">&raquo;</button>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--primary)] hover:border-[var(--primary)] hover:text-white hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] transition-all disabled:opacity-30 disabled:pointer-events-none"
+            >&rsaquo;</button>
+            <button 
+              onClick={() => setCurrentPage(totalPages)}
+              disabled={currentPage === totalPages}
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--primary)] hover:border(--primary)] hover:text-white hover:shadow-[0_0_15px_rgba(var(--primary-rgb),0.4)] transition-all disabled:opacity-30 disabled:pointer-events-none"
+            >&raquo;</button>
             <span className="ml-8 opacity-70 bg-[var(--surface-container-high)] px-3 py-1.5 rounded-full border border-[var(--outline-variant)]">
-              Menampilkan <span className="text-[var(--on-surface)]">{filteredData.length}</span> dari <span className="text-[var(--on-surface)]">{filteredData.length}</span> pasien
+              Menampilkan <span className="text-[var(--on-surface)]">{paginatedData.length}</span> dari <span className="text-[var(--on-surface)]">{filteredData.length}</span> pasien
             </span>
           </div>
           <button 
@@ -482,7 +512,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
           >
             Tutup Windows
           </button>
-         </div>
+        </div>
          </div>
        </div>
      </div>

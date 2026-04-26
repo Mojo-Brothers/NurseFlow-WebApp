@@ -2,6 +2,11 @@ import React from 'react';
 import { Sparkles, Brain, Activity, ShieldAlert, Target, TrendingUp, X, Clock, BrainCircuit, Stethoscope, Fingerprint, ShieldCheck } from 'lucide-react';
 
 export default function AISummaryBox({ summary, onClose }) {
+  const traceId = React.useMemo(() => 
+    Math.random().toString(36).substring(7).toUpperCase(),
+    [summary]
+  );
+
   if (!summary) return null;
 
   return (
@@ -97,7 +102,7 @@ export default function AISummaryBox({ summary, onClose }) {
             </div>
           </div>
           <div className="flex items-center gap-2 text-[9px] font-black text-[var(--on-surface-variant)] uppercase tracking-widest opacity-60">
-            <Fingerprint size={12} /> JCI Audit Trace ID: {Math.random().toString(36).substring(7).toUpperCase()}
+            <Fingerprint size={12} /> JCI Audit Trace ID: {traceId}
           </div>
         </div>
       </div>

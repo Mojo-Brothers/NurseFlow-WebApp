@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyCEQJqb_FyuKTpSq6Yc5g-T0wUYwUjSNNo",
@@ -127,10 +127,8 @@ async function seed() {
     }
 
     console.log("✅ Seeding Complete! 100 Patients, 100 Encounters, and 300+ Records injected.");
-    process.exit(0);
   } catch (error) {
     console.error("❌ Seeding Failed:", error);
-    process.exit(1);
   }
 }
 
