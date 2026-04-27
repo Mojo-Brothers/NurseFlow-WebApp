@@ -14,6 +14,7 @@ import EarlyWarningSystem from './EarlyWarningSystem.jsx';
 import EMARForm from './EMARForm.jsx';
 import LabAlertSystem from './LabAlertSystem.jsx';
 import HandHygieneAudit from './HandHygieneAudit.jsx';
+import UgdAssessmentForm from './UgdAssessmentForm.jsx';
 
 export default function ClinicalModuleModal({ 
   isOpen, 
@@ -153,6 +154,10 @@ export default function ClinicalModuleModal({
             setFormData={setFormData}
          />
        );
+    }
+
+    if (name.includes('GAWAT DARURAT') || name.includes('UGD') || name.includes('IGD')) {
+      return <UgdAssessmentForm formData={formData} setFormData={setFormData} patient={patient} encounter={encounter} currentUser={currentUser} />;
     }
 
     if (name.includes('SOAP') || name.includes('CPPT')) {
