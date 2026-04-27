@@ -135,7 +135,7 @@ const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={['PATIENT']} />,
             children: [
               { path: "/portal", element: <PatientPortal /> },
-              { path: "/portal/waiting", element: <VirtualWaitingRoom doctorName="Alexandra" appointmentTime="14:00" /> },
+              { path: "/portal/waiting", element: <VirtualWaitingRoom doctorName="TELEMEDICINE_DOCTOR" appointmentTime="14:00" /> },
               { path: "/wayfinding", element: <WayfindingPortal /> }
             ]
           },

@@ -74,7 +74,7 @@ export default function SoapNoteModal({ isOpen, onClose, onSave, patient, encoun
               <div>
                 <h2 className="text-xl font-black text-[var(--on-surface)] tracking-tight">SOAP NOTES (CPPT)</h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-black text-[var(--primary)] uppercase tracking-widest">{patient?.name || 'Pasien'}</span>
+                  <span className="text-[10px] font-black text-[var(--primary)] uppercase tracking-widest">{patient?.name || encounter?.patient_name || 'PASIEN'}</span>
                   <span className="text-[10px] font-bold text-[var(--on-surface-variant)]">•</span>
                   <span className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest">Encounter: {encounter?.id?.slice(-8) || 'N/A'}</span>
                 </div>

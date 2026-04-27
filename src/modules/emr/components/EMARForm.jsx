@@ -64,7 +64,7 @@ export default function EMARForm({ formData, setFormData, patient }) {
           />
           <div>
             <span className="text-sm font-black uppercase tracking-widest text-[var(--on-surface)]">Konfirmasi Identitas Pasien (Double ID)</span>
-            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Wajib: Cocokkan Gelang Pasien dengan MRN: {patient?.mrn || '362461'}</p>
+            <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Wajib: Cocokkan Gelang Pasien dengan MRN: {patient?.mrn || 'N/A'}</p>
           </div>
         </label>
       </div>

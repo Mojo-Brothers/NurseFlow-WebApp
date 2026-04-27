@@ -170,7 +170,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
               <Building2 size={10} /> Departemen
             </label>
             <div className="relative">
-              <select name="departemen" value={filters.departemen} onChange={handleFilterChange} className="w-full bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-xl px-3 py-2 text-[10px] font-bold text-[var(--on-surface)] focus:bg-[var(--surface-container)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-fixed)] outline-none transition-all appearance-none cursor-pointer">
+              <select name="departemen" value={filters.departemen} onChange={handleFilterChange} className="w-full bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-xl px-3 py-2 text-[10px] font-bold text-[var(--on-surface)] focus:bg-[var(--surface-container)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-fixed)] outline-none transition-all appearance-none bg-none cursor-pointer">
                 <option value="" className="bg-[var(--surface-container)]">Pilih Dept</option>
               <optgroup label="Emergency & Critical Care" className="bg-[var(--surface-container)]">
                 <option value="IGD">Instalasi Gawat Darurat (IGD)</option>
@@ -218,7 +218,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
               <ShieldCheck size={10} /> Penjamin
             </label>
             <div className="relative">
-            <select name="penjamin" value={filters.penjamin} onChange={handleFilterChange} className="w-full bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-xl px-3 py-2 text-[10px] font-bold text-[var(--on-surface)] focus:bg-[var(--surface-container)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-fixed)] outline-none transition-all appearance-none cursor-pointer">
+            <select name="penjamin" value={filters.penjamin} onChange={handleFilterChange} className="w-full bg-[var(--surface-container-lowest)] border border-[var(--outline-variant)] rounded-xl px-3 py-2 text-[10px] font-bold text-[var(--on-surface)] focus:bg-[var(--surface-container)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-fixed)] outline-none transition-all appearance-none bg-none cursor-pointer">
               <option value="" className="bg-[var(--surface-container)]">Pilih Penjamin</option>
               <optgroup label="Pemerintah & BUMN" className="bg-[var(--surface-container)]">
                 <option value="BPJS Kesehatan">BPJS Kesehatan</option>

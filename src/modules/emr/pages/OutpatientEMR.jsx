@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { usePatientStore } from '../../patient/patient.store.js';
@@ -11,7 +11,8 @@ import {
   Heart, Scale, ClipboardCheck, BookOpen, UserCheck, ShieldCheck, 
   HelpCircle, Thermometer, Info, Scissors, Microscope, Settings, 
   Workflow, PlusSquare, ScrollText, AlertCircle, UserPlus, ClipboardList,
-  FileSignature, LogOut, Share2, Clipboard, Zap, History, Eye, Plus, Edit2, RefreshCw, Sparkles, Brain
+  FileSignature, LogOut, Share2, Clipboard, Zap, History, Eye, Plus, Edit2, RefreshCw, Sparkles, Brain,
+  Droplets, PenTool, Clock
 } from 'lucide-react';
 import PatientSearchModal from '../components/PatientSearchModal.jsx';
 import ClinicalModuleModal from '../components/ClinicalModuleModal.jsx';
@@ -22,51 +23,109 @@ import { saveSoapNote, getPatientRecords, saveClinicalRecord } from '../services
 
 const JCI_MODULE_GROUPS = [
   {
-    title: 'PENGKAJIAN & ASESMEN (AOP)',
+    title: 'PENGKAJIAN & ASESMEN AWAL (AOP)',
     modules: [
       { id: 'initial-med', name: 'PENGKAJIAN AWAL MEDIS (RJ)', icon: <Stethoscope size={18} />, standard: 'AOP.1.1' },
       { id: 'initial-nurse', name: 'PENGKAJIAN AWAL KEPERAWATAN', icon: <ClipboardList size={18} />, standard: 'AOP.1.1' },
+      { id: 'ugd-assessment', name: 'PENGKAJIAN UNIT GAWAT DARURAT (UGD)', icon: <Zap size={18} />, standard: 'AOP.1.1' },
+      { id: 'mcu-assessment', name: 'PENGKAJIAN MCU', icon: <Search size={18} />, standard: 'AOP.1.1' },
+      { id: 'head-to-toe', name: 'HEAD TO TOE', icon: <User size={18} />, standard: 'AOP.1.5' },
       { id: 'nutritional', name: 'SKRINING GIZI (MST)', icon: <Activity size={18} />, standard: 'AOP.1.4' },
-      { id: 'pain', name: 'ASESMEN NYERI TERINTEGRASI', icon: <Heart size={18} />, standard: 'AOP.1.5' },
       { id: 'fall-risk', name: 'ASESMEN RISIKO JATUH (IPSG.6)', icon: <AlertTriangle size={18} />, standard: 'IPSG.6' },
-      { id: 'specialty', name: 'ASESMEN KHUSUS (PEDIATRI/GERIATRI)', icon: <UserPlus size={18} />, standard: 'AOP.1.8' },
     ]
   },
   {
-    title: 'CPPT & ASUHAN PASIEN (COP)',
+    title: 'ASESMEN SPESIALISTIK & KHUSUS (AOP.1.8)',
+    modules: [
+      { id: 'geriatric-rj', name: 'PENGKAJIAN DEWASA GERIATRI RJ', icon: <UserPlus size={18} />, standard: 'AOP.1.8' },
+      { id: 'geriatric-ri', name: 'PENGKAJIAN DEWASA GERIATRI RI', icon: <UserPlus size={18} />, standard: 'AOP.1.8' },
+      { id: 'pediatric-rj', name: 'PENGKAJIAN ANAK RJ', icon: <Activity size={18} />, standard: 'AOP.1.8' },
+      { id: 'pediatric-ri', name: 'PENGKAJIAN AWAL ANAK RI', icon: <Activity size={18} />, standard: 'AOP.1.8' },
+      { id: 'nicu-ri', name: 'PENGKAJIAN AWAL NICU / PERINA RI', icon: <Heart size={18} />, standard: 'AOP.1.8' },
+      { id: 'newborn', name: 'PENGKAJIAN BAYI BARU LAHIR', icon: <User size={18} />, standard: 'AOP.1.8' },
+      { id: 'psychiatric', name: 'PENGKAJIAN PASIEN GANGGUAN JIWA', icon: <Brain size={18} />, standard: 'AOP.1.8' },
+      { id: 'advanced-nutrition', name: 'PENGKAJIAN GIZI LANJUT', icon: <Activity size={18} />, standard: 'AOP.1.4' },
+      { id: 'end-of-life', name: 'PENGKAJIAN END OF LIFE', icon: <Eye size={18} />, standard: 'AOP.1.8.3' },
+      { id: 'special-pop', name: 'PENGKAJIAN POPULASI KHUSUS', icon: <UserPlus size={18} />, standard: 'AOP.1.8' },
+    ]
+  },
+  {
+    title: 'KEBIDANAN & KANDUNGAN (COP.3.6)',
+    modules: [
+      { id: 'obgyn-rj', name: 'PENGKAJIAN KEBIDANAN RJ', icon: <User size={18} />, standard: 'COP.3.6' },
+      { id: 'obgyn-ri', name: 'PENGKAJIAN AWAL KEBIDANAN RI', icon: <User size={18} />, standard: 'COP.3.6' },
+      { id: 'gynaecology-ri', name: 'PENGKAJIAN AWAL KEBIDANAN STATUS GINEKOLOGI RI', icon: <FileText size={18} />, standard: 'COP.3.6' },
+      { id: 'postpartum-obs', name: 'OBSERVASI NIFAS', icon: <Clock size={18} />, standard: 'COP.3.6' },
+      { id: 'mother-graph', name: 'GRAFIK IBU', icon: <Activity size={18} />, standard: 'COP.3.6' },
+    ]
+  },
+  {
+    title: 'CPPT & ASUHAN TERINTEGRASI (COP)',
     modules: [
       { id: 'soap', name: 'SOAP NOTES (CPPT)', icon: <FileText size={18} />, standard: 'COP.2.1', highlight: true },
-      { id: 'care-plan', name: 'RENCANA ASUHAN TERINTEGRASI', icon: <Workflow size={18} />, standard: 'COP.2' },
+      { id: 'integrated-notes', name: 'CATATAN TERINTEGRASI', icon: <ClipboardList size={18} />, standard: 'COP.2.1' },
+      { id: 'nursing-notes', name: 'CATATAN KEPERAWATAN', icon: <PenTool size={18} />, standard: 'COP.2.1' },
+      { id: 'outpatient-exam', name: 'PEMERIKSAAN RAWAT JALAN', icon: <Stethoscope size={18} />, standard: 'COP.2.1' },
+      { id: 'pain-integrated', name: 'MONITORING NYERI PASIEN', icon: <Heart size={18} />, standard: 'AOP.1.5' },
+      { id: 'daily-graph', name: 'GRAFIK HARIAN PASIEN', icon: <Activity size={18} />, standard: 'COP.2.1' },
       { id: 'ews', name: 'EARLY WARNING SYSTEM (EWS)', icon: <AlertCircle size={18} />, standard: 'COP.3.1' },
-      { id: 'consult', name: 'PERMINTAAN KONSULTASI INTERNAL', icon: <Share2 size={18} />, standard: 'COP.2.2' },
-      { id: 'reconciliation', name: 'REKONSILIASI OBAT', icon: <Pill size={18} />, standard: 'MMU.4.1' },
-      { id: 'observation', name: 'CATATAN OBSERVASI KHUSUS', icon: <Eye size={18} />, standard: 'COP.2.3' },
+      { id: 'special-obs', name: 'OBSERVASI KEADAAN KHUSUS', icon: <Eye size={18} />, standard: 'COP.2.3' },
+    ]
+  },
+  {
+    title: 'INTENSIVE & KRITIS (COP.3.1)',
+    modules: [
+      { id: 'icu-assessment', name: 'PENGKAJIAN ICU', icon: <Activity size={18} />, standard: 'COP.3.1' },
+      { id: 'hemodialysis', name: 'PENGKAJIAN HEMODIALISA', icon: <RefreshCw size={18} />, standard: 'COP.3.1' },
+      { id: 'hd-nurse-initial', name: 'PENGKAJIAN AWAL PERAWAT HD', icon: <ClipboardList size={18} />, standard: 'COP.3.1' },
+      { id: 'transfusion-monitor', name: 'MONITORING REAKSI TRANSFUSI', icon: <Droplets size={18} />, standard: 'COP.3.3' },
+    ]
+  },
+  {
+    title: 'BEDAH & PERIOPERATIF (ASC)',
+    modules: [
+      { id: 'pre-surgery', name: 'PENGKAJIAN PERIOPERATIF', icon: <ClipboardCheck size={18} />, standard: 'ASC.4' },
+      { id: 'sedation-notes', name: 'CATATAN SEDASI / CATATAN ANESTESI', icon: <Zap size={18} />, standard: 'ASC.3' },
+      { id: 'surgery-report', name: 'LAPORAN PEMBEDAHAN', icon: <FileSignature size={18} />, standard: 'ASC.7' },
+      { id: 'op-report', name: 'LAPORAN OPERASI', icon: <FileText size={18} />, standard: 'ASC.7' },
+      { id: 'safety-checklist', name: 'KESELAMATAN BEDAH (CHECKLIST)', icon: <ShieldCheck size={18} />, standard: 'IPSG.4' },
+    ]
+  },
+  {
+    title: 'REHABILITASI & FUNGSIONAL (COP.2)',
+    modules: [
+      { id: 'barthel-index', name: 'BARTHEL INDEX', icon: <Scale size={18} />, standard: 'AOP.1.7' },
+      { id: 'odc-assessment', name: 'PENGKAJIAN ODC', icon: <Building2 size={18} />, standard: 'COP.2' },
+      { id: 'restraint', name: 'PENGKAJIAN RESTRAIN', icon: <User size={18} />, standard: 'COP.3.8' },
+      { id: 'isolation', name: 'PENGKAJIAN ISOLASI DAN PENYAKIT MENULAR', icon: <ShieldAlert size={18} />, standard: 'PCI.6' },
+    ]
+  },
+  {
+    title: 'TRANSFER & RENCANA PEMULANGAN (ACC)',
+    modules: [
+      { id: 'transfer-internal', name: 'TRANSFER PASIEN INTERNAL (SBAR)', icon: <LogOut size={18} />, standard: 'ACC.3' },
+      { id: 'discharge-planning', name: 'PERENCANAAN PASIEN PULANG TERINTEGRASI', icon: <History size={18} />, standard: 'ACC.2' },
+      { id: 'medical-resume-rj', name: 'RESUME MEDIS RJ', icon: <ScrollText size={18} />, standard: 'ACC.4.2' },
+      { id: 'medical-resume-ri', name: 'RESUME MEDIS', icon: <ScrollText size={18} />, standard: 'ACC.4.2' },
+      { id: 'nursing-resume', name: 'RESUME KEPERAWATAN', icon: <FileText size={18} />, standard: 'ACC.4.2' },
     ]
   },
   {
     title: 'HAK PASIEN & EDUKASI (PFR)',
     modules: [
       { id: 'informed-consent', name: 'PERSETUJUAN TINDAKAN MEDIS', icon: <FileSignature size={18} />, standard: 'PFR.5' },
+      { id: 'consult-request', name: 'SURAT PERMINTAAN KONSULTASI', icon: <Share2 size={18} />, standard: 'COP.2.2' },
       { id: 'education', name: 'EDUKASI PASIEN & KELUARGA', icon: <BookOpen size={18} />, standard: 'PFE.1' },
       { id: 'general-consent', name: 'GENERAL CONSENT (PPU)', icon: <ClipboardCheck size={18} />, standard: 'PFR.1.1' },
-      { id: 'pfr-ack', name: 'TATA TERTIB & HAK PASIEN', icon: <Scale size={18} />, standard: 'PFR.1' },
-    ]
-  },
-  {
-    title: 'OPERASIONAL & TRANSFER (ACC)',
-    modules: [
-      { id: 'transfer', name: 'TRANSFER PASIEN INTERNAL (SBAR)', icon: <LogOut size={18} />, standard: 'ACC.3' },
-      { id: 'surgery-safety', name: 'KESELAMATAN BEDAH (CHECKLIST)', icon: <ShieldCheck size={18} />, standard: 'IPSG.4' },
-      { id: 'discharge', name: 'RESUME MEDIS (DISCHARGE SUMMARY)', icon: <ScrollText size={18} />, standard: 'ACC.4.2' },
-      { id: 'lab-order', name: 'ORDER LABORATORIUM & RADIOLOGI', icon: <Microscope size={18} />, standard: 'AOP.5' },
+      { id: 'pfr-rights', name: 'TATA TERTIB & HAK PASIEN', icon: <Scale size={18} />, standard: 'PFR.1' },
     ]
   },
   {
     title: 'PENGELOLAAN OBAT (MMU)',
     modules: [
       { id: 'cpoe', name: 'ORDER RESEP / CPOE (IPSG.3)', icon: <Pill size={18} />, standard: 'MMU.4', highlight: true },
+      { id: 'medication-list', name: 'DAFTAR PENGOBATAN', icon: <ClipboardList size={18} />, standard: 'MMU.4.1' },
       { id: 'emar', name: 'PEMBERIAN OBAT (eMAR)', icon: <Zap size={18} />, standard: 'MMU.6' },
-      { id: 'reconciliation-mmu', name: 'REKONSILIASI OBAT', icon: <Workflow size={18} />, standard: 'MMU.4.1' },
       { id: 'drug-interaction', name: 'INTERAKSI & ALERGI OBAT', icon: <ShieldAlert size={18} />, standard: 'MMU.1' },
     ]
   },
@@ -75,7 +134,6 @@ const JCI_MODULE_GROUPS = [
     modules: [
       { id: 'incident', name: 'PELAPORAN INSIDEN (KNC/KTD/KTC)', icon: <ShieldAlert size={18} />, standard: 'QPS.7', highlight: true },
       { id: 'sentinel', name: 'LAPORAN SENTINEL', icon: <AlertCircle size={18} />, standard: 'QPS.7' },
-      { id: 'kpi-unit', name: 'INDIKATOR MUTU UNIT', icon: <Activity size={18} />, standard: 'QPS.3' },
       { id: 'hand-hygiene', name: 'AUDIT KEPATUHAN CUCI TANGAN', icon: <CheckCircle2 size={18} />, standard: 'IPSG.5' },
     ]
   }
@@ -86,7 +144,7 @@ export default function OutpatientEMR() {
   const location = useLocation();
   const isInpatientMode = location.pathname === '/emr-ri';
   const { patients, fetchPatients, selectPatient, selectedPatientId } = usePatientStore();
-  const { selectedEncounterId, fetchPatientActiveEncounter, activeEncounters, setLiveContext } = useEncounterStore();
+  const { selectedEncounterId, fetchPatientActiveEncounter, activeEncounters, setLiveContext, liveContext } = useEncounterStore();
   
   const [activeTab, setActiveTab] = useState('MODUL E-MR');
   const [selectedModule, setSelectedModule] = useState(null);
@@ -171,7 +229,7 @@ export default function OutpatientEMR() {
          await saveClinicalRecord({
             patientId: selectedPatientId,
             encounterId: selectedEncounterId,
-            author: currentUser?.email || 'Dr. Robby Viory',
+            author: currentUser?.displayName || currentUser?.email || 'MEDICAL_STAFF',
             moduleName: moduleData.module,
             data: moduleData
          });
@@ -226,7 +284,13 @@ export default function OutpatientEMR() {
           ...(highPain ? ['Nyeri Tidak Terkontrol'] : []),
           ...(diagnoses.length > 2 ? [`Multimorbiditas (${diagnoses.length} Diagnosa)`] : [])
         ].slice(0, 3),
-        recommendation: expertisePoints[3], // Use the recommendation point
+        recommendations: [
+          { category: 'Monitoring', action: 'Lanjutkan observasi hemodinamik per 4 jam.' },
+          { category: 'Therapy', action: highPain ? 'Eskalasi manajemen nyeri dengan Paracetamol IV/Oral.' : 'Lanjutkan terapi suportif sesuai protap.' },
+          ...(nutritionalRisk ? [{ category: 'Nutrition', action: 'Konsultasi Dietisien untuk diet tinggi protein.' }] : []),
+          ...(highFallRisk ? [{ category: 'Safety', action: 'Pasang penanda risiko jatuh & edukasi keluarga.' }] : []),
+          { category: 'Follow-up', action: 'Evaluasi ulang CPPT dalam 24 jam kedepan.' }
+        ],
         recordCount: records.length,
         confidence: 94 + Math.floor(Math.random() * 5),
         timestamp: new Date().toISOString()
@@ -281,8 +345,8 @@ export default function OutpatientEMR() {
     }
   }, [selectedPatientId, fetchPatientActiveEncounter]);
 
-  const activePatient = patients.find(p => p.id === selectedPatientId) || {};
-  const activeEncounter = activeEncounters?.find(e => e.id === selectedEncounterId) || {};
+  const activePatient = useMemo(() => patients.find(p => p.id === selectedPatientId) || {}, [patients, selectedPatientId]);
+  const activeEncounter = useMemo(() => activeEncounters?.find(e => e.id === (selectedEncounterId || liveContext?.encounterId)) || {}, [activeEncounters, selectedEncounterId, liveContext]);
 
   const noReg = activeEncounter?.id ? activeEncounter.id.slice(-8).toUpperCase() : '-';
   const noRM = activePatient?.mrn || '-';
@@ -373,7 +437,7 @@ export default function OutpatientEMR() {
                            Tenaga Medis Penanggung Jawab *
                         </label>
                         <div className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-2xl p-4 text-sm font-black text-[var(--primary)] flex items-center gap-3">
-                           <User size={18} /> {currentUser?.email || 'Dr. Robby Viory'}
+                           <User size={18} /> {currentUser?.displayName || currentUser?.email || 'MEDICAL_STAFF'}
                         </div>
                      </div>
                   </div>
@@ -525,20 +589,26 @@ export default function OutpatientEMR() {
               </div>
 
               {/* High Alerts */}
-              <div className="col-span-3 flex flex-col gap-1.5">
-                <div className={`flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all ${activePatient?.allergies?.length > 0 ? 'bg-red-500/10 border-red-500/30' : 'bg-red-500/5 border-red-500/10'}`}>
-                  <span className={`text-[8px] font-black uppercase tracking-widest ${activePatient?.allergies?.length > 0 ? 'text-red-600' : 'text-red-500'}`}>Alergi Terdaftar</span>
+              <div className="col-span-3 flex flex-col gap-2">
+                <div className={`flex items-center justify-between px-4 py-2 rounded-xl border transition-all ${activePatient?.allergies?.length > 0 ? 'bg-red-500/15 border-red-500/40' : 'bg-red-500/5 border-red-500/10'}`}>
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert size={14} className={activePatient?.allergies?.length > 0 ? 'text-red-600' : 'text-red-400'} />
+                    <span className={`text-[10px] font-black uppercase tracking-widest ${activePatient?.allergies?.length > 0 ? 'text-red-600' : 'text-red-500'}`}>Alergi Terdaftar</span>
+                  </div>
                   {activePatient?.allergies?.length > 0 ? (
-                    <span className="text-[9px] font-black text-red-700 uppercase animate-pulse">
+                    <span className="text-xs font-black text-red-700 uppercase animate-pulse">
                       {activePatient.allergies[0].agent} ({activePatient.allergies[0].severity})
                     </span>
                   ) : (
-                    <span className="text-[9px] font-bold text-red-700 opacity-40">Tidak Ada Alergi</span>
+                    <span className="text-xs font-bold text-red-700/60 uppercase">Tidak Ada Alergi</span>
                   )}
                 </div>
-                <div className={`flex items-center justify-between px-3 py-1.5 rounded-lg border transition-all ${activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'bg-amber-500/20 border-amber-500/40 animate-pulse' : 'bg-amber-500/5 border-amber-500/10'}`}>
-                  <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest">Status Penanda</span>
-                  <span className={`text-[9px] font-black uppercase ${activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'text-amber-700' : 'text-amber-700 opacity-40'}`}>
+                <div className={`flex items-center justify-between px-4 py-2 rounded-xl border transition-all ${activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'bg-amber-500/25 border-amber-500/50 animate-pulse shadow-lg shadow-amber-500/10' : 'bg-amber-500/5 border-amber-500/10'}`}>
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle size={14} className={activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'text-amber-600' : 'text-amber-400'} />
+                    <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Status Penanda</span>
+                  </div>
+                  <span className={`text-xs font-black uppercase ${activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'text-amber-800' : 'text-amber-700/60'}`}>
                     {activePatient?.safety_flags?.fall_risk === 'HIGH' ? '⚠️ RISIKO JATUH TINGGI' : 'Pasien Standar'}
                   </span>
                 </div>
@@ -574,7 +644,7 @@ export default function OutpatientEMR() {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-6 lg:px-10 py-8 scroll-smooth">
+      <div className="flex-1 overflow-y-auto px-6 lg:px-10 pt-8 pb-32 scroll-smooth">
         {activeView === 'safety' ? (
            <SafetyDashboard />
         ) : (
@@ -603,22 +673,24 @@ export default function OutpatientEMR() {
                               setIsModuleModalOpen(true);
                             }}
                             className={`
-                              group relative flex flex-col items-start p-5 rounded-[2rem] border transition-all duration-500
+                              group relative flex flex-col items-start justify-between p-6 rounded-[2.5rem] border transition-all duration-500 min-h-[180px]
                               ${mod.highlight 
                                 ? 'bg-gradient-to-br from-[var(--primary)] to-blue-700 text-white border-[var(--primary)] shadow-2xl shadow-[var(--primary)]/30 hover:scale-[1.03] active:scale-95' 
                                 : 'bg-[var(--surface-container-lowest)] border-[var(--outline-variant)] hover:border-[var(--primary)] hover:bg-[var(--surface-container-low)] hover:shadow-xl hover:shadow-[var(--primary)]/5 hover:-translate-y-1'}
                             `}
                           >
-                            <div className={`
-                              w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500
-                              ${mod.highlight 
-                                ? 'bg-white/20 text-white group-hover:rotate-12' 
-                                : 'bg-[var(--primary)]/10 text-[var(--primary)] group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-12'}
-                            `}>
-                              {mod.icon}
+                            <div>
+                              <div className={`
+                                w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500
+                                ${mod.highlight 
+                                  ? 'bg-white/20 text-white group-hover:rotate-12' 
+                                  : 'bg-[var(--primary)]/10 text-[var(--primary)] group-hover:bg-[var(--primary)] group-hover:text-white group-hover:rotate-12'}
+                              `}>
+                                {mod.icon}
+                              </div>
                             </div>
                             
-                            <div className="text-left">
+                            <div className="text-left mt-auto">
                               <p className={`text-[10px] font-black uppercase tracking-widest opacity-60 mb-1 ${mod.highlight ? 'text-blue-100' : 'text-[var(--primary)]'}`}>
                                 Standard {mod.standard}
                               </p>

@@ -1,5 +1,6 @@
 import { db } from '../../../core/firebase.js';
 import { deductStock } from '../../inventory/services/inventory.service.js';
+import { DEMO_RECORDS } from '../../../core/demoData.js';
 import { 
   collection, 
   doc, 
@@ -283,7 +284,6 @@ export const saveClinicalRecord = async ({ patientId, encounterId, author, modul
 };
 
 
-import { DEMO_RECORDS } from '../../../core/demoData.js';
 
 export const getPatientRecords = async (patientId) => {
   try {

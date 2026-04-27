@@ -5,7 +5,7 @@ import {
   Info, AlertTriangle, User, Calendar, Clock, BadgeCheck,
   Search, Plus, ArrowRight, BookOpen, FileSignature, Pill, 
   Microscope, ScrollText, Workflow, Scale, LogOut, UserPlus,
-  AlertCircle
+  AlertCircle, Sparkles, Brain, RefreshCw, Droplets, Share2, ClipboardCheck
 } from 'lucide-react';
 import PatientVerificationModal from './PatientVerificationModal.jsx';
 import MedicationOrderForm from './MedicationOrderForm.jsx';
@@ -55,8 +55,8 @@ export default function ClinicalModuleModal({
       } else {
         // New record initialization
         setFormData({
+          author: currentUser?.displayName || currentUser?.email || 'MEDICAL_STAFF',
           timestamp: new Date().toISOString().slice(0, 16),
-          author: currentUser?.email || 'Dr. Robby Viory',
           notes: '',
           verification: false
         });
@@ -359,7 +359,7 @@ export default function ClinicalModuleModal({
        );
     }
 
-    if (moduleName.includes('PERSYARATAN') || moduleName.includes('CONSENT')) {
+    if (name.includes('PERSYARATAN') || name.includes('CONSENT') || name.includes('PERSETUJUAN')) {
        return (
          <div className="space-y-8">
             <div className="bg-[var(--surface-container-low)] p-10 rounded-[3rem] border border-[var(--outline-variant)]">
@@ -368,8 +368,8 @@ export default function ClinicalModuleModal({
                      <FileSignature size={40} />
                   </div>
                   <div>
-                     <h3 className="text-xl font-black uppercase tracking-tighter">Persetujuan Tindakan Kedokteran (Informed Consent)</h3>
-                     <p className="text-xs font-bold opacity-60">Sesuai Permenkes RI No. 290 Tahun 2008 & Standar JCI PFR.5</p>
+                     <h3 className="text-xl font-black uppercase tracking-tighter">{moduleName}</h3>
+                     <p className="text-xs font-bold opacity-60">Sesuai Standar JCI PFR.5 - Legal Digital Signature</p>
                   </div>
                </div>
                <div className="space-y-6">
@@ -835,67 +835,202 @@ export default function ClinicalModuleModal({
        );
     }
 
+    // GENERIC DYNAMIC RENDERER FOR NEW MODULES (AESTHETIC & FUNCTIONAL)
+    const isAssessment = name.includes('PENGKAJIAN') || name.includes('ASESMEN') || name.includes('BARTHEL');
+    const isReport = name.includes('LAPORAN') || name.includes('RESUME') || name.includes('SURAT') || name.includes('DOKUMEN');
+    const isMonitoring = name.includes('MONITORING') || name.includes('GRAFIK') || name.includes('OBSERVASI') || name.includes('EWS');
+    const isNote = name.includes('CATATAN') || name.includes('PEMERIKSAAN');
+
+    if (isAssessment || isReport || isMonitoring || isNote) {
+       return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+             {/* Dynamic Hero Section */}
+             <div className="bg-gradient-to-br from-[var(--primary)]/10 to-blue-500/5 p-8 rounded-[3rem] border border-[var(--primary)]/10 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:opacity-[0.06] transition-opacity duration-1000">
+                   <Workflow size={240} className="rotate-12" />
+                </div>
+                <div className="flex items-start gap-8 relative z-10">
+                   <div className="w-20 h-20 rounded-3xl bg-[var(--primary)] flex items-center justify-center text-white shadow-2xl shadow-[var(--primary)]/40 transform -rotate-2">
+                      {isAssessment ? <ClipboardList size={40} /> : 
+                       isMonitoring ? <Activity size={40} /> : 
+                       isReport ? <FileText size={40} /> : <PenTool size={40} />}
+                   </div>
+                   <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                         <span className="px-3 py-1 rounded-full bg-white/50 dark:bg-black/20 text-[var(--primary)] text-[9px] font-black tracking-widest uppercase border border-[var(--primary)]/10">
+                            Clinical Module Engine v2.0
+                         </span>
+                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                         <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">System Ready</span>
+                      </div>
+                      <h3 className="text-3xl font-black uppercase tracking-tighter text-[var(--on-surface)] leading-none">{moduleName}</h3>
+                      <p className="text-xs font-bold opacity-60 mt-3 max-w-2xl leading-relaxed italic">
+                         "Modul ini dikonfigurasi secara otomatis untuk memenuhi standar dokumentasi medis terintegrasi JCI. Pastikan seluruh temuan klinis dicatat dengan akurasi tinggi."
+                      </p>
+                   </div>
+                </div>
+             </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                {/* Main Content Area */}
+                <div className="md:col-span-8 space-y-8">
+                   
+                   {isMonitoring && (
+                      <div className="bg-[var(--surface-container-low)] p-8 rounded-[2.5rem] border border-[var(--outline-variant)]">
+                         <h4 className="text-xs font-black uppercase tracking-widest text-[var(--primary)] mb-6 flex items-center gap-2">
+                            <Activity size={16} /> Vital Signs & Parameters
+                         </h4>
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {['TD', 'NADI', 'SUHU', 'RR', 'SPO2', 'GCS', 'MAP', 'VAS'].map(v => (
+                               <div key={v} className="bg-white/40 dark:bg-black/10 p-5 rounded-2xl border border-[var(--outline-variant)] group focus-within:border-[var(--primary)] transition-all">
+                                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 block mb-2">{v}</label>
+                                  <input 
+                                     type="text" 
+                                     className="bg-transparent border-none w-full text-xl font-black focus:outline-none placeholder:opacity-20" 
+                                     placeholder="00"
+                                     value={formData[v] || ''}
+                                     onChange={(e) => setFormData({...formData, [v]: e.target.value})}
+                                  />
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+                   )}
+
+                   {isAssessment && (
+                      <div className="bg-[var(--surface-container-low)] p-8 rounded-[2.5rem] border border-[var(--outline-variant)]">
+                         <h4 className="text-xs font-black uppercase tracking-widest text-[var(--primary)] mb-6 flex items-center gap-2">
+                            <ClipboardCheck size={16} /> Clinical Assessment Points
+                         </h4>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {['Anamnesa Singkat', 'Status Fisik', 'Kondisi Psikologis', 'Kebutuhan Khusus'].map(label => (
+                               <div key={label} className="space-y-3">
+                                  <label className="text-[10px] font-black uppercase tracking-widest opacity-40 ml-2">{label}</label>
+                                  <textarea 
+                                     className="w-full bg-white/40 dark:bg-black/10 border border-[var(--outline-variant)] rounded-2xl p-4 text-sm font-bold min-h-[120px] focus:ring-4 focus:ring-[var(--primary)]/5 focus:border-[var(--primary)] transition-all resize-none shadow-inner"
+                                     placeholder={`Tuliskan ${label}...`}
+                                     value={formData[label] || ''}
+                                     onChange={(e) => setFormData({...formData, [label]: e.target.value})}
+                                  />
+                               </div>
+                            ))}
+                         </div>
+                      </div>
+                   )}
+
+                   <div className="space-y-4">
+                      <div className="flex items-center justify-between px-2">
+                         <label className="text-xs font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
+                            <PenTool size={16} className="text-[var(--primary)]" /> 
+                            Narasi Klinis & Catatan {isReport ? 'Laporan' : 'Tambahan'} *
+                         </label>
+                         <div className="flex items-center gap-2 text-[9px] font-black text-emerald-500 uppercase tracking-widest">
+                            <Zap size={12} className="animate-pulse" /> Real-time Sync Active
+                         </div>
+                      </div>
+                      <div className="relative group">
+                         <textarea 
+                            className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-[3rem] p-10 text-lg font-bold focus:outline-none focus:ring-8 focus:ring-[var(--primary)]/5 focus:border-[var(--primary)] transition-all min-h-[500px] shadow-2xl shadow-inner placeholder:opacity-20 leading-relaxed"
+                            placeholder={`Tuliskan dokumentasi lengkap untuk ${moduleName} sesuai regulasi RS & protokol JCI...`}
+                            value={formData.notes || ''}
+                            onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                         />
+                         <div className="absolute bottom-8 right-10 flex items-center gap-4">
+                            <div className="flex -space-x-3">
+                               {[1,2,3,4].map(i => (
+                                  <div key={i} className="w-10 h-10 rounded-full border-4 border-white dark:border-gray-900 bg-gray-200 overflow-hidden shadow-lg">
+                                     <img src={`https://i.pravatar.cc/100?img=${i+20}`} alt="avatar" />
+                                  </div>
+                               ))}
+                            </div>
+                            <span className="text-[10px] font-black text-[var(--on-surface-variant)]/40 uppercase tracking-widest">Collaborating...</span>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                {/* Sidebar Info Panel */}
+                <div className="md:col-span-4 space-y-6">
+                   <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 rounded-[3rem] text-white shadow-2xl shadow-blue-500/20 group hover:scale-[1.02] transition-all duration-500">
+                      <h4 className="text-[10px] font-black uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                         <ShieldCheck size={18} /> Quality & Audit
+                      </h4>
+                      <p className="text-xs font-medium leading-relaxed opacity-80 mb-6">
+                         Dokumentasi ini memenuhi kriteria akreditasi JCI dan KARS. Pastikan waktu (timestamp) sesuai dengan kejadian sebenarnya.
+                      </p>
+                      <div className="space-y-4 pt-6 border-t border-white/10">
+                         <div className="flex flex-col gap-1">
+                            <span className="text-[9px] font-black uppercase opacity-40">Dokter/Perawat Pelaksana</span>
+                            <span className="text-sm font-black">{currentUser?.displayName || currentUser?.email || 'MEDICAL_STAFF'}</span>
+                         </div>
+                         <div className="flex flex-col gap-1">
+                            <span className="text-[9px] font-black uppercase opacity-40">Clinical Unit</span>
+                            <span className="text-sm font-black">STATION_04 / OPS</span>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="bg-[var(--surface-container-high)] rounded-[2.5rem] p-8 border border-[var(--outline-variant)] space-y-6 shadow-sm">
+                      <h4 className="text-[10px] font-black uppercase tracking-widest opacity-40">Audit Trail Metadata</h4>
+                      <div className="space-y-4">
+                         <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-2xl bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0">
+                               <Clock size={20} className="text-[var(--primary)]" />
+                            </div>
+                            <div>
+                               <p className="text-[11px] font-black uppercase tracking-widest mb-1">Time Created</p>
+                               <p className="text-sm font-bold opacity-60">{new Date().toLocaleString()}</p>
+                            </div>
+                         </div>
+                         <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-2xl bg-white/50 dark:bg-black/20 flex items-center justify-center shrink-0">
+                               <BadgeCheck size={20} className="text-emerald-500" />
+                            </div>
+                            <div>
+                               <p className="text-[11px] font-black uppercase tracking-widest mb-1">Verification</p>
+                               <p className="text-sm font-bold text-emerald-600">JCI CERTIFIED</p>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+
+                   <div className="p-8 rounded-[2.5rem] bg-amber-500/10 border border-amber-500/20 space-y-3">
+                      <div className="flex items-center gap-2 text-amber-600 font-black text-[10px] uppercase tracking-widest">
+                         <AlertTriangle size={14} /> Attention Required
+                      </div>
+                      <p className="text-[11px] font-bold text-amber-700/80 leading-relaxed italic">
+                         "Pastikan double-check untuk semua dosis obat dan tindakan invasif sebelum finalisasi modul ini."
+                      </p>
+                   </div>
+                </div>
+             </div>
+          </div>
+       );
+    }
+
     return (
-      <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-           <div className="space-y-3">
-              <label className="text-xs font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
-                 <Calendar size={14} /> Tanggal Pemeriksaan *
-              </label>
-              <input 
-                type="datetime-local" 
-                className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-2xl p-4 text-sm font-bold"
-                value={formData.timestamp}
-                onChange={(e) => setFormData({...formData, timestamp: e.target.value})}
-              />
-           </div>
-           <div className="space-y-3">
-              <label className="text-xs font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
-                 <User size={14} /> Pelaksana (Author) *
-              </label>
-              <div className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-2xl p-4 text-sm font-black text-[var(--primary)] flex items-center gap-3">
-                 <BadgeCheck size={18} className="text-blue-500" /> {formData.author}
-              </div>
-           </div>
-        </div>
-
-        <div className="space-y-4">
-           <label className="text-xs font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
-              <PenTool size={14} /> Temuan Klinis & Dokumentasi Terintegrasi *
-           </label>
-           <div className="relative group">
-              <textarea 
-                 className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)] rounded-[2.5rem] p-8 text-base font-bold focus:outline-none focus:ring-4 focus:ring-[var(--primary)]/5 focus:border-[var(--primary)] transition-all min-h-[400px] shadow-inner"
-                 placeholder={`Tuliskan laporan lengkap untuk modul ${moduleName} di sini sesuai protokol JCI...`}
-                 value={formData.notes}
-                 onChange={(e) => setFormData({...formData, notes: e.target.value})}
-              />
-              <div className="absolute bottom-6 right-8 flex items-center gap-3">
-                 <div className="flex -space-x-2">
-                    {[1,2,3].map(i => (
-                       <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-900 bg-gray-200 overflow-hidden">
-                          <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="avatar" />
-                       </div>
-                    ))}
-                 </div>
-                 <span className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em]">Live Collaboration Active</span>
-              </div>
-           </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-           <div className="p-4 rounded-2xl border border-dashed border-[var(--outline-variant)] flex items-center gap-3 opacity-60">
-              <ShieldCheck size={20} className="text-emerald-500" />
-              <span className="text-[10px] font-black uppercase">Standard {moduleName.split('(').pop().replace(')', '') || 'JCI'}</span>
-           </div>
-           <div className="p-4 rounded-2xl border border-dashed border-[var(--outline-variant)] flex items-center gap-3 opacity-60">
-              <Zap size={20} className="text-amber-500" />
-              <span className="text-[10px] font-black uppercase">Auto-save Enabled</span>
-           </div>
-           <div className="p-4 rounded-2xl border border-dashed border-[var(--outline-variant)] flex items-center gap-3 opacity-60">
-              <Lock size={20} className="text-blue-500" />
-              <span className="text-[10px] font-black uppercase">End-to-End Encrypted</span>
-           </div>
+      <div className="space-y-8 animate-in fade-in duration-700">
+        <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-white/5 dark:to-white/10 p-12 rounded-[4rem] text-center space-y-8 border border-[var(--outline-variant)]">
+          <div className="w-32 h-32 rounded-[2.5rem] bg-white dark:bg-black/40 flex items-center justify-center text-[var(--primary)] shadow-2xl mx-auto transform hover:rotate-6 transition-transform">
+            <Workflow size={64} className="animate-pulse" />
+          </div>
+          <div className="space-y-4">
+            <h3 className="text-3xl font-black uppercase tracking-tighter text-[var(--on-surface)]">
+              {moduleName}
+            </h3>
+            <p className="text-sm font-bold text-[var(--on-surface-variant)] opacity-60 max-w-xl mx-auto leading-relaxed">
+              Modul ini sedang dalam fase pengembangan untuk mencapai standar akurasi tinggi JCI. 
+              Gunakan mode catatan klinis universal di bawah ini untuk mendokumentasikan temuan Anda.
+            </p>
+          </div>
+          <div className="flex justify-center gap-6 pt-4">
+             <button 
+                onClick={() => setFormData({...formData, notes: ''})}
+                className="px-12 py-5 rounded-[2rem] bg-[var(--primary)] text-white text-sm font-black uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-2xl shadow-[var(--primary)]/30 flex items-center gap-3"
+             >
+                <PenTool size={20} /> Enable Universal Clinical Entry
+             </button>
+          </div>
         </div>
       </div>
     );
@@ -937,9 +1072,9 @@ export default function ClinicalModuleModal({
              <div className="flex flex-col items-end">
                 <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em]">Patient Focus</p>
                 <div className="flex items-center gap-3">
-                   <p className="text-lg font-black text-[var(--on-surface)]">{patient?.name || 'Tn. Kincay'}</p>
+                   <p className="text-lg font-black text-[var(--on-surface)]">{patient?.name || encounter?.patient_name || 'PASIEN'}</p>
                    <div className="px-2 py-1 rounded-lg bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] text-[10px] font-bold">
-                      MRN {patient?.mrn || '362461'}
+                      MRN {patient?.mrn || encounter?.mrn || 'N/A'}
                    </div>
                 </div>
              </div>

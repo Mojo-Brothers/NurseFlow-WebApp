@@ -75,12 +75,36 @@ export default function AISummaryBox({ summary, onClose }) {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-2 text-[11px] font-black text-[var(--primary)] uppercase tracking-widest">
-                <Stethoscope size={16} /> Clinician Recommendation
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[11px] font-black text-[var(--primary)] uppercase tracking-widest">
+                  <Stethoscope size={16} /> Clinician Recommendations
+                </div>
+                <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                   JCI CDS Ready
+                </span>
               </div>
-              <div className="p-4 rounded-[1.5rem] bg-[var(--surface-container-high)] border border-[var(--outline-variant)] text-sm font-medium text-[var(--on-surface)] leading-relaxed italic relative">
-                <div className="absolute top-3 left-4 text-[var(--primary)] opacity-20"><Brain size={40} /></div>
-                <p className="relative z-10">"{summary?.recommendation || 'Lanjutkan pemantauan rutin sesuai protokol standar.'}"</p>
+              <div className="space-y-2.5">
+                {summary?.recommendations?.map((rec, i) => (
+                  <div key={i} className="group/rec p-4 rounded-2xl bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:border-[var(--primary)]/40 hover:bg-white dark:hover:bg-white/5 transition-all duration-300 flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-lg bg-[var(--primary)]/5 text-[var(--primary)] flex items-center justify-center shrink-0 group-hover/rec:bg-[var(--primary)] group-hover/rec:text-white transition-colors">
+                       <Target size={14} />
+                    </div>
+                    <div className="flex-1">
+                       <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-[9px] font-black text-[var(--primary)] uppercase tracking-[0.1em]">{rec.category}</span>
+                       </div>
+                       <p className="text-xs font-bold text-[var(--on-surface)] leading-relaxed">{rec.action}</p>
+                    </div>
+                    <button className="opacity-0 group-hover/rec:opacity-100 transition-opacity px-3 py-1.5 rounded-lg bg-[var(--primary)] text-white text-[9px] font-black uppercase tracking-widest hover:brightness-110">
+                       Order
+                    </button>
+                  </div>
+                ))}
+                {(!summary?.recommendations || summary.recommendations.length === 0) && (
+                   <div className="p-4 rounded-[1.5rem] bg-[var(--surface-container-high)] border border-[var(--outline-variant)] text-xs font-bold text-[var(--on-surface-variant)] italic">
+                     Lanjutkan pemantauan rutin sesuai protokol standar.
+                   </div>
+                )}
               </div>
             </div>
           </div>
