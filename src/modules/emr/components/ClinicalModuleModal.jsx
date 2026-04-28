@@ -1137,120 +1137,35 @@ export default function ClinicalModuleModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in duration-300 p-4 lg:p-10">
+    <div className="fixed inset-0 z-[2000] flex flex-col items-center justify-start bg-slate-100/80 dark:bg-slate-900/90 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto pt-10 pb-20 custom-scrollbar">
       <div 
-        className="absolute inset-0 cursor-zoom-out" 
+        className="fixed inset-0 z-[-1] cursor-zoom-out" 
         onClick={onClose}
       />
       
-      <div className="w-full max-w-[1600px] h-[95vh] bg-[var(--surface-container-lowest)] rounded-[4rem] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/10 overflow-hidden flex flex-col relative z-10 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+      <div className="w-full max-w-[1200px] flex flex-col items-center relative z-10 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         
         {/* Decorative elements */}
         <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--primary)] via-blue-400 to-[var(--primary)] opacity-50"></div>
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-[var(--primary)]/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-        {/* Modal Header */}
-        <div className="px-12 py-8 flex items-center justify-between border-b border-[var(--outline-variant)] bg-white/50 dark:bg-black/10 backdrop-blur-sm">
-          <div className="flex items-center gap-6">
-             <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-[var(--primary)] to-blue-600 flex items-center justify-center text-white shadow-2xl shadow-[var(--primary)]/30 transform -rotate-3 hover:rotate-0 transition-transform duration-500">
-                <FileText size={32} />
-             </div>
-             <div>
-                <div className="flex items-center gap-3 mb-1">
-                   <span className="px-3 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-black tracking-widest uppercase border border-[var(--primary)]/20">
-                      JCI COMMAND CENTER
-                   </span>
-                   <div className="h-1 w-1 rounded-full bg-[var(--outline-variant)]"></div>
-                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Enterprise E-MR v2.6</span>
-                </div>
-                <h2 className="text-3xl font-black text-[var(--on-surface)] tracking-tight uppercase">{moduleName}</h2>
-             </div>
-          </div>
-
-          <div className="flex items-center gap-8">
-             <div className="flex flex-col items-end">
-                <p className="text-[10px] font-black opacity-30 uppercase tracking-[0.2em]">Patient Focus</p>
-                <div className="flex items-center gap-3">
-                   <p className="text-lg font-black text-[var(--on-surface)]">{patient?.name || encounter?.patient_name || 'PASIEN'}</p>
-                   <div className="px-2 py-1 rounded-lg bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] text-[10px] font-bold">
-                      MRN {patient?.mrn || encounter?.mrn || 'N/A'}
-                   </div>
-                </div>
-             </div>
-             <button 
-                onClick={onClose}
-                className="w-14 h-14 rounded-full bg-[var(--surface-container-high)] hover:bg-red-500 hover:text-white flex items-center justify-center transition-all duration-500 shadow-sm group"
-             >
-                <X size={24} className="group-hover:rotate-90 transition-transform duration-500" />
-             </button>
-          </div>
-        </div>
-
-        {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[var(--surface-container-lowest)] to-gray-50/30 dark:from-[var(--surface-container-lowest)] dark:to-black/20 custom-scrollbar">
-           <A4Layout 
-             title={moduleName} 
-             patient={patient || encounter}
-             metadata={{
-               doctorName: currentUser?.displayName || currentUser?.email,
-               hash: `EMR-${moduleName.toUpperCase().replace(/\s/g, '-')}-${Date.now()}`
-             }}
-           >
-             {renderModuleContent()}
-           </A4Layout>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="px-12 py-10 border-t border-[var(--outline-variant)] bg-[var(--surface-container-low)]/30 backdrop-blur-xl flex items-center justify-between">
-           <div className="flex items-center gap-6">
-              <label className="flex items-center gap-4 cursor-pointer group">
-                 <div className="relative">
-                    <input 
-                      type="checkbox" 
-                      className="peer hidden" 
-                      checked={formData.verification}
-                      onChange={(e) => setFormData({...formData, verification: e.target.checked})}
-                    />
-                    <div className="w-8 h-8 rounded-xl border-2 border-[var(--outline-variant)] peer-checked:bg-[var(--primary)] peer-checked:border-[var(--primary)] transition-all duration-300 flex items-center justify-center">
-                       <CheckCircle2 size={18} className="text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
-                    </div>
-                 </div>
-                 <div className="flex flex-col">
-                    <span className="text-sm font-black text-[var(--on-surface)] group-hover:text-[var(--primary)] transition-colors">Verifikasi Data JCI</span>
-                    <span className="text-[10px] font-bold text-[var(--on-surface-variant)] opacity-60">Saya menyatakan data ini akurat & sesuai standar keselamatan pasien.</span>
-                 </div>
-              </label>
-           </div>
-
-           <div className="flex items-center gap-4">
-              <button 
-                onClick={onClose}
-                className="px-10 py-5 rounded-2xl text-sm font-black uppercase tracking-widest text-[var(--on-surface-variant)] hover:bg-[var(--surface-container-high)] transition-all"
-              >
-                 Batal
-              </button>
-              <button 
-                onClick={handleSave}
-                disabled={isSaving}
-                className={`
-                  relative overflow-hidden px-12 py-5 rounded-3xl text-sm font-black uppercase tracking-widest text-white shadow-2xl transition-all active:scale-95 flex items-center gap-3
-                  ${isSaving ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-br from-[var(--primary)] to-blue-700 hover:brightness-110 shadow-[var(--primary)]/40 hover:shadow-[var(--primary)]/60'}
-                `}
-              >
-                 {isSaving ? (
-                   <>
-                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                     Menyimpan...
-                   </>
-                 ) : (
-                   <>
-                     <ShieldAlert size={20} /> Simpan & Finalisasi E-MR
-                   </>
-                 )}
-              </button>
-           </div>
-        </div>
+        <A4Layout 
+          title={moduleName} 
+          patient={patient || encounter}
+          currentUser={currentUser}
+          onClose={onClose}
+          onSave={handleSave}
+          isSaving={isSaving}
+          formData={formData}
+          setFormData={setFormData}
+          metadata={{
+            doctorName: currentUser?.displayName || currentUser?.email,
+            hash: `EMR-${moduleName.toUpperCase().replace(/\s/g, '-')}-${Date.now()}`
+          }}
+        >
+          {renderModuleContent()}
+        </A4Layout>
       </div>
       <PatientVerificationModal 
          isOpen={showVerificationModal}

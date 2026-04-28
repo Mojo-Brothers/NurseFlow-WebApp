@@ -3,7 +3,7 @@ import {
   ShieldCheck, Printer, Download, Share2, 
   MapPin, Phone, Globe, Mail, 
   User, Calendar, Fingerprint, Activity,
-  Maximize2, MoreHorizontal, ShieldAlert
+  Maximize2, MoreHorizontal, ShieldAlert, X, CheckCircle2
 } from 'lucide-react';
 
 export default function A4Layout({ 
@@ -13,147 +13,195 @@ export default function A4Layout({
   hospitalName = "NURSEFLOW MEDICAL CENTER",
   hospitalAddress = "Kawasan Industri MM2100, Cikarang Barat, Bekasi 17530",
   hospitalContact = "+62 21 8998 0000 • info@nurseflow.com • www.nurseflow.com",
-  metadata = {}
+  metadata = {},
+  onClose,
+  onSave,
+  isSaving,
+  formData = {},
+  setFormData,
+  currentUser
 }) {
   return (
-    <div className="min-h-full w-full flex flex-col items-center bg-gray-100/50 dark:bg-black/40 py-12 px-4 relative overflow-x-hidden">
+    <div className="w-full flex flex-col items-center">
       
-      {/* ─── MODERN ACTION BAR (Floating) ─── */}
-      <div className="fixed top-12 right-12 z-[100] flex flex-col gap-3 animate-in fade-in slide-in-from-right-10 duration-1000">
-         {[
-            { icon: <Printer size={20} />, label: 'Print', color: 'bg-white dark:bg-gray-900 text-blue-600 hover:bg-blue-600' },
-            { icon: <Download size={20} />, label: 'PDF', color: 'bg-white dark:bg-gray-900 text-emerald-600 hover:bg-emerald-600' },
-            { icon: <Share2 size={20} />, label: 'Share', color: 'bg-white dark:bg-gray-900 text-indigo-500 hover:bg-indigo-500' }
-         ].map((action, i) => (
-            <button 
-               key={i}
-               className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-2xl transition-all duration-300 hover:text-white active:scale-90 group ${action.color}`}
-               title={action.label}
-            >
-               {React.cloneElement(action.icon, { className: 'group-hover:scale-110 transition-transform' })}
-            </button>
-         ))}
-      </div>
-
       {/* ─── THE A4 PAPER (PHYSICAL FIDELITY) ─── */}
-      <div className="w-[210mm] min-h-[297mm] bg-white dark:bg-[#1a1c1e] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.2)] dark:shadow-[0_80px_150px_-30px_rgba(0,0,0,0.8)] flex flex-col relative transition-all duration-700 animate-in fade-in zoom-in-95 overflow-hidden border border-gray-100 dark:border-white/5 flex-shrink-0">
+      <div className="w-[210mm] min-h-[297mm] bg-white shadow-[0_64px_128px_-32px_rgba(0,0,0,0.2)] flex flex-col relative transition-all duration-700 animate-in fade-in zoom-in-95 overflow-hidden border border-slate-200 flex-shrink-0 mb-32">
         
-        {/* Top Decorative Indicator */}
-        <div className="h-1.5 w-full bg-gradient-to-r from-[var(--primary)] via-blue-500 to-[var(--primary)] opacity-80"></div>
+        {/* Top Interactive Bar: Command Center Integrated (8pt Grid: 16px py, 40px px) */}
+        <div className="px-10 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-white/10 no-print">
+           <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                 <ShieldAlert size={18} />
+              </div>
+              <div className="flex flex-col">
+                 <p className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mb-1">JCI Command Center</p>
+                 <p className="text-[11px] font-black uppercase tracking-tight leading-none">{title}</p>
+              </div>
+           </div>
+           <div className="flex items-center gap-4">
+              <div className="flex gap-2">
+                 {[
+                    { icon: <Printer size={16} />, label: 'Print' },
+                    { icon: <Download size={16} />, label: 'PDF' }
+                 ].map((act, i) => (
+                    <button key={i} className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95">
+                       {act.icon}
+                    </button>
+                 ))}
+              </div>
+              <div className="w-px h-6 bg-white/10 mx-2"></div>
+              <button 
+                onClick={onClose}
+                className="w-10 h-10 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all active:scale-95"
+              >
+                 <X size={18} />
+              </button>
+           </div>
+        </div>
 
-        {/* ─── PREMIUM HOSPITAL BRANDING ─── */}
-        <header className="p-16 flex justify-between items-start relative z-10 border-b border-gray-100 dark:border-white/5 bg-gray-50/20 dark:bg-black/5">
-          <div className="flex items-start gap-10">
-            <div className="relative">
-               <div className="w-24 h-24 rounded-[2.5rem] bg-[var(--primary)] flex items-center justify-center text-white shadow-2xl shadow-[var(--primary)]/40 rotate-3 transition-transform duration-700">
-                  <Activity size={48} />
-               </div>
-               <div className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-emerald-500 border-4 border-white dark:border-gray-900 flex items-center justify-center text-white shadow-lg">
-                  <ShieldCheck size={14} />
-               </div>
+        {/* Top Decorative Indicator: Enterprise Medical Blue */}
+        <div className="h-1.5 w-full bg-[#1e40af]"></div>
+
+        {/* ─── PREMIUM HOSPITAL BRANDING (8pt Grid: 48px py, 64px px) ─── */}
+        <header className="px-16 py-12 flex justify-between items-start relative z-10 border-b border-slate-100 bg-white">
+          <div className="flex items-start gap-8">
+            <div className="w-20 h-20 rounded-2xl bg-[#1e40af] flex items-center justify-center text-white shadow-xl shadow-blue-900/20 transform -rotate-3">
+               <Activity size={40} />
             </div>
-            <div>
-               <h1 className="text-3xl font-black text-[var(--on-surface)] tracking-tighter uppercase leading-none mb-4">{hospitalName}</h1>
-               <div className="space-y-1.5 opacity-40">
-                  <p className="text-[10px] font-bold flex items-center gap-3 uppercase tracking-widest">
-                    <MapPin size={12} className="text-[var(--primary)]" /> {hospitalAddress}
+            <div className="pt-2">
+               <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none mb-3">{hospitalName}</h1>
+               <div className="space-y-1.5 opacity-60">
+                  <p className="text-[10px] font-bold flex items-center gap-3 uppercase tracking-widest text-slate-500">
+                    <MapPin size={12} className="text-[#1e40af]" /> {hospitalAddress}
                   </p>
-                  <p className="text-[10px] font-bold flex items-center gap-3 uppercase tracking-widest">
-                    <Phone size={12} className="text-[var(--primary)]" /> {hospitalContact}
+                  <p className="text-[10px] font-bold flex items-center gap-3 uppercase tracking-widest text-slate-500">
+                    <Mail size={12} className="text-[#1e40af]" /> {hospitalContact}
                   </p>
                </div>
             </div>
           </div>
           
-          <div className="text-right">
+          <div className="text-right pt-2">
              <div className="inline-flex flex-col items-end">
-                <div className="px-4 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[9px] font-black uppercase tracking-widest mb-3">
-                   JCI Accredited Facility
+                <div className="px-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-3">
+                   JCI Accredited Facility • Phase II
                 </div>
-                <p className="text-[9px] font-black opacity-30 uppercase tracking-[0.5em]">EMR ID: NF-2026-X</p>
+                <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.5em]">DOC REF: HIS-ER-2026-X</p>
              </div>
           </div>
         </header>
 
-        {/* ─── DYNAMIC PATIENT CONTEXT (COMPACT GLASS) ─── */}
-        <div className="bg-[var(--primary)] text-white p-10 grid grid-cols-2 gap-y-8 gap-x-12">
+        {/* ─── DYNAMIC PATIENT CONTEXT (8pt Grid: 32px py, 64px px, 32px gap) ─── */}
+        <div className="bg-[#1e40af] text-white px-16 py-8 grid grid-cols-4 gap-8 border-y border-blue-900/10">
            {[
               { label: 'Patient Name', value: patient?.name || 'N/A' },
-              { label: 'Medical Record (MRN)', value: patient?.mrn || 'N/A' },
-              { label: 'DOB / Age', value: patient?.dob || patient?.demographics?.dob || 'N/A' },
+              { label: 'MRN (Medical Record)', value: patient?.mrn || 'N/A' },
+              { label: 'Date of Birth', value: patient?.dob || patient?.demographics?.dob || 'N/A' },
               { label: 'Gender', value: patient?.gender === 'M' || patient?.demographics?.gender === 'M' ? 'MALE' : 'FEMALE' }
            ].map((item, i) => (
-              <div key={i} className="space-y-1">
-                 <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60">{item.label}</p>
-                 <p className="text-xl font-black truncate tracking-tight leading-none">{item.value}</p>
+              <div key={i} className="space-y-1 border-l border-white/20 pl-6 first:border-0 first:pl-0">
+                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-200/50">{item.label}</p>
+                 <p className="text-base font-black truncate tracking-tight uppercase leading-none">{item.value}</p>
               </div>
            ))}
         </div>
 
-        {/* ─── PRIMARY CONTENT AREA ─── */}
-        <main className="flex-1 px-16 py-16 relative">
-          <div className="flex items-center gap-6 mb-16">
-             <div className="w-2 h-10 bg-[var(--primary)] rounded-full shadow-lg shadow-[var(--primary)]/40"></div>
+        {/* ─── PRIMARY CONTENT AREA (8pt Grid: 48px py, 64px px) ─── */}
+        <main className="flex-1 px-16 py-12 relative bg-white">
+          <div className="flex items-center gap-5 mb-12 pb-6 border-b border-slate-100">
+             <div className="w-2 h-8 bg-[#1e40af] rounded-full"></div>
              <div>
-                <h2 className="text-4xl font-black text-[var(--on-surface)] tracking-tighter uppercase leading-none">{title}</h2>
-                <p className="text-[9px] font-black opacity-30 uppercase tracking-[0.4em] mt-3 ml-1">Official Medical Documentation Protocol</p>
+                <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">{title}</h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-2">Official Clinical Assessment Record • Phase 27.2</p>
              </div>
           </div>
           
-          <div className="relative z-10">
+          <div className="relative z-10 text-slate-900">
              {children}
           </div>
         </main>
 
-        {/* ─── MODERN FOOTER & SIGNATURES ─── */}
-        <footer className="mt-auto p-16 border-t border-gray-100 dark:border-white/5 bg-gray-50/20 dark:bg-black/5">
-           <div className="grid grid-cols-2 gap-20 mb-16">
-              <div className="space-y-8 text-center">
-                 <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Medical In-Charge Signature</p>
-                 <div className="h-28 flex items-center justify-center opacity-10 grayscale">
-                    <ShieldCheck size={72} />
+        {/* ─── INTEGRATED INTERACTIVE ACTION BAR (8pt Grid: 32px padding) ─── */}
+        <div className="mx-16 mb-12 p-8 bg-slate-50 border border-slate-200 rounded-3xl no-print flex items-center justify-between shadow-inner">
+           <div className="flex items-center gap-8">
+              <label className="flex items-center gap-4 cursor-pointer group">
+                 <div className="relative">
+                    <input 
+                      type="checkbox" 
+                      className="peer hidden" 
+                      checked={formData.verification}
+                      onChange={(e) => setFormData({...formData, verification: e.target.checked})}
+                    />
+                    <div className="w-6 h-6 rounded-lg border-2 border-slate-300 peer-checked:bg-blue-600 peer-checked:border-blue-600 transition-all duration-300 flex items-center justify-center">
+                       <CheckCircle2 size={14} className="text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                    </div>
                  </div>
                  <div>
-                    <p className="text-lg font-black text-[var(--on-surface)] uppercase tracking-tight">{metadata?.doctorName || '........................................'}</p>
-                    <p className="text-[9px] font-bold opacity-30 uppercase tracking-widest mt-1">SIP: {metadata?.doctorSip || 'PPA-000-X'}</p>
+                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-tight">Verifikasi JCI Compliance</p>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">{currentUser?.email || 'MEDICAL STAFF'}</p>
                  </div>
+              </label>
+           </div>
+           
+           <div className="flex items-center gap-4">
+              <button 
+                onClick={onClose}
+                className="px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 hover:bg-slate-200 transition-all"
+              >
+                 Batal
+              </button>
+              <button 
+                onClick={onSave}
+                disabled={isSaving}
+                className="px-10 py-3 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-white bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-900/30 disabled:bg-slate-400 transition-all flex items-center gap-3 active:scale-95"
+              >
+                 {isSaving ? <Activity size={14} className="animate-spin" /> : <ShieldAlert size={14} />}
+                 {isSaving ? 'Finalizing...' : 'Finalisasi E-MR'}
+              </button>
+           </div>
+        </div>
+
+        {/* ─── MODERN FOOTER & SIGNATURES (8pt Grid: 48px py, 64px px) ─── */}
+        <footer className="mt-auto px-16 py-12 border-t border-slate-100 bg-slate-50/40">
+           <div className="grid grid-cols-2 gap-32 mb-12">
+              <div className="flex flex-col gap-8">
+                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">PPA In-Charge (Clinical Provider)</p>
+                 <div className="h-24 flex items-end border-b border-slate-200 border-dashed pb-3">
+                    <p className="text-lg font-black text-slate-800 uppercase tracking-tighter">{metadata?.doctorName || '........................................'}</p>
+                 </div>
+                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Digitally Signed & Time-Stamped</p>
               </div>
 
-              <div className="space-y-8 text-center">
-                 <p className="text-[9px] font-black uppercase tracking-widest opacity-40">Patient / Family Signature</p>
-                 <div className="h-28 flex items-center justify-center opacity-10">
-                    <Fingerprint size={72} />
-                 </div>
-                 <div>
-                    <p className="text-lg font-black opacity-20 uppercase tracking-tight">........................................</p>
-                    <p className="text-[9px] font-bold opacity-30 uppercase tracking-widest mt-1">Full Name & ID Verified</p>
-                 </div>
+              <div className="flex flex-col gap-8">
+                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Patient / Family Acknowledgement</p>
+                 <div className="h-24 border-b border-slate-200 border-dashed"></div>
+                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Identified via IPSG.1 Protocol</p>
               </div>
            </div>
 
-           <div className="pt-10 border-t border-gray-200/50 dark:border-white/10 flex justify-between items-end">
-              <div className="space-y-3">
-                 <div className="flex gap-4 items-center">
-                    <div className="px-3 py-1 rounded bg-black text-white text-[8px] font-black tracking-widest uppercase">SHA-256 Verified</div>
-                    <span className="text-[8px] font-mono opacity-20 uppercase truncate max-w-[200px]">{metadata?.hash || 'F4E3D2C1B0A9Z8Y7X6W5V4U3T2S1R0Q'}</span>
+           <div className="pt-10 border-t border-slate-200 flex justify-between items-end">
+              <div className="flex flex-col gap-3">
+                 <div className="flex gap-3 items-center">
+                    <div className="px-2 py-1 rounded-md bg-slate-900 text-white text-[7px] font-black tracking-widest uppercase">SHA-256 SECURE</div>
+                    <span className="text-[7px] font-mono text-slate-400 uppercase truncate max-w-[200px]">{metadata?.hash || 'F4E3D2C1B0A9Z8Y7X6W5V4U3T2S1R0Q'}</span>
                  </div>
-                 <p className="text-[9px] font-black opacity-20 uppercase tracking-[0.4em]">NurseFlow Intelligence HIS • E-MR Core v2.7.0</p>
+                 <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">NurseFlow Enterprise Intelligence HIS • v2.7.4-Final</p>
               </div>
               <div className="text-right">
-                 <span className="text-[9px] font-bold opacity-20 block mb-1">Generated: {new Date().toLocaleString()}</span>
-                 <span className="text-[9px] font-black text-[var(--primary)] uppercase tracking-widest">Confidential Record</span>
+                 <span className="text-[8px] font-bold text-slate-400 block mb-2">DOC_TIMESTAMP: {new Date().toLocaleString()}</span>
+                 <span className="text-[9px] font-black text-blue-600 uppercase tracking-[0.2em]">Confidential Medical Record</span>
               </div>
            </div>
         </footer>
 
-        {/* Watermark */}
+        {/* Watermark: Extremely subtle */}
         <div className="absolute inset-0 flex items-center justify-center opacity-[0.015] pointer-events-none select-none overflow-hidden">
-           <h1 className="text-[20rem] font-black -rotate-12 tracking-tighter">NURSEFLOW</h1>
+           <h1 className="text-[14rem] font-black -rotate-12 tracking-tighter text-slate-900 uppercase">Confidential</h1>
         </div>
       </div>
 
       {/* Helper Text (Non-printing) */}
-      <p className="mt-12 text-[9px] font-black text-[var(--on-surface-variant)] opacity-30 uppercase tracking-[0.8em]">End of Official Document</p>
+      <p className="text-[10px] font-black text-slate-400 opacity-20 uppercase tracking-[1em] no-print">End of Official Document</p>
     </div>
   );
 }
