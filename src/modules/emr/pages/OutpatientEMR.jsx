@@ -164,6 +164,7 @@ export default function OutpatientEMR() {
     }
     setIsSearchModalOpen(false);
     setSelectedModule(null);
+    console.log(`[OutpatientEMR] Context updated: Patient=${patientId}, Encounter=${encounterId}`);
   }, [selectPatient, setLiveContext]);
 
   const fetchClinicalRecords = React.useCallback(async (isMounted = { current: true }) => {

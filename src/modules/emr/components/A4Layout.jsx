@@ -3,13 +3,17 @@ import {
   ShieldCheck, Printer, Download, Share2, 
   MapPin, Phone, Globe, Mail, 
   User, Calendar, Fingerprint, Activity,
-  Maximize2, MoreHorizontal, ShieldAlert, X, CheckCircle2
+  Maximize2, MoreHorizontal, ShieldAlert, X, CheckCircle2, Plus
 } from 'lucide-react';
+import { Separator } from '../../../components/ui/separator';
+import { Label } from '../../../components/ui/label';
+import { calculateAge } from '../../../utils/clinicalCalculators.js';
 
 export default function A4Layout({ 
   children, 
   title = "DOKUMEN REKAM MEDIS",
   patient = {},
+  encounter = {},
   hospitalName = "NURSEFLOW MEDICAL CENTER",
   hospitalAddress = "Kawasan Industri MM2100, Cikarang Barat, Bekasi 17530",
   hospitalContact = "+62 21 8998 0000 • info@nurseflow.com • www.nurseflow.com",
@@ -19,7 +23,8 @@ export default function A4Layout({
   isSaving,
   formData = {},
   setFormData,
-  currentUser
+  currentUser,
+  latestRecord = null
 }) {
   return (
     <div className="w-full flex flex-col items-center">
@@ -57,54 +62,138 @@ export default function A4Layout({
                  <X size={18} />
               </button>
            </div>
-        </div>
+         </div>
 
         {/* Top Decorative Indicator: Enterprise Medical Blue */}
         <div className="h-1.5 w-full bg-[#1e40af]"></div>
 
-        {/* ─── PREMIUM HOSPITAL BRANDING (8pt Grid: 48px py, 64px px) ─── */}
-        <header className="px-16 py-12 flex justify-between items-start relative z-10 border-b border-slate-100 bg-white">
-          <div className="flex items-start gap-8">
-            <div className="w-20 h-20 rounded-2xl bg-[#1e40af] flex items-center justify-center text-white shadow-xl shadow-blue-900/20 transform -rotate-3">
-               <Activity size={40} />
-            </div>
-            <div className="pt-2">
-               <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none mb-3">{hospitalName}</h1>
-               <div className="space-y-1.5 opacity-60">
-                  <p className="text-[10px] font-bold flex items-center gap-3 uppercase tracking-widest text-slate-500">
-                    <MapPin size={12} className="text-[#1e40af]" /> {hospitalAddress}
-                  </p>
-                  <p className="text-[10px] font-bold flex items-center gap-3 uppercase tracking-widest text-slate-500">
-                    <Mail size={12} className="text-[#1e40af]" /> {hospitalContact}
-                  </p>
-               </div>
-            </div>
-          </div>
-          
-          <div className="text-right pt-2">
-             <div className="inline-flex flex-col items-end">
-                <div className="px-4 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mb-3">
-                   JCI Accredited Facility • Phase II
-                </div>
-                <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.5em]">DOC REF: HIS-ER-2026-X</p>
-             </div>
-          </div>
-        </header>
-
-        {/* ─── DYNAMIC PATIENT CONTEXT (8pt Grid: 32px py, 64px px, 32px gap) ─── */}
-        <div className="bg-[#1e40af] text-white px-16 py-8 grid grid-cols-4 gap-8 border-y border-blue-900/10">
-           {[
-              { label: 'Patient Name', value: patient?.name || 'N/A' },
-              { label: 'MRN (Medical Record)', value: patient?.mrn || 'N/A' },
-              { label: 'Date of Birth', value: patient?.dob || patient?.demographics?.dob || 'N/A' },
-              { label: 'Gender', value: patient?.gender === 'M' || patient?.demographics?.gender === 'M' ? 'MALE' : 'FEMALE' }
-           ].map((item, i) => (
-              <div key={i} className="space-y-1 border-l border-white/20 pl-6 first:border-0 first:pl-0">
-                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-200/50">{item.label}</p>
-                 <p className="text-base font-black truncate tracking-tight uppercase leading-none">{item.value}</p>
+        {/* ─── PREMIUM CLINICAL IDENTITY (2026 Enterprise Standard) ─── */}
+        <header className="px-16 py-14 bg-white flex flex-col gap-12">
+           {/* Primary Identity Section: The Focal Point */}
+           <div className="flex justify-between items-start">
+              <div className="flex items-center gap-12">
+                 <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-8">
+                       <h1 className="text-3xl font-black text-slate-900 tracking-tighter leading-tight uppercase">
+                          {patient?.name || patient?.displayName || patient?.nama || patient?.patient_name || encounter?.patient_name || patient?.demographics?.name || 'BELUM TERIDENTIFIKASI'}
+                       </h1>
+                       <div className="flex gap-3 pt-2">
+                          <span className="px-4 py-1.5 rounded-full bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/30 flex items-center justify-center">
+                             {encounter?.department || encounter?.unit || encounter?.type || 'POLIKLINIK'}
+                          </span>
+                          { (patient?.insurance || encounter?.guarantor || encounter?.insurance) && (
+                            <span className="px-4 py-1.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-600/30 flex items-center justify-center">
+                               {patient?.insurance || encounter?.guarantor || encounter?.insurance || 'UMUM'}
+                            </span>
+                          )}
+                       </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-6 text-2xl font-bold tracking-tight">
+                       <span className="text-slate-900/90 font-black">{patient?.mrn || patient?.demographics?.mrn || '00-00-00'}</span>
+                       <span className="w-2 h-2 rounded-full bg-slate-200"></span>
+                       <span className={`${(patient?.gender === 'F' || patient?.demographics?.gender === 'F') ? 'text-rose-500' : 'text-blue-500'} font-black`}>
+                          {(patient?.gender === 'F' || patient?.demographics?.gender === 'F') ? 'Perempuan' : 'Laki-laki'}
+                       </span>
+                       <span className="w-2 h-2 rounded-full bg-slate-200"></span>
+                       <span className="text-slate-600 font-black">
+                          {patient?.dob || patient?.demographics?.dob ? calculateAge(patient.dob || patient.demographics.dob) : '?? Years'}
+                       </span>
+                    </div>
+                 </div>
               </div>
-           ))}
-        </div>
+           </div>
+
+           {/* Clinical Dashboard Zone: Semantic Priority Cards */}
+           <div className="grid grid-cols-3 gap-8">
+              {/* Allergy Alert */}
+              <div className="bg-rose-50/40 border border-rose-100 p-6 rounded-[2.5rem] flex flex-col gap-4 transition-all hover:shadow-lg hover:shadow-rose-900/5 group relative overflow-hidden">
+                 <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-500/30">
+                       <ShieldAlert size={20} />
+                    </div>
+                    <button className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all">
+                       <Plus size={14} />
+                    </button>
+                 </div>
+                 <div>
+                    <p className="text-[9px] font-black text-rose-400 uppercase tracking-[0.2em]">Riwayat Alergi</p>
+                    <p className="text-sm font-black text-rose-900 uppercase leading-none mt-1">
+                       {Array.isArray(patient?.allergies) 
+                          ? patient.allergies.map(a => a.agent).join(', ') || 'Tidak Ada Alergi'
+                          : patient?.allergies || 'Tidak Ada Alergi'}
+                    </p>
+                 </div>
+              </div>
+
+              {/* Triage Status & Working Diagnosis */}
+              <div className="bg-amber-50/40 border border-amber-100 p-6 rounded-[2.5rem] flex flex-col gap-4 transition-all hover:shadow-lg hover:shadow-amber-900/5 group relative overflow-hidden">
+                 <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
+                       <Activity size={20} />
+                    </div>
+                    <div className="px-3 py-1 rounded-lg bg-amber-100 text-amber-700 text-[8px] font-black uppercase">
+                       {encounter?.triage_priority || 'Priority 2'}
+                    </div>
+                 </div>
+                 <div>
+                    <p className="text-[9px] font-black text-amber-500 uppercase tracking-[0.2em]">Diagnosa Kerja</p>
+                    <p className="text-sm font-black text-amber-900 uppercase leading-none mt-1">
+                       {latestRecord?.assessment || encounter?.working_diagnosis || 'Belum Ditentukan'}
+                    </p>
+                 </div>
+              </div>
+
+              {/* Vaccination */}
+              <div className="bg-emerald-50/40 border border-emerald-100 p-6 rounded-[2.5rem] flex flex-col gap-4 transition-all hover:shadow-lg hover:shadow-emerald-900/5 group overflow-hidden relative">
+                 <div className="flex items-center justify-between">
+                    <div className="w-10 h-10 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                       <CheckCircle2 size={20} />
+                    </div>
+                    <button className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all">
+                       <Plus size={14} />
+                    </button>
+                 </div>
+                 <div>
+                    <p className="text-[9px] font-black text-emerald-500 uppercase tracking-[0.2em]">Riwayat Vaksin</p>
+                    <p className="text-sm font-black text-emerald-900 uppercase leading-none mt-1">
+                       {patient?.vaccinations?.length > 0 ? `ADA DATA (${patient.vaccinations.length})` : 'TIDAK ADA DATA'}
+                    </p>
+                 </div>
+              </div>
+           </div>
+
+           {/* Muted Metadata Section */}
+           <div className="px-10 py-8 bg-slate-50/40 rounded-[2.5rem] border border-slate-100 grid grid-cols-2 gap-16">
+              <div className="flex flex-col gap-4">
+                 {[
+                    { label: 'Registration ID', value: encounter?.id?.slice(-8).toUpperCase() || encounter?.encounterId || 'NEW_ENCOUNTER', valueColor: 'text-blue-700' },
+                    { label: 'Religion', value: patient?.religion || patient?.demographics?.religion || '-' },
+                    { label: 'Insurance Provider', value: patient?.insurance || encounter?.insurance || 'UMUM' }
+                 ].map((item, i) => (
+                    <div key={i} className="grid grid-cols-[140px_10px_1fr] items-center text-[11px]">
+                       <span className="font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+                       <span className="text-slate-300">:</span>
+                       <span className={`font-bold uppercase ${item.valueColor || 'text-slate-700'}`}>{item.value}</span>
+                    </div>
+                 ))}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                 {[
+                    { label: 'Department / Poli', value: encounter?.department || encounter?.unit || 'UGD' },
+                    { label: 'Primary Diagnosis', value: encounter?.primary_diagnosis || 'None Recorded', valueColor: 'text-slate-400' },
+                    { label: 'Complex Patient', value: patient?.is_complex ? 'Ya (Attention Required)' : 'Tidak (Standard Workflow)', valueColor: patient?.is_complex ? 'text-red-600' : 'text-emerald-600' }
+                 ].map((item, i) => (
+                    <div key={i} className="grid grid-cols-[140px_10px_1fr] items-center text-[11px]">
+                       <span className="font-black text-slate-400 uppercase tracking-widest">{item.label}</span>
+                       <span className="text-slate-300">:</span>
+                       <span className={`font-bold uppercase ${item.valueColor || 'text-slate-700'}`}>{item.value}</span>
+                    </div>
+                 ))}
+              </div>
+           </div>
+        </header>
 
         {/* ─── PRIMARY CONTENT AREA (8pt Grid: 48px py, 64px px) ─── */}
         <main className="flex-1 px-16 py-12 relative bg-white">

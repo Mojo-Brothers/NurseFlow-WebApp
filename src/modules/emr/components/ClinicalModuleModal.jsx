@@ -16,6 +16,9 @@ import LabAlertSystem from './LabAlertSystem.jsx';
 import HandHygieneAudit from './HandHygieneAudit.jsx';
 import UgdAssessmentForm from './UgdAssessmentForm.jsx';
 import A4Layout from './A4Layout.jsx';
+import { db } from '../../../core/firebase.js';
+import { doc, onSnapshot, query, collection, where, orderBy, limit, getDocs } from 'firebase/firestore';
+import { COLLECTIONS } from '../../../core/constants.js';
 
 export default function ClinicalModuleModal({ 
   isOpen, 
@@ -30,6 +33,21 @@ export default function ClinicalModuleModal({
   const [formData, setFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
+  
+  // Real-time Database State
+  const [dbPatient, setDbPatient] = useState(patient || {});
+  const [dbEncounter, setDbEncounter] = useState(encounter || {});
+  const [latestRecord, setLatestRecord] = useState(null);
+
+  // Debugging log for patient/encounter context
+  useEffect(() => {
+    if (isOpen) {
+      const pId = patient?.id || encounter?.patient_id || 'N/A';
+      const eId = encounter?.id || 'N/A';
+      const pName = patient?.name || patient?.nama || patient?.fullName || 'Unknown Patient';
+      console.log(`[ClinicalModule] Opening ${moduleName} for: ${pName} (P:${pId}, E:${eId})`);
+    }
+  }, [isOpen, patient, encounter, moduleName]);
 
   // Reset form when module changes or initialData is provided
   useEffect(() => {
@@ -66,6 +84,53 @@ export default function ClinicalModuleModal({
       setShowVerificationModal(false);
     }
   }, [isOpen, moduleName, currentUser, initialData]);
+
+  // DB Connection: Real-time Patient & Encounter Listeners
+  useEffect(() => {
+    // Synchronize state with props whenever they change
+    setDbPatient(patient || {});
+    setDbEncounter(encounter || {});
+
+    const targetPatientId = patient?.id || encounter?.patient_id || patient?.patientId;
+    if (!isOpen || !targetPatientId) return;
+
+    // 1. Patient Listener
+    const unsubPatient = onSnapshot(doc(db, COLLECTIONS.PATIENTS, targetPatientId), (snap) => {
+      if (snap.exists()) {
+        setDbPatient(prev => ({ ...prev, id: snap.id, ...snap.data() }));
+      }
+    });
+
+    // 2. Encounter Listener
+    let unsubEncounter = () => {};
+    if (encounter?.id) {
+      unsubEncounter = onSnapshot(doc(db, COLLECTIONS.ENCOUNTERS, encounter.id), (snap) => {
+        if (snap.exists()) {
+          setDbEncounter(prev => ({ ...prev, id: snap.id, ...snap.data() }));
+        }
+      });
+    }
+
+    // 3. Latest Clinical Record (for Working Diagnosis)
+    const fetchLatestRecord = async () => {
+      const q = query(
+        collection(db, COLLECTIONS.MEDICAL_RECORDS),
+        where('encounterId', '==', encounter?.id || ''),
+        orderBy('created_at', 'desc'),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setLatestRecord(snap.docs[0].data());
+      }
+    };
+    fetchLatestRecord();
+
+    return () => {
+      unsubPatient();
+      unsubEncounter();
+    };
+  }, [isOpen, patient?.id, encounter?.id]);
 
   if (!isOpen) return null;
 
@@ -1146,14 +1211,15 @@ export default function ClinicalModuleModal({
       <div className="w-full max-w-[1200px] flex flex-col items-center relative z-10 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         
         {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-[var(--primary)] via-blue-400 to-[var(--primary)] opacity-50"></div>
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-[var(--primary)]/10 rounded-full blur-3xl pointer-events-none"></div>
+
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <A4Layout 
           title={moduleName} 
-          patient={patient || encounter}
-          currentUser={currentUser}
+          patient={dbPatient} 
+          encounter={dbEncounter} 
+          latestRecord={latestRecord}
           onClose={onClose}
           onSave={handleSave}
           isSaving={isSaving}

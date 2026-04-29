@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { CheckCircle2, ShieldCheck, User, Clock, Info, AlertTriangle, Fingerprint } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '../../../components/ui/card';
+import { Button } from '../../../components/ui/button';
+import { Label } from '../../../components/ui/label';
 
 export default function HandHygieneAudit({ formData, setFormData }) {
   const [moments, setMoments] = useState([
-    { id: 1, label: 'Sebelum Menyentuh Pasien', description: 'Melindungi pasien dari kuman di tangan perawat.', done: false },
-    { id: 2, label: 'Sebelum Prosedur Aseptik', description: 'Melindungi pasien dari kuman masuk ke tubuh.', done: false },
-    { id: 3, label: 'Setelah Terpapar Cairan Tubuh', description: 'Melindungi diri dan lingkungan.', done: false },
-    { id: 4, label: 'Setelah Menyentuh Pasien', description: 'Melindungi diri dan lingkungan.', done: false },
-    { id: 5, label: 'Setelah Menyentuh Lingkungan Pasien', description: 'Melindungi diri dan lingkungan.', done: false }
+    { id: 1, label: 'Before Patient Contact', description: 'Protect patient from germs on hands.', done: false },
+    { id: 2, label: 'Before Aseptic Procedure', description: 'Protect patient from germs entering body.', done: false },
+    { id: 3, label: 'After Body Fluid Exposure', description: 'Protect self and environment.', done: false },
+    { id: 4, label: 'After Patient Contact', description: 'Protect self and environment.', done: false },
+    { id: 5, label: 'After Contact with Surroundings', description: 'Protect self and environment.', done: false }
   ]);
 
   const toggleMoment = (id) => {
@@ -19,96 +22,113 @@ export default function HandHygieneAudit({ formData, setFormData }) {
   const [method, setMethod] = useState('Handrub');
 
   return (
-    <div className="space-y-8">
-      {/* JCI IPSG.5 BANNER */}
-      <div className="bg-emerald-500/10 border border-emerald-500/20 p-8 rounded-[3rem] flex items-center gap-6">
-        <div className="w-16 h-16 rounded-[2rem] bg-emerald-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/20">
-          <Fingerprint size={36} />
-        </div>
-        <div>
-          <h3 className="text-xl font-black uppercase tracking-tighter text-emerald-600 dark:text-emerald-400">Audit Kepatuhan Cuci Tangan (IPSG.5)</h3>
-          <p className="text-sm font-bold opacity-70 leading-relaxed">Pengurangan risiko infeksi terkait pelayanan kesehatan melalui protokol 5 Moments Hand Hygiene WHO.</p>
-        </div>
-      </div>
+    <div className="space-y-12 animate-in fade-in duration-700 pb-10">
+      {/* ─── IPSG.5 SAFETY HUB ─── */}
+      <Card className="bg-emerald-50/50 border-2 border-emerald-100 rounded-[3.5rem] p-4 relative overflow-hidden group">
+         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-150 transition-all duration-1000"></div>
+         <CardContent className="p-8 flex items-center gap-10 relative z-10">
+            <div className="w-24 h-24 rounded-[2.5rem] bg-emerald-600 text-white flex items-center justify-center shadow-2xl shadow-emerald-600/30">
+               <Fingerprint size={44} />
+            </div>
+            <div className="space-y-3">
+               <h3 className="text-xl font-black text-emerald-700 uppercase tracking-tighter">Hand Hygiene Audit (IPSG.5)</h3>
+               <p className="text-xs font-bold text-slate-500 leading-relaxed max-w-2xl italic">
+                  Health care-associated infection risk reduction through WHO 5 Moments Hand Hygiene protocol implementation and direct observation.
+               </p>
+            </div>
+         </CardContent>
+      </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
-        {/* Method Selection */}
-        <div className="md:col-span-4 space-y-6">
-           <div className="bg-[var(--surface-container-low)] p-8 rounded-[2.5rem] border border-[var(--outline-variant)]">
-              <h4 className="text-xs font-black uppercase tracking-widest opacity-40 mb-6">Metode Kebersihan Tangan</h4>
-              <div className="space-y-3">
-                 {['Handrub (Berbasis Alkohol)', 'Handwash (Sabun & Air)', 'Bedah (Aseptik)'].map(m => (
-                    <button 
+      <div className="grid grid-cols-12 gap-10">
+        {/* ─── METHODOLOGY ─── */}
+        <div className="col-span-4 space-y-8">
+           <Card className="rounded-[3rem] border-2 border-slate-100 shadow-sm p-4">
+              <CardHeader className="pb-8">
+                 <CardTitle className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Administration Method</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                 {['Handrub (Alcohol)', 'Handwash (Soap)', 'Surgical Aseptic'].map(m => (
+                    <Button 
                        key={m}
+                       variant={method === m ? 'default' : 'outline'}
                        onClick={() => {
                           setMethod(m);
                           setFormData({...formData, method: m});
                        }}
-                       className={`w-full p-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all border ${method === m ? 'bg-[var(--primary)] text-white border-[var(--primary)] shadow-lg' : 'bg-white dark:bg-black/20 border-[var(--outline-variant)] text-[var(--on-surface-variant)]'}`}
+                       className={`w-full h-16 rounded-2xl text-[10px] font-black uppercase tracking-widest ${method === m ? 'shadow-blue-600/20 shadow-xl scale-105' : 'bg-white border-slate-200'}`}
                     >
                        {m}
-                    </button>
+                    </Button>
                  ))}
-              </div>
-           </div>
+              </CardContent>
+           </Card>
 
-           <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex gap-4">
-              <Info size={20} className="text-amber-500 shrink-0" />
-              <p className="text-[10px] font-bold italic text-amber-700 dark:text-amber-400">Auditor wajib mengamati secara langsung (direct observation) tanpa mengganggu pelayanan.</p>
+           <div className="p-6 rounded-3xl bg-amber-50 border border-amber-100 flex gap-5">
+              <Info size={24} className="text-amber-500 shrink-0" />
+              <p className="text-[10px] font-bold italic text-amber-700 leading-relaxed">Auditors must conduct direct observation without interrupting clinical care workflows.</p>
            </div>
         </div>
 
-        {/* 5 Moments Checklist */}
-        <div className="md:col-span-8 space-y-4">
-           <h4 className="text-xs font-black uppercase tracking-widest opacity-40 mb-2 px-2">WHO 5 Moments Check</h4>
-           {moments.map((m) => (
-              <button 
-                key={m.id}
-                onClick={() => toggleMoment(m.id)}
-                className={`
-                   w-full p-6 rounded-[2.5rem] border-2 flex items-center justify-between transition-all duration-500 text-left
-                   ${m.done ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-[var(--surface-container-low)] border-[var(--outline-variant)] hover:border-[var(--primary)]/30'}
-                `}
-              >
-                <div className="flex items-center gap-5">
-                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${m.done ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' : 'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]'}`}>
-                      {m.done ? <CheckCircle2 size={24} /> : <span className="text-lg font-black">{m.id}</span>}
+        {/* ─── MOMENTS CHECKLIST ─── */}
+        <div className="col-span-8 space-y-6">
+           <div className="flex items-center justify-between px-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">WHO 5 Moments Checklist</h4>
+              <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Select Observed Actions</span>
+           </div>
+           <div className="space-y-4">
+              {moments.map((m) => (
+                 <button 
+                   key={m.id}
+                   type="button"
+                   onClick={() => toggleMoment(m.id)}
+                   className={`
+                      w-full p-8 rounded-[3rem] border-2 flex items-center justify-between transition-all duration-500 text-left group
+                      ${m.done ? 'bg-emerald-50/50 border-emerald-500 shadow-xl shadow-emerald-500/10' : 'bg-white border-slate-100 hover:border-blue-400'}
+                   `}
+                 >
+                   <div className="flex items-center gap-8">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 ${m.done ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-600 group-hover:text-white'}`}>
+                         {m.done ? <CheckCircle2 size={28} /> : <span className="text-xl font-black">{m.id}</span>}
+                      </div>
+                      <div>
+                         <p className="text-lg font-black text-slate-900 uppercase tracking-tight">{m.label}</p>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{m.description}</p>
+                      </div>
                    </div>
-                   <div>
-                      <p className="text-sm font-black uppercase tracking-tight">{m.label}</p>
-                      <p className="text-[10px] font-bold opacity-50 uppercase tracking-tighter mt-0.5">{m.description}</p>
+                   <div className={`px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all ${m.done ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-50 border-slate-200 text-slate-400 opacity-60'}`}>
+                      {m.done ? 'COMPLIANT' : 'PENDING'}
                    </div>
-                </div>
-                <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${m.done ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-[var(--surface-container-highest)] border-[var(--outline-variant)] opacity-40'}`}>
-                   {m.done ? 'COMPLIANT' : 'PENDING'}
-                </div>
-              </button>
-           ))}
+                 </button>
+              ))}
+           </div>
         </div>
       </div>
 
-      {/* COMPLIANCE SCORE */}
-      <div className="p-10 rounded-[3.5rem] bg-gradient-to-br from-emerald-600 to-teal-800 text-white shadow-2xl shadow-emerald-500/20 flex flex-col md:flex-row items-center justify-between gap-8">
-         <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-full border-8 border-white/20 flex items-center justify-center text-3xl font-black">
-               {Math.round((moments.filter(m => m.done).length / moments.length) * 100)}%
+      {/* ─── AUDIT PERFORMANCE ─── */}
+      <Card className="p-12 rounded-[4rem] bg-slate-900 text-white shadow-2xl relative overflow-hidden group">
+         <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-emerald-600/20 opacity-50"></div>
+         <CardContent className="p-0 flex flex-col md:flex-row items-center justify-between gap-12 relative z-10">
+            <div className="flex items-center gap-10">
+               <div className="w-28 h-28 rounded-full border-[10px] border-white/10 flex items-center justify-center text-4xl font-black shadow-2xl bg-white/5">
+                  {Math.round((moments.filter(m => m.done).length / moments.length) * 100)}%
+               </div>
+               <div>
+                  <h3 className="text-3xl font-black uppercase tracking-tighter leading-none">Compliance Score</h3>
+                  <p className="text-sm font-bold text-slate-400 mt-4 max-w-sm">Meets international clinical hygiene standards as mandated by Infection Prevention & Control (PPI).</p>
+               </div>
             </div>
-            <div>
-               <h3 className="text-2xl font-black uppercase tracking-tighter">Compliance Score</h3>
-               <p className="text-xs font-bold opacity-70">Sesuai standar PPI Rumah Sakit Berstandar Internasional.</p>
+            <div className="flex flex-col gap-4 w-full md:w-auto">
+               <div className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-5">
+                  <User size={18} className="text-blue-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Observer: Nurse Sarah</span>
+               </div>
+               <div className="px-8 py-4 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-5">
+                  <Clock size={18} className="text-emerald-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Verified: {new Date().toLocaleTimeString()}</span>
+               </div>
             </div>
-         </div>
-         <div className="flex flex-col items-center md:items-end gap-2">
-            <div className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
-               <User size={16} />
-               <span className="text-[10px] font-black uppercase tracking-widest">Observer: Nurse Sarah</span>
-            </div>
-            <div className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
-               <Clock size={16} />
-               <span className="text-[10px] font-black uppercase tracking-widest">Waktu: {new Date().toLocaleTimeString()}</span>
-            </div>
-         </div>
-      </div>
+         </CardContent>
+      </Card>
     </div>
   );
 }
