@@ -535,41 +535,116 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
       </div>
 
       {/* ─── PRIMARY SURVEY (ABCDE) ─── */}
-      <Card className="border-none shadow-none bg-transparent">
-        <CardHeader className="px-0 pb-8 flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-4">
-            <Stethoscope size={16} className="text-blue-600" /> Primary Survey (ABCDE)
-          </CardTitle>
-          <span className="text-[9px] font-black text-red-500 uppercase tracking-widest bg-red-50 px-4 py-1 rounded-full border border-red-100">Critical Stage</span>
+      <Card className="border-none shadow-none bg-transparent mb-6">
+        <CardHeader className="px-0 pb-4 flex flex-row items-center justify-between">
+          <div className="flex items-center gap-3">
+             <div className="w-8 h-8 bg-slate-900 flex items-center justify-center rounded-lg shadow-sm">
+                <Activity size={16} className="text-white" />
+             </div>
+             <CardTitle className="text-lg font-black text-slate-900 uppercase tracking-tight">
+               ABCDE SURVEY
+             </CardTitle>
+          </div>
+          <div className="flex items-center gap-2 bg-red-600 text-white px-3 py-1.5 rounded-md border border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)]">
+             <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+             <span className="text-[10px] font-black uppercase tracking-widest">Critical Stage</span>
+          </div>
         </CardHeader>
         <CardContent className="px-0">
-          <div className="grid grid-cols-5 gap-6">
+          <div className="grid grid-cols-5 gap-4 min-h-40">
              {[
-                { id: 'A', label: 'Airway', options: ['Clear', 'Partial Obstr.', 'Total Obstr.'] },
-                { id: 'B', label: 'Breathing', options: ['Normal', 'Tachypnea', 'Bradypnea', 'Apnea'] },
-                { id: 'C', label: 'Circulation', options: ['Stable', 'Hemorrhage', 'Shock'] },
-                { id: 'D', label: 'Disability', options: ['Alert', 'Voice', 'Pain', 'Unresp.'] },
-                { id: 'E', label: 'Exposure', options: ['Normal', 'Deformity', 'Trauma'] }
+                { 
+                  id: 'A', label: 'Airway', 
+                  options: [
+                    { val: 'Clear', label: 'Clear', type: 'neutral' },
+                    { val: 'Partial Obstr.', label: 'Partial', type: 'amber' },
+                    { val: 'Total Obstr.', label: 'Total', type: 'red' }
+                  ] 
+                },
+                { 
+                  id: 'B', label: 'Breathing', 
+                  options: [
+                    { val: 'Normal', label: 'Normal', type: 'neutral' },
+                    { val: 'Tachypnea', label: 'Tachypnea', type: 'amber' },
+                    { val: 'Bradypnea', label: 'Bradypnea', type: 'amber' },
+                    { val: 'Apnea', label: 'Apnea', type: 'red' }
+                  ] 
+                },
+                { 
+                  id: 'C', label: 'Circulation', 
+                  options: [
+                    { val: 'Stable', label: 'Stable', type: 'neutral' },
+                    { val: 'Hemorrhage', label: 'Hemorrhage', type: 'amber' },
+                    { val: 'Shock', label: 'Shock', type: 'red' }
+                  ] 
+                },
+                { 
+                  id: 'D', label: 'Disability', 
+                  options: [
+                    { val: 'Alert', label: 'Alert', type: 'neutral' },
+                    { val: 'Voice', label: 'Voice', type: 'amber' },
+                    { val: 'Pain', label: 'Pain', type: 'amber' },
+                    { val: 'Unresp.', label: 'Unresponsive', type: 'red' }
+                  ] 
+                },
+                { 
+                  id: 'E', label: 'Exposure', 
+                  options: [
+                    { val: 'Normal', label: 'Normal', type: 'neutral' },
+                    { val: 'Deformity', label: 'Deformity', type: 'amber' },
+                    { val: 'Trauma', label: 'Trauma', type: 'red' }
+                  ] 
+                }
              ].map((step) => (
-               <div key={step.id} className="border-2 border-slate-100 rounded-[2rem] overflow-hidden flex flex-col bg-white hover:border-blue-100 transition-colors">
-                  <div className="bg-slate-900 text-white text-[10px] font-black p-4 text-center uppercase tracking-widest">
-                     {step.id} • {step.label}
+               <div key={step.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/80">
+                     <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest text-left flex items-center">
+                        <span className="text-blue-600 mr-2">{step.id}</span>
+                        {step.label}
+                     </h4>
                   </div>
-                  <div className="p-6 flex flex-col gap-4 flex-1 justify-center">
-                     <RadioGroup 
-                        value={formData.primarySurvey?.[step.id] || ''} 
-                        onValueChange={(val) => updateField('primarySurvey', step.id, val)}
-                        className="flex flex-col gap-3"
-                     >
-                        {step.options.map(opt => (
-                          <div key={opt} className="flex items-center gap-3 group cursor-pointer">
-                             <RadioGroupItem value={opt} id={`abcde_${step.id}_${opt}`} />
-                             <Label htmlFor={`abcde_${step.id}_${opt}`} className="text-[10px] font-black text-slate-500 group-hover:text-blue-600 transition-colors uppercase cursor-pointer">
-                                {opt}
-                             </Label>
-                          </div>
-                        ))}
-                     </RadioGroup>
+                  <div className="p-3 flex flex-col gap-2 flex-1">
+                     {step.options.map(opt => {
+                       const isActive = formData.primarySurvey?.[step.id] === opt.val;
+                       
+                       let baseStyle = "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300";
+                       let activeStyle = "";
+
+                       if (opt.type === 'neutral') {
+                          activeStyle = "bg-slate-800 border-slate-900 text-white shadow-md";
+                       } else if (opt.type === 'amber') {
+                          baseStyle = "border-amber-100/50 bg-amber-50/20 text-amber-700 hover:bg-amber-50 hover:border-amber-200";
+                          activeStyle = "bg-amber-500 border-amber-600 text-white shadow-[0_4px_12px_rgba(245,158,11,0.3)]";
+                       } else if (opt.type === 'red') {
+                          baseStyle = "border-red-100/50 bg-red-50/20 text-red-700 hover:bg-red-50 hover:border-red-200";
+                          activeStyle = "bg-red-600 border-red-700 text-white shadow-[0_4px_12px_rgba(220,38,38,0.3)]";
+                       }
+
+                       return (
+                         <button
+                           key={opt.val}
+                           type="button"
+                           onClick={() => updateField('primarySurvey', step.id, opt.val)}
+                           className={cn(
+                             "w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all duration-200 relative overflow-hidden group",
+                             isActive ? activeStyle : baseStyle
+                           )}
+                         >
+                            <span className={cn(
+                               "text-[10px] uppercase tracking-wide z-10 relative",
+                               isActive ? "font-semibold" : "font-medium"
+                            )}>
+                               {opt.label}
+                            </span>
+                            
+                            {isActive ? (
+                               <div className={cn("w-1.5 h-1.5 rounded-full z-10 relative shadow-sm", opt.type === 'red' && "animate-pulse")} style={{ backgroundColor: 'white' }} />
+                            ) : (
+                               <div className="w-1.5 h-1.5 rounded-full z-10 relative opacity-0 group-hover:opacity-20 transition-opacity bg-current" />
+                            )}
+                         </button>
+                       );
+                     })}
                   </div>
                </div>
              ))}
@@ -577,36 +652,59 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
         </CardContent>
       </Card>
 
-      {/* ─── SUBJECTIVE & SECONDARY SURVEY ─── */}
-      <div className="grid grid-cols-12 gap-10 items-stretch">
-        {/* Left Column: Text Entries */}
-        <div className="col-span-7 flex flex-col gap-10">
-           <Card className="border-none shadow-none bg-transparent">
-              <CardHeader className="px-0 pb-4">
-                 <CardTitle className="flex items-center gap-4">
-                    <Info size={16} className="text-blue-600" /> Chief Complaint & History
-                 </CardTitle>
+      {/* ─── CLINICAL DOCUMENTATION FLOW ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-6 items-stretch mb-6">
+        
+        {/* LEFT COLUMN: SOAP & EXAM */}
+        <div className="flex flex-col gap-6">
+           {/* Subjective */}
+           <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
+              <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+                 <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100/50">
+                       <Info size={14} strokeWidth={2.5} />
+                    </div>
+                    <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                       S — Subjective
+                    </CardTitle>
+                 </div>
+                 <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="flex items-center gap-1.5"><Clock size={10} /> {liveTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                    <span className="w-1 h-1 rounded-full bg-slate-300" />
+                    <span className="flex items-center gap-1.5"><User size={10} /> RN On-Duty</span>
+                 </div>
               </CardHeader>
-              <CardContent className="px-0">
+              <CardContent className="p-0 flex-1 relative group">
+                 <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent pointer-events-none h-4" />
                  <Textarea 
-                    className="min-h-[180px] text-sm font-bold"
-                    placeholder="S: Patient complaints..."
+                    className="w-full h-full min-h-[160px] border-0 rounded-none resize-none text-[13px] font-semibold text-slate-700 p-6 focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-inset bg-transparent placeholder:text-slate-300 placeholder:font-medium transition-all"
+                    placeholder="Patient complaints and history of present illness..."
                     value={formData.subjective || ''}
                     onChange={(e) => updateField(null, 'subjective', e.target.value)}
                  />
               </CardContent>
            </Card>
            
-           <Card className="border-none shadow-none bg-transparent">
-              <CardHeader className="px-0 pb-4">
-                 <CardTitle className="flex items-center gap-4">
-                    <Eye size={16} className="text-blue-600" /> Physical Exam (Head-to-Toe)
-                 </CardTitle>
+           {/* Objective */}
+           <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
+              <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+                 <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100/50">
+                       <Eye size={14} strokeWidth={2.5} />
+                    </div>
+                    <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                       O — Objective Exam
+                    </CardTitle>
+                 </div>
+                 <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100/50"><Save size={10} /> Auto-Saved</span>
+                 </div>
               </CardHeader>
-              <CardContent className="px-0">
+              <CardContent className="p-0 flex-1 relative group">
+                 <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent pointer-events-none h-4" />
                  <Textarea 
-                    className="min-h-[260px] text-sm font-bold"
-                    placeholder="O: Objective findings..."
+                    className="w-full h-full min-h-[220px] border-0 rounded-none resize-none text-[13px] font-semibold text-slate-700 p-6 focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-inset bg-transparent placeholder:text-slate-300 placeholder:font-medium transition-all"
+                    placeholder="Head-to-toe clinical findings..."
                     value={formData.objective || ''}
                     onChange={(e) => updateField(null, 'objective', e.target.value)}
                  />
@@ -614,78 +712,167 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
            </Card>
         </div>
 
-        {/* Right Column: Widgets */}
-        <div className="col-span-5 flex flex-col gap-10">
-           {/* GCS & Neuro */}
-           <Card className="bg-slate-900 border-none shadow-2xl rounded-[3rem] p-4 flex flex-col">
-              <CardHeader className="pb-8">
-                 <CardTitle className="text-blue-400 flex items-center gap-4">
-                    <Brain size={18} /> Neurological Hub (GCS)
+        {/* RIGHT COLUMN: GCS, ALERGY, SAFETY */}
+        <div className="flex flex-col gap-6">
+           {/* GCS & Neuro - Redesigned to be tactile */}
+           <Card className="bg-[#0A0F1C] border border-slate-800 shadow-xl rounded-2xl flex flex-col overflow-hidden relative">
+              {/* Subtle top glow */}
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+              
+              <CardHeader className="px-6 py-5 border-b border-white/5">
+                 <CardTitle className="text-[11px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-3">
+                    <Brain size={16} /> Neurological Hub (GCS)
                  </CardTitle>
               </CardHeader>
-              <CardContent className="flex flex-col gap-8">
-                 <div className="grid grid-cols-3 gap-6">
+              
+              <CardContent className="p-6 flex flex-col gap-8">
+                 <div className="flex flex-col gap-5">
                     {[
                        { l: 'Eye', m: 4, f: 'gcs_e' },
                        { l: 'Motor', m: 6, f: 'gcs_m' },
                        { l: 'Verbal', m: 5, f: 'gcs_v' }
                     ].map(x => (
-                      <div key={x.f} className="flex flex-col items-center">
-                         <Label className="text-[8px] font-black text-slate-500 uppercase mb-4 tracking-widest">{x.l}</Label>
-                         <Input 
-                            type="number" max={x.m} min={1}
-                            className="w-full bg-white/5 border-white/10 h-16 text-3xl font-black text-center text-white focus-visible:ring-blue-500/20 focus-visible:border-blue-500"
-                            value={formData.neuro?.[x.f] || ''}
-                            onChange={(e) => updateField('neuro', x.f, e.target.value)}
-                         />
-                         <p className="text-[7px] font-bold text-slate-600 mt-3 uppercase tracking-tighter">Max {x.m}</p>
+                      <div key={x.f} className="flex flex-col gap-2.5">
+                         <div className="flex justify-between items-center px-1">
+                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{x.l}</Label>
+                            <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider">Max {x.m}</span>
+                         </div>
+                         <div className="flex gap-1.5">
+                            {Array.from({length: x.m}, (_, i) => x.m - i).map(val => {
+                               const isSelected = parseInt(formData.neuro?.[x.f]) === val;
+                               return (
+                                  <button
+                                     key={val}
+                                     type="button"
+                                     onClick={() => updateField('neuro', x.f, val.toString())}
+                                     className={cn(
+                                        "flex-1 h-9 rounded-lg text-[13px] font-black transition-all duration-200 border",
+                                        isSelected 
+                                          ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
+                                          : "bg-white/5 text-slate-500 border-white/10 hover:bg-white/10 hover:text-slate-300"
+                                     )}
+                                  >
+                                     {val}
+                                  </button>
+                               );
+                            })}
+                         </div>
                       </div>
                     ))}
                  </div>
-                 <div className="pt-8 border-t border-white/10 flex justify-between items-center px-4">
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500">Combined GCS</span>
-                    <span className="text-5xl font-black text-blue-400 tabular-nums tracking-tighter">
-                       {(parseInt(formData.neuro?.gcs_e)||0) + (parseInt(formData.neuro?.gcs_m)||0) + (parseInt(formData.neuro?.gcs_v)||0)}
-                    </span>
+                 
+                 <div className="pt-6 border-t border-white/10 flex justify-between items-end px-2">
+                    <div className="flex flex-col gap-1">
+                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Combined Score</span>
+                       <span className="text-[9px] font-bold text-slate-600 uppercase">Range: 3-15</span>
+                    </div>
+                    
+                    {(() => {
+                       const total = (parseInt(formData.neuro?.gcs_e)||0) + (parseInt(formData.neuro?.gcs_m)||0) + (parseInt(formData.neuro?.gcs_v)||0);
+                       const isCritical = total > 0 && total <= 8;
+                       const isWarning = total > 8 && total <= 12;
+                       const isGood = total > 12;
+                       return (
+                          <div className={cn(
+                             "text-6xl font-black tabular-nums tracking-tighter leading-none transition-colors",
+                             isCritical ? "text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]" :
+                             isWarning ? "text-amber-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]" :
+                             isGood ? "text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.4)]" :
+                             "text-slate-600"
+                          )}>
+                             {total === 0 ? '--' : total}
+                          </div>
+                       );
+                    })()}
                  </div>
               </CardContent>
            </Card>
 
-           {/* Safety & Allergy */}
-           <Card className="border-2 border-slate-100 rounded-[3rem] p-4 flex flex-col flex-1">
-              <CardContent className="pt-6 flex flex-col gap-10">
-                 <div className="flex flex-col gap-4">
-                    <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-4">
-                       <ShieldCheck size={16} className="text-red-500" /> Allergy Alert
-                    </Label>
-                    <Input 
-                       className="h-14 border-slate-200 bg-red-50/20 focus-visible:border-red-400 focus-visible:ring-red-100 text-sm"
-                       placeholder="Document allergies..."
-                       value={formData.allergies || ''}
-                       onChange={(e) => updateField(null, 'allergies', e.target.value)}
-                    />
-                 </div>
-                 <div className="flex flex-col gap-4">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest px-1">Patient Safety Screening</p>
-                    <div className="flex flex-col gap-3">
-                       {[
-                          { l: 'Fall Risk', f: 'safety_fall' },
-                          { l: 'Suicide Risk', f: 'safety_suicide' },
-                          { l: 'Infection Control', f: 'safety_infection' }
-                       ].map(s => (
-                          <div key={s.f} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50 border border-slate-100 hover:border-slate-200 transition-colors">
-                             <span className="text-[10px] font-black uppercase text-slate-600 tracking-tight">{s.l}</span>
-                             <button 
-                                type="button"
-                                onClick={() => updateField('safety', s.f, !formData.safety?.[s.f])}
-                                className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${formData.safety?.[s.f] ? 'bg-red-500 text-white shadow-lg shadow-red-500/30' : 'bg-slate-200 text-slate-400 hover:bg-slate-300'}`}
-                             >
-                                {formData.safety?.[s.f] ? 'HIGH' : 'LOW'}
-                             </button>
+           {/* Safety & Allergy Module */}
+           <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col flex-1 overflow-hidden">
+              <CardContent className="p-0 flex flex-col h-full">
+                 
+                 {/* Allergy Alert Module */}
+                 <div className="p-6 flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                       <Label className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                          <ShieldCheck size={14} className="text-slate-400" /> Allergy Alert
+                       </Label>
+                       {formData.allergies ? (
+                          <span className="text-[8px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded uppercase tracking-wider animate-pulse border border-red-200">Critical</span>
+                       ) : (
+                          <span className="text-[8px] font-black bg-amber-50 text-amber-600 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-100">Unverified</span>
+                       )}
+                    </div>
+                    
+                    <div className={cn(
+                       "relative border-2 rounded-xl transition-all duration-300 overflow-hidden group",
+                       formData.allergies 
+                          ? "border-red-400 bg-red-50 shadow-[0_4px_15px_rgba(239,68,68,0.15)]" 
+                          : "border-slate-200 bg-slate-50 focus-within:border-amber-400 focus-within:bg-amber-50 focus-within:shadow-[0_4px_15px_rgba(251,191,36,0.15)]"
+                    )}>
+                       <Input 
+                          className="h-12 border-0 bg-transparent text-sm font-bold placeholder:font-medium placeholder:text-slate-400 focus-visible:ring-0 px-4"
+                          placeholder="Document known allergies..."
+                          value={formData.allergies || ''}
+                          onChange={(e) => updateField(null, 'allergies', e.target.value)}
+                       />
+                       {formData.allergies && (
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex h-2 w-2">
+                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                           </div>
-                       ))}
+                       )}
                     </div>
                  </div>
+
+                 {/* Safety Screening Blocks */}
+                 <div className="flex flex-col gap-3 p-6 pt-5 bg-slate-50/50 border-t border-slate-100 flex-1">
+                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 mb-1">
+                       <BadgeInfo size={14} className="text-slate-400" /> Patient Safety
+                    </p>
+                    <div className="flex flex-col gap-2.5">
+                       {[
+                          { l: 'Fall Risk', f: 'safety_fall', icon: <Activity size={14} /> },
+                          { l: 'Suicide Risk', f: 'safety_suicide', icon: <AlertCircle size={14} /> },
+                          { l: 'Infection Control', f: 'safety_infection', icon: <ShieldAlert size={14} /> }
+                       ].map(s => {
+                          const isHigh = formData.safety?.[s.f];
+                          return (
+                             <button 
+                                key={s.f}
+                                type="button"
+                                onClick={() => updateField('safety', s.f, !isHigh)}
+                                className={cn(
+                                   "w-full flex items-center justify-between p-3.5 rounded-xl border transition-all duration-300 text-left group",
+                                   isHigh 
+                                      ? "bg-red-600 border-red-500 text-white shadow-[0_4px_12px_rgba(220,38,38,0.25)]" 
+                                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                                )}
+                             >
+                                <div className="flex items-center gap-3">
+                                   <div className={cn(
+                                      "p-1.5 rounded-md transition-colors",
+                                      isHigh ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600"
+                                   )}>
+                                      {s.icon}
+                                   </div>
+                                   <span className="text-[11px] font-black uppercase tracking-wide">{s.l}</span>
+                                </div>
+                                <div className={cn(
+                                   "px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-all",
+                                   isHigh 
+                                      ? "bg-white/20 border-white/20 text-white shadow-inner" 
+                                      : "bg-slate-50 border-slate-200 text-slate-400 group-hover:border-slate-300"
+                                )}>
+                                   {isHigh ? 'HIGH RISK' : 'LOW RISK'}
+                                </div>
+                             </button>
+                          );
+                       })}
+                    </div>
+                 </div>
+
               </CardContent>
            </Card>
         </div>
