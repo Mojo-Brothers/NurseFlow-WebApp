@@ -27,6 +27,28 @@ const SPACING = {
 
 export default function UgdAssessmentForm({ formData, setFormData, patient, encounter, currentUser }) {
   const [liveTime, setLiveTime] = useState(new Date());
+  const [activeTab, setActiveTab] = useState('PERAWAT');
+  const [showTimelineModal, setShowTimelineModal] = useState(false);
+  const [timelineInput, setTimelineInput] = useState({ action: '', user: '', time: '' });
+  
+  const [showRjpModal, setShowRjpModal] = useState(false);
+  const [rjpInput, setRjpInput] = useState({ type: 'OBAT', detail: '', time: '' });
+
+  const handleAddTimeline = () => {
+    if (!timelineInput.action || !timelineInput.time) return;
+    const currentLogs = formData.timelineLogs || [];
+    updateField(null, 'timelineLogs', [...currentLogs, timelineInput]);
+    setShowTimelineModal(false);
+    setTimelineInput({ action: '', user: '', time: '' });
+  };
+
+  const handleAddRjpLog = () => {
+    if (!rjpInput.detail || !rjpInput.time) return;
+    const currentLogs = formData.rjpLogs || [];
+    updateField(null, 'rjpLogs', [...currentLogs, rjpInput]);
+    setShowRjpModal(false);
+    setRjpInput({ type: 'OBAT', detail: '', time: '' });
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setLiveTime(new Date()), 1000);
@@ -123,9 +145,41 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
 
   return (
     <div className={`${SPACING.OUTER} pb-16`}>
-      
-      {/* ─── TRIAGE COMMAND CENTER ─── */}
-      <section className="space-y-4 font-sans">
+
+      {/* ─── PREMIUM TAB NAVIGATION ─── */}
+      <div className="flex items-center justify-between mb-2">
+         <div className="flex items-center gap-2 bg-slate-200/60 p-1.5 rounded-2xl w-fit border border-slate-200/80 shadow-[inset_0_1px_4px_rgba(0,0,0,0.05)]">
+            {[
+               { id: 'PERAWAT', label: 'Pengkajian Perawat', icon: <User size={14} /> },
+               { id: 'DOKTER', label: 'Pengkajian Dokter', icon: <Stethoscope size={14} /> },
+               { id: 'TINDAKAN', label: 'Tindakan Keperawatan', icon: <ClipboardCheck size={14} /> },
+               { id: 'RJP', label: 'Resusitasi (RJP)', icon: <Heart size={14} /> }
+            ].map(tab => (
+               <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={cn(
+                     "flex items-center gap-2.5 px-6 py-2.5 rounded-[12px] text-[11px] font-black uppercase tracking-[0.08em] transition-all duration-300 relative",
+                     activeTab === tab.id 
+                        ? "bg-white text-blue-600 shadow-[0_4px_15px_rgba(37,99,235,0.1)] border border-slate-200/50 scale-[1.02]" 
+                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/80 border border-transparent hover:scale-[1.01]"
+                  )}
+               >
+                  {tab.icon}
+                  {tab.label}
+                  {activeTab === tab.id && (
+                     <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-8 h-1 bg-blue-600 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.5)]" />
+                  )}
+               </button>
+            ))}
+         </div>
+      </div>
+
+      {activeTab === 'PERAWAT' && (
+         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+            {/* ─── TRIAGE COMMAND CENTER ─── */}
+            <section className="space-y-4 font-sans">
         <div className="flex items-center justify-between px-1">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-md bg-slate-900 flex items-center justify-center shadow-md border border-slate-700">
@@ -654,229 +708,310 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
 
       {/* ─── CLINICAL DOCUMENTATION FLOW ─── */}
       <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-6 items-stretch mb-6">
-        
-        {/* LEFT COLUMN: SOAP & EXAM */}
-        <div className="flex flex-col gap-6">
-           {/* Subjective */}
-           <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
-              <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
-                 <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100/50">
-                       <Info size={14} strokeWidth={2.5} />
-                    </div>
-                    <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                       S — Subjective
-                    </CardTitle>
-                 </div>
-                 <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                    <span className="flex items-center gap-1.5"><Clock size={10} /> {liveTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                    <span className="w-1 h-1 rounded-full bg-slate-300" />
-                    <span className="flex items-center gap-1.5"><User size={10} /> RN On-Duty</span>
-                 </div>
-              </CardHeader>
-              <CardContent className="p-0 flex-1 relative group">
-                 <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent pointer-events-none h-4" />
-                 <Textarea 
-                    className="w-full h-full min-h-[160px] border-0 rounded-none resize-none text-[13px] font-semibold text-slate-700 p-6 focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-inset bg-transparent placeholder:text-slate-300 placeholder:font-medium transition-all"
-                    placeholder="Patient complaints and history of present illness..."
-                    value={formData.subjective || ''}
-                    onChange={(e) => updateField(null, 'subjective', e.target.value)}
-                 />
-              </CardContent>
-           </Card>
-           
-           {/* Objective */}
-           <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
-              <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
-                 <div className="flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100/50">
-                       <Eye size={14} strokeWidth={2.5} />
-                    </div>
-                    <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                       O — Objective Exam
-                    </CardTitle>
-                 </div>
-                 <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                    <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100/50"><Save size={10} /> Auto-Saved</span>
-                 </div>
-              </CardHeader>
-              <CardContent className="p-0 flex-1 relative group">
-                 <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent pointer-events-none h-4" />
-                 <Textarea 
-                    className="w-full h-full min-h-[220px] border-0 rounded-none resize-none text-[13px] font-semibold text-slate-700 p-6 focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-inset bg-transparent placeholder:text-slate-300 placeholder:font-medium transition-all"
-                    placeholder="Head-to-toe clinical findings..."
-                    value={formData.objective || ''}
-                    onChange={(e) => updateField(null, 'objective', e.target.value)}
-                 />
-              </CardContent>
-           </Card>
-        </div>
+         {/* ROW 1: Subjective & Neuro */}
+         {/* Subjective */}
+         <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+               <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100/50">
+                     <Info size={14} strokeWidth={2.5} />
+                  </div>
+                  <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                     S — Subjective
+                  </CardTitle>
+               </div>
+               <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="flex items-center gap-1.5"><Clock size={10} /> {liveTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  <span className="w-1 h-1 rounded-full bg-slate-300" />
+                  <span className="flex items-center gap-1.5"><User size={10} /> RN On-Duty</span>
+               </div>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 relative group">
+               <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent pointer-events-none h-4" />
+               <Textarea 
+                  className="w-full h-full min-h-[160px] border-0 rounded-none resize-none text-[13px] font-semibold text-slate-700 p-6 focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-inset bg-transparent placeholder:text-slate-300 placeholder:font-medium transition-all"
+                  placeholder="Patient complaints and history of present illness..."
+                  value={formData.subjective || ''}
+                  onChange={(e) => updateField(null, 'subjective', e.target.value)}
+               />
+            </CardContent>
+         </Card>
 
-        {/* RIGHT COLUMN: GCS, ALERGY, SAFETY */}
-        <div className="flex flex-col gap-6">
-           {/* GCS & Neuro - Redesigned to be tactile */}
-           <Card className="bg-[#0A0F1C] border border-slate-800 shadow-xl rounded-2xl flex flex-col overflow-hidden relative">
-              {/* Subtle top glow */}
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
-              
-              <CardHeader className="px-6 py-5 border-b border-white/5">
-                 <CardTitle className="text-[11px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-3">
-                    <Brain size={16} /> Neurological Hub (GCS)
-                 </CardTitle>
-              </CardHeader>
-              
-              <CardContent className="p-6 flex flex-col gap-8">
-                 <div className="flex flex-col gap-5">
-                    {[
-                       { l: 'Eye', m: 4, f: 'gcs_e' },
-                       { l: 'Motor', m: 6, f: 'gcs_m' },
-                       { l: 'Verbal', m: 5, f: 'gcs_v' }
-                    ].map(x => (
-                      <div key={x.f} className="flex flex-col gap-2.5">
-                         <div className="flex justify-between items-center px-1">
-                            <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{x.l}</Label>
-                            <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider">Max {x.m}</span>
-                         </div>
-                         <div className="flex gap-1.5">
-                            {Array.from({length: x.m}, (_, i) => x.m - i).map(val => {
-                               const isSelected = parseInt(formData.neuro?.[x.f]) === val;
-                               return (
-                                  <button
-                                     key={val}
-                                     type="button"
-                                     onClick={() => updateField('neuro', x.f, val.toString())}
-                                     className={cn(
-                                        "flex-1 h-9 rounded-lg text-[13px] font-black transition-all duration-200 border",
-                                        isSelected 
-                                          ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
-                                          : "bg-white/5 text-slate-500 border-white/10 hover:bg-white/10 hover:text-slate-300"
-                                     )}
-                                  >
-                                     {val}
-                                  </button>
-                               );
-                            })}
-                         </div>
-                      </div>
-                    ))}
-                 </div>
-                 
-                 <div className="pt-6 border-t border-white/10 flex justify-between items-end px-2">
-                    <div className="flex flex-col gap-1">
-                       <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Combined Score</span>
-                       <span className="text-[9px] font-bold text-slate-600 uppercase">Range: 3-15</span>
+         {/* GCS & Neuro - Redesigned to be tactile */}
+         <Card className="bg-[#0A0F1C] border border-slate-800 shadow-xl rounded-2xl flex flex-col h-full overflow-hidden relative">
+            {/* Subtle top glow */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
+            
+            <CardHeader className="px-6 py-5 border-b border-white/5">
+               <CardTitle className="text-[11px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-3">
+                  <Brain size={16} /> Neurological Hub (GCS)
+               </CardTitle>
+            </CardHeader>
+            
+            <CardContent className="p-6 flex flex-col gap-8 flex-1">
+               <div className="flex flex-col gap-5">
+                  {[
+                     { l: 'Eye', m: 4, f: 'gcs_e' },
+                     { l: 'Motor', m: 6, f: 'gcs_m' },
+                     { l: 'Verbal', m: 5, f: 'gcs_v' }
+                  ].map(x => (
+                    <div key={x.f} className="flex flex-col gap-2.5">
+                       <div className="flex justify-between items-center px-1">
+                          <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{x.l}</Label>
+                          <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider">Max {x.m}</span>
+                       </div>
+                       <div className="flex gap-1.5">
+                          {Array.from({length: x.m}, (_, i) => x.m - i).map(val => {
+                             const isSelected = parseInt(formData.neuro?.[x.f]) === val;
+                             return (
+                                <button
+                                   key={val}
+                                   type="button"
+                                   onClick={() => updateField('neuro', x.f, val.toString())}
+                                   className={cn(
+                                      "flex-1 h-9 rounded-lg text-[13px] font-black transition-all duration-200 border",
+                                      isSelected 
+                                        ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
+                                        : "bg-white/5 text-slate-500 border-white/10 hover:bg-white/10 hover:text-slate-300"
+                                   )}
+                                >
+                                   {val}
+                                </button>
+                             );
+                          })}
+                       </div>
                     </div>
-                    
-                    {(() => {
-                       const total = (parseInt(formData.neuro?.gcs_e)||0) + (parseInt(formData.neuro?.gcs_m)||0) + (parseInt(formData.neuro?.gcs_v)||0);
-                       const isCritical = total > 0 && total <= 8;
-                       const isWarning = total > 8 && total <= 12;
-                       const isGood = total > 12;
-                       return (
-                          <div className={cn(
-                             "text-6xl font-black tabular-nums tracking-tighter leading-none transition-colors",
-                             isCritical ? "text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]" :
-                             isWarning ? "text-amber-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]" :
-                             isGood ? "text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.4)]" :
-                             "text-slate-600"
-                          )}>
-                             {total === 0 ? '--' : total}
-                          </div>
-                       );
-                    })()}
-                 </div>
-              </CardContent>
-           </Card>
+                  ))}
+               </div>
+               
+               <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-end px-2">
+                  <div className="flex flex-col gap-1">
+                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Combined Score</span>
+                     <span className="text-[9px] font-bold text-slate-600 uppercase">Range: 3-15</span>
+                  </div>
+                  
+                  {(() => {
+                     const total = (parseInt(formData.neuro?.gcs_e)||0) + (parseInt(formData.neuro?.gcs_m)||0) + (parseInt(formData.neuro?.gcs_v)||0);
+                     const isCritical = total > 0 && total <= 8;
+                     const isWarning = total > 8 && total <= 12;
+                     const isGood = total > 12;
+                     return (
+                        <div className={cn(
+                           "text-6xl font-black tabular-nums tracking-tighter leading-none transition-colors",
+                           isCritical ? "text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]" :
+                           isWarning ? "text-amber-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]" :
+                           isGood ? "text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.4)]" :
+                           "text-slate-600"
+                        )}>
+                           {total === 0 ? '--' : total}
+                        </div>
+                     );
+                  })()}
+               </div>
+            </CardContent>
+         </Card>
 
-           {/* Safety & Allergy Module */}
-           <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col flex-1 overflow-hidden">
-              <CardContent className="p-0 flex flex-col h-full">
-                 
-                 {/* Allergy Alert Module */}
-                 <div className="p-6 flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                       <Label className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                          <ShieldCheck size={14} className="text-slate-400" /> Allergy Alert
-                       </Label>
-                       {formData.allergies ? (
-                          <span className="text-[8px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded uppercase tracking-wider animate-pulse border border-red-200">Critical</span>
-                       ) : (
-                          <span className="text-[8px] font-black bg-amber-50 text-amber-600 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-100">Unverified</span>
-                       )}
-                    </div>
-                    
-                    <div className={cn(
-                       "relative border-2 rounded-xl transition-all duration-300 overflow-hidden group",
-                       formData.allergies 
-                          ? "border-red-400 bg-red-50 shadow-[0_4px_15px_rgba(239,68,68,0.15)]" 
-                          : "border-slate-200 bg-slate-50 focus-within:border-amber-400 focus-within:bg-amber-50 focus-within:shadow-[0_4px_15px_rgba(251,191,36,0.15)]"
-                    )}>
-                       <Input 
-                          className="h-12 border-0 bg-transparent text-sm font-bold placeholder:font-medium placeholder:text-slate-400 focus-visible:ring-0 px-4"
-                          placeholder="Document known allergies..."
-                          value={formData.allergies || ''}
-                          onChange={(e) => updateField(null, 'allergies', e.target.value)}
-                       />
-                       {formData.allergies && (
-                          <div className="absolute right-4 top-1/2 -translate-y-1/2 flex h-2 w-2">
-                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                          </div>
-                       )}
-                    </div>
-                 </div>
+         {/* ROW 2: Objective & Safety */}
+         {/* Objective */}
+         <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
+            <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+               <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100/50">
+                     <Eye size={14} strokeWidth={2.5} />
+                  </div>
+                  <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                     O — Objective Exam
+                  </CardTitle>
+               </div>
+               <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                  <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100/50"><Save size={10} /> Auto-Saved</span>
+               </div>
+            </CardHeader>
+            <CardContent className="p-0 flex-1 relative group">
+               <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent pointer-events-none h-4" />
+               <Textarea 
+                  className="w-full h-full min-h-[220px] border-0 rounded-none resize-none text-[13px] font-semibold text-slate-700 p-6 focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-inset bg-transparent placeholder:text-slate-300 placeholder:font-medium transition-all"
+                  placeholder="Head-to-toe clinical findings..."
+                  value={formData.objective || ''}
+                  onChange={(e) => updateField(null, 'objective', e.target.value)}
+               />
+            </CardContent>
+         </Card>
 
-                 {/* Safety Screening Blocks */}
-                 <div className="flex flex-col gap-3 p-6 pt-5 bg-slate-50/50 border-t border-slate-100 flex-1">
-                    <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 mb-1">
-                       <BadgeInfo size={14} className="text-slate-400" /> Patient Safety
-                    </p>
-                    <div className="flex flex-col gap-2.5">
-                       {[
-                          { l: 'Fall Risk', f: 'safety_fall', icon: <Activity size={14} /> },
-                          { l: 'Suicide Risk', f: 'safety_suicide', icon: <AlertCircle size={14} /> },
-                          { l: 'Infection Control', f: 'safety_infection', icon: <ShieldAlert size={14} /> }
-                       ].map(s => {
-                          const isHigh = formData.safety?.[s.f];
-                          return (
-                             <button 
-                                key={s.f}
-                                type="button"
-                                onClick={() => updateField('safety', s.f, !isHigh)}
-                                className={cn(
-                                   "w-full flex items-center justify-between p-3.5 rounded-xl border transition-all duration-300 text-left group",
-                                   isHigh 
-                                      ? "bg-red-600 border-red-500 text-white shadow-[0_4px_12px_rgba(220,38,38,0.25)]" 
-                                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
-                                )}
-                             >
-                                <div className="flex items-center gap-3">
-                                   <div className={cn(
-                                      "p-1.5 rounded-md transition-colors",
-                                      isHigh ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600"
-                                   )}>
-                                      {s.icon}
-                                   </div>
-                                   <span className="text-[11px] font-black uppercase tracking-wide">{s.l}</span>
-                                </div>
-                                <div className={cn(
-                                   "px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-all",
-                                   isHigh 
-                                      ? "bg-white/20 border-white/20 text-white shadow-inner" 
-                                      : "bg-slate-50 border-slate-200 text-slate-400 group-hover:border-slate-300"
-                                )}>
-                                   {isHigh ? 'HIGH RISK' : 'LOW RISK'}
-                                </div>
-                             </button>
-                          );
-                       })}
-                    </div>
-                 </div>
+         {/* Safety & Allergy Module */}
+         <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
+            <CardContent className="p-0 flex flex-col h-full">
+               
+               {/* Allergy Alert Module */}
+               <div className="p-6 flex flex-col gap-4">
+                  <div className="flex items-center justify-between">
+                     <Label className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                        <ShieldCheck size={14} className="text-slate-400" /> Allergy Alert
+                     </Label>
+                     {formData.allergies ? (
+                        <span className="text-[8px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded uppercase tracking-wider animate-pulse border border-red-200">Critical</span>
+                     ) : (
+                        <span className="text-[8px] font-black bg-amber-50 text-amber-600 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-100">Unverified</span>
+                     )}
+                  </div>
+                  
+                  <div className={cn(
+                     "relative border-2 rounded-xl transition-all duration-300 overflow-hidden group",
+                     formData.allergies 
+                        ? "border-red-400 bg-red-50 shadow-[0_4px_15px_rgba(239,68,68,0.15)]" 
+                        : "border-slate-200 bg-slate-50 focus-within:border-amber-400 focus-within:bg-amber-50 focus-within:shadow-[0_4px_15px_rgba(251,191,36,0.15)]"
+                  )}>
+                     <Input 
+                        className="h-12 border-0 bg-transparent text-sm font-bold placeholder:font-medium placeholder:text-slate-400 focus-visible:ring-0 px-4"
+                        placeholder="Document known allergies..."
+                        value={formData.allergies || ''}
+                        onChange={(e) => updateField(null, 'allergies', e.target.value)}
+                     />
+                     {formData.allergies && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex h-2 w-2">
+                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                           <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                        </div>
+                     )}
+                  </div>
+               </div>
 
-              </CardContent>
-           </Card>
-        </div>
+               {/* Safety Screening Blocks */}
+               <div className="flex flex-col gap-3 p-6 pt-5 bg-slate-50/50 border-t border-slate-100 flex-1">
+                  <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 mb-1">
+                     <BadgeInfo size={14} className="text-slate-400" /> Patient Safety
+                  </p>
+                  <div className="flex flex-col gap-2.5">
+                     {[
+                        { l: 'Fall Risk', f: 'safety_fall', icon: <Activity size={14} /> },
+                        { l: 'Suicide Risk', f: 'safety_suicide', icon: <AlertCircle size={14} /> },
+                        { l: 'Infection Control', f: 'safety_infection', icon: <ShieldAlert size={14} /> }
+                     ].map(s => {
+                        const isHigh = formData.safety?.[s.f];
+                        return (
+                           <button 
+                              key={s.f}
+                              type="button"
+                              onClick={() => updateField('safety', s.f, !isHigh)}
+                              className={cn(
+                                 "w-full flex items-center justify-between p-3.5 rounded-xl border transition-all duration-300 text-left group",
+                                 isHigh 
+                                    ? "bg-red-600 border-red-500 text-white shadow-[0_4px_12px_rgba(220,38,38,0.25)]" 
+                                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                              )}
+                           >
+                              <div className="flex items-center gap-3">
+                                 <div className={cn(
+                                    "p-1.5 rounded-md transition-colors",
+                                    isHigh ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600"
+                                 )}>
+                                    {s.icon}
+                                 </div>
+                                 <span className="text-[11px] font-black uppercase tracking-wide">{s.l}</span>
+                              </div>
+                              <div className={cn(
+                                 "px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-all",
+                                 isHigh 
+                                    ? "bg-white/20 border-white/20 text-white shadow-inner" 
+                                    : "bg-slate-50 border-slate-200 text-slate-400 group-hover:border-slate-300"
+                              )}>
+                                 {isHigh ? 'HIGH RISK' : 'LOW RISK'}
+                              </div>
+                           </button>
+                        );
+                     })}
+                  </div>
+               </div>
+
+            </CardContent>
+         </Card>
       </div>
+         </div>
+      )}
+
+      {activeTab === 'DOKTER' && (
+         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+            {/* ─── PENGKAJIAN MEDIS (DOKTER) ─── */}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr] gap-6 items-stretch">
+               {/* Left: Anamnesis */}
+               <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
+                  <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+                     <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100/50">
+                           <Stethoscope size={14} strokeWidth={2.5} />
+                        </div>
+                        <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                           Anamnesis Medis
+                        </CardTitle>
+                     </div>
+                  </CardHeader>
+                  <CardContent className="p-0 flex flex-col flex-1">
+                     <div className="p-4 border-b border-slate-100 flex-1">
+                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Keluhan Utama & Riwayat Penyakit</Label>
+                        <Textarea 
+                           className="w-full min-h-[140px] border-slate-200 rounded-xl resize-none text-sm font-medium text-slate-700 p-4 focus-visible:ring-indigo-100 bg-slate-50/50"
+                           placeholder="Jelaskan keluhan utama..."
+                           value={formData.medicalAnamnesis || ''}
+                           onChange={(e) => updateField(null, 'medicalAnamnesis', e.target.value)}
+                        />
+                     </div>
+                     <div className="p-4 flex-1">
+                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Riwayat Penyakit Dahulu & Operasi</Label>
+                        <Textarea 
+                           className="w-full min-h-[140px] border-slate-200 rounded-xl resize-none text-sm font-medium text-slate-700 p-4 focus-visible:ring-indigo-100 bg-slate-50/50"
+                           placeholder="Riwayat medis pasien..."
+                           value={formData.medicalHistory || ''}
+                           onChange={(e) => updateField(null, 'medicalHistory', e.target.value)}
+                        />
+                     </div>
+                  </CardContent>
+               </Card>
+
+               {/* Right: Pemeriksaan Fisik Lanjutan */}
+               <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
+                  <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
+                     <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center text-teal-600 shadow-sm border border-teal-100/50">
+                           <Microscope size={14} strokeWidth={2.5} />
+                        </div>
+                        <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
+                           Pemeriksaan Fisik & Penunjang
+                        </CardTitle>
+                     </div>
+                  </CardHeader>
+                  <CardContent className="p-0 flex flex-col h-full">
+                     <div className="flex flex-col flex-1 p-4 gap-4">
+                        <div className="flex-1">
+                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Pemeriksaan Fisik Detail</Label>
+                           <Textarea 
+                              className="w-full h-full min-h-[150px] border-slate-200 rounded-xl resize-none text-sm font-medium text-slate-700 p-4 focus-visible:ring-teal-100 bg-slate-50/50"
+                              placeholder="Kepala, Leher, Thorax, Abdomen, Ekstremitas..."
+                              value={formData.physicalExam || ''}
+                              onChange={(e) => updateField(null, 'physicalExam', e.target.value)}
+                           />
+                        </div>
+                        <div className="border-t border-slate-100 pt-4">
+                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Pemeriksaan Penunjang (Laboratorium, Rad, dll)</Label>
+                           <div className="space-y-3">
+                              {['EKG', 'CT Scan', 'Thorax', 'Laboratorium'].map(exam => (
+                                 <div key={exam} className="flex items-center gap-3">
+                                    <div className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center bg-white cursor-pointer hover:bg-slate-50 transition-colors">
+                                       {formData.exams?.[exam] && <CheckCircle2 size={12} className="text-teal-600" />}
+                                    </div>
+                                    <Input 
+                                       className="h-10 text-xs font-medium border-slate-200 focus-visible:ring-teal-100 bg-white shadow-sm flex-1"
+                                       placeholder={`Keterangan ${exam}...`}
+                                       value={formData.exams?.[exam] || ''}
+                                       onChange={(e) => updateField('exams', exam, e.target.value)}
+                                    />
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+                     </div>
+                  </CardContent>
+               </Card>
+            </div>
 
       {/* ─── DIAGNOSIS & ACTION PLAN ─── */}
       <div className="grid grid-cols-2 gap-10">
@@ -911,30 +1046,33 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
             </CardContent>
          </Card>
       </div>
+         </div>
+      )}
 
+      {activeTab === 'TINDAKAN' && (
+         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
       {/* ─── ACTION TIMELINE ─── */}
       <Card className="bg-slate-50 border-2 border-slate-100 p-6 rounded-[3.5rem] flex flex-col">
          <CardHeader className="px-6 pb-12 flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-4">
                <Clock size={16} className="text-blue-600" /> ER Intervention Timeline
             </CardTitle>
-            <Button size="sm" className="rounded-full px-6 shadow-blue-600/10 active:scale-95">
+            <Button size="sm" className="rounded-full px-6 shadow-blue-600/10 active:scale-95" onClick={() => setShowTimelineModal(true)}>
                <Plus size={14} className="mr-2" /> Log Action
             </Button>
          </CardHeader>
 
          <CardContent className="px-6 relative pl-16 border-l-4 border-slate-200/50 flex flex-col gap-10 ml-8">
-            {[
+            {(formData.timelineLogs && formData.timelineLogs.length > 0 ? formData.timelineLogs : [
                { time: '14:20', action: 'Triage Assessment Completed', user: 'RN Sarah Jenkins' },
-               { time: '14:25', action: 'Vital Signs & EWS Established', user: 'RN Sarah Jenkins' },
-               { time: '14:35', action: 'Physician Initial Review', user: 'Dr. Marcus Holloway' }
-            ].map((item, i) => (
+               { time: '14:25', action: 'Vital Signs & EWS Established', user: 'RN Sarah Jenkins' }
+            ]).map((item, i) => (
               <div key={i} className="relative group">
                  <div className="absolute -left-[61px] top-1.5 w-6 h-6 rounded-full bg-white border-4 border-blue-600 shadow-xl group-hover:scale-110 transition-transform"></div>
                  <div className="flex justify-between items-start bg-white p-6 rounded-3xl border border-slate-100 shadow-sm group-hover:border-blue-100 group-hover:shadow-md transition-all">
                     <div>
                        <p className="text-sm font-black text-slate-800 uppercase tracking-tight">{item.action}</p>
-                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-2 italic">Operator: {item.user}</p>
+                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.15em] mt-2 italic">Operator: {item.user || 'On-Duty Staff'}</p>
                     </div>
                     <span className="text-sm font-black text-blue-600 tabular-nums bg-blue-50 px-3 py-1 rounded-lg">{item.time}</span>
                  </div>
@@ -942,7 +1080,305 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
             ))}
          </CardContent>
       </Card>
+         </div>
+      )}
+
+      {activeTab === 'RJP' && (
+         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
+            {/* ─── RESUSITASI JANTUNG PARU (RJP) ─── */}
+            <div className="bg-red-50/40 border border-red-100 p-8 rounded-[3rem] relative overflow-hidden">
+               {/* Background Warning Glow */}
+               <div className="absolute top-0 right-0 w-96 h-96 bg-red-500/10 rounded-full blur-[100px] pointer-events-none" />
+               <div className="absolute top-4 right-8 flex items-center gap-2 bg-red-100 text-red-600 px-3 py-1.5 rounded-full border border-red-200">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Code Blue Active</span>
+               </div>
+               
+               <div className="flex items-center gap-4 mb-8 relative z-10">
+                  <div className="w-12 h-12 bg-red-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-red-600/30">
+                     <Heart size={24} className="animate-[pulse_1s_ease-in-out_infinite]" />
+                  </div>
+                  <div>
+                     <h2 className="text-xl font-black text-red-950 uppercase tracking-tight">Protokol Resusitasi (RJP)</h2>
+                     <p className="text-xs font-bold text-red-700/80 uppercase tracking-widest mt-1">Advanced Cardiac Life Support</p>
+                  </div>
+               </div>
+
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+                  {/* Indikasi & Tim */}
+                  <Card className="bg-white border border-red-100 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+                     <CardHeader className="bg-red-50/50 border-b border-red-50 px-6 py-4">
+                        <CardTitle className="text-[11px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                           <AlertTriangle size={14} /> Indikasi & Tim Resusitasi
+                        </CardTitle>
+                     </CardHeader>
+                     <CardContent className="p-6 flex flex-col gap-6 flex-1">
+                        <div>
+                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Indikasi Dilakukan RJP</Label>
+                           <Textarea 
+                              className="w-full min-h-[100px] border-slate-200 rounded-xl resize-none text-sm font-medium text-slate-700 focus-visible:ring-red-100"
+                              placeholder="Kondisi pasien saat RJP dimulai (misal: Cardiac Arrest, Asistol)..."
+                              value={formData.rjpIndication || ''}
+                              onChange={(e) => updateField(null, 'rjpIndication', e.target.value)}
+                           />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div>
+                              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Waktu Mulai RJP</Label>
+                              <Input 
+                                 type="time"
+                                 className="h-12 border-slate-200 rounded-xl text-lg font-bold tabular-nums text-slate-800 focus-visible:ring-red-100"
+                                 value={formData.rjpStartTime || ''}
+                                 onChange={(e) => updateField(null, 'rjpStartTime', e.target.value)}
+                              />
+                           </div>
+                           <div>
+                              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Dokter Penanggung Jawab</Label>
+                              <Input 
+                                 className="h-12 border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus-visible:ring-red-100"
+                                 placeholder="Nama Dokter..."
+                                 value={formData.rjpDoctor || ''}
+                                 onChange={(e) => updateField(null, 'rjpDoctor', e.target.value)}
+                              />
+                           </div>
+                        </div>
+                     </CardContent>
+                  </Card>
+
+                  {/* Airway & Circulation */}
+                  <Card className="bg-white border border-red-100 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+                     <CardHeader className="bg-red-50/50 border-b border-red-50 px-6 py-4">
+                        <CardTitle className="text-[11px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                           <Activity size={14} /> Airway & Circulation
+                        </CardTitle>
+                     </CardHeader>
+                     <CardContent className="p-6 flex flex-col gap-6 flex-1">
+                        <div className="grid grid-cols-2 gap-4">
+                           <div className="col-span-2">
+                              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Intubasi (Waktu & Ukuran ETT)</Label>
+                              <div className="flex items-center gap-3">
+                                 <Input type="time" className="w-32 h-10 border-slate-200 rounded-xl font-bold tabular-nums" value={formData.rjpIntubationTime || ''} onChange={(e) => updateField(null, 'rjpIntubationTime', e.target.value)} />
+                                 <Input className="h-10 border-slate-200 rounded-xl flex-1 text-sm font-medium" placeholder="Ukuran ETT & Batas..." value={formData.rjpEttSize || ''} onChange={(e) => updateField(null, 'rjpEttSize', e.target.value)} />
+                              </div>
+                           </div>
+                           <div className="col-span-2 border-t border-slate-100 pt-4">
+                              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Pemasangan Akses IV & Cairan</Label>
+                              <div className="flex items-center gap-3">
+                                 <Input className="h-10 border-slate-200 rounded-xl w-1/3 text-sm font-medium" placeholder="Akses IV..." value={formData.rjpIvAccess || ''} onChange={(e) => updateField(null, 'rjpIvAccess', e.target.value)} />
+                                 <Input className="h-10 border-slate-200 rounded-xl flex-1 text-sm font-medium" placeholder="Cairan IV yang dipakai..." value={formData.rjpFluids || ''} onChange={(e) => updateField(null, 'rjpFluids', e.target.value)} />
+                              </div>
+                           </div>
+                        </div>
+                     </CardContent>
+                  </Card>
+               </div>
+
+               {/* Penatalaksanaan, Defibrilasi, Hasil Akhir */}
+               <div className="mt-8 grid grid-cols-1 gap-8 relative z-10">
+                  <Card className="bg-white border border-red-100 rounded-3xl shadow-sm overflow-hidden flex flex-col">
+                     <CardHeader className="bg-red-50/50 border-b border-red-50 px-6 py-4 flex flex-row items-center justify-between">
+                        <CardTitle className="text-[11px] font-black text-red-800 uppercase tracking-widest flex items-center gap-2">
+                           <Zap size={14} /> Monitoring Obat & Defibrilasi
+                        </CardTitle>
+                        <Button size="sm" onClick={() => setShowRjpModal(true)} className="bg-red-600 hover:bg-red-700 text-white rounded-lg h-8 px-4 text-[10px] font-black uppercase tracking-wider">
+                           <Plus size={12} className="mr-1.5" /> Tambah Log
+                        </Button>
+                     </CardHeader>
+                     <CardContent className="p-0">
+                        <div className="divide-y divide-slate-100">
+                           {formData.rjpLogs && formData.rjpLogs.length > 0 ? (
+                              formData.rjpLogs.map((log, i) => (
+                                 <div key={i} className="p-4 px-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
+                                    <div className="flex items-center gap-4">
+                                       <div className={cn(
+                                          "w-8 h-8 rounded-full flex items-center justify-center border",
+                                          log.type === 'SHOCK' ? "bg-amber-50 text-amber-600 border-amber-200" : "bg-blue-50 text-blue-600 border-blue-200"
+                                       )}>
+                                          {log.type === 'SHOCK' ? <Zap size={14} /> : <Pill size={14} />}
+                                       </div>
+                                       <div>
+                                          <p className="text-xs font-black text-slate-800 uppercase">{log.type === 'SHOCK' ? 'Defibrilasi' : 'Pemberian Obat'}</p>
+                                          <p className="text-[10px] font-bold text-slate-500 uppercase mt-0.5">{log.detail}</p>
+                                       </div>
+                                    </div>
+                                    <div className="text-sm font-black tabular-nums text-slate-600">{log.time}</div>
+                                 </div>
+                              ))
+                           ) : (
+                              <div className="p-6 text-center">
+                                 <p className="text-xs font-semibold text-slate-400 italic">Belum ada data pemberian obat atau defibrilasi.</p>
+                              </div>
+                           )}
+                        </div>
+                     </CardContent>
+                  </Card>
+
+                  <Card className="bg-slate-900 border border-slate-800 rounded-3xl shadow-xl overflow-hidden flex flex-col relative">
+                     <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-red-600/10 pointer-events-none mix-blend-overlay" />
+                     <CardHeader className="border-b border-slate-800 px-6 py-4">
+                        <CardTitle className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                           <Activity size={14} className="text-slate-400" /> Hasil Akhir RJP
+                        </CardTitle>
+                     </CardHeader>
+                     <CardContent className="p-6 flex flex-col md:flex-row gap-8 relative z-10">
+                        <div className="flex-1">
+                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block">Catatan Klinis Hasil Akhir</Label>
+                           <Textarea 
+                              className="w-full min-h-[120px] bg-slate-950 border-slate-800 rounded-xl resize-none text-sm font-medium text-white focus-visible:ring-slate-700 placeholder:text-slate-600"
+                              placeholder="Kondisi akhir pasien setelah RJP..."
+                              value={formData.rjpOutcomeNotes || ''}
+                              onChange={(e) => updateField(null, 'rjpOutcomeNotes', e.target.value)}
+                           />
+                        </div>
+                        <div className="w-full md:w-64 flex flex-col gap-4">
+                           <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Outcome</Label>
+                           <RadioGroup 
+                              value={formData.rjpOutcome || ''} 
+                              onValueChange={(val) => updateField(null, 'rjpOutcome', val)}
+                              className="flex flex-col gap-3"
+                           >
+                              <div className="flex items-center space-x-3 bg-slate-800/50 border border-slate-700/50 p-3 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors">
+                                 <RadioGroupItem value="ROSC" id="outcome-rosc" className="border-slate-500 text-emerald-500" />
+                                 <Label htmlFor="outcome-rosc" className="text-xs font-bold text-white uppercase tracking-widest cursor-pointer">ROSC (Pindah ICU)</Label>
+                              </div>
+                              <div className="flex items-center space-x-3 bg-slate-800/50 border border-slate-700/50 p-3 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors">
+                                 <RadioGroupItem value="DECEASED" id="outcome-deceased" className="border-slate-500 text-red-500" />
+                                 <Label htmlFor="outcome-deceased" className="text-xs font-bold text-slate-300 uppercase tracking-widest cursor-pointer">Meninggal</Label>
+                              </div>
+                           </RadioGroup>
+                           <div className="mt-2">
+                              <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Waktu Selesai</Label>
+                              <Input 
+                                 type="time"
+                                 className="h-10 bg-slate-950 border-slate-800 rounded-xl text-sm font-bold tabular-nums text-white focus-visible:ring-slate-700"
+                                 value={formData.rjpEndTime || ''}
+                                 onChange={(e) => updateField(null, 'rjpEndTime', e.target.value)}
+                              />
+                           </div>
+                        </div>
+                     </CardContent>
+                  </Card>
+               </div>
+            </div>
+         </div>
+      )}
 
     </div>
+
+      {/* ─── DIALOG FORMS (MODALS) ─── */}
+      {showTimelineModal && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowTimelineModal(false)} />
+            <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+               <div className="bg-slate-50 px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                        <Plus size={16} strokeWidth={3} />
+                     </div>
+                     <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Tambah Tindakan</h3>
+                  </div>
+                  <button onClick={() => setShowTimelineModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                     <X size={20} />
+                  </button>
+               </div>
+               <div className="p-6 flex flex-col gap-5">
+                  <div>
+                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Tindakan / Aktivitas</Label>
+                     <Input 
+                        className="h-12 border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus-visible:ring-blue-100"
+                        placeholder="Deskripsi tindakan..."
+                        value={timelineInput.action}
+                        onChange={e => setTimelineInput({...timelineInput, action: e.target.value})}
+                        autoFocus
+                     />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                     <div>
+                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Waktu Tindakan</Label>
+                        <Input 
+                           type="time"
+                           className="h-12 border-slate-200 rounded-xl text-lg font-bold tabular-nums text-slate-800 focus-visible:ring-blue-100"
+                           value={timelineInput.time}
+                           onChange={e => setTimelineInput({...timelineInput, time: e.target.value})}
+                        />
+                     </div>
+                     <div>
+                        <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Operator (Opsional)</Label>
+                        <Input 
+                           className="h-12 border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus-visible:ring-blue-100"
+                           placeholder="Nama perawat/dokter..."
+                           value={timelineInput.user}
+                           onChange={e => setTimelineInput({...timelineInput, user: e.target.value})}
+                        />
+                     </div>
+                  </div>
+                  <Button onClick={handleAddTimeline} className="mt-4 h-12 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-wider">
+                     Simpan Ke Timeline
+                  </Button>
+               </div>
+            </div>
+         </div>
+      )}
+
+      {showRjpModal && (
+         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setShowRjpModal(false)} />
+            <div className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 border border-slate-200">
+               <div className="bg-red-50 px-6 py-5 border-b border-red-100 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+                        <Activity size={16} strokeWidth={3} />
+                     </div>
+                     <h3 className="text-sm font-black text-red-800 uppercase tracking-widest">Input Obat / Shock</h3>
+                  </div>
+                  <button onClick={() => setShowRjpModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                     <X size={20} />
+                  </button>
+               </div>
+               <div className="p-6 flex flex-col gap-5">
+                  <div>
+                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Jenis Intervensi</Label>
+                     <div className="grid grid-cols-2 gap-3">
+                        <button 
+                           onClick={() => setRjpInput({...rjpInput, type: 'OBAT'})}
+                           className={cn("h-12 rounded-xl text-xs font-black uppercase tracking-widest border transition-all", rjpInput.type === 'OBAT' ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50")}
+                        >
+                           Obat-obatan
+                        </button>
+                        <button 
+                           onClick={() => setRjpInput({...rjpInput, type: 'SHOCK'})}
+                           className={cn("h-12 rounded-xl text-xs font-black uppercase tracking-widest border transition-all", rjpInput.type === 'SHOCK' ? "bg-amber-50 border-amber-200 text-amber-600 shadow-sm" : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50")}
+                        >
+                           Defibrilasi (Shock)
+                        </button>
+                     </div>
+                  </div>
+                  <div>
+                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Detail (Dosis / Joule)</Label>
+                     <Input 
+                        className="h-12 border-slate-200 rounded-xl text-sm font-bold text-slate-800 focus-visible:ring-red-100"
+                        placeholder={rjpInput.type === 'OBAT' ? "Contoh: Epinephrine 1mg IV..." : "Contoh: Biphasic 200 Joule..."}
+                        value={rjpInput.detail}
+                        onChange={e => setRjpInput({...rjpInput, detail: e.target.value})}
+                        autoFocus
+                     />
+                  </div>
+                  <div>
+                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Waktu Diberikan</Label>
+                     <Input 
+                        type="time"
+                        className="h-12 border-slate-200 rounded-xl text-lg font-bold tabular-nums text-slate-800 focus-visible:ring-red-100"
+                        value={rjpInput.time}
+                        onChange={e => setRjpInput({...rjpInput, time: e.target.value})}
+                     />
+                  </div>
+                  <Button onClick={handleAddRjpLog} className="mt-4 h-12 w-full rounded-xl bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-wider">
+                     Catat Intervensi
+                  </Button>
+               </div>
+            </div>
+         </div>
+      )}
+
   );
 }
