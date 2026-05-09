@@ -34,6 +34,8 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
   const [showRjpModal, setShowRjpModal] = useState(false);
   const [rjpInput, setRjpInput] = useState({ type: 'OBAT', detail: '', time: '' });
 
+  const [activeZone, setActiveZone] = useState('zone-triage');
+
   const handleAddTimeline = () => {
     if (!timelineInput.action || !timelineInput.time) return;
     const currentLogs = formData.timelineLogs || [];
@@ -54,6 +56,25 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
     const timer = setInterval(() => setLiveTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (activeTab !== 'PERAWAT') return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveZone(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: '-20% 0px -60% 0px' }
+    );
+    const sections = document.querySelectorAll('section[id^="zone-"]');
+    setTimeout(() => {
+      document.querySelectorAll('section[id^="zone-"]').forEach((s) => observer.observe(s));
+    }, 100);
+    return () => document.querySelectorAll('section[id^="zone-"]').forEach((s) => observer.unobserve(s));
+  }, [activeTab]);
 
   const updateField = (section, field, value) => {
     if (section) {
@@ -177,755 +198,410 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
       </div>
 
       {activeTab === 'PERAWAT' && (
-         <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-both">
-            {/* ─── TRIAGE COMMAND CENTER ─── */}
-            <section className="space-y-4 font-sans">
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-md bg-slate-900 flex items-center justify-center shadow-md border border-slate-700">
-              <Siren size={14} className="text-red-500 animate-[pulse_2s_ease-in-out_infinite]" />
-            </div>
-            <div className="flex flex-col">
-              <h2 className="text-[12px] font-bold uppercase tracking-[0.05em] text-slate-900 leading-none">
-                ER Triage Control
-              </h2>
-              <div className="flex items-center gap-1.5 mt-1">
-                <div className="relative flex h-1 w-1">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1 w-1 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-                </div>
-                <span className="text-[8px] font-semibold text-slate-500 uppercase tracking-normal">System Synced • Live</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3 bg-white border border-slate-200/80 px-3 py-1 rounded-md shadow-sm">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-normal">ER Load</span>
-              <span className="text-[9px] font-bold text-orange-600 uppercase tracking-normal">Moderate</span>
-            </div>
-            <div className="h-2.5 w-px bg-slate-200" />
-            <div className="flex items-center gap-1.5">
-              <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-normal">Shift</span>
-              <span className="text-[9px] font-bold text-slate-900 uppercase tracking-normal tabular-nums">S1</span>
-            </div>
-            <div className="h-2.5 w-px bg-slate-200" />
-            <div className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" />
-              <span className="text-[9px] font-bold text-slate-700 uppercase tracking-normal">Normal Ops</span>
-            </div>
-          </div>
-        </div>
-
-        <Card className="overflow-hidden border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.02),0_24px_48px_rgba(15,23,42,0.1)] bg-white/40 backdrop-blur-3xl rounded-[3.5rem] p-2 border-2">
-          <div className="grid grid-cols-12 divide-x divide-slate-100 bg-white/90 rounded-[3.2rem] overflow-hidden">
-            {/* LEFT: CLINICAL TRIAGE COMMAND STRIP */}
-            <div className="col-span-12 xl:col-span-8 p-6 lg:p-8 flex flex-col justify-between relative">
-              {/* The "Bridge Element" - a subtle telemetry line connecting left to right */}
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-px h-3/4 bg-gradient-to-b from-transparent via-blue-500/20 to-transparent pointer-events-none" />
-
-              <div className="bg-slate-200/60 p-2 rounded-3xl flex flex-col gap-1.5 shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)] border border-slate-200">
-                {ESI_LEVELS.map((esi) => {
-                  const isActive = formData.esi === esi.level || (!formData.esi && esi.level === 2);
-                  return (
-                    <button
-                      key={esi.level}
-                      type="button"
-                      onClick={() => updateField(null, 'esi', esi.level)}
-                      className={cn(
-                        "relative flex items-center p-3 rounded-2xl transition-all duration-300 group text-left overflow-hidden",
-                        isActive 
-                          ? `bg-gradient-to-r ${esi.activeBg} text-white z-10 border border-white/20 ${esi.glow}` 
-                          : `bg-slate-50/80 hover:bg-white border border-transparent shadow-sm`
-                      )}
-                    >
-                      {/* Inner Recessed Bevel */}
-                      {isActive && (
-                        <div className="absolute inset-x-0 bottom-0 h-1 bg-black/10" />
-                      )}
-
-                      <div className="flex items-center gap-4 w-full relative z-10">
-                        {/* LEFT: NUMBER */}
-                        <div className="w-14 h-14 flex items-center justify-center shrink-0">
-                          <span className={cn(
-                            "text-5xl font-black tracking-tighter transition-all duration-300 leading-none",
-                            isActive ? "text-white" : "text-slate-300 group-hover:text-slate-400"
-                          )}>
-                            {esi.level}
-                          </span>
-                        </div>
-
-                        {/* MIDDLE: INFO */}
-                        <div className="flex flex-col flex-1 gap-0.5">
-                          <div className="flex items-center gap-2">
-                             <div className={cn(
-                                "p-1 rounded-md transition-all shadow-sm",
-                                isActive ? "bg-white/20 text-white shadow-inner border border-white/10" : `bg-white border border-slate-200 ${esi.color}`
-                             )}>
-                                {esi.level === 1 && isActive ? <Activity className="w-3 h-3 animate-pulse" /> : React.cloneElement(esi.icon, { className: 'w-3 h-3' })}
-                             </div>
-                             <span className={cn(
-                                "text-[11px] font-bold uppercase tracking-[0.05em]",
-                                isActive ? "text-white" : "text-slate-900"
-                             )}>
-                                {esi.label}
-                             </span>
-                          </div>
-                          <p className={cn(
-                            "text-[10px] font-medium tracking-[0.02em]",
-                            isActive ? "text-white/80" : "text-slate-500"
-                          )}>
-                            {esi.sub}
-                          </p>
-                        </div>
-
-                        {/* RIGHT: SLA */}
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "flex items-center gap-2 h-8 px-3 rounded-xl text-[9px] font-bold transition-all border shadow-sm shrink-0",
-                            isActive ? `${esi.activeBadge} text-white border-white/10 shadow-[inset_0_1px_4px_rgba(0,0,0,0.2)]` : "bg-white text-slate-500 border-slate-200"
-                          )}>
-                            <Clock size={10} strokeWidth={3} className={isActive ? "opacity-90" : "opacity-50"} />
-                            <span className="uppercase tracking-[0.05em] tabular-nums">{esi.sla}</span>
-                          </div>
-                          
-                          {/* Clinical Pulse Signal */}
-                          {isActive ? (
-                            <div className="relative flex h-2 w-2 shrink-0 mr-1">
-                              <div className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-40" />
-                              <div className="relative inline-flex rounded-full h-2 w-2 bg-white shadow-[0_0_10px_rgba(255,255,255,1)]" />
-                            </div>
-                          ) : (
-                            <div className="w-2 mr-1 shrink-0" />
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              
-              {/* CLINICAL QUEUE STRIP */}
-              <div className="flex items-center justify-between bg-slate-50 border border-slate-200/80 rounded-xl px-5 py-2.5 mt-6 shadow-sm">
-                <div className="flex items-center gap-5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-normal">Waiting</span>
-                    <span className="text-[10px] font-mono font-bold text-slate-700 tabular-nums bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-inner">12</span>
-                  </div>
-                  <div className="h-3 w-px bg-slate-200" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-normal">Critical</span>
-                    <span className="text-[10px] font-mono font-bold text-red-600 tabular-nums bg-red-50 px-1.5 py-0.5 rounded border border-red-100 shadow-inner">02</span>
-                  </div>
-                  <div className="h-3 w-px bg-slate-200" />
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-normal">Avg Wait</span>
-                    <span className="text-[10px] font-mono font-bold text-slate-700 tabular-nums">14 <span className="text-[8px] text-slate-400">MIN</span></span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
-                   <span className="text-[8px] font-semibold text-slate-400 uppercase tracking-normal">Last Call:</span>
-                   <span className="text-[9px] font-mono font-bold text-slate-900 tabular-nums">BED 03</span>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT: DARK TELEMETRY DECK */}
-            <div className="col-span-12 xl:col-span-4 bg-gradient-to-b from-slate-900 to-slate-950 p-8 flex flex-col gap-7 relative overflow-hidden border-t border-l border-slate-700/50 shadow-[inset_0_2px_20px_rgba(0,0,0,0.5)]">
-              {/* Radial Glow & Micro-noise */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none" />
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] opacity-20 pointer-events-none mix-blend-overlay" />
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-              
-              <div className="flex items-center justify-between relative z-10">
-                <div className="flex items-center gap-2">
-                  <Activity size={12} className="text-emerald-400 animate-[pulse_1.5s_ease-in-out_infinite]" />
-                  <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-emerald-400">Telemetry Active</span>
-                </div>
-                <div className="flex items-center gap-1.5 bg-slate-800/80 border border-slate-700/80 rounded px-2 py-0.5 shadow-inner">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                  <span className="text-[7px] font-bold uppercase tracking-[0.1em] text-slate-300">Standard</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 relative z-10">
-                <Label className="text-[9px] text-slate-400 font-semibold uppercase tracking-[0.15em] px-1">
-                  Arrival Mode
-                </Label>
-                <div className="grid grid-cols-3 gap-3 py-2 px-3 bg-slate-950/80 rounded-[1.5rem] border border-white/5 shadow-[inset_0_2px_8px_rgba(0,0,0,0.4)] h-16">
-                  {[
-                    { val: 'AMBULANCE', icon: <Siren size={20} strokeWidth={1.8} />, label: 'EMS' },
-                    { val: 'WALK-IN', icon: <User size={20} strokeWidth={1.8} />, label: 'Walk-In' },
-                    { val: 'REFERRAL', icon: <FileText size={20} strokeWidth={1.8} />, label: 'Referral' }
-                  ].map(mode => {
-                    const isSelected = (formData.arrivalMode || 'AMBULANCE') === mode.val;
-                    return (
-                      <button
-                        key={mode.val}
-                        type="button"
-                        onClick={() => updateField(null, 'arrivalMode', mode.val)}
-                        className={cn(
-                          "relative group flex items-center justify-center rounded-xl transition-all duration-300",
-                          isSelected 
-                            ? "bg-slate-800 ring-1 ring-blue-400/30 shadow-[0_0_20px_rgba(59,130,246,0.18)] text-white" 
-                            : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
-                        )}
-                      >
-                        {mode.icon}
-
-                        {/* Hovercard */}
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[9px] font-bold uppercase tracking-[0.1em] px-3 py-1.5 rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 border border-slate-700">
-                          {mode.label}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-3 relative z-10">
-                <div className="flex items-center justify-between px-1">
-                   <Label className="text-[9px] text-white font-semibold uppercase tracking-[0.15em]">
-                     Time of Arrival
-                   </Label>
-                   <div className="flex items-center gap-1.5 shrink-0">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                      <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-white">Sync Pulse</span>
-                   </div>
-                </div>
-                <div className="relative group flex flex-col justify-center bg-slate-950/80 border border-slate-800 h-[5.5rem] rounded-[1.25rem] shadow-[inset_0_4px_15px_rgba(0,0,0,0.6)] overflow-hidden cursor-pointer">
-                  {/* Subtle Glow */}
-                  <div className="absolute inset-0 bg-blue-500/5 mix-blend-overlay pointer-events-none" />
-                  
-                  {/* Realtime Display - Stacked Hierarchy */}
-                  <div className="flex flex-col items-center justify-center relative z-10 h-full">
-                    <span className="text-5xl font-black text-white tracking-tight tabular-nums leading-none font-mono">
-                       {liveTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                    <div className="flex items-center gap-2 mt-1.5 opacity-80">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="text-[11px] font-bold font-mono text-emerald-400 uppercase tracking-widest leading-none">
-                         {liveTime.getSeconds().toString().padStart(2, '0')} SEC <span className="text-white/40 font-medium tracking-normal ml-0.5">• WIB</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Hidden Input for Form State */}
-                  <Input 
-                    type="time" 
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20"
-                    value={formData.arrivalTime || new Date().toTimeString().slice(0,5)}
-                    onChange={(e) => updateField(null, 'arrivalTime', e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="mt-auto relative z-10">
-                 <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[1.25rem] p-3.5 flex items-center gap-3.5 shadow-inner">
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-emerald-500 rounded-full blur-[8px] opacity-40 animate-pulse" />
-                      <div className="w-7 h-7 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center relative z-10">
-                         <CheckCircle2 size={14} className="text-emerald-400" />
-                      </div>
-                    </div>
-                    <div>
-                       <p className="text-[9px] font-bold text-emerald-400 uppercase tracking-[0.1em]">Patient Indexed</p>
-                       <p className="text-[8px] font-medium text-emerald-400/60 mt-0.5">Ready for clinical assessment</p>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </div>
-        </Card>
-      </section>
-
-      {/* ─── VITAL SIGNS TELEMETRY STRIP ─── */}
-      <div className="bg-slate-50/60 p-8 rounded-[3rem] border border-slate-200/60 mb-8">
-        <div className="flex items-center justify-between mb-8">
-           <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                 <div className="relative flex h-2 w-2">
-                    <div className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></div>
-                    <div className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></div>
-                 </div>
-                 <h3 className="text-[13px] font-black text-slate-800 uppercase tracking-[0.1em]">Patient Telemetry</h3>
-              </div>
-              <div className="h-4 w-px bg-slate-300" />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Live • Updated 2s ago</span>
-           </div>
-           
-           {/* NEWS2 SEVERITY MODULE */}
-           <div className="flex items-center gap-4 bg-white border border-slate-200/80 rounded-2xl px-4 py-2 shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-              <div className="flex flex-col">
-                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">NEWS2 Score</span>
-              </div>
-              <div className="h-6 w-px bg-slate-100" />
-              <div className="flex items-center gap-3">
-                 <span className="text-2xl font-black text-emerald-600 tabular-nums leading-none">{newsScore}</span>
-                 <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded-md border border-emerald-100">
-                    <ShieldCheck size={12} /> Low Risk
-                 </div>
-              </div>
-           </div>
-        </div>
-
-        <div className="grid grid-cols-6 gap-3 mb-8">
-           {[
-              { label: 'SYS', icon: <Heart className="w-4 h-4 stroke-[2]" />, field: 'bp_sys', unit: 'mmHg', color: 'text-slate-400', activeColor: 'text-rose-500', activeBg: 'bg-white' },
-              { label: 'DIA', icon: <Heart className="w-4 h-4 stroke-[2]" />, field: 'bp_dia', unit: 'mmHg', color: 'text-slate-400', activeColor: 'text-rose-500', activeBg: 'bg-white' },
-              { label: 'HR', icon: <Activity className="w-4 h-4 stroke-[2]" />, field: 'hr', unit: 'bpm', color: 'text-slate-400', activeColor: 'text-amber-500', activeBg: 'bg-gradient-to-b from-amber-50/40 to-transparent border-amber-100/60' },
-              { label: 'RR', icon: <Wind className="w-4 h-4 stroke-[2]" />, field: 'rr', unit: '/min', color: 'text-slate-400', activeColor: 'text-sky-500', activeBg: 'bg-gradient-to-b from-sky-50/40 to-transparent border-sky-100/60', pulse: true },
-              { label: 'TEMP', icon: <Thermometer className="w-4 h-4 stroke-[2]" />, field: 'temp', unit: '°C', color: 'text-slate-400', activeColor: 'text-orange-500', activeBg: 'bg-white' },
-              { label: 'SPO2', icon: <Droplets className="w-4 h-4 stroke-[2]" />, field: 'spo2', unit: '%', color: 'text-slate-400', activeColor: 'text-blue-500', activeBg: 'bg-gradient-to-b from-blue-50/40 to-transparent border-blue-100/60' }
-           ].map((vs) => {
-             const val = formData.vitals?.[vs.field];
-             const hasData = val && val !== '';
-             return (
-               <div key={vs.field} className={cn("bg-white border border-slate-200/80 px-4 py-3.5 rounded-[1.5rem] shadow-[0_1px_2px_rgba(15,23,42,0.04)] flex flex-col justify-between h-28 group relative overflow-hidden transition-all hover:border-blue-400 hover:shadow-md", hasData && vs.activeBg)}>
-                  <div className="flex items-center justify-between z-10 relative">
-                     <span className={cn("text-[11px] font-semibold tracking-[0.12em] uppercase", hasData ? "text-slate-700" : "text-slate-400")}>{vs.label}</span>
-                     <div className={cn("transition-colors", hasData ? vs.activeColor : vs.color, vs.pulse && hasData && "animate-pulse")}>
-                        {vs.icon}
+         <div className="relative">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both pb-32">
+               
+               {/* ─── LEFT PILLAR: MINI WORKFLOW RAIL (2 COLS) ─── */}
+               <div className="hidden md:block col-span-2 sticky top-6">
+                  <div className="flex flex-col gap-1.5 bg-white/60 backdrop-blur-xl rounded-[2rem] p-3 shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-white">
+                     <div className="px-3 pb-3 border-b border-slate-100/50 mb-1 flex items-center justify-between">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Workflow</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                      </div>
-                  </div>
-                  
-                  <div className="flex flex-col mt-auto z-10 relative">
-                     {hasData ? (
-                        <div className="flex items-baseline gap-1.5">
-                           <Input 
-                              className="h-auto p-0 border-none bg-transparent text-4xl font-bold tabular-nums tracking-tight focus-visible:ring-0 text-slate-900 w-full" 
-                              value={val}
-                              onChange={(e) => updateField('vitals', vs.field, e.target.value)}
-                           />
-                           <span className="text-xs text-slate-400 font-medium">{vs.unit}</span>
-                        </div>
-                     ) : (
-                        <div className="flex items-center h-[40px] w-full relative">
-                           <Input 
-                              className="absolute inset-0 opacity-0 cursor-text z-20 w-full h-full" 
-                              value={val || ''}
-                              onChange={(e) => updateField('vitals', vs.field, e.target.value)}
-                           />
-                           <div className="flex items-center gap-1.5 opacity-60">
-                             <Activity size={10} className="text-slate-500 animate-pulse" />
-                             <span className="text-[10px] text-slate-500 font-medium tracking-wide">Awaiting monitor</span>
-                           </div>
-                        </div>
-                     )}
-                  </div>
-
-                  {/* Physiological Energy: Shimmer on active cards */}
-                  {hasData && (
-                     <div className="absolute top-0 right-0 w-32 h-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12 translate-x-[200%] group-hover:animate-[shimmer_2s_infinite] pointer-events-none mix-blend-overlay" />
-                  )}
-               </div>
-             )
-           })}
-        </div>
-
-          <div className="grid grid-cols-2 gap-6">
-             <div className="bg-white border border-slate-200/80 p-6 rounded-[2rem] flex flex-col gap-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
-                         <Brain size={16} strokeWidth={2} />
-                      </div>
-                      <Label className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">Pain Scale (VAS)</Label>
-                   </div>
-                   <p className="text-[11px] font-black text-slate-900 uppercase tracking-wider bg-slate-100 px-3 py-1 rounded-md">Intensity: {formData.painScale || 0}/10</p>
-                </div>
-                <input 
-                   type="range" min="0" max="10" 
-                   className="w-full h-1.5 bg-slate-100 rounded-full appearance-none cursor-pointer accent-blue-600 mt-2" 
-                   value={formData.painScale || 0}
-                   onChange={(e) => updateField(null, 'painScale', e.target.value)}
-                />
-             </div>
-
-             <div className="bg-white border border-slate-200/80 p-6 rounded-[2rem] flex flex-col gap-4 shadow-[0_1px_2px_rgba(15,23,42,0.04)] relative overflow-hidden">
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">
-                         <Wind size={16} strokeWidth={2} />
-                      </div>
-                      <Label className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">Oxygen Therapy</Label>
-                   </div>
-                   <div className="flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <p className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Active Flow</p>
-                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mt-1">
-                   <Select 
-                      value={formData.oxygenSupport || 'ROOM_AIR'}
-                      onValueChange={(val) => {
-                          updateField(null, 'oxygenSupport', val);
-                          if (val === 'ROOM_AIR') updateField(null, 'oxygenFlow', '21% FiO2');
-                          else updateField(null, 'oxygenFlow', '');
-                      }}
-                   >
-                      <SelectTrigger className="bg-slate-50 border-transparent hover:border-slate-200 h-10 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wide">
-                         <SelectValue placeholder="Delivery Mode" />
-                      </SelectTrigger>
-                      <SelectContent>
-                         <SelectItem value="ROOM_AIR">Room Air</SelectItem>
-                         <SelectItem value="NASAL_CANNULA">Nasal Cannula</SelectItem>
-                         <SelectItem value="SIMPLE_MASK">Simple Mask</SelectItem>
-                         <SelectItem value="NRM">NRM</SelectItem>
-                      </SelectContent>
-                   </Select>
-                   <div className="relative">
-                      <Input 
-                         className="h-10 bg-slate-50 border-transparent hover:border-slate-200 rounded-xl text-xs font-bold text-slate-700 uppercase tracking-wide px-4"
-                         placeholder="Flow / FiO2"
-                         value={formData.oxygenFlow || (formData.oxygenSupport === 'ROOM_AIR' || !formData.oxygenSupport ? '21% FiO2' : '')}
-                         onChange={(e) => updateField(null, 'oxygenFlow', e.target.value)}
-                      />
-                   </div>
-                </div>
-             </div>
-          </div>
-      </div>
-
-      {/* ─── PRIMARY SURVEY (ABCDE) ─── */}
-      <Card className="border-none shadow-none bg-transparent mb-6">
-        <CardHeader className="px-0 pb-4 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-             <div className="w-8 h-8 bg-slate-900 flex items-center justify-center rounded-lg shadow-sm">
-                <Activity size={16} className="text-white" />
-             </div>
-             <CardTitle className="text-lg font-black text-slate-900 uppercase tracking-tight">
-               ABCDE SURVEY
-             </CardTitle>
-          </div>
-          <div className="flex items-center gap-2 bg-red-600 text-white px-3 py-1.5 rounded-md border border-red-500 shadow-[0_0_15px_rgba(220,38,38,0.4)]">
-             <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-             <span className="text-[10px] font-black uppercase tracking-widest">Critical Stage</span>
-          </div>
-        </CardHeader>
-        <CardContent className="px-0">
-          <div className="grid grid-cols-5 gap-4 min-h-40">
-             {[
-                { 
-                  id: 'A', label: 'Airway', 
-                  options: [
-                    { val: 'Clear', label: 'Clear', type: 'neutral' },
-                    { val: 'Partial Obstr.', label: 'Partial', type: 'amber' },
-                    { val: 'Total Obstr.', label: 'Total', type: 'red' }
-                  ] 
-                },
-                { 
-                  id: 'B', label: 'Breathing', 
-                  options: [
-                    { val: 'Normal', label: 'Normal', type: 'neutral' },
-                    { val: 'Tachypnea', label: 'Tachypnea', type: 'amber' },
-                    { val: 'Bradypnea', label: 'Bradypnea', type: 'amber' },
-                    { val: 'Apnea', label: 'Apnea', type: 'red' }
-                  ] 
-                },
-                { 
-                  id: 'C', label: 'Circulation', 
-                  options: [
-                    { val: 'Stable', label: 'Stable', type: 'neutral' },
-                    { val: 'Hemorrhage', label: 'Hemorrhage', type: 'amber' },
-                    { val: 'Shock', label: 'Shock', type: 'red' }
-                  ] 
-                },
-                { 
-                  id: 'D', label: 'Disability', 
-                  options: [
-                    { val: 'Alert', label: 'Alert', type: 'neutral' },
-                    { val: 'Voice', label: 'Voice', type: 'amber' },
-                    { val: 'Pain', label: 'Pain', type: 'amber' },
-                    { val: 'Unresp.', label: 'Unresponsive', type: 'red' }
-                  ] 
-                },
-                { 
-                  id: 'E', label: 'Exposure', 
-                  options: [
-                    { val: 'Normal', label: 'Normal', type: 'neutral' },
-                    { val: 'Deformity', label: 'Deformity', type: 'amber' },
-                    { val: 'Trauma', label: 'Trauma', type: 'red' }
-                  ] 
-                }
-             ].map((step) => (
-               <div key={step.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
-                  <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/80">
-                     <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest text-left flex items-center">
-                        <span className="text-blue-600 mr-2">{step.id}</span>
-                        {step.label}
-                     </h4>
-                  </div>
-                  <div className="p-3 flex flex-col gap-2 flex-1">
-                     {step.options.map(opt => {
-                       const isActive = formData.primarySurvey?.[step.id] === opt.val;
-                       
-                       let baseStyle = "border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:border-slate-300";
-                       let activeStyle = "";
-
-                       if (opt.type === 'neutral') {
-                          activeStyle = "bg-slate-800 border-slate-900 text-white shadow-md";
-                       } else if (opt.type === 'amber') {
-                          baseStyle = "border-amber-100/50 bg-amber-50/20 text-amber-700 hover:bg-amber-50 hover:border-amber-200";
-                          activeStyle = "bg-amber-500 border-amber-600 text-white shadow-[0_4px_12px_rgba(245,158,11,0.3)]";
-                       } else if (opt.type === 'red') {
-                          baseStyle = "border-red-100/50 bg-red-50/20 text-red-700 hover:bg-red-50 hover:border-red-200";
-                          activeStyle = "bg-red-600 border-red-700 text-white shadow-[0_4px_12px_rgba(220,38,38,0.3)]";
-                       }
-
-                       return (
-                         <button
-                           key={opt.val}
-                           type="button"
-                           onClick={() => updateField('primarySurvey', step.id, opt.val)}
-                           className={cn(
-                             "w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-left transition-all duration-200 relative overflow-hidden group",
-                             isActive ? activeStyle : baseStyle
-                           )}
-                         >
-                            <span className={cn(
-                               "text-[10px] uppercase tracking-wide z-10 relative",
-                               isActive ? "font-semibold" : "font-medium"
-                            )}>
-                               {opt.label}
-                            </span>
-                            
-                            {isActive ? (
-                               <div className={cn("w-1.5 h-1.5 rounded-full z-10 relative shadow-sm", opt.type === 'red' && "animate-pulse")} style={{ backgroundColor: 'white' }} />
-                            ) : (
-                               <div className="w-1.5 h-1.5 rounded-full z-10 relative opacity-0 group-hover:opacity-20 transition-opacity bg-current" />
-                            )}
-                         </button>
-                       );
-                     })}
-                  </div>
-               </div>
-             ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ─── CLINICAL DOCUMENTATION FLOW ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-[1.6fr_1fr] gap-6 items-stretch mb-6">
-         {/* ROW 1: Subjective & Neuro */}
-         {/* Subjective */}
-         <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
-               <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm border border-blue-100/50">
-                     <Info size={14} strokeWidth={2.5} />
-                  </div>
-                  <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                     S — Subjective
-                  </CardTitle>
-               </div>
-               <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                  <span className="flex items-center gap-1.5"><Clock size={10} /> {liveTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                  <span className="w-1 h-1 rounded-full bg-slate-300" />
-                  <span className="flex items-center gap-1.5"><User size={10} /> RN On-Duty</span>
-               </div>
-            </CardHeader>
-            <CardContent className="p-0 flex-1 relative group">
-               <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent pointer-events-none h-4" />
-               <Textarea 
-                  className="w-full h-full min-h-[160px] border-0 rounded-none resize-none text-[13px] font-semibold text-slate-700 p-6 focus-visible:ring-2 focus-visible:ring-blue-200 focus-visible:ring-inset bg-transparent placeholder:text-slate-300 placeholder:font-medium transition-all"
-                  placeholder="Patient complaints and history of present illness..."
-                  value={formData.subjective || ''}
-                  onChange={(e) => updateField(null, 'subjective', e.target.value)}
-               />
-            </CardContent>
-         </Card>
-
-         {/* GCS & Neuro - Redesigned to be tactile */}
-         <Card className="bg-[#0A0F1C] border border-slate-800 shadow-xl rounded-2xl flex flex-col h-full overflow-hidden relative">
-            {/* Subtle top glow */}
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent" />
-            
-            <CardHeader className="px-6 py-5 border-b border-white/5">
-               <CardTitle className="text-[11px] font-black text-blue-400 uppercase tracking-widest flex items-center gap-3">
-                  <Brain size={16} /> Neurological Hub (GCS)
-               </CardTitle>
-            </CardHeader>
-            
-            <CardContent className="p-6 flex flex-col gap-8 flex-1">
-               <div className="flex flex-col gap-5">
-                  {[
-                     { l: 'Eye', m: 4, f: 'gcs_e' },
-                     { l: 'Motor', m: 6, f: 'gcs_m' },
-                     { l: 'Verbal', m: 5, f: 'gcs_v' }
-                  ].map(x => (
-                    <div key={x.f} className="flex flex-col gap-2.5">
-                       <div className="flex justify-between items-center px-1">
-                          <Label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{x.l}</Label>
-                          <span className="text-[8px] font-bold text-slate-600 uppercase tracking-wider">Max {x.m}</span>
-                       </div>
-                       <div className="flex gap-1.5">
-                          {Array.from({length: x.m}, (_, i) => x.m - i).map(val => {
-                             const isSelected = parseInt(formData.neuro?.[x.f]) === val;
-                             return (
-                                <button
-                                   key={val}
-                                   type="button"
-                                   onClick={() => updateField('neuro', x.f, val.toString())}
-                                   className={cn(
-                                      "flex-1 h-9 rounded-lg text-[13px] font-black transition-all duration-200 border",
-                                      isSelected 
-                                        ? "bg-blue-600 text-white border-blue-500 shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
-                                        : "bg-white/5 text-slate-500 border-white/10 hover:bg-white/10 hover:text-slate-300"
-                                   )}
-                                >
-                                   {val}
-                                </button>
-                             );
-                          })}
-                       </div>
-                    </div>
-                  ))}
-               </div>
-               
-               <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-end px-2">
-                  <div className="flex flex-col gap-1">
-                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Combined Score</span>
-                     <span className="text-[9px] font-bold text-slate-600 uppercase">Range: 3-15</span>
-                  </div>
-                  
-                  {(() => {
-                     const total = (parseInt(formData.neuro?.gcs_e)||0) + (parseInt(formData.neuro?.gcs_m)||0) + (parseInt(formData.neuro?.gcs_v)||0);
-                     const isCritical = total > 0 && total <= 8;
-                     const isWarning = total > 8 && total <= 12;
-                     const isGood = total > 12;
-                     return (
-                        <div className={cn(
-                           "text-6xl font-black tabular-nums tracking-tighter leading-none transition-colors",
-                           isCritical ? "text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.4)]" :
-                           isWarning ? "text-amber-500 drop-shadow-[0_0_20px_rgba(245,158,11,0.4)]" :
-                           isGood ? "text-emerald-400 drop-shadow-[0_0_20px_rgba(52,211,153,0.4)]" :
-                           "text-slate-600"
-                        )}>
-                           {total === 0 ? '--' : total}
-                        </div>
-                     );
-                  })()}
-               </div>
-            </CardContent>
-         </Card>
-
-         {/* ROW 2: Objective & Safety */}
-         {/* Objective */}
-         <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
-            <CardHeader className="px-6 py-4 border-b border-slate-100 flex flex-row items-center justify-between bg-slate-50/50">
-               <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100/50">
-                     <Eye size={14} strokeWidth={2.5} />
-                  </div>
-                  <CardTitle className="text-xs font-black text-slate-800 uppercase tracking-widest">
-                     O — Objective Exam
-                  </CardTitle>
-               </div>
-               <div className="flex items-center gap-3 text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                  <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100/50"><Save size={10} /> Auto-Saved</span>
-               </div>
-            </CardHeader>
-            <CardContent className="p-0 flex-1 relative group">
-               <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 to-transparent pointer-events-none h-4" />
-               <Textarea 
-                  className="w-full h-full min-h-[220px] border-0 rounded-none resize-none text-[13px] font-semibold text-slate-700 p-6 focus-visible:ring-2 focus-visible:ring-emerald-200 focus-visible:ring-inset bg-transparent placeholder:text-slate-300 placeholder:font-medium transition-all"
-                  placeholder="Head-to-toe clinical findings..."
-                  value={formData.objective || ''}
-                  onChange={(e) => updateField(null, 'objective', e.target.value)}
-               />
-            </CardContent>
-         </Card>
-
-         {/* Safety & Allergy Module */}
-         <Card className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
-            <CardContent className="p-0 flex flex-col h-full">
-               
-               {/* Allergy Alert Module */}
-               <div className="p-6 flex flex-col gap-4">
-                  <div className="flex items-center justify-between">
-                     <Label className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                        <ShieldCheck size={14} className="text-slate-400" /> Allergy Alert
-                     </Label>
-                     {formData.allergies ? (
-                        <span className="text-[8px] font-black bg-red-100 text-red-600 px-2 py-0.5 rounded uppercase tracking-wider animate-pulse border border-red-200">Critical</span>
-                     ) : (
-                        <span className="text-[8px] font-black bg-amber-50 text-amber-600 px-2 py-0.5 rounded uppercase tracking-wider border border-amber-100">Unverified</span>
-                     )}
-                  </div>
-                  
-                  <div className={cn(
-                     "relative border-2 rounded-xl transition-all duration-300 overflow-hidden group",
-                     formData.allergies 
-                        ? "border-red-400 bg-red-50 shadow-[0_4px_15px_rgba(239,68,68,0.15)]" 
-                        : "border-slate-200 bg-slate-50 focus-within:border-amber-400 focus-within:bg-amber-50 focus-within:shadow-[0_4px_15px_rgba(251,191,36,0.15)]"
-                  )}>
-                     <Input 
-                        className="h-12 border-0 bg-transparent text-sm font-bold placeholder:font-medium placeholder:text-slate-400 focus-visible:ring-0 px-4"
-                        placeholder="Document known allergies..."
-                        value={formData.allergies || ''}
-                        onChange={(e) => updateField(null, 'allergies', e.target.value)}
-                     />
-                     {formData.allergies && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex h-2 w-2">
-                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                           <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                        </div>
-                     )}
-                  </div>
-               </div>
-
-               {/* Safety Screening Blocks */}
-               <div className="flex flex-col gap-3 p-6 pt-5 bg-slate-50/50 border-t border-slate-100 flex-1">
-                  <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2 mb-1">
-                     <BadgeInfo size={14} className="text-slate-400" /> Patient Safety
-                  </p>
-                  <div className="flex flex-col gap-2.5">
                      {[
-                        { l: 'Fall Risk', f: 'safety_fall', icon: <Activity size={14} /> },
-                        { l: 'Suicide Risk', f: 'safety_suicide', icon: <AlertCircle size={14} /> },
-                        { l: 'Infection Control', f: 'safety_infection', icon: <ShieldAlert size={14} /> }
-                     ].map(s => {
-                        const isHigh = formData.safety?.[s.f];
+                        { id: 'os-triage', label: 'Triage', icon: <Siren size={14} /> },
+                        { id: 'os-neuro', label: 'Neuro', icon: <Brain size={14} /> },
+                        { id: 'os-docs', label: 'History', icon: <FileText size={14} /> }
+                     ].map(zone => {
+                        const isActive = activeZone === zone.id;
                         return (
-                           <button 
-                              key={s.f}
+                           <button
+                              key={zone.id}
                               type="button"
-                              onClick={() => updateField('safety', s.f, !isHigh)}
+                              onClick={() => {
+                                 setActiveZone(zone.id);
+                                 document.getElementById(zone.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }}
                               className={cn(
-                                 "w-full flex items-center justify-between p-3.5 rounded-xl border transition-all duration-300 text-left group",
-                                 isHigh 
-                                    ? "bg-red-600 border-red-500 text-white shadow-[0_4px_12px_rgba(220,38,38,0.25)]" 
-                                    : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50 shadow-sm"
+                                 "flex flex-col items-center justify-center gap-1.5 px-2 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 relative group",
+                                 isActive 
+                                    ? "bg-slate-900 text-white shadow-md" 
+                                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
                               )}
                            >
-                              <div className="flex items-center gap-3">
-                                 <div className={cn(
-                                    "p-1.5 rounded-md transition-colors",
-                                    isHigh ? "bg-white/20 text-white" : "bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600"
-                                 )}>
-                                    {s.icon}
-                                 </div>
-                                 <span className="text-[11px] font-black uppercase tracking-wide">{s.l}</span>
+                              <div className={cn("transition-transform duration-300", isActive && "scale-110 text-emerald-400")}>
+                                 {zone.icon}
                               </div>
-                              <div className={cn(
-                                 "px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border transition-all",
-                                 isHigh 
-                                    ? "bg-white/20 border-white/20 text-white shadow-inner" 
-                                    : "bg-slate-50 border-slate-200 text-slate-400 group-hover:border-slate-300"
-                              )}>
-                                 {isHigh ? 'HIGH RISK' : 'LOW RISK'}
-                              </div>
+                              <span className="text-center leading-tight">{zone.label}</span>
+                              {isActive && <div className="absolute right-1 top-1/2 -translate-y-1/2 w-1 h-4 bg-emerald-400 rounded-full" />}
                            </button>
                         );
                      })}
                   </div>
                </div>
 
-            </CardContent>
-         </Card>
-      </div>
+               {/* ─── CENTER PILLAR: MAIN CLINICAL WORKSPACE (7 COLS) ─── */}
+               <div className="col-span-1 md:col-span-7 flex flex-col gap-10">
+                  
+                  {/* ZONE 1: Triage & Admission */}
+                  <section id="os-triage" className="scroll-mt-6">
+                     <div className="flex flex-col gap-6">
+                        <div className="flex items-center gap-3">
+                           <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-inner">
+                              <Siren size={16} />
+                           </div>
+                           <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">Triage & Admission</h2>
+                           <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent ml-4" />
+                        </div>
+                        
+                        <div className="bg-white border border-slate-200/80 rounded-[2.5rem] shadow-sm p-8">
+                           <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+                              <div className="flex flex-col gap-3">
+                                 <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Waktu Masuk <span className="text-red-500">*</span></Label>
+                                 <Input type="datetime-local" className="h-14 rounded-2xl border-slate-200 font-bold text-slate-800 bg-slate-50/50 focus-visible:ring-blue-500/20 text-sm px-4" value={formData.waktuMasuk || ''} onChange={e => updateField(null, 'waktuMasuk', e.target.value)} />
+                              </div>
+                              <div className="flex flex-col gap-3">
+                                 <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">Triage Obstetri</Label>
+                                 <div className="flex gap-2 h-14 bg-slate-100/80 p-1.5 rounded-[1.25rem] border border-slate-200/50">
+                                    {['Merah', 'Kuning', 'Hijau', 'Hitam'].map(v => {
+                                       const isSelected = formData.triageObstetri === v;
+                                       return (
+                                          <button
+                                             key={v}
+                                             type="button"
+                                             onClick={() => updateField(null, 'triageObstetri', v)}
+                                             className={cn(
+                                                "flex-1 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300",
+                                                isSelected ? "bg-white text-slate-800 shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-slate-200/50"
+                                             )}
+                                          >
+                                             {v}
+                                          </button>
+                                       );
+                                    })}
+                                 </div>
+                              </div>
+                              <div className="xl:col-span-2 flex flex-col gap-3">
+                                 <Label className="text-xs font-black text-slate-400 uppercase tracking-widest">ESI Level <span className="text-red-500">*</span></Label>
+                                 <div className="flex gap-3">
+                                    {[1, 2, 3, 4, 5].map(v => {
+                                       const isSelected = parseInt(formData.esi) === v;
+                                       return (
+                                          <button
+                                             key={v}
+                                             type="button"
+                                             onClick={() => updateField(null, 'esi', v)}
+                                             className={cn(
+                                                "flex-1 h-16 rounded-2xl text-xl font-black transition-all duration-300 border-2",
+                                                isSelected 
+                                                   ? "bg-red-600 text-white border-red-500 shadow-[0_8px_20px_rgba(220,38,38,0.25)] scale-[1.02]" 
+                                                   : "bg-white text-slate-400 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                             )}
+                                          >
+                                             {v}
+                                          </button>
+                                       );
+                                    })}
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </section>
+
+                  {/* ZONE 2: Neuro Block */}
+                  <section id="os-neuro" className="scroll-mt-6">
+                     <div className="flex flex-col gap-6">
+                        <div className="flex items-center gap-3">
+                           <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shadow-inner">
+                              <Brain size={16} />
+                           </div>
+                           <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">Neuro & Motor Block</h2>
+                           <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent ml-4" />
+                        </div>
+
+                        <div className="bg-white border border-slate-200/80 rounded-[2.5rem] shadow-sm p-8">
+                           <div className="grid grid-cols-1 xl:grid-cols-2 gap-12">
+                              {/* GCS Segment */}
+                              <div className="flex flex-col gap-6">
+                                 <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Glasgow Coma Scale</Label>
+                                 <div className="flex flex-col gap-4">
+                                    {[
+                                       { l: 'E (Eye)', m: 4, f: 'gcsE' },
+                                       { l: 'V (Verbal)', m: 5, f: 'gcsV' },
+                                       { l: 'M (Motorik)', m: 6, f: 'gcsM' }
+                                    ].map(x => (
+                                      <div key={x.f} className="flex flex-col gap-2">
+                                         <div className="flex justify-between items-center px-2">
+                                            <Label className="text-xs font-black text-slate-700 uppercase tracking-widest">{x.l}</Label>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Max {x.m}</span>
+                                         </div>
+                                         <div className="flex gap-2">
+                                            {Array.from({length: x.m}, (_, i) => x.m - i).map(val => {
+                                               const isSelected = parseInt(formData[x.f]) === val;
+                                               return (
+                                                  <button
+                                                     key={val}
+                                                     type="button"
+                                                     onClick={() => updateField(null, x.f, val.toString())}
+                                                     className={cn(
+                                                        "flex-1 h-12 rounded-[1rem] text-sm font-black transition-all duration-200 border-2",
+                                                        isSelected 
+                                                          ? "bg-indigo-600 text-white border-indigo-500 shadow-md" 
+                                                          : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:border-slate-300"
+                                                     )}
+                                                  >
+                                                     {val}
+                                                  </button>
+                                               );
+                                            })}
+                                         </div>
+                                      </div>
+                                    ))}
+                                 </div>
+                              </div>
+
+                              {/* Clinical State Segments */}
+                              <div className="flex flex-col gap-8">
+                                 <div className="flex flex-col gap-3">
+                                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tingkat Kesadaran <span className="text-red-500">*</span></Label>
+                                    <div className="flex flex-wrap gap-2 bg-slate-50 p-2 rounded-[1.25rem] border border-slate-200/50">
+                                       {['Compos Mentis', 'Apatis', 'Somnolen', 'Sopor', 'Coma'].map(v => {
+                                          const isSelected = (formData.tingkatKesadaran || 'Compos Mentis') === v;
+                                          return (
+                                             <button
+                                                key={v}
+                                                type="button"
+                                                onClick={() => updateField(null, 'tingkatKesadaran', v)}
+                                                className={cn(
+                                                   "px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                                                   isSelected ? "bg-white text-slate-800 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
+                                                )}
+                                             >
+                                                {v}
+                                             </button>
+                                          );
+                                       })}
+                                    </div>
+                                 </div>
+                                 <div className="grid grid-cols-2 gap-6">
+                                    <div className="flex flex-col gap-3">
+                                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Capillary Refill (CRT) <span className="text-red-500">*</span></Label>
+                                       <div className="flex gap-2 bg-slate-50 p-1.5 rounded-2xl border border-slate-200/50">
+                                          {['< 2 detik', '> 2 detik'].map(v => {
+                                             const isSelected = (formData.crt || '< 2 detik') === v;
+                                             return (
+                                                <button key={v} type="button" onClick={() => updateField(null, 'crt', v)} className={cn("flex-1 px-2 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", isSelected ? "bg-white text-slate-800 shadow-sm border border-slate-200" : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50")}>{v}</button>
+                                             );
+                                          })}
+                                       </div>
+                                    </div>
+                                    <div className="flex gap-4">
+                                       <div className="flex-1 flex flex-col gap-3">
+                                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">BB (Kg)</Label>
+                                          <Input className="h-12 border-slate-200 rounded-xl bg-slate-50 text-base font-bold text-center text-slate-800" placeholder="--" value={formData.beratBadan || ''} onChange={e => updateField(null, 'beratBadan', e.target.value)} />
+                                       </div>
+                                       <div className="flex-1 flex flex-col gap-3">
+                                          <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TB (cm)</Label>
+                                          <Input className="h-12 border-slate-200 rounded-xl bg-slate-50 text-base font-bold text-center text-slate-800" placeholder="--" value={formData.tinggiBadan || ''} onChange={e => updateField(null, 'tinggiBadan', e.target.value)} />
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </section>
+
+                  {/* ZONE 3: Narrative Documentation Surface */}
+                  <section id="os-docs" className="scroll-mt-6">
+                     <div className="flex flex-col gap-6">
+                        <div className="flex items-center gap-3">
+                           <div className="w-8 h-8 rounded-xl bg-slate-200/50 text-slate-600 flex items-center justify-center shadow-inner border border-slate-200">
+                              <FileText size={16} />
+                           </div>
+                           <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">Narrative Documentation</h2>
+                           <div className="h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent ml-4" />
+                        </div>
+
+                        {/* Borderless Canvas approach */}
+                        <div className="bg-slate-50 rounded-[2.5rem] border border-slate-200/50 p-8 shadow-[inset_0_2px_15px_rgba(0,0,0,0.02)]">
+                           <div className="flex flex-col gap-10">
+                              
+                              <div className="flex flex-col gap-4">
+                                 <Label className="text-xs font-black text-slate-700 uppercase tracking-widest">Anamnesis & Keluhan Utama <span className="text-red-500">*</span></Label>
+                                 <Textarea 
+                                    className="w-full min-h-[180px] rounded-[1.5rem] resize-none border-0 bg-white font-medium text-sm text-slate-700 focus-visible:ring-2 focus-visible:ring-blue-100 p-6 shadow-sm" 
+                                    placeholder="Dokumentasikan narasi klinis secara lengkap disini..." 
+                                    value={formData.anamnesis || ''} 
+                                    onChange={e => updateField(null, 'anamnesis', e.target.value)} 
+                                 />
+                              </div>
+
+                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-10">
+                                 <div className="flex flex-col gap-4">
+                                    <Label className="text-xs font-black text-slate-700 uppercase tracking-widest">Riwayat Penyakit Dahulu <span className="text-red-500">*</span></Label>
+                                    <Textarea className="w-full min-h-[120px] rounded-[1.5rem] resize-none border-0 bg-white font-medium text-sm text-slate-700 focus-visible:ring-2 focus-visible:ring-blue-100 p-6 shadow-sm" placeholder="Penyakit kronis, operasi..." value={formData.riwayatPenyakitDahulu || ''} onChange={e => updateField(null, 'riwayatPenyakitDahulu', e.target.value)} />
+                                 </div>
+                                 <div className="flex flex-col gap-6">
+                                    <div className="flex flex-col gap-4 flex-1">
+                                       <Label className="text-xs font-black text-slate-700 uppercase tracking-widest">Riwayat Konsumsi Obat</Label>
+                                       <div className="flex-1 rounded-[1.5rem] bg-white border border-slate-200/80 flex flex-col items-center justify-center p-6 text-center cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm">
+                                          <Pill size={24} className="text-slate-300 mb-3" />
+                                          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Rekam Obat di Rumah</p>
+                                       </div>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+                                       <div>
+                                          <Label className="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">Indikasi Polisi/Forensik <span className="text-red-500">*</span></Label>
+                                       </div>
+                                       <div className="flex gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100">
+                                          {['Tidak', 'Ya'].map(v => (
+                                             <button key={v} type="button" onClick={() => updateField(null, 'kasusPolisi', v)} className={cn("px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all", (formData.kasusPolisi || 'Tidak') === v ? (v === 'Ya' ? "bg-red-600 text-white shadow-sm" : "bg-slate-800 text-white shadow-sm") : "text-slate-400 hover:text-slate-600 hover:bg-slate-100")}>{v}</button>
+                                          ))}
+                                       </div>
+                                    </div>
+                                 </div>
+                              </div>
+                           </div>
+                        </div>
+                     </div>
+                  </section>
+               </div>
+
+               {/* ─── RIGHT PILLAR: LIVE TELEMETRY + RISK ENGINE (3 COLS) ─── */}
+               <div className="col-span-1 md:col-span-3 sticky top-6 flex flex-col h-[calc(100vh-100px)] bg-[#0B1120] text-slate-300 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-800 overflow-hidden relative group">
+                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-50" />
+                  
+                  {/* Top Live Header */}
+                  <div className="bg-slate-900/80 border-b border-white/10 px-6 py-4 flex items-center justify-between z-10 backdrop-blur-md">
+                     <h3 className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                        <Activity size={14} className="text-emerald-400" /> Patient Live State
+                     </h3>
+                     <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                     </span>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto scrollbar-hide p-6 flex flex-col gap-8">
+                     
+                     {/* Telemetry Stack (Vertical) */}
+                     <div className="flex flex-col gap-5">
+                        <Label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Telemetry Vitals</Label>
+                        {[
+                           { l: 'BP', desc: 'Tekanan Darah', f: 'tekananDarah', u: 'mmHg', color: 'text-emerald-400', border: 'focus-visible:border-emerald-500' },
+                           { l: 'HR', desc: 'Nadi', f: 'nadi', u: 'bpm', color: 'text-emerald-400', border: 'focus-visible:border-emerald-500' },
+                           { l: 'Suhu', desc: 'Temperature', f: 'suhu', u: '°C', color: 'text-orange-400', border: 'focus-visible:border-orange-500' },
+                           { l: 'RR', desc: 'Pernafasan', f: 'pernafasan', u: 'rpm', color: 'text-cyan-400', border: 'focus-visible:border-cyan-500' },
+                           { l: 'SpO2', desc: 'Saturasi', f: 'saturasi', u: '%', color: 'text-blue-400', border: 'focus-visible:border-blue-500' }
+                        ].map(v => (
+                           <div key={v.f} className="flex justify-between items-center bg-black/40 p-4 rounded-2xl border border-white/5 relative">
+                              <div className="flex flex-col">
+                                 <span className="text-xs font-black text-slate-300 uppercase tracking-widest">{v.l}</span>
+                                 <span className="text-[9px] font-medium text-slate-500">{v.desc}</span>
+                              </div>
+                              <div className="relative w-28">
+                                 <Input 
+                                    className={cn("h-10 bg-transparent border-0 border-b-2 border-slate-700 rounded-none text-xl font-black tabular-nums transition-all pl-2 pr-8 text-right focus-visible:ring-0", v.color, v.border)} 
+                                    placeholder="--" 
+                                    value={formData[v.f] || ''} 
+                                    onChange={e => updateField(null, v.f, e.target.value)} 
+                                 />
+                                 <span className="absolute right-0 bottom-2.5 text-[8px] font-bold text-slate-600 uppercase pointer-events-none">{v.u}</span>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+
+                     <div className="h-px bg-white/10 w-full" />
+
+                     {/* Risk Matrix Stack (Horizontal sliders feeling) */}
+                     <div className="flex flex-col gap-5">
+                        <Label className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Risk Assessment Rail</Label>
+                        
+                        {/* Pain Score */}
+                        <div className="flex flex-col gap-3 bg-black/20 p-4 rounded-2xl border border-white/5">
+                           <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest flex items-center gap-1"><AlertTriangle size={12}/> Nyeri</span>
+                              <div className="flex gap-1 bg-black/50 p-1 rounded-lg">
+                                 {['Tidak Ada', 'Ada'].map(v => (
+                                    <button key={v} type="button" onClick={() => updateField(null, 'keluhanNyeri', v)} className={cn("px-3 py-1 rounded-md text-[9px] font-bold uppercase transition-all", (formData.keluhanNyeri || 'Tidak Ada') === v ? (v === 'Ada' ? "bg-amber-500 text-white" : "bg-slate-700 text-white") : "text-slate-500")}>{v}</button>
+                                 ))}
+                              </div>
+                           </div>
+                           {formData.keluhanNyeri === 'Ada' && (
+                              <div className="flex items-center gap-2 mt-2">
+                                 <span className="text-[9px] text-slate-400 uppercase">Skor</span>
+                                 <Input type="number" className="h-8 w-16 bg-black border-slate-700 text-amber-500 font-bold text-center text-sm" value={formData.skorNyeri || ''} onChange={e => updateField(null, 'skorNyeri', e.target.value)} />
+                                 <Select value={formData.tipeNyeri || 'Akut'} onValueChange={v => updateField(null, 'tipeNyeri', v)}>
+                                    <SelectTrigger className="h-8 border-slate-700 bg-black text-[9px] font-bold text-slate-300 uppercase"><SelectValue /></SelectTrigger>
+                                    <SelectContent><SelectItem value="Akut" className="text-[9px]">Akut</SelectItem><SelectItem value="Kronik" className="text-[9px]">Kronik</SelectItem></SelectContent>
+                                 </Select>
+                              </div>
+                           )}
+                        </div>
+
+                        {/* Infection */}
+                        <div className="flex flex-col gap-2 bg-black/20 p-4 rounded-2xl border border-white/5">
+                           <span className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1"><ShieldAlert size={12}/> Luka & Infeksi</span>
+                           <div className="grid grid-cols-2 gap-2 mt-1">
+                              {['Tidak Ada', 'Udara', 'Kontak', 'Droplet'].map(v => (
+                                 <button key={v} type="button" onClick={() => updateField(null, 'risikoInfeksi', v)} className={cn("py-1.5 rounded-md text-[9px] font-bold uppercase transition-all border", (formData.risikoInfeksi || 'Tidak Ada') === v ? "bg-red-500/20 border-red-500 text-red-400" : "border-slate-800 text-slate-500 hover:border-slate-600")}>{v}</button>
+                              ))}
+                           </div>
+                        </div>
+
+                        {/* Fall Risk */}
+                        <div className="flex flex-col gap-3 bg-black/20 p-4 rounded-2xl border border-white/5">
+                           <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1"><Activity size={12}/> Fall Risk (Get Up & Go)</span>
+                           <div className="flex flex-col gap-2 mt-1">
+                              {[
+                                 { l: 'Berjalan Sempoyongan', f: 'jatuhBerjalan' },
+                                 { l: 'Memegang Penopang', f: 'jatuhDuduk' }
+                              ].map(q => (
+                                 <div key={q.f} className="flex justify-between items-center border-b border-white/5 pb-2">
+                                    <span className="text-[9px] text-slate-400 truncate max-w-[60%]">{q.l}</span>
+                                    <div className="flex gap-1 bg-black/50 p-1 rounded-md">
+                                       {['Tidak', 'Ya'].map(v => (
+                                          <button key={v} type="button" onClick={() => updateField(null, q.f, v)} className={cn("px-2 py-0.5 rounded text-[8px] font-bold uppercase transition-all", (formData[q.f] || 'Tidak') === v ? (v === 'Ya' ? "bg-purple-500 text-white" : "bg-slate-700 text-white") : "text-slate-500")}>{v}</button>
+                                       ))}
+                                    </div>
+                                 </div>
+                              ))}
+                              <div className={cn("mt-2 text-[9px] font-black uppercase text-center py-2 rounded-lg border", formData.jatuhBerjalan === 'Ya' || formData.jatuhDuduk === 'Ya' ? "bg-red-500/20 border-red-500 text-red-400" : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400")}>
+                                 {formData.jatuhBerjalan === 'Ya' || formData.jatuhDuduk === 'Ya' ? 'ALERT: RISIKO JATUH' : 'TIDAK BERISIKO'}
+                              </div>
+                           </div>
+                        </div>
+
+                     </div>
+                  </div>
+               </div>
+
+            </div>
+
+            {/* ─── STICKY ACTION BAR ─── */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/80 p-4 px-8 z-50 shadow-[0_-20px_40px_rgba(0,0,0,0.03)] flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+                     <User size={18} />
+                  </div>
+                  <div className="flex flex-col">
+                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assessment by</span>
+                     <span className="text-xs font-bold text-slate-700">RN. SARAH J.</span>
+                  </div>
+               </div>
+               <div className="flex items-center gap-4">
+                  <button type="button" className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors">
+                     Simpan Draft
+                  </button>
+                  <button type="button" className="px-8 py-3 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-[0_4px_15px_rgba(37,99,235,0.3)] hover:bg-blue-700 hover:scale-105 transition-all">
+                     Finalize & Sign
+                  </button>
+               </div>
+            </div>
+
          </div>
       )}
 
@@ -1263,8 +939,6 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
          </div>
       )}
 
-    </div>
-
       {/* ─── DIALOG FORMS (MODALS) ─── */}
       {showTimelineModal && (
          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -1379,6 +1053,6 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
             </div>
          </div>
       )}
-
+    </div>
   );
 }

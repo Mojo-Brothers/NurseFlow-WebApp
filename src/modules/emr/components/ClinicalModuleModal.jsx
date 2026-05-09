@@ -1208,7 +1208,7 @@ export default function ClinicalModuleModal({
         onClick={onClose}
       />
       
-      <div className="w-full max-w-[1200px] flex flex-col items-center relative z-10 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
+      <div className="w-[98vw] max-w-[1800px] flex flex-col items-center relative z-10 animate-in zoom-in-95 slide-in-from-bottom-10 duration-500">
         
         {/* Decorative elements */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-[var(--primary)]/10 rounded-full blur-3xl pointer-events-none"></div>

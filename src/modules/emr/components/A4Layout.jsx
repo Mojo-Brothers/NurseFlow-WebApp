@@ -29,8 +29,8 @@ export default function A4Layout({
   return (
     <div className="w-full flex flex-col items-center">
       
-      {/* ─── THE A4 PAPER (PHYSICAL FIDELITY) ─── */}
-      <div className="w-[210mm] min-h-[297mm] bg-white shadow-[0_64px_128px_-32px_rgba(0,0,0,0.2)] flex flex-col relative transition-all duration-700 animate-in fade-in zoom-in-95 overflow-hidden border border-slate-200 flex-shrink-0 mb-32">
+      {/* ─── ADAPTIVE CLINICAL WORKSPACE (FORMERLY A4) ─── */}
+      <div className="w-full min-h-[297mm] bg-white shadow-[0_64px_128px_-32px_rgba(0,0,0,0.2)] flex flex-col relative transition-all duration-700 animate-in fade-in zoom-in-95 overflow-hidden border border-slate-200 flex-shrink-0 mb-32 rounded-[3rem]">
         
         {/* Top Interactive Bar: Command Center Integrated (8pt Grid: 16px py, 40px px) */}
         <div className="px-10 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-white/10 no-print">
