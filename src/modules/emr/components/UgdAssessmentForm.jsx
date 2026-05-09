@@ -581,26 +581,7 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
 
             </div>
 
-            {/* ─── STICKY ACTION BAR ─── */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-200/80 p-4 px-8 z-50 shadow-[0_-20px_40px_rgba(0,0,0,0.03)] flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
-                     <User size={18} />
-                  </div>
-                  <div className="flex flex-col">
-                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Assessment by</span>
-                     <span className="text-xs font-bold text-slate-700">RN. SARAH J.</span>
-                  </div>
-               </div>
-               <div className="flex items-center gap-4">
-                  <button type="button" className="px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 transition-colors">
-                     Simpan Draft
-                  </button>
-                  <button type="button" className="px-8 py-3 rounded-xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-[0_4px_15px_rgba(37,99,235,0.3)] hover:bg-blue-700 hover:scale-105 transition-all">
-                     Finalize & Sign
-                  </button>
-               </div>
-            </div>
+
 
          </div>
       )}
