@@ -470,8 +470,9 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
                </div>
 
                {/* ─── RIGHT PILLAR: LIVE TELEMETRY + RISK ENGINE (3 COLS) ─── */}
-               <div className="col-span-1 md:col-span-3 sticky top-6 flex flex-col h-[calc(100vh-100px)] bg-[#0B1120] text-slate-300 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-800 overflow-hidden relative group">
-                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-50" />
+               <div className="col-span-1 md:col-span-3 self-stretch bg-[#0B1120] text-slate-300 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-800 relative group">
+                  <div className="sticky top-6 flex flex-col h-[calc(100vh-100px)] overflow-hidden rounded-[2.5rem]">
+                     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-500/40 to-transparent opacity-50 z-20" />
                   
                   {/* Top Live Header */}
                   <div className="bg-slate-900/80 border-b border-white/10 px-6 py-4 flex items-center justify-between z-10 backdrop-blur-md">
@@ -576,6 +577,7 @@ export default function UgdAssessmentForm({ formData, setFormData, patient, enco
                         </div>
 
                      </div>
+                  </div>
                   </div>
                </div>
 
