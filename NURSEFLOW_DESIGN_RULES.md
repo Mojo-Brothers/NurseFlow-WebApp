@@ -1,4 +1,4 @@
-# ⚖️ NURSEFLOW DESIGN CONSTITUTION (V6.0 - FINAL)
+# ⚖️ NURSEFLOW DESIGN CONSTITUTION (V6.5 - OCEANIC MONOCHROME)
 **Status: ARCHITECTURE SEALED (PRODUCTION READY)**
 **Control Level: ABSOLUTE (ENFORCED VIA AST SENTINEL)**
 
@@ -7,7 +7,7 @@ This document defines the permanent architectural boundaries between visual pres
 ---
 
 ## 🏛️ General Philosophy
-NurseFlow uses a **Context-Aware Interface Architecture**. The system UI adapts its visual weight based on the user's current cognitive load and task criticality. 
+NurseFlow uses a **High-Contrast Neo-Minimalist Architecture**. The system UI relies heavily on pure monochrome (black and white) with a single, highly distinct Oceanic Blue (#015c80) serving as the primary anchor for actions and active states. 
 
 > [!IMPORTANT]
 > **Architecture Sealed:** Any modification to the core Zoning primitives (`ClinicalCard`, `PresentationCard`) or the AST Audit Sentinel requires a Board-level Architectural Review.
@@ -15,13 +15,13 @@ NurseFlow uses a **Context-Aware Interface Architecture**. The system UI adapts 
 ---
 
 ## 🟢 Zone 1: Presentation (Dashboard / Overview)
-**Goal:** WOW Factor, First Impression, Macro-Management.
+**Goal:** Extreme Clarity, Immediate Cognitive Anchoring.
 
 ### Standards:
-- **Glassmorphism:** Use `<PresentationCard />` for ambient tiles.
-- **Vibrant Backgrounds:** Subtle mesh gradients (Max 7% opacity).
-- **Asymmetric Grid:** Bento-style layouts for hierarchy.
-- **Premium Shadows:** Deep, soft shadows for floating effects.
+- **No Glassmorphism:** Transparency is forbidden. All backgrounds must be solid.
+- **Harsh Monochrome:** Use stark white surfaces with sharp black borders (`2px solid black`).
+- **Neo-Minimalist Layouts:** Bento-style layouts using thick grid lines and high contrast.
+- **Flat Shadows:** If shadows are used, they must be solid neo-brutalist shadows (e.g. `4px 4px 0px #000`), never soft ambient blur.
 
 ---
 
@@ -30,14 +30,15 @@ NurseFlow uses a **Context-Aware Interface Architecture**. The system UI adapts 
 
 ### MANDATORY (Hukum Mati):
 - **Component Lock:** MUST use `<ClinicalCard />`.
-- **Flat Surfaces:** Solid backgrounds only.
-- **High Contrast:** All text must meet WCAG AAA standards.
+- **Flat Surfaces:** Solid backgrounds only (Pure White `#FFF` or extreme light gray `#FAFAFA`).
+- **High Contrast:** All text must meet WCAG AAA standards. Primary text is pure black (`#000`).
 - **IPSG Compliance:** Mandatory identity verification layers for all critical operational actions.
+- **Oceanic Focus:** The only non-alert colors permitted are `#015c80` for primary actions.
 
 ### FORBIDDEN:
 - **No Glass/Blur:** Transparency on clinical data is a critical safety failure.
-- **No Animations:** Zero layout shifts or distracting pulses.
-- **No Aesthetic Leakage:** Strict border-based separation instead of ambient depth.
+- **No Soft Shadows:** Floating effects cause visual ambiguity.
+- **No Animations over 150ms:** Zero layout shifts. UI must feel instantly responsive (snappy).
 
 ---
 

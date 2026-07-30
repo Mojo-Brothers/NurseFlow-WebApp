@@ -87,14 +87,14 @@ const MainLayout = () => {
 
       {/* SideNavBar (Desktop/Large Tablet) */}
       <nav 
-        className={`hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface-container-low border-r border-outline-variant pt-8 shadow-[10px_0_40px_rgba(0,0,0,0.08)] ${stressLevel === 'critical' ? 'border-r-red-500' : ''} transition-colors duration-500`}
+        className={`hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface border-r-2 border-outline pt-8 shadow-none ${stressLevel === 'critical' ? 'border-r-red-500' : ''} transition-colors duration-150`}
         onMouseMove={handleSidebarMouseMove}
         style={{ overscrollBehavior: 'contain' }}
       >
         {/* Sidebar Header & Branding */}
         <div className="px-6 mb-8">
           <div className="flex-row items-center gap-3 group">
-            <div className="w-10 h-10 bg-primary rounded-xl flex-row items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform duration-300">
+            <div className="w-10 h-10 bg-primary rounded-sm flex-row items-center justify-center shadow-none group-hover:scale-110 transition-transform duration-150">
               <span className="material-symbols-outlined text-white text-2xl">emergency</span>
             </div>
             <div>
@@ -140,10 +140,10 @@ const MainLayout = () => {
                       <li key={item.name} className="px-2 mb-1">
                         <Link
                           to={item.path}
-                          className={`flex-row items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 group relative ${
+                          className={`flex-row items-center gap-3 px-4 py-2.5 rounded-sm transition-all duration-150 group relative ${
                             isActive 
-                              ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]' 
-                              : 'text-on-surface-variant hover:bg-surface-container-highest hover:text-primary'
+                              ? 'bg-primary text-white scale-[1.02] border-2 border-primary' 
+                              : 'text-on-surface-variant hover:bg-surface-container hover:text-primary border-2 border-transparent'
                           }`}
                         >
                           <span className={`material-symbols-outlined transition-transform duration-300 ${isActive ? '' : 'group-hover:scale-110'}`}>
@@ -164,10 +164,10 @@ const MainLayout = () => {
         </div>
 
         {/* System & Profile Footer */}
-        <div className="mt-auto flex flex-col font-label text-sm font-medium border-t border-outline-variant py-6 px-4 bg-surface-container-low shadow-[0_-4px_12px_rgba(0,0,0,0.03)]">
+        <div className="mt-auto flex flex-col font-label text-sm font-medium border-t-2 border-outline py-6 px-4 bg-surface shadow-none">
           
           {/* Unified System Preferences */}
-          <div className="mb-4 flex-row items-center justify-around p-1.5 bg-surface-container rounded-2xl border border-outline-variant shadow-sm">
+          <div className="mb-4 flex-row items-center justify-around p-1.5 bg-surface-container rounded-sm border-2 border-outline shadow-none">
             <LanguageSwitcher compact />
             <div className="h-4 w-px bg-outline-variant/50"></div>
             <ThemeToggle />
@@ -181,7 +181,7 @@ const MainLayout = () => {
       </nav>
 
       {/* TopNavBar (Mobile only) */}
-      <header className="lg:hidden flex-row items-center justify-between w-full px-6 py-3 bg-surface/80 backdrop-blur-xl border-b border-outline-variant sticky top-0 z-40">
+      <header className="lg:hidden flex-row items-center justify-between w-full px-6 py-3 bg-surface border-b-2 border-outline sticky top-0 z-40 shadow-none">
         <div className="flex-row items-center gap-4">
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="material-symbols-outlined text-slate-700">menu</button>
           <h1 className="font-headline text-xl font-extrabold tracking-tighter text-blue-800 dark:text-blue-200">NurseFlow</h1>
@@ -223,7 +223,7 @@ const MainLayout = () => {
       )}
 
       {/* Main Content Canvas */}
-      <main className="flex-1 lg:ml-64 bg-background min-w-0 h-screen overflow-hidden flex flex-col transition-colors duration-500 relative">
+      <main className="flex-1 lg:ml-64 bg-background min-w-0 h-screen overflow-hidden flex flex-col transition-colors duration-150 relative">
         <Outlet />
       </main>
 

@@ -22,9 +22,7 @@ const TopAppBar = ({ onMenuClick }) => {
     <header className="top-app-bar" style={{
       position: 'fixed', top: 0, left: 0, right: 0, height: '3.25rem',
       backgroundColor: 'var(--surface)',
-      backdropFilter: 'blur(8px)',
-      WebkitBackdropFilter: 'blur(8px)',
-      borderBottom: '1px solid var(--outline-variant)',
+      borderBottom: '2px solid var(--outline)',
       zIndex: 1000,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 1rem'
@@ -75,10 +73,9 @@ const TopAppBar = ({ onMenuClick }) => {
           <Link to="/worklist" className={`nav-link ${location.pathname === '/worklist' ? 'active' : ''}`}>Worklist</Link>
         </div>
         
-        <div className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full hide-on-mobile" style={{ 
+        <div className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-sm hide-on-mobile" style={{ 
           backgroundColor: 'var(--surface-container-low)', 
-          border: '1px solid var(--outline-variant)',
-          backdropFilter: 'blur(8px)'
+          border: '2px solid var(--outline)'
         }}>
           <span className="text-[9px] font-black text-on-surface-variant uppercase opacity-40 mr-1.5 tracking-widest">Simulator</span>
           <button onClick={() => triggerCrisis('none')} className="btn-icon-sm" style={{ opacity: stressLevel === 'none' ? 1 : 0.4 }} title="Restore Standard"><span className="material-symbols-outlined text-[16px]">refresh</span></button>
@@ -90,8 +87,7 @@ const TopAppBar = ({ onMenuClick }) => {
 
         <button 
           onClick={toggleClassicUI}
-          className={`flex-row items-center gap-2 px-3 py-1.5 rounded-full border transition-all ${classicUI ? 'bg-primary text-white border-primary' : 'bg-surface text-on-surface-variant border-outline-variant opacity-60 hover:opacity-100'}`}
-          style={{ boxShadow: classicUI ? '0 4px 12px rgba(0, 94, 184, 0.3)' : 'none' }}
+          className={`flex-row items-center gap-2 px-3 py-1.5 rounded-sm border-2 transition-all ${classicUI ? 'bg-primary text-white border-primary' : 'bg-surface text-on-surface-variant border-outline opacity-60 hover:opacity-100'}`}
           title="Toggle Classic UI (Rollback Safety)"
         >
           <span className="material-symbols-outlined text-[18px]">
