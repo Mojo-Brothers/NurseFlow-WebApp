@@ -19,10 +19,9 @@ const TopAppBar = ({ onMenuClick }) => {
   const criticalCount = activeEncounters.filter(e => (e.last_news2 || 0) >= 7).length;
   
   return (
-    <header className="top-app-bar" style={{
-      position: 'fixed', top: 0, left: 0, right: 0, height: '3.25rem',
-      backgroundColor: 'var(--surface)',
-      borderBottom: '2px solid var(--outline)',
+    <header className="top-app-bar glass-panel" style={{
+      position: 'fixed', top: 0, left: 0, right: 0, height: '3.5rem',
+      borderBottom: '1px solid var(--outline-variant)',
       zIndex: 1000,
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 1rem'
@@ -73,9 +72,9 @@ const TopAppBar = ({ onMenuClick }) => {
           <Link to="/worklist" className={`nav-link ${location.pathname === '/worklist' ? 'active' : ''}`}>Worklist</Link>
         </div>
         
-        <div className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-sm hide-on-mobile" style={{ 
+        <div className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full hide-on-mobile" style={{ 
           backgroundColor: 'var(--surface-container-low)', 
-          border: '2px solid var(--outline)'
+          border: '1px solid var(--outline-variant)'
         }}>
           <span className="text-[9px] font-black text-on-surface-variant uppercase opacity-40 mr-1.5 tracking-widest">Simulator</span>
           <button onClick={() => triggerCrisis('none')} className="btn-icon-sm" style={{ opacity: stressLevel === 'none' ? 1 : 0.4 }} title="Restore Standard"><span className="material-symbols-outlined text-[16px]">refresh</span></button>
@@ -87,7 +86,7 @@ const TopAppBar = ({ onMenuClick }) => {
 
         <button 
           onClick={toggleClassicUI}
-          className={`flex-row items-center gap-2 px-3 py-1.5 rounded-sm border-2 transition-all ${classicUI ? 'bg-primary text-white border-primary' : 'bg-surface text-on-surface-variant border-outline opacity-60 hover:opacity-100'}`}
+          className={`flex-row items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 ${classicUI ? 'bg-primary text-white border-primary shadow-premium-glow' : 'bg-surface text-on-surface-variant border-outline-variant hover:bg-surface-container'}`}
           title="Toggle Classic UI (Rollback Safety)"
         >
           <span className="material-symbols-outlined text-[18px]">

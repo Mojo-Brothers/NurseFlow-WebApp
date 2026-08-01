@@ -179,7 +179,7 @@ export default function TriagePage() {
               </div>
             </div>
           </section>
-        ) : (
+        ) : operationalMode !== 'MONITOR' ? (
             <section className="bg-surface-container-low p-16 rounded-[3rem] border border-outline-variant border-dashed flex flex-col items-center justify-center text-center gap-8 animate-in zoom-in-95 duration-500">
                 <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-inner">
                     <User className="w-12 h-12" />
@@ -198,7 +198,7 @@ export default function TriagePage() {
                   PILIH PASIEN DARI MONITOR
                 </button>
             </section>
-        )}
+        ) : null}
 
         {/* ─── Layer 2: Core Operational View ─── */}
         <div className="flex-1 min-h-0">

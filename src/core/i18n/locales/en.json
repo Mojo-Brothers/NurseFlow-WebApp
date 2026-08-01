@@ -147,7 +147,9 @@
       "emergency": "🚨 ED / Emergency",
       "outpatient": "🏥 Outpatient",
       "inpatient": "🛏️ Inpatient",
-      "planned": "📅 Planned"
+      "planned": "📅 Planned",
+      "opd": "🏥 Outpatient (OPD)",
+      "ipd": "🛏️ Inpatient (IPD)"
     },
     "status": {
       "active": "Active",

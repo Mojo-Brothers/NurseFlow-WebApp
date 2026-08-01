@@ -9,6 +9,8 @@ import { getServiceCatalog } from '../../admin/services/masterData.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
+import { formatPatientName } from '../../../utils/displayUtils.js';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
 import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
 import PaymentModal from '../components/PaymentModal.jsx';
 import { toast } from 'react-hot-toast';
@@ -97,6 +99,8 @@ export default function BillingPage() {
     setIsSaving(false);
   };
 
+
+
   const handleFinalize = async () => {
     // In a real app, we would use a proper Modal for confirmation
     if (!window.confirm(t('billing.confirm_finalize'))) return;
@@ -111,10 +115,7 @@ export default function BillingPage() {
   };
 
 
-  const getPatientName = (pid) => {
-    const p = patients.find(p => p.id === pid);
-    return p ? `${p.mrn} — ${p.name} (${calculateAge(p.demographics?.dob)} ${t('common.years')})` : pid;
-  };
+  const getPatientName = (pid) => formatPatientName(pid, patients, calculateAge, t);
 
   return (
     <div className="p-8 w-full">
@@ -142,7 +143,7 @@ export default function BillingPage() {
           {isLoading ? (
             <div className="p-8 text-center"><span className="material-symbols-outlined anim-spin text-primary">progress_activity</span></div>
           ) : bills.length === 0 ? (
-            <div className="p-8 text-center text-on-surface-variant">{t('billing.no_active_bills')}</div>
+            <EmptyState icon="receipt_long" title={t('billing.no_active_bills')} description="" />
           ) : bills.map((bill) => {
             const badge = STATUS_BADGE[bill.status] || STATUS_BADGE.DRAFT;
             return (

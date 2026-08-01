@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { getShiftTasks, updateTaskStatus, createTask } from '../services/worklist.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
+import { formatPatientName } from '../../../utils/displayUtils.js';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
 
 const TASK_ICONS = {
   MEDICATION:   'medication',
@@ -82,11 +84,10 @@ export default function WorklistPage() {
     } catch (e) { alert(e.message); }
   };
 
+
+
   const filtered = filter === 'ALL' ? tasks : tasks.filter(t => t.status === filter);
-  const getPatientName = (pid) => {
-    const p = patients.find(p => p.id === pid);
-    return p ? p.name : pid;
-  };
+  const getPatientName = (pid) => formatPatientName(pid, patients);
 
   const pending   = tasks.filter(t => t.status === 'PENDING').length;
   const done      = tasks.filter(t => t.status === 'DONE').length;
@@ -147,9 +148,8 @@ export default function WorklistPage() {
             <span className="material-symbols-outlined anim-spin text-primary">progress_activity</span>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="card" style={{ padding: '3rem', textAlign: 'center', gridColumn: '1/-1' }}>
-            <span className="material-symbols-outlined" style={{ fontSize: '2.5rem', opacity: 0.3, display: 'block', marginBottom: '0.75rem' }}>task_alt</span>
-            <p style={{ color: 'var(--on-surface-variant)' }}>{t('worklist.no_tasks')}</p>
+          <div style={{ gridColumn: '1/-1' }}>
+            <EmptyState icon="task_alt" title={t('worklist.no_tasks')} description="" />
           </div>
         ) : filtered.map(task => {
           const sc = STATUS_COLORS[task.status] || STATUS_COLORS.PENDING;

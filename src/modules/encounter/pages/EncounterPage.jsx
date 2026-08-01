@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { ENCOUNTER_TYPES } from '../../../core/constants.js';
+import { formatPatientName } from '../../../utils/displayUtils.js';
 
 const ENCOUNTER_TYPE_LABELS = {
   EMERGENCY:  '🚨 IGD / Emergency',
@@ -62,10 +63,7 @@ export default function EncounterPage() {
     }
   };
 
-  const getPatientName = (patientId) => {
-    const p = patients.find(p => p.id === patientId);
-    return p ? `${p.mrn} — ${p.name}` : patientId;
-  };
+  const getPatientName = (patientId) => formatPatientName(patientId, patients);
 
   const formatTime = (ts) => {
     if (!ts?.toDate) return '—';

@@ -7,6 +7,8 @@ import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { useAuth } from '../../../contexts/useAuth.js';
+import { formatPatientName } from '../../../utils/displayUtils.js';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
 
 export default function BedManagementPage() {
   const { currentUser } = useAuth();
@@ -31,10 +33,16 @@ export default function BedManagementPage() {
   const bedMap = useMemo(() => {
     return beds.map(bed => {
       const encounter = activeEncounters.find(e => e.id === bed.encounter_id);
-      const patient = patients.find(p => p.id === bed.patient_id);
+      
+      let pName = 'Kosong';
+      if (bed.patient_id) {
+        // Use formatPatientName which handles UUID fallback gracefully
+        pName = formatPatientName(bed.patient_id, patients).split(' — ')[1] || formatPatientName(bed.patient_id, patients);
+      }
+
       return {
         ...bed,
-        patientName: patient?.name || 'Kosong',
+        patientName: pName,
         news2: encounter?.last_news2 || 0,
         status: encounter?.status || 'N/A'
       };
@@ -148,8 +156,8 @@ export default function BedManagementPage() {
       </div>
 
       {bedMap.length === 0 && (
-        <div className="py-20 text-center border-2 border-dashed border-outline-variant rounded-3xl opacity-20 mt-10">
-           <p className="text-sm font-black uppercase tracking-widest">No Beds Configured for this Ward</p>
+        <div className="col-span-full mt-10">
+          <EmptyState icon="bed" title="Tidak Ada Bed" description="Belum ada bed yang dikonfigurasi untuk bangsal ini." />
         </div>
       )}
     </div>

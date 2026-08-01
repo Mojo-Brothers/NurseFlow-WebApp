@@ -7,6 +7,7 @@ import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { deductByName } from '../services/inventory.service.js';
 import { useTranslation } from 'react-i18next';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
 
 const ROUTE_CONFIG = {
   PO:  { labelKey: 'pharmacy_v2.routes.oral', defaultLabel: 'Oral', icon: 'pill', bg: 'var(--surface-container-high)', text: 'var(--on-surface)' },
@@ -91,9 +92,8 @@ export default function PharmacyPage() {
 
          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
             {pendingQueue.length === 0 ? (
-               <div className="col-span-full py-20 text-center flex-column items-center gap-4">
-                  <span className="material-symbols-outlined text-6xl text-success opacity-20">inventory_2</span>
-                  <p className="font-bold text-on-surface-variant">{t('pharmacy_v2.zero_pending')}</p>
+               <div className="col-span-full">
+                 <EmptyState icon="inventory_2" title={t('pharmacy_v2.zero_pending')} description="" colorClass="text-success" />
                </div>
             ) : pendingQueue.map(med => {
                 const p = getPatient(med.patient_id);

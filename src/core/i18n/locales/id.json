@@ -148,7 +148,9 @@
       "emergency": "🚨 IGD / Darurat",
       "outpatient": "🏥 Rawat Jalan",
       "inpatient": "🛏️ Rawat Inap",
-      "planned": "📅 Terencana"
+      "planned": "📅 Terencana",
+      "opd": "🏥 Rawat Jalan (OPD)",
+      "ipd": "🛏️ Rawat Inap (IPD)"
     },
     "status": {
       "active": "Aktif",

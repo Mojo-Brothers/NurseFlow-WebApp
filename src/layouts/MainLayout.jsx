@@ -87,7 +87,7 @@ const MainLayout = () => {
 
       {/* SideNavBar (Desktop/Large Tablet) */}
       <nav 
-        className={`hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface border-r-2 border-outline pt-8 shadow-none ${stressLevel === 'critical' ? 'border-r-red-500' : ''} transition-colors duration-150`}
+        className={`hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface/95 backdrop-blur-xl border-r border-outline-variant pt-8 shadow-premium-soft ${stressLevel === 'critical' ? 'border-r-red-500' : ''} transition-colors duration-150`}
         onMouseMove={handleSidebarMouseMove}
         style={{ overscrollBehavior: 'contain' }}
       >
@@ -140,10 +140,10 @@ const MainLayout = () => {
                       <li key={item.name} className="px-2 mb-1">
                         <Link
                           to={item.path}
-                          className={`flex-row items-center gap-3 px-4 py-2.5 rounded-sm transition-all duration-150 group relative ${
+                          className={`flex-row items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 group relative ${
                             isActive 
-                              ? 'bg-primary text-white scale-[1.02] border-2 border-primary' 
-                              : 'text-on-surface-variant hover:bg-surface-container hover:text-primary border-2 border-transparent'
+                              ? 'bg-primary text-white scale-[1.02] shadow-premium-glow' 
+                              : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'
                           }`}
                         >
                           <span className={`material-symbols-outlined transition-transform duration-300 ${isActive ? '' : 'group-hover:scale-110'}`}>
@@ -164,10 +164,10 @@ const MainLayout = () => {
         </div>
 
         {/* System & Profile Footer */}
-        <div className="mt-auto flex flex-col font-label text-sm font-medium border-t-2 border-outline py-6 px-4 bg-surface shadow-none">
+        <div className="mt-auto flex flex-col font-label text-sm font-medium border-t border-outline-variant py-6 px-4 bg-surface/80 backdrop-blur-md">
           
           {/* Unified System Preferences */}
-          <div className="mb-4 flex-row items-center justify-around p-1.5 bg-surface-container rounded-sm border-2 border-outline shadow-none">
+          <div className="mb-4 flex-row items-center justify-around p-1.5 bg-surface-container rounded-xl border border-outline-variant shadow-sm">
             <LanguageSwitcher compact />
             <div className="h-4 w-px bg-outline-variant/50"></div>
             <ThemeToggle />
@@ -181,7 +181,7 @@ const MainLayout = () => {
       </nav>
 
       {/* TopNavBar (Mobile only) */}
-      <header className="lg:hidden flex-row items-center justify-between w-full px-6 py-3 bg-surface border-b-2 border-outline sticky top-0 z-40 shadow-none">
+      <header className="lg:hidden flex-row items-center justify-between w-full px-6 py-3 bg-surface/95 backdrop-blur-xl border-b border-outline-variant sticky top-0 z-40 shadow-sm">
         <div className="flex-row items-center gap-4">
           <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="material-symbols-outlined text-slate-700">menu</button>
           <h1 className="font-headline text-xl font-extrabold tracking-tighter text-blue-800 dark:text-blue-200">NurseFlow</h1>
