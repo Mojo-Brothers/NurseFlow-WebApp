@@ -19,13 +19,15 @@ export const registerPatient = async (patientData, staffEmail) => {
   try {
     return await runTransaction(db, async (transaction) => {
       // 1. DUPLICATE DETECTION: Check if NIK already exists
-      const q = query(
-        collection(db, COLLECTIONS.PATIENTS),
-        where('nik', '==', patientData.nik),
-        limit(1)
-      );
-      const snap = await getDocs(q);
-      if (!snap.empty) throw new Error('Pasien dengan NIK ini sudah terdaftar (Potensi duplikasi Rekam Medis).');
+      if (patientData.nik) {
+        const q = query(
+          collection(db, COLLECTIONS.PATIENTS),
+          where('nik', '==', patientData.nik),
+          limit(1)
+        );
+        const snap = await getDocs(q);
+        if (!snap.empty) throw new Error('Pasien dengan NIK ini sudah terdaftar (Potensi duplikasi Rekam Medis).');
+      }
 
       const timestamp = serverTimestamp();
       const randomNum = Math.floor(100000 + Math.random() * 900000); // 6 digit unique
@@ -83,12 +85,17 @@ export const getAllPatients = async (maxResults = 100) => {
       limit(maxResults)
     );
     const snapshot = await getDocs(q);
+    const firestorePatients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    // Return empty array if no patients found
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Always include DEMO_PATIENTS (Ny. Dewi Sartika, etc.) at the top
+    const firestoreIds = new Set(firestorePatients.map(p => p.id));
+    return [
+      ...DEMO_PATIENTS.filter(p => !firestoreIds.has(p.id)),
+      ...firestorePatients
+    ];
   } catch (error) {
     console.error('[PatientService] Failed to fetch patients:', error);
-    return [];
+    return DEMO_PATIENTS;
   }
 };
 

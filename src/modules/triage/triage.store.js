@@ -166,8 +166,21 @@ export const useTriageStore = create((set, get) => ({
     const { vitals, selectedPatientId, selectedEncounterId, secondaryAssessment, screeningQuestions, esiLevel, chiefComplaint } = get();
 
     if (!selectedPatientId || !selectedEncounterId) {
-      set({ error: 'Pasien dan Encounter Aktif wajib dipilih!' });
-      return;
+      const msg = 'Pasien dan Encounter Aktif wajib dipilih!';
+      set({ error: msg });
+      throw new Error(msg);
+    }
+
+    if (!esiLevel) {
+      const msg = 'JCI Protocol: ESI Level wajib ditentukan sebelum submit.';
+      set({ error: msg });
+      throw new Error(msg);
+    }
+
+    if (!chiefComplaint || chiefComplaint.trim() === '') {
+      const msg = 'JCI Protocol: Chief Complaint wajib diisi.';
+      set({ error: msg });
+      throw new Error(msg);
     }
 
     set({ isSubmitting: true, error: null });
@@ -193,6 +206,7 @@ export const useTriageStore = create((set, get) => ({
     } catch (err) {
       console.error('[TriageStore] Submit error:', err);
       set({ isSubmitting: false, error: err.message, holdProgress: 0 });
+      throw err;
     }
   },
 }));

@@ -2,37 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 :root {
-  /* Colors - Oceanic Clinical Monochrome */
-  --primary: #015c80; 
-  --primary-rgb: 1, 92, 128;
-  --primary-container: #004561;
+  /* Colors - Rich Deep Oceanic (EHIS 2026 Premium) */
+  --primary: #026b96; 
+  --primary-rgb: 2, 107, 150;
+  --primary-container: #014d6e;
   --on-primary: #ffffff;
   --on-primary-container: #80cfff;
-  --primary-fixed: #cce9ff;
 
-  --secondary: #000000;
-  --secondary-container: #e6e6e6;
+  --secondary: #0f172a;
+  --secondary-container: #1e293b;
   --on-secondary: #ffffff;
-  --on-secondary-container: #000000;
-  --secondary-fixed: #cccccc;
+  --on-secondary-container: #f8fafc;
 
-  --tertiary: #6e2600;
-  --tertiary-container: #933702;
+  --tertiary: #b45309;
+  --tertiary-container: #78350f;
   --on-tertiary: #ffffff;
-  --on-tertiary-container: #ffb99c;
+  --on-tertiary-container: #fde68a;
 
-  --error: #ba1a1a;
-  --error-container: #ffdad6;
-  --on-error: #ffffff;
-  --on-error-container: #93000a;
-
-  /* Surfaces - Clean Clinical Palette */
-  --background: #f8fafc;
-  --on-background: #0f172a;
+  /* Surfaces - Clean, High Contrast */
+  --background: #f4f7fb;
+  --on-background: #090e17;
   --surface: #ffffff;
   --on-surface: #0f172a;
-  --on-surface-variant: #64748b;
+  --on-surface-variant: #475569;
   
   --surface-container-lowest: #ffffff;
   --surface-container-low: #f8fafc;
@@ -41,54 +36,37 @@
   --surface-container-highest: #cbd5e1;
   
   --outline: #e2e8f0;
-  --outline-rgb: 226, 232, 240;
   --outline-variant: #cbd5e1;
-  --outline-variant-rgb: 203, 213, 225;
-  --inverse-surface: #0f172a;
-  --inverse-on-surface: #f8fafc;
-
-  /* Surface RGBs for high-density dividers */
-  --surface-container-low-rgb: 250, 250, 250;
-  --surface-container-highest-rgb: 224, 224, 224;
-
-  /* Triage Specific Colors */
-  --status-error: #ba1a1a;
-  --status-warning: #933702;
-  --status-primary: #015c80;
-  --status-secondary: #000000;
 
   /* Typography */
-  --font-headline: 'Manrope', system-ui, sans-serif;
-  --font-body: 'Public Sans', system-ui, sans-serif;
+  --font-headline: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
 
-  /* Spacing & Shapes - Premium Modern */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
-
-  /* Motion - Snappy */
-  --transition-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-standard: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dark {
-  --primary: #80cfff;
-  --primary-rgb: 128, 207, 255;
-  --primary-container: #015c80;
-  --on-primary: #001a26;
-  --background: #050505;
-  --surface: #0a0a0a;
-  --on-surface: #f5f5f5;
-  --on-surface-variant: #cccccc;
-  --surface-container-lowest: #000000;
-  --surface-container-low: #111111;
-  --surface-container: #1a1a1a;
-  --outline-variant: #333333;
-  --outline-variant-rgb: 51, 51, 51;
-  --outline: #ffffff;
+  --primary: #38bdf8;
+  --primary-rgb: 56, 189, 248;
+  --primary-container: #0284c7;
+  --on-primary: #082f49;
+  
+  --background: #020617;
+  --on-background: #f8fafc;
+  --surface: #0f172a;
+  --on-surface: #f1f5f9;
+  --on-surface-variant: #94a3b8;
+  
+  --surface-container-lowest: #020617;
+  --surface-container-low: #0b1120;
+  --surface-container: #0f172a;
+  --surface-container-high: #1e293b;
+  --surface-container-highest: #334155;
+  
+  --outline: #1e293b;
+  --outline-variant: #334155;
 }
 
 @layer base {
@@ -97,221 +75,154 @@
     color: var(--on-surface);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
-    transition: background-color 0.1s ease, color 0.1s ease;
+    -moz-osx-font-smoothing: grayscale;
+    transition: background-color var(--transition-smooth), color var(--transition-smooth);
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-headline);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     font-weight: 800;
     color: var(--on-surface);
   }
 }
 
 @layer components {
-  /* ─── Premium Atelier Components -> Modern Glass ─── */
+  /* ─── Premium Glassmorphism ─── */
   
   .glass-panel {
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
   }
   
   .dark .glass-panel {
-    background: rgba(10, 10, 10, 0.7);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-  }
-
-  .ambient-shadow {
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
   }
 
   .clinical-card {
     background-color: var(--surface-container-lowest);
     border: 1px solid var(--outline);
-    border-radius: var(--radius-lg);
+    border-radius: 1.25rem;
     padding: 1.5rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all var(--transition-smooth);
   }
   
   .clinical-card:hover {
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
     transform: translateY(-2px);
+    border-color: rgba(var(--primary-rgb), 0.3);
   }
 
-  .primary-gradient {
-    background: var(--primary); /* Flat */
+  .dark .clinical-card:hover {
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
   }
 
-  /* ─── Triage Specific Components ─── */
+  /* ─── Modern Buttons ─── */
   
-  .esi-badge {
-    border-radius: var(--radius-full);
-    border: none;
-    padding: 0.35rem 0.85rem;
-    display: flex;
-    flex-direction: column;
+  .btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-container) 100%);
+    color: var(--on-primary);
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-family: var(--font-headline);
+    letter-spacing: 0.01em;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-  }
-  .esi-1 { background-color: #ba1a1a; color: white; border-color: #ba1a1a; }
-  .esi-2 { background-color: #933702; color: white; border-color: #933702; }
-  .esi-3 { background-color: #015c80; color: white; border-color: #015c80; }
-  .esi-4 { background-color: #111111; color: white; border-color: #111111; }
-  .esi-5 { background-color: #ffffff; color: black; border-color: #000000; }
-
-  .vital-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-  }
-
-  .vital-button {
-    background-color: var(--surface-container-lowest);
-    border: 1px solid var(--outline);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transition: var(--transition-fast);
+    gap: 0.5rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.3);
     position: relative;
     overflow: hidden;
-    cursor: pointer;
   }
 
-  .vital-button.active {
-    background-color: var(--primary);
-    color: var(--on-primary);
-    border-color: var(--primary);
+  .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+    transform: skewX(-20deg);
+    transition: all 0.5s ease;
   }
 
-  /* ─── Anti-Collapse Layout Engine ─── */
-  
-  .flex-row { 
-    display: flex; 
-    flex-direction: row; 
-    flex-wrap: nowrap; 
-    min-width: 0;
-  }
-  
-  .flex-column { 
-    display: flex; 
-    flex-direction: column; 
-    min-width: 0;
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.4);
   }
 
-  .items-center { align-items: center; }
-  .justify-between { justify-content: space-between; }
-  .flex-1 { flex: 1; min-width: 0; }
-
-  .gap-1 { gap: 0.25rem; }
-  .gap-2 { gap: 0.5rem; }
-  .gap-3 { gap: 0.75rem; }
-  .gap-4 { gap: 1rem; }
-  .gap-6 { gap: 1.5rem; }
-  .gap-8 { gap: 2rem; }
-
-  /* Grid System */
-  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
-
-  @media (max-width: 1024px) {
-    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .btn-primary:hover::after {
+    left: 150%;
   }
 
-  /* ─── Global Form Components ─── */
-  
-  .form-group {
-    display: flex;
-    flex-direction: column;
+  .btn-primary:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(var(--primary-rgb), 0.2);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--on-surface-variant);
+    padding: 0.75rem 1.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     gap: 0.5rem;
-    margin-bottom: 1.5rem;
+    transition: all var(--transition-fast);
   }
 
+  .btn-ghost:hover {
+    background: var(--surface-container-high);
+    color: var(--on-surface);
+  }
+
+  /* ─── Form Inputs ─── */
+  
   .form-input {
     width: 100%;
-    min-width: 0;
     padding: 0.85rem 1.25rem;
     background-color: var(--surface-container-low);
-    border: 1px solid var(--outline-variant);
-    border-radius: var(--radius-md);
+    border: 1px solid var(--outline);
+    border-radius: 0.75rem;
     color: var(--on-surface);
     font-family: var(--font-body);
     font-size: 0.95rem;
-    font-weight: 700;
-    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 500;
+    transition: all var(--transition-fast);
   }
 
   .form-input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: none;
+    box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
     background: var(--surface-container-lowest);
   }
 
-  .metric-label {
-    display: block;
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: var(--on-surface);
-    margin-bottom: 0.6rem;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-
-  label:not(.btn-primary label) {
-    font-size: 0.65rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--on-surface);
-    margin-bottom: 0.25rem;
-    display: block;
-  }
-
-  /* ─── Button System ─── */
+  /* ─── Utility Layouts ─── */
   
-  .btn-primary {
-    background: var(--primary);
-    color: var(--on-primary);
-    padding: 0.85rem 1.75rem;
-    border-radius: var(--radius-full);
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: none;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 12px rgba(1, 92, 128, 0.2);
-  }
+  .flex-row { display: flex; flex-direction: row; }
+  .flex-col { display: flex; flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .justify-center { justify-content: center; }
 
-  .btn-primary:hover {
-    background: var(--primary-container);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(1, 92, 128, 0.3);
+  /* ─── Micro-Animations ─── */
+  .hover-scale {
+    transition: transform var(--transition-fast);
   }
-
-  .btn-primary:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 4px rgba(1, 92, 128, 0.2);
-  }
-
-  .btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: var(--surface-container-high);
-    border-color: var(--outline-variant);
-    color: var(--on-surface-variant);
+  .hover-scale:hover {
+    transform: scale(1.02);
   }
 }
 
@@ -319,9 +230,10 @@
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   
-  .soft-pulse:active { animation: softPulse 0.3s ease-out; }
-  @keyframes softPulse {
-    0% { background-color: var(--primary-fixed); }
-    100% { background-color: inherit; }
+  .text-gradient {
+    background: linear-gradient(135deg, var(--primary) 0%, #38bdf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }

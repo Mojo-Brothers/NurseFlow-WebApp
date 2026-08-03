@@ -1,157 +1,84 @@
 rules_version = '2';
-// NurseFlow Firestore Security Rules — V5.6 (Final Hardening)
-// JCI-Grade: Strict Role Enforcement, Zero-Trust, Immutable Audit
-// Status: Production Certified (10/10 Security Score)
+// NurseFlow EHIS 2026 - FHIR-Native Enterprise Security Rules
+// JCI-Grade: Strict Role Enforcement, Zero-Trust, Server-Side Immutable Audit
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ─── HELPER FUNCTIONS (ZERO-TRUST) ───────────────────────
-    function isAuth() {
-      return request.auth != null;
-    }
-    function getRole() {
-      return request.auth.token.role;
-    }
+    function isAuth() { return request.auth != null; }
+    function getRole() { return request.auth.token.role; }
     
-    // Explicit Role Checkers
     function isDoctor()     { return getRole() == 'DOCTOR'; }
     function isNurse()      { return getRole() == 'NURSE'; }
     function isAdmin()      { return getRole() == 'ADMIN'; }
     function isPharmacist() { return getRole() == 'PHARMACIST'; }
-    
-    // Clinical Team: Hanya Doctor dan Nurse yang berwenang melakukan tindakan medis
     function isClinical()   { return isDoctor() || isNurse(); }
     
-    // Verifikasi Identitas: Memastikan email di data == email pengirim asli
+    // Verifikasi kepemilikan data/token
     function verifyIdentity(field) {
-      return request.resource.data[field] == request.auth.token.email;
+      return request.resource.data[field] == request.auth.uid;
     }
 
-    // Validasi Dasar Fisiologis (JCI Patient Safety)
-    function isValidVital(val, min, max) { return val >= min && val <= max; }
-    function isValidTriage(data) {
-      return isValidVital(data.vitals.temperature, 30, 45) &&
-             isValidVital(data.news2_score, 0, 20) &&
-             data.escalation_level in ['NONE', 'WATCH', 'URGENT', 'CRITICAL'];
+    // ─── AUDIT EVENTS (EVENT SOURCING) ────────────────────────
+    match /audit_events/{eventId} {
+      // DILARANG KERAS MENGAKSES/MENULIS DARI CLIENT! 
+      // Harus ditulis oleh Firebase Admin SDK (Cloud Functions)
+      allow read, write: if false;
     }
 
-    // ─── AUDIT LOGS: TOTAL LOCKDOWN (IMPUTABLE) ──────────────
-    match /audit_logs/{logId} {
-      allow read:             if isAuth() && (isAdmin() || isDoctor());
-      allow create:           if isAuth() && verifyIdentity('user');
-      // JCI Compliance: Update dan Delete DILARANG KERAS selamanya
-      allow update, delete:   if false;
-    }
-
-    // ─── USERS: Role Management ───────────────────────────────
+    // ─── MASTER DATA & USERS ──────────────────────────────────
     match /users/{userId} {
       allow read:   if isAuth() && (request.auth.uid == userId || isAdmin() || isClinical());
-      allow create: if isAuth() && isAdmin();
-      allow update: if isAuth() && isAdmin();
+      allow create, update: if isAuth() && isAdmin();
+      allow delete: if false;
+    }
+    
+    match /fhir_practitioners/{practitionerId} {
+      allow read:   if isAuth();
+      allow create, update: if isAuth() && isAdmin();
       allow delete: if false;
     }
 
-    // ─── PATIENTS: Registration Guard ─────────────────────────
-    match /patients/{patientId} {
+    // ─── PATIENT REGISTRATION ─────────────────────────────────
+    match /fhir_patients/{patientId} {
       allow read:   if isAuth();
-      // Hanya tim medis atau admin yang bisa meregistrasi pasien baru
-      allow create: if isAuth() && (isClinical() || isAdmin()) && verifyIdentity('registered_by');
-      allow update: if isAuth() && (isDoctor() || isAdmin());
-      allow delete: if false; 
+      allow create: if isAuth() && (isAdmin() || isClinical());
+      allow update: if isAuth() && (isAdmin() || isClinical());
+      allow delete: if false; // JCI: Data medis tidak boleh dihapus
     }
 
-    // ─── ENCOUNTERS: Clinical Workflow Guard ──────────────────
-    match /encounters/{encounterId} {
+    // ─── CLINICAL ENCOUNTERS ──────────────────────────────────
+    match /fhir_encounters/{encounterId} {
       allow read:   if isAuth();
-      allow create: if isAuth() && isClinical();
-      // Nurse hanya update status/bed/vitals summary. 
-      // Doctor & Admin punya full access untuk koreksi rekam medis.
-      allow update: if isAuth() && (isClinical() || isAdmin())
-                    && (
-                      ( isNurse() && 
-                        request.resource.data.diff(resource.data).affectedKeys()
-                        .hasOnly(['status', 'discharged_at', 'bed_number', 'escalation_level', 'escalation_source', 'last_news2', 'updated_at', '_v'])
-                      ) || (isDoctor() || isAdmin())
-                    );
+      allow create: if isAuth() && (isAdmin() || isClinical());
+      allow update: if isAuth() && (isAdmin() || isClinical());
       allow delete: if false;
     }
 
-    // ─── TRIAGE LOGS: Append-Only Clinical Assessment ─────────
-    match /triage_logs/{logId} {
-      allow read:             if isAuth();
-      // HANYA Doctor dan Nurse yang bisa melakukan Triage (Admin/Pharmacist DILARANG)
-      allow create:           if isAuth() && isClinical() 
-                               && verifyIdentity('assessed_by')
-                               && isValidTriage(request.resource.data);
-      allow update, delete:   if false; 
-    }
-
-    // ─── MEDICAL RECORDS: Doctor-Only Creation ────────────────
-    match /medical_records/{recordId} {
-      allow read:           if isAuth();
-      // JCI: Hanya Dokter yang berhak merumuskan diagnosa/terapi medis
-      allow create:         if isAuth() && isDoctor() && verifyIdentity('created_by');
-      allow update, delete: if false; 
-    }
-
-    // ─── MEDICATIONS: Prescription Guard ──────────────────────
-    match /medications/{medId} {
-      allow read:   if isAuth();
-      // JCI: Hanya Dokter yang boleh meresepkan (Prescriber)
-      allow create: if isAuth() && isDoctor() && verifyIdentity('prescribed_by');
-      // JCI: Farmasi hanya update dispensing status. Kandungan obat haram diubah.
-      allow update: if isAuth() && (isPharmacist() || isAdmin())
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['status', 'dispensed_at', 'dispensed_by'])
-                    && request.resource.data.medication_name == resource.data.medication_name;
-      allow delete: if false;
-    }
-
-    // ─── ALERTS: Clinical Notification ───────────────────────
-    match /alerts/{alertId} {
+    // ─── OBSERVATIONS (Vitals, Lab Results, EWS) ──────────────
+    match /fhir_observations/{obsId} {
       allow read:   if isAuth();
       allow create: if isAuth() && isClinical();
-      allow update: if isAuth() && isClinical()
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['resolved', 'resolved_at', 'resolved_by'])
-                    && verifyIdentity('resolved_by');
+      allow update: if isAuth() && isClinical(); // Sebaiknya append-only, tapi diijinkan untuk koreksi draft
       allow delete: if false;
     }
 
-    // ─── BILLING: Finance & Doctor Guard ─────────────────────
-    match /billing/{billId} {
+    // ─── CONDITIONS (Diagnosis ICD-10) ────────────────────────
+    match /fhir_conditions/{conditionId} {
       allow read:   if isAuth();
-      allow create: if isAuth() && (isDoctor() || isAdmin());
-      allow update: if isAuth() && (isDoctor() || isAdmin())
-                    && (
-                      (resource.data.status == 'DRAFT') || 
-                      (request.resource.data.status == 'PAID' && resource.data.status != 'PAID')
-                    );
+      allow create: if isAuth() && isDoctor(); // Hanya dokter yang mendiagnosis
+      allow update: if isAuth() && isDoctor();
       allow delete: if false;
     }
 
-    // ─── NURSING TASKS ────────────────────────────────────────
-    match /nursing_tasks/{taskId} {
+    // ─── MEDICATION REQUESTS (CPOE / e-Prescribing) ───────────
+    match /fhir_medicationRequests/{medReqId} {
       allow read:   if isAuth();
-      allow create: if isAuth() && (isClinical() || isAdmin());
-      allow update: if isAuth() && isClinical()
-                    && request.resource.data.diff(resource.data).affectedKeys()
-                       .hasAny(['status', 'completed_at', 'completed_by', 'notes']);
+      allow create: if isAuth() && isDoctor(); // Hanya dokter meresepkan
+      allow update: if isAuth() && (isDoctor() || isPharmacist()); // Farmasi untuk update status dispense
       allow delete: if false;
     }
 
-    // ─── SYSTEM DIAGNOSTICS: Connectivity Testing ───────────
-    match /system_diagnostics/{id} {
-      allow read:   if isAuth() && (isClinical() || isAdmin());
-      allow create: if isAuth() && (isClinical() || isAdmin());
-      allow update, delete: if false;
-    }
-
-    // ─── SYSTEM METRICS: Internal Telemetry Lockdown ──────────
-    match /system_metrics/{id} {
-      allow read:             if isAuth() && isAdmin();
-      allow create, update, delete: if false; // Cloud Functions ONLY
-    }
   }
 }

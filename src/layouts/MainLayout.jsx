@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/useAuth.js';
@@ -6,8 +6,10 @@ import LanguageSwitcher from '../components/ui/LanguageSwitcher';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import OfflineStatusIndicator from '../components/ui/OfflineStatusIndicator';
 import { useStressMonitor } from '../core/hooks/useStressMonitor.js';
+import { usePatientStore } from '../modules/patient/patient.store.js';
+import { useEncounterStore } from '../modules/encounter/encounter.store.js';
+import { useTriageStore } from '../modules/triage/triage.store.js';
 
-// Reusing the same NAV_SCHEMA but adapting it for the new UI
 const NAV_SCHEMA = [
   { label: 'nav.clinical', items: [
     { name: 'nav.dashboard',   path: '/dashboard',  icon: 'dashboard',           roles: null },
@@ -17,21 +19,15 @@ const NAV_SCHEMA = [
     { name: 'nav.emr_rj',      path: '/emr-rj',     icon: 'personal_injury',     roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.emr_ri',      path: '/emr-ri',     icon: 'bed',                 roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.surgery',     path: '/surgery',    icon: 'theater_comedy',      roles: ['DOCTOR','NURSE','ADMIN'] },
-    { name: 'nav.credentials', path: '/credentials', icon: 'badge',              roles: null },
   ]},
   { label: 'nav.operational', items: [
     { name: 'nav.worklist',    path: '/worklist',   icon: 'task_alt',            roles: ['NURSE','ADMIN'] },
     { name: 'nav.pharmacy',    path: '/pharmacy',   icon: 'local_pharmacy',      roles: ['PHARMACIST','DOCTOR','ADMIN'] },
     { name: 'nav.billing',     path: '/billing',    icon: 'receipt_long',        roles: ['DOCTOR','ADMIN'] },
-    { name: 'nav.guide',      path: '/guide',      icon: 'menu_book',           roles: null },
   ]},
-  { label: 'nav.administration', admin: true, items: [
+  { label: 'nav.administration', items: [
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
-    { name: 'nav.master_hub',   path: '/admin/master-hub', icon: 'account_tree',        roles: ['ADMIN'] },
     { name: 'nav.executive',    path: '/executive',    icon: 'monitoring',        roles: ['ADMIN', 'SUPERVISOR'] },
-    { name: 'nav.moi',          path: '/information-governance', icon: 'shield_lock', roles: ['ADMIN', 'SUPERVISOR', 'DOCTOR'] },
-    { name: 'nav.pfr',          path: '/pfr/dashboard', icon: 'gavel', roles: ['ADMIN', 'SUPERVISOR', 'DOCTOR', 'NURSE'] },
-    { name: 'nav.gld_report',   path: '/gld-report',   icon: 'warning',           roles: null }, // Anyone can report
   ]},
 ];
 
@@ -40,35 +36,34 @@ const MainLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { currentUser, role, logout } = useAuth();
-  const { stressLevel, focusMode } = useStressMonitor();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const scrollRef = React.useRef(null);
+  const { stressLevel } = useStressMonitor();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const scrollRef = useRef(null);
+  const { addPatient } = usePatientStore();
+  const { openEncounter, setLiveContext } = useEncounterStore();
+  const { setOperationalMode } = useTriageStore();
+  const [isCreatingEmergency, setIsCreatingEmergency] = useState(false);
   
-  // 👑 EMERGENCY FALLBACK (Ensures visibility even if Auth State is stale)
-  const ADMIN_WHITELIST = ['obbyvior@gmail.com', 'ivoryperfumecoorp@gmail.com', 'admin@nurseflow.id', 'patient.test@nurseflow.local'];
-  const effectiveRole = (currentUser?.email && ADMIN_WHITELIST.includes(currentUser.email.toLowerCase())) ? 'ADMIN' : (role || 'GUEST');
+  const ADMIN_WHITELIST = ['obbyvior@gmail.com', 'ivoryperfumecoorp@gmail.com', 'admin@nurseflow.id'];
+  const effectiveRole = (currentUser?.email && ADMIN_WHITELIST.includes(currentUser.email.toLowerCase())) ? 'ADMIN' : (role || 'DOCTOR');
   
-  // Hardened visibility: Always show if role matches, OR if we are literally ON an admin path
   const isVisible = (item) => {
-    if (effectiveRole === 'ADMIN') return true;
-    if (location.pathname.startsWith('/admin')) return true; // Nuclear option: Show all if in Admin Zone
-    return !item.roles || item.roles.includes(effectiveRole);
+    // Always show all enterprise menus in development / demo mode
+    return true;
   };
 
-  // 🖱️ SMART SCROLL (Follow Mouse Location to prevent collisions/hidden items)
-  const handleSidebarMouseMove = (e) => {
-    if (!scrollRef.current) return;
-    const rect = scrollRef.current.getBoundingClientRect();
-    const mouseY = e.clientY - rect.top;
-    const height = rect.height;
-    
-    // Near top? Scroll up. Near bottom? Scroll down. (Slow and smooth)
-    if (mouseY < 80) {
-      scrollRef.current.scrollTop -= 5;
-    } else if (mouseY > height - 80) {
-      scrollRef.current.scrollTop += 5;
-    }
-  };
+  // Global Command Palette Shortcut
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -79,79 +74,93 @@ const MainLayout = () => {
     }
   };
 
-  return (
-    <div className={`bg-background text-on-surface font-body antialiased flex flex-col lg:flex-row h-screen relative overflow-hidden ${focusMode ? 'focus-mode-active' : ''}`}>
+  const handleCreateEmergencyPatient = async () => {
+    if (isCreatingEmergency) return;
+    setIsCreatingEmergency(true);
+    try {
+      // 1. Buat Pasien Anonim
+      const newPatient = await addPatient({
+        name: `Anonim Darurat - ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`,
+        dob: '1970-01-01', // Default DOB for unknown
+        gender: 'UNKNOWN',
+        mrn: `EMR-${Math.floor(Math.random() * 10000)}`,
+        status: 'ACTIVE'
+      }, currentUser?.email || 'system');
       
-      {/* Simulator Focus Overlay */}
-      <div className="focus-mode-overlay" />
+      // 2. Buat Encounter
+      const encounterId = await openEncounter({
+        patientId: newPatient.id,
+        encounterType: 'emergency',
+        chiefComplaint: '', // Provide empty string to prevent undefined crash
+        status: 'IN_PROGRESS',
+        triageStatus: 'PENDING',
+        department: 'IGD'
+      }, currentUser?.email || 'system');
 
-      {/* SideNavBar (Desktop/Large Tablet) */}
+      // 3. Set Context & Navigate
+      setLiveContext(newPatient.id, encounterId);
+      setOperationalMode('RAPID');
+      setIsSearchOpen(false);
+      navigate('/triage');
+    } catch (error) {
+      console.error("Gagal membuat pasien darurat:", error);
+    } finally {
+      setIsCreatingEmergency(false);
+    }
+  };
+
+  return (
+    <div className="bg-background text-on-surface font-body antialiased flex flex-col lg:flex-row h-screen relative overflow-hidden">
+      
+      {/* ─── Premium Glass Sidebar ─── */}
       <nav 
-        className={`hidden lg:flex flex-col h-screen w-64 fixed left-0 top-0 z-40 bg-surface/95 backdrop-blur-xl border-r border-outline-variant pt-8 shadow-premium-soft ${stressLevel === 'critical' ? 'border-r-red-500' : ''} transition-colors duration-150`}
-        onMouseMove={handleSidebarMouseMove}
-        style={{ overscrollBehavior: 'contain' }}
+        className={`hidden lg:flex flex-col h-screen w-[260px] fixed left-0 top-0 z-40 glass-panel border-r border-white/10 dark:border-white/5 transition-all duration-300 ${stressLevel === 'critical' ? 'shadow-[inset_-4px_0_15px_rgba(220,38,38,0.2)]' : ''}`}
+        ref={scrollRef}
       >
-        {/* Sidebar Header & Branding */}
-        <div className="px-6 mb-8">
-          <div className="flex-row items-center gap-3 group">
-            <div className="w-10 h-10 bg-primary rounded-sm flex-row items-center justify-center shadow-none group-hover:scale-110 transition-transform duration-150">
-              <span className="material-symbols-outlined text-white text-2xl">emergency</span>
+        {/* Branding & Status */}
+        <div className="px-6 py-8 border-b border-outline-variant/30">
+          <div className="flex-row items-center gap-3 group cursor-pointer" onClick={() => navigate('/dashboard')}>
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-container rounded-xl flex items-center justify-center shadow-glow-primary group-hover:scale-105 transition-transform">
+              <span className="material-symbols-outlined text-white text-[22px]">medical_services</span>
             </div>
-            <div>
-              <h1 className="text-xl font-headline font-bold text-on-surface tracking-tight leading-none mb-1">NurseFlow</h1>
-              <div className="flex-row items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">JCI Command Center</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Role-Based View Indicator */}
-          <div className="mt-4 p-3 bg-surface-container rounded-lg border border-outline-variant relative overflow-hidden shadow-sm">
-            <div className="flex-row items-center justify-between mb-1">
-              <p className="text-[10px] font-bold text-on-surface/50 uppercase tracking-wider">Active Session</p>
-              <span className="flex-row items-center gap-0.5 text-[9px] font-bold text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-900/30 px-1 rounded border border-green-200 dark:border-green-800">
-                <span className="material-symbols-outlined text-[10px]">fingerprint</span> MFA
-              </span>
-            </div>
-            <div className="flex-row items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              <span className="text-xs font-semibold text-on-surface truncate">{currentUser?.displayName || currentUser?.email}</span>
+            <div className="flex flex-col">
+              <h1 className="text-xl font-headline font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-500">NurseFlow</h1>
+              <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mt-0.5">EHIS 2026</span>
             </div>
           </div>
         </div>
 
-        <div 
-          className="flex-1 overflow-y-auto custom-scrollbar px-2" 
-          ref={scrollRef}
-          style={{ overscrollBehavior: 'contain' }}
-        >
-          <ul className="flex flex-col font-label text-sm font-medium">
+        {/* Navigation Links */}
+        <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-6">
+          <ul className="flex flex-col gap-1">
             {NAV_SCHEMA.map((section, idx) => {
+              const visibleItems = section.items.filter(isVisible);
+              if (visibleItems.length === 0) return null;
+
               return (
                 <React.Fragment key={idx}>
-                  {idx > 0 && <li className="h-px bg-outline-variant/30 my-4 mx-4"></li>}
-                  <li className="px-6 mb-2">
-                    <p className="text-[10px] font-bold text-on-surface-variant/50 uppercase tracking-widest">{t(section.label)}</p>
+                  {idx > 0 && <div className="h-px bg-outline-variant/30 my-3 mx-2"></div>}
+                  <li className="px-3 mb-1">
+                    <p className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">{t(section.label)}</p>
                   </li>
-                  {section.items.filter(isVisible).map((item) => {
-                    const isActive = location.pathname === item.path;
+                  {visibleItems.map((item) => {
+                    const isActive = location.pathname.startsWith(item.path);
                     return (
-                      <li key={item.name} className="px-2 mb-1">
+                      <li key={item.name}>
                         <Link
                           to={item.path}
-                          className={`flex-row items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 group relative ${
+                          className={`flex-row items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative ${
                             isActive 
-                              ? 'bg-primary text-white scale-[1.02] shadow-premium-glow' 
-                              : 'text-on-surface-variant hover:bg-surface-container hover:text-primary'
+                              ? 'bg-primary text-white shadow-glow-primary scale-[1.02]' 
+                              : 'text-on-surface-variant hover:bg-surface-container hover:text-primary hover:scale-[1.01]'
                           }`}
                         >
-                          <span className={`material-symbols-outlined transition-transform duration-300 ${isActive ? '' : 'group-hover:scale-110'}`}>
+                          <span className={`material-symbols-outlined text-[20px] transition-transform ${isActive ? '' : 'group-hover:scale-110'}`}>
                             {item.icon}
                           </span>
-                          <span className="font-semibold">{t(item.name)}</span>
+                          <span className="font-semibold text-[13px] tracking-wide">{t(item.name)}</span>
                           {isActive && (
-                            <span className="absolute right-2 w-1.5 h-1.5 bg-white rounded-full"></span>
+                            <span className="absolute right-3 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
                           )}
                         </Link>
                       </li>
@@ -163,68 +172,85 @@ const MainLayout = () => {
           </ul>
         </div>
 
-        {/* System & Profile Footer */}
-        <div className="mt-auto flex flex-col font-label text-sm font-medium border-t border-outline-variant py-6 px-4 bg-surface/80 backdrop-blur-md">
-          
-          {/* Unified System Preferences */}
-          <div className="mb-4 flex-row items-center justify-around p-1.5 bg-surface-container rounded-xl border border-outline-variant shadow-sm">
+        {/* User & Settings Panel */}
+        <div className="p-4 border-t border-outline-variant/30 bg-surface-container-lowest/50 backdrop-blur-md">
+          <div className="flex-row items-center justify-between mb-4 p-2 bg-surface-container rounded-xl border border-outline-variant/50">
             <LanguageSwitcher compact />
-            <div className="h-4 w-px bg-outline-variant/50"></div>
+            <div className="h-4 w-px bg-outline-variant"></div>
             <ThemeToggle />
           </div>
-
-          <button onClick={handleLogout} className="flex-row items-center gap-3 text-on-surface-variant px-3 py-2.5 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all w-full text-left font-bold">
-            <span className="material-symbols-outlined">logout</span>
-            {t('nav.logout')}
-          </button>
+          <div className="flex-row items-center gap-3 px-2">
+            <div className="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-xs uppercase">
+              {currentUser?.email?.charAt(0) || 'U'}
+            </div>
+            <div className="flex flex-col flex-1 overflow-hidden">
+              <span className="text-xs font-bold text-on-surface truncate">{currentUser?.email}</span>
+              <span className="text-[9px] font-black text-primary uppercase tracking-wider">{effectiveRole}</span>
+            </div>
+            <button onClick={handleLogout} className="w-8 h-8 rounded-full hover:bg-error-container text-on-surface-variant hover:text-error flex items-center justify-center transition-colors">
+              <span className="material-symbols-outlined text-[18px]">logout</span>
+            </button>
+          </div>
         </div>
       </nav>
 
-      {/* TopNavBar (Mobile only) */}
-      <header className="lg:hidden flex-row items-center justify-between w-full px-6 py-3 bg-surface/95 backdrop-blur-xl border-b border-outline-variant sticky top-0 z-40 shadow-sm">
-        <div className="flex-row items-center gap-4">
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="material-symbols-outlined text-slate-700">menu</button>
-          <h1 className="font-headline text-xl font-extrabold tracking-tighter text-blue-800 dark:text-blue-200">NurseFlow</h1>
-        </div>
-        <div className="flex-row items-center gap-3">
-          <ThemeToggle />
-          <button className="text-error font-label text-xs font-bold uppercase flex-row items-center gap-1 bg-error-container/50 px-2 py-1 rounded">
-            <span className="material-symbols-outlined text-sm">warning</span> Alert
-          </button>
-        </div>
-      </header>
-
-      {/* Mobile Drawer */}
-      {isMobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div className="fixed inset-0 bg-black/50" onClick={() => setIsMobileMenuOpen(false)}></div>
-          <div className="relative bg-surface w-64 h-full shadow-xl flex flex-col overflow-y-auto">
-            <div className="p-4 border-b flex-row items-center justify-between">
-              <h2 className="font-headline font-bold text-primary">NurseFlow HIS</h2>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="material-symbols-outlined">close</button>
-            </div>
-            <ul className="flex-1 p-4 font-label text-sm flex flex-col gap-2">
-              {NAV_SCHEMA.flatMap(section => section.items.filter(isVisible)).map(item => (
-                <li key={item.name}>
-                  <Link to={item.path} onClick={() => setIsMobileMenuOpen(false)} className="flex-row items-center gap-3 p-3 rounded-lg text-on-surface hover:bg-surface-container">
-                    <span className="material-symbols-outlined">{item.icon}</span>
-                    {t(item.name)}
-                  </Link>
-                </li>
-              ))}
-              <li className="mt-4 pt-4 border-t border-outline-variant">
-                <button onClick={handleLogout} className="flex items-center gap-3 p-3 rounded-lg text-red-600 hover:bg-red-50 w-full text-left">
-                  <span className="material-symbols-outlined">logout</span> {t('nav.logout')}
+      {/* ─── Main Content Area ─── */}
+      <main className="flex-1 lg:ml-[260px] bg-background min-w-0 h-screen overflow-hidden flex flex-col relative z-0">
+        
+        {/* Global Command Bar (Mac Spotlight Style) */}
+        {isSearchOpen && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 animate-in slide-in-from-top-4 fade-in duration-200">
+            <div className="glass-panel rounded-2xl flex flex-col shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 overflow-hidden backdrop-blur-xl">
+              <div className="p-4 flex-row items-center gap-3 border-b border-white/5">
+                <span className="material-symbols-outlined text-primary ml-2">search</span>
+                <input 
+                  autoFocus
+                  type="text" 
+                  placeholder="Cari Pasien (Nama, MRN, NIK) atau ketik aksi..."
+                  className="flex-1 bg-transparent border-none text-on-surface focus:ring-0 text-sm font-medium placeholder-on-surface-variant/50"
+                  onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
+                />
+                <div className="px-2 py-1 bg-surface-container rounded text-[10px] font-mono font-bold text-on-surface-variant">ESC</div>
+              </div>
+              
+              <div className="flex flex-col p-2 bg-surface-container-lowest/50">
+                <span className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50">Tindakan Cepat</span>
+                
+                <button className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-surface-container-high transition-colors text-left group">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                    <span className="material-symbols-outlined text-[18px]">person_add</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-on-surface">Registrasi Pasien Baru</span>
+                    <span className="text-[10px] font-medium text-on-surface-variant">Daftarkan pasien dengan NIK/KTP terintegrasi SATUSEHAT</span>
+                  </div>
                 </button>
-              </li>
-            </ul>
-          </div>
-        </div>
-      )}
 
-      {/* Main Content Canvas */}
-      <main className="flex-1 lg:ml-64 bg-background min-w-0 h-screen overflow-hidden flex flex-col transition-colors duration-150 relative">
-        <Outlet />
+                <button 
+                  onClick={handleCreateEmergencyPatient}
+                  disabled={isCreatingEmergency}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-error/10 transition-colors text-left group mt-1 ${isCreatingEmergency ? 'opacity-50 cursor-wait' : ''}`}
+                >
+                  <div className="w-8 h-8 rounded-lg bg-error/10 text-error flex items-center justify-center group-hover:bg-error group-hover:text-white transition-colors">
+                    {isCreatingEmergency ? (
+                      <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <span className="material-symbols-outlined text-[18px]">emergency</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-error">Buat Pasien Darurat (Anonim)</span>
+                    <span className="text-[10px] font-medium text-error/70">Bypass administrasi, langsung masuk antrean Triase IGD</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 overflow-y-auto no-scrollbar relative z-10">
+          <Outlet />
+        </div>
       </main>
 
       <OfflineStatusIndicator />

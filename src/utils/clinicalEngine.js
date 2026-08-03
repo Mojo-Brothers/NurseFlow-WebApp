@@ -10,16 +10,24 @@
  * @returns {boolean} - True jika ada konflik.
  */
 export const checkAllergyConflict = (medicationName, patientAllergies = []) => {
-  if (!medicationName || !patientAllergies.length) return false;
+  if (!medicationName || !patientAllergies || !patientAllergies.length) return false;
 
-  const normalizedMed = medicationName.trim().toLowerCase();
+  const normalizedMed = String(medicationName).trim().toLowerCase();
   
   return patientAllergies.some(allergy => {
-    const normalizedAllergy = allergy.trim().toLowerCase();
+    if (!allergy) return false;
+    const allergyText = typeof allergy === 'string' 
+      ? allergy 
+      : (allergy.agent || allergy.name || allergy.allergen || allergy.substance || '');
     
-    // Exact match or partial match (e.g. "Amoxicillin" matches "Penicillin" class if logic expanded)
-    // For V1, we do strict string inclusion
-    return normalizedMed.includes(normalizedAllergy) || normalizedAllergy.includes(normalizedMed);
+    if (!allergyText) return false;
+    const normalizedAllergy = String(allergyText).trim().toLowerCase();
+    
+    // Check if medicine matches entire allergy string or sub-agents (e.g. "Amoxicillin / Penicillin")
+    const subAgents = normalizedAllergy.split(/[\/,+]/).map(s => s.trim()).filter(Boolean);
+    return subAgents.some(sub => normalizedMed.includes(sub) || sub.includes(normalizedMed)) ||
+           normalizedMed.includes(normalizedAllergy) || 
+           normalizedAllergy.includes(normalizedMed);
   });
 };
 

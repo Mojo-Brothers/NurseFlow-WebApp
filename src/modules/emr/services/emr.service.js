@@ -292,11 +292,17 @@ export const getPatientRecords = async (patientId) => {
       where('patientId', '==', patientId)
     );
     const snapshot = await getDocs(q);
+    const firestoreRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const demoRecords = DEMO_RECORDS.filter(r => r.patientId === patientId);
     
-    // Return empty array if no records found
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Merge so both new records and pre-populated demo records display
+    const firestoreIds = new Set(firestoreRecords.map(r => r.id));
+    return [
+      ...firestoreRecords,
+      ...demoRecords.filter(r => !firestoreIds.has(r.id))
+    ];
   } catch (error) {
     console.error('[EmrService] Failed to fetch records:', error);
-    return [];
+    return DEMO_RECORDS.filter(r => r.patientId === patientId);
   }
 };

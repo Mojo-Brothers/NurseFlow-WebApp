@@ -261,11 +261,21 @@ export default function A4Layout({
                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Digitally Signed & Time-Stamped</p>
               </div>
 
-              <div className="flex flex-col gap-8">
-                 <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Patient / Family Acknowledgement</p>
-                 <div className="h-24 border-b border-slate-200 border-dashed"></div>
-                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Identified via IPSG.1 Protocol</p>
-              </div>
+               <div className="flex flex-col gap-8">
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Patient / Family Acknowledgement</p>
+                  <div className="h-24 border-b border-slate-200 border-dashed flex items-center justify-center">
+                     {metadata?.patientSignatureBase64 || metadata?.signatureImage ? (
+                        <img 
+                           src={metadata?.patientSignatureBase64 || metadata?.signatureImage} 
+                           alt="Tanda Tangan Pasien" 
+                           className="max-h-20 max-w-full object-contain"
+                        />
+                     ) : (
+                        <span className="text-[10px] text-slate-300 italic">Identified via IPSG.1 Protocol</span>
+                     )}
+                  </div>
+                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{metadata?.witnessSignature || 'Identified via IPSG.1 Protocol'}</p>
+               </div>
            </div>
 
            <div className="pt-10 border-t border-slate-200 flex justify-between items-end">

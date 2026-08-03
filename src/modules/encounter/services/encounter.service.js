@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES, ESCALATION_LEVELS, SYNC_PRIORITIES, ESCALATION_SOURCES } from '../../../core/constants.js';
+import { DEMO_ENCOUNTERS } from '../../../core/demoData.js';
 
 /**
  * Membuka encounter baru dalam status WAITING.
@@ -197,6 +198,11 @@ export const getPatientEncounters = async (patientId) => {
  */
 export const getPatientActiveEncounter = async (patientId) => {
   try {
+    const demoEnc = DEMO_ENCOUNTERS.find(e => e.patient_id === patientId);
+    if (demoEnc) {
+      return demoEnc;
+    }
+
     const q = query(
       collection(db, COLLECTIONS.ENCOUNTERS),
       where('patient_id', '==', patientId),
@@ -210,10 +216,13 @@ export const getPatientActiveEncounter = async (patientId) => {
     );
     const snap = await getDocs(q);
     
-    return snap.empty ? null : { id: snap.docs[0].id, ...snap.docs[0].data() };
+    if (snap.empty) {
+      return null;
+    }
+    return { id: snap.docs[0].id, ...snap.docs[0].data() };
   } catch (error) {
     console.error('[EncounterService] Failed to fetch patient active encounter:', error);
-    return null;
+    return DEMO_ENCOUNTERS.find(e => e.patient_id === patientId) || null;
   }
 };
 

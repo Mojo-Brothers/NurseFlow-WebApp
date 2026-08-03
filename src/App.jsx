@@ -48,6 +48,7 @@ import PFRPatientRightsDashboard from './modules/pfr/pages/PatientRightsDashboar
 import MasterDataHub from './modules/admin/pages/MasterDataHub';
 import Teleconsultation from './modules/telemedicine/pages/TeleconsultationPage';
 import VirtualWaitingRoom from './modules/telemedicine/components/VirtualWaitingRoom';
+import SignaturePadEndpoint from './modules/emr/pages/SignaturePadEndpoint';
 import { useAuth } from './contexts/useAuth';
 import { Toaster } from 'react-hot-toast';
 
@@ -63,6 +64,10 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/e-sign/:requestId",
+    element: <SignaturePadEndpoint />
   },
   {
 //    element: <ProtectedRoute />,

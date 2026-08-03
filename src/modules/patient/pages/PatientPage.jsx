@@ -39,6 +39,7 @@ import {
   doc,
   updateDoc
 } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import { usePatientStore } from '../patient.store.js';
@@ -50,6 +51,7 @@ import { getAvailableDoctors } from '../services/patient.service.js';
 import { logAudit } from '../../../core/services/audit.service.js';
 import { AUDIT_ACTIONS, COLLECTIONS, ENCOUNTER_TYPES } from '../../../core/constants.js';
 import { useAuth } from '../../../contexts/useAuth.js';
+import { functions } from '../../../core/firebase.js';
 import AuditTrailModal from '../components/AuditTrailModal.jsx';
 import '../styles/Patients.css';
 
@@ -169,8 +171,14 @@ export default function PatientPage() {
     
     return matchesSearch && matchesInsurance && matchesSafety && matchesTriage && matchesType && matchesStatus;
   }).sort((a, b) => {
-    if (activeFilters.sortBy === 'RECENT') return new Date(b.createdAt) - new Date(a.createdAt);
-    if (activeFilters.sortBy === 'NAME') return a.name.localeCompare(b.name);
+    if (a.is_demo && !b.is_demo) return -1;
+    if (!a.is_demo && b.is_demo) return 1;
+    if (activeFilters.sortBy === 'RECENT') {
+      const dateA = new Date(a.createdAt?.toDate?.() || a.createdAt || a.registered_at || 0);
+      const dateB = new Date(b.createdAt?.toDate?.() || b.createdAt || b.registered_at || 0);
+      return dateB - dateA;
+    }
+    if (activeFilters.sortBy === 'NAME') return (a.name || '').localeCompare(b.name || '');
     return 0;
   });
 
@@ -276,7 +284,35 @@ export default function PatientPage() {
           delta: { name: patientData.name, nik: patientData.nik },
           reason: 'NEW_PATIENT_REGISTRATION'
         });
-        toast.success(t('patients_v2.success.registered') || 'Pasien berhasil didaftarkan');
+
+        // EHIS Phase 2: Bridging BPJS VClaim (Mock)
+        if (form.insurance_type?.toLowerCase().includes('bpjs')) {
+          toast.loading('Menghubungkan ke BPJS VClaim...', { id: 'bpjs-sep' });
+          try {
+            const createSEP = httpsCallable(functions, 'createSEP');
+            const sepResult = await createSEP({
+              noKartu: form.insurance_no,
+              tglSep: new Date().toISOString().substring(0, 10),
+              jnsPelayanan: '2', // Rawat Jalan
+              klsRawat: '1',
+              noMR: newPatient.mrn || 'NEW',
+              diagAwal: form.allergies || 'A00', // Mock diagnosis
+              poli: 'IGD',
+              user: currentUser?.email || 'system'
+            });
+            const sepNo = sepResult.data?.response?.sep?.noSep;
+            if (sepNo) {
+               toast.success(`SEP BPJS Terbit: ${sepNo}`, { id: 'bpjs-sep' });
+            } else {
+               toast.error('Gagal menerbitkan SEP BPJS', { id: 'bpjs-sep' });
+            }
+          } catch (err) {
+            console.error('BPJS Error:', err);
+            toast.error('Koneksi VClaim Gagal', { id: 'bpjs-sep' });
+          }
+        } else {
+          toast.success(t('patients_v2.success.registered') || 'Pasien berhasil didaftarkan');
+        }
       }
 
       setIsModalOpen(false);
@@ -350,7 +386,7 @@ export default function PatientPage() {
     selectPatient(patientId);
     
     // Route to EMR Workspace
-    navigate('/emr');
+    navigate('/emr-rj');
   };
 
   return (
@@ -362,50 +398,48 @@ export default function PatientPage() {
         </div>
       </div>
 
-      {/* ─── Modern Unified Command Bar ─── */}
-      <div className="relative mb-6">
-        <div className="command-bar-container">
-          <div className="command-search-group">
-            <span className="material-symbols-outlined text-primary opacity-70">search</span>
+      {/* ─── Premium Glass Command Bar ─── */}
+      <div className="relative mb-8 z-20">
+        <div className="glass-panel rounded-2xl p-3 flex-row items-center justify-between gap-4 shadow-premium-soft">
+          <div className="flex-1 flex-row items-center gap-3 px-3">
+            <span className="material-symbols-outlined text-primary/70 text-[24px]">search</span>
             <input 
               type="text" 
-              placeholder={t('patients_v2.search_placeholder')}
-              className="command-search-input"
+              placeholder="Cari Pasien (Nama, MRN, NIK)..."
+              className="w-full bg-transparent border-none text-on-surface focus:ring-0 font-medium placeholder-on-surface-variant/50 h-10 px-2"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
           
-          <div className="h-8 w-[1px] bg-outline-variant/50 hidden sm:block"></div>
+          <div className="h-10 w-[1px] bg-outline-variant/50 hidden md:block"></div>
           
-          <div className="flex-row items-center gap-2">
+          <div className="flex-row items-center gap-3">
             <button 
-              className={`filter-trigger-btn ${activeFilterCount > 0 ? 'active' : ''}`}
+              className={`flex-row items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-bold text-sm ${activeFilterCount > 0 ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container text-on-surface-variant'}`}
               onClick={() => setIsFilterOpen(true)}
             >
               <span className="material-symbols-outlined text-[20px]">tune</span>
-              <span className="hidden md:inline">{t('patients_v2.btn_filter')}</span>
-              {activeFilterCount > 0 && <span className="filter-badge">{activeFilterCount}</span>}
+              <span className="hidden md:inline">Filter</span>
+              {activeFilterCount > 0 && (
+                <span className="w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] ml-1">{activeFilterCount}</span>
+              )}
             </button>
-
-            <div className="h-8 w-[1px] bg-outline-variant/50 hidden sm:block mx-1"></div>
 
             <button 
               id="btn-new-patient-registration"
-              className="btn-primary h-12 px-6 rounded-xl shadow-lg shadow-primary/20 flex flex-row items-center gap-2"
+              className="btn-primary"
               onClick={(e) => { 
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Register Button Clicked');
                 setIsEditing(false);
                 setForm(initialFormState);
                 setIsModalOpen(true); 
                 setCurrentStep(1); 
-                toast.success('Membuka Formulir Pendaftaran...');
               }}
             >
               <span className="material-symbols-outlined text-[20px]">person_add</span>
-              <span className="font-black text-[11px] uppercase tracking-wider">{t('patients_v2.btn_new')}</span>
+              <span className="font-bold text-sm hidden sm:inline">Daftar Pasien</span>
             </button>
           </div>
         </div>
@@ -577,142 +611,94 @@ export default function PatientPage() {
         )}
       </div>
 
-      {/* ─── DESKTOP TABLE VIEW ─── */}
-      <div className="clinical-table-wrapper">
-        <table className="clinical-table">
-          <thead>
-            <tr>
-              <th className="col-id">MRN / No. RM</th>
-              <th className="col-identity">{t('patients_v2.table.identity')}</th>
-              <th className="col-age">{t('patients_v2.table.age_gender')}</th>
-              <th className="col-complaint">{t('patients_v2.table.complaint')}</th>
-              <th className="col-vitals">{t('patients_v2.table.vitals')}</th>
-              <th className="col-status">{t('patients_v2.table.status')}</th>
-              <th className="col-actions">{t('patients_v2.table.actions')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan="7" className="py-20 text-center">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    <span className="font-bold text-on-surface-variant/60">{t('patients_v2.table.syncing')}</span>
+      {/* ─── UNIFIED PREMIUM CARD GRID ─── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10 relative z-10">
+        {loading ? (
+          <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+            <span className="font-bold text-on-surface-variant/60 animate-pulse">Menyiapkan Data Pasien...</span>
+          </div>
+        ) : filteredPatients.length === 0 ? (
+          <div className="col-span-full py-24 flex flex-col items-center justify-center gap-4 opacity-40">
+            <div className="w-24 h-24 bg-surface-container-high rounded-full flex items-center justify-center mb-2 shadow-inner">
+              <span className="material-symbols-outlined text-[64px] text-on-surface-variant">person_search</span>
+            </div>
+            <h3 className="text-2xl font-headline font-black tracking-tight">{t('patients_v2.table.no_records')}</h3>
+            <p className="text-sm max-w-[300px] mx-auto text-center">{t('patients_v2.table.no_records_match', { term: searchTerm })}</p>
+            <button 
+              className="px-6 py-2 rounded-full border border-primary text-primary font-bold hover:bg-primary/10 transition-colors mt-4"
+              onClick={() => setSearchTerm('')}
+            >
+              Clear Search
+            </button>
+          </div>
+        ) : (
+          filteredPatients.map(patient => (
+            <div key={patient.id} className="clinical-card group flex flex-col relative overflow-hidden">
+              {/* Triage Edge Indicator */}
+              <div className={`absolute top-0 left-0 w-1.5 h-full ${patient.status === 'EMERGENCY' ? 'bg-error shadow-glow-error' : 'bg-primary'}`}></div>
+              
+              <div className="flex-row justify-between items-start mb-4 pl-3">
+                <div>
+                  <h3 className="font-headline font-black text-lg text-on-surface leading-tight group-hover:text-primary transition-colors">{patient.name || 'TANPA NAMA'}</h3>
+                  <div className="flex-row items-center gap-2 mt-1">
+                    <span className="text-[10px] font-mono font-bold bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">MRN: {patient.mrn || 'PENDING'}</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant/50 uppercase">{patient.demographics?.gender === 'M' ? 'Laki-laki' : 'Perempuan'} • {patient.demographics?.dob ? `${calculateAge(patient.demographics.dob)} Thn` : '--'}</span>
                   </div>
-                </td>
-              </tr>
-            ) : filteredPatients.length === 0 ? (
-              <tr>
-                <td colSpan="7" className="py-24 text-center">
-                  <div className="flex flex-col items-center gap-4 opacity-40">
-                    <div className="w-20 h-20 bg-surface-container-high rounded-full flex items-center justify-center mb-2">
-                      <span className="material-symbols-outlined text-5xl">person_off</span>
-                    </div>
-                    <h3 className="text-xl font-black tracking-tight">{t('patients_v2.table.no_records')}</h3>
-                    <p className="text-sm max-w-[300px] mx-auto">{t('patients_v2.table.no_records_match', { term: searchTerm })}</p>
-                    <button 
-                      className="btn-ghost text-primary font-black uppercase text-[10px] tracking-widest mt-4"
-                      onClick={() => setSearchTerm('')}
-                    >
-                      {t('patients_v2.filters.reset_search')}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              filteredPatients.map(patient => (
-                <tr key={patient.id} className="hover:bg-surface-container-low transition-all">
-                  <td className="col-id">
-                    <span className="patient-id-label">{patient.mrn || 'PENDING'}</span>
-                  </td>
-                  <td className="col-identity">
-                    <div className="flex flex-col">
-                      <span className="patient-name-cell font-black tracking-tight">{patient.name || 'TANPA NAMA'}</span>
-                      <span className="text-[10px] font-mono font-bold opacity-50">NIK: {patient.nik || '---------'}</span>
-                    </div>
-                  </td>
-                  <td className="col-age">
-                    <div className="flex flex-col">
-                      <span className="text-xs font-black">{patient.demographics?.dob ? `${calculateAge(patient.demographics.dob)} Thn` : '--'}</span>
-                      <span className="text-[10px] font-bold opacity-50 uppercase">{patient.demographics?.gender === 'M' ? 'Laki-laki' : 'Perempuan'}</span>
-                    </div>
-                  </td>
-                  <td className="col-complaint">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex flex-wrap gap-1">
-                        {patient.safety_flags?.allergy_risk && (
-                          <span className="px-1.5 py-0.5 bg-error text-white text-[8px] font-black rounded uppercase">Allergy</span>
-                        )}
-                        {patient.safety_flags?.fall_risk && (
-                          <span className="px-1.5 py-0.5 bg-warning text-white text-[8px] font-black rounded uppercase animate-pulse">Fall Risk</span>
-                        )}
-                      </div>
-                      <span className="text-xs text-on-surface-variant font-medium line-clamp-1">
-                        {patient.medical_summary?.chief_complaint || patient.clinical_baseline?.allergies?.[0] || 'Kunjungan Rutin'}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="col-vitals">
-                    <div className="flex flex-row items-center gap-3">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black opacity-40 uppercase">TD</span>
-                        <span className="text-xs font-bold">{patient.vitals?.bp || '--'}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black opacity-40 uppercase">HR</span>
-                        <span className="text-xs font-bold">{patient.vitals?.hr || '--'}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-[10px] font-black opacity-40 uppercase">SPO2</span>
-                        <span className="text-xs font-bold text-primary">{patient.vitals?.spo2 ? `${patient.vitals.spo2}%` : '--'}</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="col-status">
-                    <span className={`chip text-[10px] ${patient.status === 'EMERGENCY' ? 'chip-error' : 'chip-info'}`}>
-                      {patient.status || 'STABLE'}
-                    </span>
-                  </td>
-                  <td className="col-actions">
-                    <div className="action-menu-container">
-                      <button className="btn-action-trigger" onClick={(e) => toggleMenu(e, patient.id)}>
-                        <span className="material-symbols-outlined">more_horiz</span>
+                </div>
+                
+                <div className="action-menu-container">
+                  <button className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors" onClick={(e) => toggleMenu(e, patient.id)}>
+                    <span className="material-symbols-outlined">more_vert</span>
+                  </button>
+                  {activeMenuId === patient.id && (
+                    <div className="absolute right-0 top-10 w-48 glass-panel rounded-xl py-2 z-50 shadow-2xl animate-scale-in origin-top-right">
+                      <button className="w-full text-left px-4 py-2 hover:bg-surface-container-high text-sm font-bold flex items-center gap-3 text-primary" onClick={() => handleViewEMR(patient.id, patient.name)}>
+                        <span className="material-symbols-outlined text-[18px]">clinical_notes</span> Buka EMR
                       </button>
-                      {activeMenuId === patient.id && (
-                        <div className="action-menu-dropdown">
-                          <button className="action-menu-item" onClick={() => handleViewEMR(patient.id, patient.name)}>
-                            <span className="material-symbols-outlined">clinical_notes</span>
-                            {t('patients_v2.actions.view_emr')}
-                          </button>
-                          <button className="action-menu-item" onClick={() => handleEditPatient(patient)}>
-                            <span className="material-symbols-outlined">edit</span>
-                            {t('patients_v2.actions.edit')}
-                          </button>
-                          <button 
-                            className="action-menu-item" 
-                            onClick={() => {
-                              setSelectedPatientForAudit(patient);
-                              setIsAuditModalOpen(true);
-                              setActiveMenuId(null);
-                            }}
-                          >
-                            <span className="material-symbols-outlined">history</span>
-                            {t('patients_v2.actions.history') || 'Riwayat Audit'}
-                          </button>
-                          <div className="border-t border-outline-variant/30 my-1"></div>
-                          <button className="action-menu-item danger">
-                            <span className="material-symbols-outlined">delete</span>
-                            {t('patients_v2.actions.deactivate')}
-                          </button>
-                        </div>
-                      )}
+                      <button className="w-full text-left px-4 py-2 hover:bg-surface-container-high text-sm font-bold flex items-center gap-3 text-on-surface-variant" onClick={() => handleEditPatient(patient)}>
+                        <span className="material-symbols-outlined text-[18px]">edit</span> Edit Data
+                      </button>
+                      <button className="w-full text-left px-4 py-2 hover:bg-surface-container-high text-sm font-bold flex items-center gap-3 text-on-surface-variant" onClick={() => { setSelectedPatientForAudit(patient); setIsAuditModalOpen(true); setActiveMenuId(null); }}>
+                        <span className="material-symbols-outlined text-[18px]">history</span> Riwayat Audit
+                      </button>
                     </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4 pl-3">
+                <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30 flex flex-col gap-1">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant/50">Asuransi</span>
+                  <span className="text-xs font-bold truncate text-on-surface">{patient.insurance?.type || 'UMUM'}</span>
+                </div>
+                <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30 flex flex-col gap-1">
+                  <span className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant/50">DPJP</span>
+                  <span className="text-xs font-bold truncate text-on-surface">{patient.primary_physician?.name || getRandomDoctor(patient.id)}</span>
+                </div>
+              </div>
+
+              {/* Safety & Alerts */}
+              <div className="flex-row flex-wrap gap-2 mb-4 pl-3">
+                {patient.safety_flags?.allergy_risk && (
+                  <span className="px-2 py-1 bg-error-container text-on-error-container text-[9px] font-black rounded-md uppercase tracking-wider border border-error/20">Allergy Alert</span>
+                )}
+                {patient.safety_flags?.fall_risk && (
+                  <span className="px-2 py-1 bg-warning-container text-warning text-[9px] font-black rounded-md uppercase tracking-wider border border-warning/20 animate-pulse-soft">Fall Risk</span>
+                )}
+                {patient.status === 'EMERGENCY' && (
+                  <span className="px-2 py-1 bg-error text-white text-[9px] font-black rounded-md uppercase tracking-wider shadow-glow-error animate-pulse-alert">IGD Triage</span>
+                )}
+              </div>
+
+              <div className="mt-auto pt-3 border-t border-outline-variant/30 pl-3">
+                <span className="text-[10px] font-medium text-on-surface-variant/60 line-clamp-1">
+                  <strong className="font-bold text-on-surface-variant">Keluhan:</strong> {patient.medical_summary?.chief_complaint || patient.clinical_baseline?.allergies?.[0] || 'Kunjungan Rutin'}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* ─── MOBILE CARD VIEW (Visible on Small Screens) ─── */}

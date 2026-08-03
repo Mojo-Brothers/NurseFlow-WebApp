@@ -105,79 +105,17 @@ exports.processTriage = functions.https.onCall(async (data, context) => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 3. TRIGGERS — Automated Audit Trail (JCI)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-// Triage Logs Audit (Immutable Record)
-exports.onTriageCreate = functions.firestore
-  .document('triage_logs/{logId}')
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
-    await db.collection('audit_logs').add({
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      user:      data.assessed_by || 'unknown',
-      action:    'CREATE',
-      resource_type: 'triage_logs',
-      resource_id:   context.params.logId,
-      delta:         { score: data.news2_score, tamper: data.tamper_alert },
-      source:        'TRIGGER_AUTO'
-    });
-  });
-
-// Medication Audit (Strict)
-exports.onMedicationCreate = functions.firestore
-  .document('medications/{medId}')
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
-    await db.collection('audit_logs').add({
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      user:      data.prescribed_by,
-      action:    'CREATE',
-      resource_type: 'medications',
-      resource_id:   context.params.medId,
-      delta:         { med: data.medication_name, dose: data.dose },
-      source:        'TRIGGER_AUTO'
-    });
-  });
-
-// Patient Audit
-exports.onPatientCreate = functions.firestore
-  .document('patients/{patientId}')
-  .onCreate(async (snap, context) => {
-    const data = snap.data();
-    await db.collection('audit_logs').add({
-      timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      user:      data.registered_by || 'system',
-      action:    'CREATE',
-      resource_type: 'patients',
-      resource_id:   context.params.patientId,
-      delta:         { mrn: data.mrn },
-      source:        'TRIGGER_AUTO'
-    });
-  });
+const { auditTrailLogger } = require('./audit/eventLogger');
+exports.auditTrailLogger = auditTrailLogger;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// 4. UTILITY — MRN Generation (Secure)
+// 4. BPJS VClaim - Phase 2 EHIS 2026
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-exports.registerPatient = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login required.');
+const { createSEP } = require('./api/bpjs/vclaim');
+exports.createSEP = createSEP;
 
-  // DEFENSE-IN-DEPTH: Role Verification
-  const userRole = context.auth.token.role;
-  if (!['DOCTOR', 'NURSE', 'ADMIN'].includes(userRole)) {
-    throw new functions.https.HttpsError('permission-denied', 'Anda tidak memiliki wewenang untuk meregistrasi pasien.');
-  }
-
-  const { name, dob, gender, nik, address, phone } = data;
-  const randomNum = Math.floor(100000 + Math.random() * 900000);
-  const s = String(randomNum);
-  const mrn = `${s.substring(0,2)}-${s.substring(2,4)}-${s.substring(4,6)}`;
-
-  const payload = {
-    name, dob, gender, nik, address, phone, mrn,
-    is_active: true,
-    registered_at: admin.firestore.FieldValue.serverTimestamp(),
-    registered_by: context.auth.token.email,
-  };
-
-  const patientRef = await db.collection('patients').add(payload);
-  return { id: patientRef.id, mrn };
-});
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 5. Clinical EWS Automation - Phase 2 EHIS 2026
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const { calculateEWS } = require('./clinical/ewsCalculator');
+exports.calculateEWS = calculateEWS;

@@ -1,0 +1,51 @@
+[33mca60f21[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: implement UI component library and scaffold Outpatient EMR module with Radix UI and Tailwind CSS
+[33mf6ca753[m feat: implement EMR clinical modules and billing interface components
+[33ma2bfd31[m feat: initialize EMR module core components and UI design system libraries
+[33m8973d82[m feat: implement A4 document layout, assessment modal, and UGD form components for EMR module
+[33m43a449f[m feat: implement EMR component suite including A4 layout, modular clinical forms, and document management modals
+[33meb374b7[m feat: implement UGD assessment form and clinical module modal components
+[33m3bd4c76[m feat: implement EMR module featuring SOAP note documentation, patient search, and clinical assessment tools
+[33m049cf1c[m feat: add PatientSearchModal component, AISummaryBox placeholder, and master data seeder script
+[33m6503793[m feat: implement core EMR modules, patient services, and clinical UI components including AI summary and encounter tracking
+[33m5cbb1c3[m feat: implement encounter and patient service layers with Zustand stores and EMR dashboard components
+[33m42d7a9e[m feat: implement EMR clinical modules, safety dashboards, and medication ordering components
+[33m8f375af[m feat: implement EMR service, clinical module modal, and outpatient page for SOAP and diagnostic order management
+[33m7856e6d[m feat: scaffold full-stack hospital management system architecture including modular core, EMR, triage, pharmacy, and billing services
+[33m5e9ac8a[m feat: implement patient registration, triage, and encounter modules with JCI-compliant workflows
+[33m5335ffb[m feat: scaffold NurseFlow application core modules, layout, and UI components including global navigation and administration hubs
+[33ma15c22d[m feat: implement outpatient EMR module with dashboard integration and UI components
+[33m615cd7b[m feat: implement patient education module and add top navigation bar with system monitoring tools
+[33mdc3f4f8[m docs: update README with documentation links
+[33m3beb19e[m docs: add project task list and walkthrough in Indonesian
+[33m6f255d6[m feat: scaffold full-stack architecture and core clinical modules for NurseFlow WebApp
+[33mf965622[m feat: implement architectural design system with enforced ClinicalCard boundaries and modular page structure
+[33mf93550d[m[33m ([m[1;31morigin/develop[m[33m)[m feat: implement main layout with collapsible sidebar and top app bar
+[33m6bd02ac[m feat: implement core services for idempotency, billing, telemetry, and sync management alongside new UI modules
+[33m694248f[m Merge branch 'main' of https://github.com/Mojo-Brothers/NurseFlow-WebApp into develop
+[33ma8ecc81[m feat: implement triage module with clinical intelligence, patient encounter management, and real-time vital sign tracking
+[33m839a47d[m feat: implement robust offline synchronization queue with IndexedDB, audit logging, and system health diagnostics
+[33m9d90cd8[m feat: implement CI/CD pipeline workflows for automated testing, deployment, and production rollbacks
+[33mdd07d8c[m chore: implement Pulse Heartbeat and stabilize concurrency (Step 3 Test Brutal)
+[33m0172d5d[m ci: add GitHub Actions workflows for staging and production deployment
+[33mb50f2a4[m feat: implement AdminHubPage for audit, observability, and user management and disable no-undef rule in eslint config
+[33m8dca2ef[m feat: implement MainLayout with role-based navigation, add versioning component, and configure CI/CD deployment pipelines
+[33mf2d361d[m chore: remove lint and build steps from firebase predeploy configuration
+[33mc39cf20[m Merge pull request #1 from Mojo-Brothers/develop
+[33m15e4575[m feat: add GitHub Actions workflows for automated staging and production deployments to Firebase
+[33m85f94ce[m feat: implement core modules including billing, authentication, and connection monitoring with new service and page components
+[33m3161883[m build: implement enterprise-grade github actions for nurseflow v5
+[33mb758c8a[m feat: implement internationalization support and core dashboard, encounter, and triage modules with Firebase integration
+[33mf7e0a81[m feat: implement internationalization, authentication login page, and main application layout with role-based navigation
+[33m1a78365[m feat: implement triage service with clinical intelligence, velocity tracking, and offline-resilient sync queue
+[33mf6ae5a2[m feat: implement V5 triage page with clinical intelligence, velocity trends, and patient sync processing.
+[33m5a36f86[m feat: implement clinical engine, triage service, and patient management modules with NEWS2 scoring and offline sync support.
+[33m0aaf95f[m checkout: temporary commit for worktree checkout
+[33m56c6a54[m feat: initialize core application architecture and implement dashboard and patient management modules
+[33m864e94a[m feat: implement modular system architecture with core services, stores, and pages for NurseFlow WebApp
+[33m08a8cd4[m feat: initialize Firebase services and enable Firestore offline persistence
+[33mfc190ab[m feat: complete all modules - Pharmacy, Worklist, Billing, Cloud Functions, Firestore indexes
+[33m4355720[m feat(steps 3+8+9): RBAC auth store, Admin Hub, ErrorBoundary, pagination hook, role-aware sidebar
+[33m44e253f[m feat(steps 5c+7+9): add Encounters module, Cloud Functions, Firestore Security Rules
+[33m8af1181[m refactor(arch): implement domain-driven design with Firebase abstraction + Zustand
+[33m6e62b2c[m feat(his): implement jci emr, patient registration, triage, and google auth
+[33m99cdb9f[m Minor Update
