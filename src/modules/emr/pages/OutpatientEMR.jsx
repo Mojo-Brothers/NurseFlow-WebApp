@@ -181,7 +181,13 @@ export default function OutpatientEMR() {
   };
 
   const filteredSoapRecords = useMemo(() => {
-    return soapRecords.filter(rec => {
+    // Sort records newest first based on Firestore timestamp or Date
+    const sorted = [...soapRecords].sort((a, b) => {
+      const aTime = a.created_at?.seconds ? a.created_at.seconds * 1000 : new Date(a.created_at?.toDate?.() || 0).getTime();
+      const bTime = b.created_at?.seconds ? b.created_at.seconds * 1000 : new Date(b.created_at?.toDate?.() || 0).getTime();
+      return bTime - aTime;
+    });
+    return sorted.filter(rec => {
       const searchTarget = `
         ${rec.moduleName || ''} 
         ${rec.assessment || ''} 
