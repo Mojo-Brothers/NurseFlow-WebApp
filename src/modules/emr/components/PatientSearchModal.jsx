@@ -73,13 +73,14 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
         dokter: enc.admitting_doctor || '-',
         penjamin: enc.insurance_provider || enc.guarantor || 'Umum',
         tanggalMasuk: enc.admitted_at?.toDate ? format(enc.admitted_at.toDate(), 'yyyy-MM-dd') : '',
+        rawDate: enc.admitted_at?.toDate ? enc.admitted_at.toDate().getTime() : (enc.created_at?.toDate ? enc.created_at.toDate().getTime() : 0),
         encounterType: enc.encounter_type || 'OPD' // Fallback to OPD
       };
     });
   }, [activeEncounters, patients]);
 
   const filteredData = useMemo(() => {
-    return mergedData.filter(item => {
+    const filtered = mergedData.filter(item => {
       if (filters.noReg && !item.noReg.includes(filters.noReg.toUpperCase())) return false;
       if (filters.noRM && !item.noRM.includes(filters.noRM)) return false;
       if (filters.nama && !item.nama.toLowerCase().includes(filters.nama.toLowerCase())) return false;
@@ -89,6 +90,9 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
       if (filters.careType !== 'ALL' && item.encounterType !== filters.careType) return false;
       return true;
     });
+    
+    // Default Sort: Newest to Oldest (Descending)
+    return filtered.sort((a, b) => b.rawDate - a.rawDate);
   }, [mergedData, filters]);
 
   // Reset to page 1 when filters change

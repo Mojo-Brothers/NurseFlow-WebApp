@@ -77,15 +77,15 @@
 }
 
 .step-indicator {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background-color: var(--surface-container-high);
   color: var(--on-surface-variant);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   font-weight: 800;
   border: 2px solid transparent;
   transition: all 0.3s;
@@ -139,13 +139,17 @@
   .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
 }
 .section-divider {
-  margin: 1.5rem 0 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--primary-container);
+  margin: 1rem 0 0.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--outline-variant);
   color: var(--primary);
   font-size: 0.75rem;
-  font-weight: 800;
+  font-weight: 900;
   text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* ─── Patient Card (Mobile) ─── */

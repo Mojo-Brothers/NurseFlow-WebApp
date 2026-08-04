@@ -157,13 +157,33 @@ export default function RapidIntake() {
                 </div>
                 
                 <div className="flex flex-row items-center gap-3">
-                  <input
-                    type="number"
-                    value={vitals[key] || ''}
-                    onChange={(e) => handleVitalChange(key, e.target.value)}
-                    placeholder="--"
-                    className="flex-1 bg-transparent text-3xl font-headline font-black text-on-surface w-full focus:outline-none placeholder:text-on-surface-variant/30"
-                  />
+                  {key === 'systolicBP' ? (
+                    <div className="flex flex-1 items-center gap-2 text-3xl font-headline font-black text-on-surface">
+                      <input
+                        type="number"
+                        value={vitals.systolicBP || ''}
+                        onChange={(e) => handleVitalChange('systolicBP', e.target.value)}
+                        placeholder="--"
+                        className="w-20 bg-transparent text-center focus:outline-none placeholder:text-on-surface-variant/30 text-3xl font-headline font-black text-on-surface"
+                      />
+                      <span className="text-on-surface-variant/50 text-2xl">/</span>
+                      <input
+                        type="number"
+                        value={vitals.diastolicBP || ''}
+                        onChange={(e) => handleVitalChange('diastolicBP', e.target.value)}
+                        placeholder="--"
+                        className="w-20 bg-transparent text-center focus:outline-none placeholder:text-on-surface-variant/30 text-3xl font-headline font-black text-on-surface"
+                      />
+                    </div>
+                  ) : (
+                    <input
+                      type="number"
+                      value={vitals[key] || ''}
+                      onChange={(e) => handleVitalChange(key, e.target.value)}
+                      placeholder="--"
+                      className="flex-1 bg-transparent text-3xl font-headline font-black text-on-surface w-full focus:outline-none placeholder:text-on-surface-variant/30"
+                    />
+                  )}
                   
                   {/* Preset Pills */}
                   <div className="flex flex-col gap-1">

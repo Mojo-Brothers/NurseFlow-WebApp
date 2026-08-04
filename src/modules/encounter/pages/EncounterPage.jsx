@@ -75,12 +75,18 @@ export default function EncounterPage() {
     });
   };
 
-  const filteredEncounters = activeEncounters.filter(enc => 
-    patients.some(p => p.id === enc.patient_id) && // FILTER OUT ORPHAN ENCOUNTERS
-    (getPatientName(enc.patient_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (enc.chief_complaint || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (enc.ward || '').toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredEncounters = activeEncounters
+    .filter(enc => 
+      patients.some(p => p.id === enc.patient_id) && // FILTER OUT ORPHAN ENCOUNTERS
+      (getPatientName(enc.patient_id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (enc.chief_complaint || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (enc.ward || '').toLowerCase().includes(searchTerm.toLowerCase()))
+    )
+    .sort((a, b) => {
+      const timeA = a.admitted_at?.toDate ? a.admitted_at.toDate().getTime() : (a.created_at?.toDate ? a.created_at.toDate().getTime() : 0);
+      const timeB = b.admitted_at?.toDate ? b.admitted_at.toDate().getTime() : (b.created_at?.toDate ? b.created_at.toDate().getTime() : 0);
+      return timeB - timeA;
+    });
 
   return (
     <div className="p-4 lg:p-8 w-full max-w-full">

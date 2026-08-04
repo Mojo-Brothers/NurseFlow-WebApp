@@ -66,6 +66,28 @@ sequenceDiagram
     C->>A: Status: DISCHARGED (Visit Closed)
 ```
 
+### A2. Emergency Anonymous Patient Journey (Mr. X / Tanpa Identitas)
+*Kasus: Pasien tidak sadar (Trauma/Gawat Darurat) tanpa membawa identitas.*
+```mermaid
+sequenceDiagram
+    participant P as Pasien Darurat
+    participant N as Perawat (Triage UGD)
+    participant D as Dokter (EMR UGD)
+    participant A as Admin/Registrasi
+    participant C as Kasir (Billing)
+
+    P->>N: Tiba di UGD (Kritis)
+    N->>N: Bypass Registrasi: Buat Pasien "Mr. X" & Encounter Darurat
+    N->>N: Input Rapid Vitals & ESI Triage Level 1
+    N->>D: Notifikasi Code Red/Trauma
+    D->>D: Life-saving interventions & Order CPOE Cepat
+    D->>N: Pasien Stabil
+    A->>A: Keluarga datang / Identifikasi Biometrik berhasil
+    A->>A: Merge "Mr. X" dengan Rekam Medis Asli (NIK)
+    A->>C: Generate Billing Valid
+    C->>P: Proses Administrasi Akhir
+```
+
 ### B. State Transition Encounter (Lifecycle Pasien)
 ```mermaid
 stateDiagram-v2
@@ -121,6 +143,21 @@ stateDiagram-v2
     *   **Atomic Event:** Begitu status pembayaran berubah menjadi `PAID`, sistem secara otomatis menutup Encounter tersebut (`DISCHARGED`).
     *   Pasien dihapus dari Worklist aktif.
 *   **JCI Standard:** Transparansi biaya dan penutupan rekam medis yang tepat waktu.
+
+### Skenario Khusus: Penanganan Pasien Darurat Anonim (Mr. X)
+*   **Aksi 1 (Triage Kritis):** Perawat UGD menyambut pasien tidak sadar tanpa identitas. Perawat menggunakan modul Triage untuk membuat pasien baru secara instan (*Bypass Admisi*).
+    *   **Behavior Sistem:** Menghasilkan ID unik `MRX-YYYYMMDD-XXX` dan mencatat jenis kelamin serta ciri-ciri visual. Sistem langsung melompati status `WAITING` dan masuk ke status darurat `TRIAGE`.
+*   **Aksi 2 (Asesmen Cepat & Code Red):** Perawat merekam Tanda Vital (Rapid Vitals) dan menetapkan ESI Level 1 (Resusitasi).
+    *   **Behavior Sistem:** Memicu notifikasi alarm visual (Code Red/Trauma) di dasbor EMR Dokter UGD, mengaktifkan alur penyelamatan nyawa darurat.
+*   **Aksi 3 (Tindakan Penyelamatan Medis):** Dokter UGD langsung memberikan obat-obatan kritis, resusitasi cairan, dan intubasi melalui form EMR atas nama "Mr. X". 
+    *   **Behavior Sistem:** Mencatat timestamp tindakan secara presisi untuk keperluan medikolegal, mencatat resep ke Farmasi Darurat, dan memulai *Billing Draft* anonim.
+*   **Aksi 4 (Identifikasi Biometrik / Verifikasi Keluarga):** Keluarga pasien tiba atau alat pemindai sidik jari/iris RS mengonfirmasi identitas asli pasien (Misal: Tn. Budi, NIK 317XXXX).
+*   **Aksi 5 (Merge Data / Peleburan Entitas):** Staf Registrasi atau Admin medis menggunakan modul "Patient Merge".
+    *   **Behavior Sistem:** 
+        1. Menarik seluruh riwayat Triage, Tanda Vital, SOAP Dokter, obat-obatan, dan *Billing* dari akun sementara "Mr. X".
+        2. Meleburkan semua data tersebut secara utuh ke dalam *Medical Record Number* asli Tn. Budi tanpa ada jeda atau kehilangan *timestamp*.
+        3. Menghapus (atau menonaktifkan dengan status *merged*) akun "Mr. X" dari *database* aktif.
+*   **JCI Standard:** Penyelamatan nyawa tidak terhambat birokrasi pendaftaran, namun integritas rekam medis jangka panjang tetap terjaga (Zero Data Loss & Identitas Tunggal).
 
 ---
 

@@ -16,6 +16,12 @@ import LabAlertSystem from './LabAlertSystem.jsx';
 import HandHygieneAudit from './HandHygieneAudit.jsx';
 import UgdAssessmentForm from './UgdAssessmentForm.jsx';
 import A4Layout from './A4Layout.jsx';
+import BloodTransfusionForm from './BloodTransfusionForm.jsx';
+import DNRForm from './DNRForm.jsx';
+import NutritionScreeningForm from './NutritionScreeningForm.jsx';
+import PainReassessmentForm from './PainReassessmentForm.jsx';
+import PreAnesthesiaAssessmentForm from './PreAnesthesiaAssessmentForm.jsx';
+import MedicationReconciliationForm from './MedicationReconciliationForm.jsx';
 import { db } from '../../../core/firebase.js';
 import { doc, onSnapshot, query, collection, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { COLLECTIONS } from '../../../core/constants.js';
@@ -166,6 +172,29 @@ export default function ClinicalModuleModal({
     const name = moduleName.toUpperCase();
 
     // Specialized forms based on module name or ID
+    if (name.includes('TRANSFUSI') || name.includes('BLOOD')) {
+       return <BloodTransfusionForm formData={formData} setFormData={setFormData} isSaving={isSaving} onSave={handleFinalVerified} />;
+    }
+    
+    if (name.includes('DNR') || name.includes('RESUSITASI')) {
+       return <DNRForm formData={formData} setFormData={setFormData} isSaving={isSaving} onSave={handleFinalVerified} />;
+    }
+
+    if (name.includes('GIZI') || name.includes('MST') || name.includes('NUTRITION')) {
+       return <NutritionScreeningForm formData={formData} setFormData={setFormData} isSaving={isSaving} onSave={handleFinalVerified} />;
+    }
+
+    if (name.includes('RE-ASESMEN NYERI') || name.includes('PAIN REASSESSMENT')) {
+       return <PainReassessmentForm formData={formData} setFormData={setFormData} isSaving={isSaving} onSave={handleFinalVerified} />;
+    }
+
+    if (name.includes('PRA-ANESTESI') || name.includes('PRE-ANESTHESIA')) {
+       return <PreAnesthesiaAssessmentForm formData={formData} setFormData={setFormData} isSaving={isSaving} onSave={handleFinalVerified} />;
+    }
+
+    if (name.includes('REKONSILIASI') || name.includes('RECONCILIATION')) {
+       return <MedicationReconciliationForm formData={formData} setFormData={setFormData} isSaving={isSaving} onSave={handleFinalVerified} />;
+    }
     if (name.includes('CPOE') || name.includes('RESEP')) {
        return (
          <MedicationOrderForm 

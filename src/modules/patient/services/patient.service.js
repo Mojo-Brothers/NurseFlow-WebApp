@@ -64,7 +64,7 @@ export const registerPatient = async (patientData, staffEmail) => {
         delta:         { name: patientData.name, mrn }
       });
 
-      return { id: patientRef.id, mrn };
+      return { id: patientRef.id, ...payload };
     });
   } catch (error) {
     console.error('[PatientService] Registration failed:', error);

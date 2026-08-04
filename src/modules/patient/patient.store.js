@@ -46,6 +46,10 @@ export const usePatientStore = create((set, get) => ({
       } else {
         // Mode Create
         const newPatient = await registerPatient(patientData, registeredBy);
+        // Inject a valid local date object for immediate client-side sorting 
+        // since serverTimestamp() cannot be parsed locally before fetch
+        newPatient.registered_at = new Date(); 
+        
         set(state => ({
           patients:  [newPatient, ...state.patients],
           isLoading: false,

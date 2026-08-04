@@ -22,7 +22,14 @@ import {
   User,
   ShieldCheck,
   History,
-  Fingerprint
+  Fingerprint,
+  Zap,
+  Sparkles,
+  Edit2,
+  Mail,
+  Phone,
+  Shield,
+  HeartPulse
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -68,22 +75,22 @@ const DUMMY_DOCTORS = [
 
 const initialFormState = {
   // Step 1: Identitas Utama (IPSG 1)
-  name: '', nik: '', dob: '', gender: 'M', pob: '', 
-  nationality: 'WNI', marital_status: 'single',
+  title: 'Tn', name: '', nik: '', passport_no: '', dob: '', gender: 'M', pob: '', 
+  nationality: 'WNI', religion: 'islam', ethnicity: '', marital_status: 'single',
   // Step 2: Kontak & Demografi
-  address: '', religion: 'islam', phone: '', 
+  address: '', city: '', province: '', postal_code: '', email: '', phone: '', 
   education: 'sma', occupation: 'Private',
   preferred_language: 'id', interpreter_needed: false,
   // Step 3: Penanggung Jawab / Wali
-  emergency_name: '', emergency_phone: '', relationship: 'family',
-  guarantor_name: '', guarantor_phone: '',
+  emergency_name: '', emergency_phone: '', emergency_address: '', relationship: 'family',
+  kin_name: '', kin_relation: '', guarantor_name: '', guarantor_phone: '',
   // Step 4: Asuransi & Billing
-  insurance_type: 'umum', insurance_no: '',
+  insurance_type: 'umum', insurance_group: '', insurance_no: '', insurance_valid_thru: '', payment_preference: 'cash',
   // Step 5: Medis & Safety (IPSG 6)
-  blood_type: 'o', allergies: '', fall_risk: false, 
+  blood_type: 'o', allergies: '', infectious_disease: '', disability: '', implant_pacemaker: false, fall_risk: false, 
   primary_physician_id: '',
   // Step 6: Hak Pasien & Spiritual (PFR)
-  privacy_level: 'STANDARD', spiritual_needs: '', consent: false
+  privacy_level: 'STANDARD', spiritual_needs: '', dnr_status: false, organ_donor: false, data_release: true, consent: false
 };
 
 export default function PatientPage() {
@@ -100,6 +107,140 @@ export default function PatientPage() {
 
   // ─── Local State: Unified Form Data (Super Complete JCI Standard) ───
   const [form, setForm] = useState(initialFormState);
+
+  const applyPreset = (type) => {
+    if (type === 'wni') {
+      setForm({
+        ...initialFormState,
+        title: 'Tn',
+        name: 'Budi Santoso',
+        nik: '3171012304850001',
+        passport_no: '',
+        pob: 'Jakarta',
+        dob: '1985-04-23',
+        gender: 'M',
+        religion: 'islam',
+        nationality: 'WNI',
+        ethnicity: 'Jawa',
+        marital_status: 'single',
+        address: 'Jl. Melati No. 12, Cilandak',
+        city: 'Jakarta Selatan',
+        province: 'DKI Jakarta',
+        postal_code: '12430',
+        phone: '081298765432',
+        email: 'budi.santoso@gmail.com',
+        occupation: 'Swasta',
+        education: 's1',
+        preferred_language: 'Indonesia',
+        interpreter_needed: false,
+        emergency_name: 'Siti Aminah',
+        relationship: 'Istri',
+        emergency_phone: '081311223344',
+        emergency_address: 'Jl. Melati No. 12',
+        kin_name: 'Siti Aminah',
+        kin_relation: 'Istri',
+        guarantor_name: 'Budi Santoso',
+        guarantor_phone: '081298765432',
+        insurance_type: 'UMUM',
+        payment_preference: 'cash',
+        blood_type: 'O',
+        primary_physician_id: DUMMY_DOCTORS[0]?.id || '',
+        allergies: 'Aspirin, Seafood',
+        disability: '-',
+        infectious_disease: '',
+        fall_risk: false,
+        implant_pacemaker: false,
+        privacy_level: 'STANDARD',
+        spiritual_needs: 'Bimbingan Doa Sebelum Operasi',
+        dnr_status: false,
+        organ_donor: false,
+        data_release: true,
+        consent: true
+      });
+      toast.success('Preset WNI Umum Berhasil Dimuat!');
+    } else if (type === 'bpjs') {
+      setForm({
+        ...initialFormState,
+        title: 'Ny',
+        name: 'Ratna Sari Dewi',
+        nik: '3201025508920003',
+        passport_no: '',
+        pob: 'Bandung',
+        dob: '1992-08-15',
+        gender: 'F',
+        religion: 'islam',
+        nationality: 'WNI',
+        ethnicity: 'Sunda',
+        marital_status: 'single',
+        address: 'Jl. Raya Lembang No. 45',
+        city: 'Bandung Barat',
+        province: 'Jawa Barat',
+        postal_code: '40391',
+        phone: '085712345678',
+        email: 'ratna.sd@gmail.com',
+        occupation: 'Ibu Rumah Tangga',
+        education: 'sma',
+        emergency_name: 'Ahmad Supriadi',
+        relationship: 'Suami',
+        emergency_phone: '085799887766',
+        insurance_type: 'BPJS KESEHATAN',
+        insurance_group: 'BPJS Mandiri Kelas 1',
+        insurance_no: '0001928374651',
+        insurance_valid_thru: '2028-12-31',
+        payment_preference: 'insurance',
+        blood_type: 'A',
+        primary_physician_id: DUMMY_DOCTORS[1]?.id || '',
+        allergies: 'Penicillin',
+        fall_risk: true,
+        implant_pacemaker: false,
+        consent: true,
+        data_release: true
+      });
+      toast.success('Preset BPJS Emergency Berhasil Dimuat!');
+    } else if (type === 'wna') {
+      setForm({
+        ...initialFormState,
+        title: 'Tn',
+        name: 'John Michael Smith',
+        nik: '',
+        passport_no: 'A98765432',
+        pob: 'Sydney',
+        dob: '1980-11-05',
+        gender: 'M',
+        religion: 'kristen',
+        nationality: 'Australia',
+        ethnicity: 'Caucasian',
+        marital_status: 'single',
+        address: 'Vimala Hills Villa 8, Ciawi',
+        city: 'Bogor',
+        province: 'Jawa Barat',
+        postal_code: '16720',
+        phone: '+61412345678',
+        email: 'john.smith@sydney.au',
+        occupation: 'Architect',
+        education: 's2_s3',
+        preferred_language: 'English',
+        interpreter_needed: true,
+        emergency_name: 'Emily Smith',
+        relationship: 'Sister',
+        emergency_phone: '+61488776655',
+        insurance_type: 'ASURANSI SWASTA',
+        insurance_group: 'Bupa Global International',
+        insurance_no: 'BUPA-992104-AU',
+        insurance_valid_thru: '2027-06-30',
+        payment_preference: 'credit_card',
+        blood_type: 'AB',
+        primary_physician_id: DUMMY_DOCTORS[2]?.id || '',
+        allergies: 'Nuts, Latex',
+        disability: 'English Language Only',
+        implant_pacemaker: true,
+        privacy_level: 'VIP',
+        consent: true,
+        data_release: true
+      });
+      toast.success('Preset WNA Asuransi Berhasil Dimuat!');
+    }
+  };
   
   // Helper for step-by-step form updates
   const updateField = (key, value) => {
@@ -125,9 +266,11 @@ export default function PatientPage() {
 
   const [activeMenuId, setActiveMenuId] = useState(null);
   
-  // ─── Audit Trail State ───
+  // ─── Audit Trail & Merge State ───
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
   const [selectedPatientForAudit, setSelectedPatientForAudit] = useState(null);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+  const [selectedPatientForMerge, setSelectedPatientForMerge] = useState(null);
 
   // Close menu on click outside
   useEffect(() => {
@@ -171,12 +314,16 @@ export default function PatientPage() {
     
     return matchesSearch && matchesInsurance && matchesSafety && matchesTriage && matchesType && matchesStatus;
   }).sort((a, b) => {
-    if (a.is_demo && !b.is_demo) return -1;
-    if (!a.is_demo && b.is_demo) return 1;
     if (activeFilters.sortBy === 'RECENT') {
-      const dateA = new Date(a.createdAt?.toDate?.() || a.createdAt || a.registered_at || 0);
-      const dateB = new Date(b.createdAt?.toDate?.() || b.createdAt || b.registered_at || 0);
-      return dateB - dateA;
+      const getTime = (p) => {
+        let t = p.createdAt || p.registered_at || p.admitted_at;
+        if (!t) return 0;
+        if (typeof t.toDate === 'function') return t.toDate().getTime();
+        if (t.seconds) return t.seconds * 1000;
+        if (t instanceof Date) return t.getTime();
+        return new Date(t).getTime() || 0;
+      };
+      return getTime(b) - getTime(a);
     }
     if (activeFilters.sortBy === 'NAME') return (a.name || '').localeCompare(b.name || '');
     return 0;
@@ -334,7 +481,7 @@ export default function PatientPage() {
       name: patient.name || '',
       nik: patient.nik || '',
       dob: patient.demographics?.dob || '',
-      gender: patient.demographics?.gender || 'M',
+      gender: (patient.demographics?.gender === 'UNKNOWN' ? 'U' : patient.demographics?.gender) || 'M',
       pob: patient.demographics?.pob || '',
       nationality: patient.demographics?.nationality || 'WNI',
       marital_status: patient.demographics?.marital_status || 'single',
@@ -643,7 +790,7 @@ export default function PatientPage() {
                   <h3 className="font-headline font-black text-lg text-on-surface leading-tight group-hover:text-primary transition-colors">{patient.name || 'TANPA NAMA'}</h3>
                   <div className="flex-row items-center gap-2 mt-1">
                     <span className="text-[10px] font-mono font-bold bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">MRN: {patient.mrn || 'PENDING'}</span>
-                    <span className="text-[10px] font-bold text-on-surface-variant/50 uppercase">{patient.demographics?.gender === 'M' ? 'Laki-laki' : 'Perempuan'} • {patient.demographics?.dob ? `${calculateAge(patient.demographics.dob)} Thn` : '--'}</span>
+                    <span className="text-[10px] font-bold text-on-surface-variant/50 uppercase">{patient.demographics?.gender === 'M' ? 'Laki-laki' : patient.demographics?.gender === 'F' ? 'Perempuan' : 'Tidak Diketahui'} • {patient.demographics?.dob ? `${calculateAge(patient.demographics.dob)} Thn` : '--'}</span>
                   </div>
                 </div>
                 
@@ -662,6 +809,9 @@ export default function PatientPage() {
                       <button className="w-full text-left px-4 py-2 hover:bg-surface-container-high text-sm font-bold flex items-center gap-3 text-on-surface-variant" onClick={() => { setSelectedPatientForAudit(patient); setIsAuditModalOpen(true); setActiveMenuId(null); }}>
                         <span className="material-symbols-outlined text-[18px]">history</span> Riwayat Audit
                       </button>
+                      <button className="w-full text-left px-4 py-2 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-sm font-bold flex items-center gap-3 text-purple-600 dark:text-purple-400" onClick={() => { setSelectedPatientForMerge(patient); setIsMergeModalOpen(true); setActiveMenuId(null); }}>
+                        <span className="material-symbols-outlined text-[18px]">call_merge</span> Merger Rekam Medis
+                      </button>
                     </div>
                   )}
                 </div>
@@ -670,7 +820,7 @@ export default function PatientPage() {
               <div className="grid grid-cols-2 gap-3 mb-4 pl-3">
                 <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30 flex flex-col gap-1">
                   <span className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant/50">Asuransi</span>
-                  <span className="text-xs font-bold truncate text-on-surface">{patient.insurance?.type || 'UMUM'}</span>
+                  <span className="text-xs font-bold truncate text-on-surface">{(patient.insurance?.type || 'UMUM').toUpperCase()}</span>
                 </div>
                 <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30 flex flex-col gap-1">
                   <span className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant/50">DPJP</span>
@@ -693,7 +843,7 @@ export default function PatientPage() {
 
               <div className="mt-auto pt-3 border-t border-outline-variant/30 pl-3">
                 <span className="text-[10px] font-medium text-on-surface-variant/60 line-clamp-1">
-                  <strong className="font-bold text-on-surface-variant">Keluhan:</strong> {patient.medical_summary?.chief_complaint || patient.clinical_baseline?.allergies?.[0] || 'Kunjungan Rutin'}
+                  <strong className="font-bold text-on-surface-variant">Keluhan:</strong> {patient.medical_summary?.chief_complaint || patient.clinical_baseline?.allergies?.[0] || (patient.status === 'EMERGENCY' ? 'Belum Diisi (Darurat)' : 'Kunjungan Rutin')}
                 </span>
               </div>
             </div>
@@ -720,8 +870,8 @@ export default function PatientPage() {
                     <h3 className="text-lg font-black text-on-surface leading-tight">{p.name || t('common.unidentified')}</h3>
                     <span className="text-[10px] font-mono opacity-60">{t('patient_form.nik')}: {p.nik || '--'}</span>
                   </div>
-                  <span className={`w-12 h-12 rounded-2xl flex-row items-center justify-center font-black text-sm shadow-sm ${(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'bg-primary/10 text-primary' : 'bg-pink-100 text-pink-600'}`}>
-                    {(!p.demographics?.gender || p.demographics?.gender === 'M' || p.demographics?.gender === 'Laki-laki') ? 'M' : 'F'}
+                  <span className={`w-12 h-12 rounded-2xl flex-row items-center justify-center font-black text-sm shadow-sm ${p.demographics?.gender === 'F' || p.demographics?.gender === 'Perempuan' ? 'bg-pink-100 text-pink-600' : p.demographics?.gender === 'U' ? 'bg-surface-variant text-on-surface-variant' : 'bg-primary/10 text-primary'}`}>
+                    {p.demographics?.gender === 'F' || p.demographics?.gender === 'Perempuan' ? 'F' : p.demographics?.gender === 'U' ? '?' : 'M'}
                   </span>
                 </div>
 
@@ -735,8 +885,8 @@ export default function PatientPage() {
                      {p.demographics?.marital_status ? t('patient_form.marital_options.' + p.demographics.marital_status.toLowerCase(), { defaultValue: p.demographics.marital_status }) : t('patient_form.marital_options.single')}
                    </div>
                    <div className="meta-item">
-                     <span className={`chip text-[9px] px-2 ${p.insurance?.type === 'BPJS KESEHATAN' ? 'chip-info' : p.insurance?.type === 'UMUM' ? 'chip-success' : 'chip-warning'}`}>
-                       {p.insurance?.type || 'UMUM'}
+                     <span className={`chip text-[9px] px-2 ${String(p.insurance?.type || 'UMUM').toUpperCase().includes('BPJS') ? 'chip-info' : String(p.insurance?.type || 'UMUM').toUpperCase() === 'UMUM' ? 'chip-success' : 'chip-warning'}`}>
+                       {(p.insurance?.type || 'UMUM').toUpperCase()}
                      </span>
                    </div>
                    <div className="meta-item">
@@ -802,42 +952,155 @@ export default function PatientPage() {
 
       {/* ─── JCI Multi-Step Registration Wizard ─── */}
       {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content card !max-w-[95vw] sm:!max-w-[650px]">
-            <div className="flex-row items-center justify-between mb-6">
-              <div>
-                <h3 className="font-bold text-xl">{isEditing ? t('patients_v2.wizard.title_edit') || 'Edit Data Pasien' : t('patients_v2.wizard.title')}</h3>
-                <span className="text-sm font-bold text-on-surface-variant">{t('patients_v2.wizard.step', { current: currentStep })}</span>
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+          <div className="bg-slate-50 dark:bg-slate-950 w-full max-w-4xl max-h-[90vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200/50 dark:border-white/5 animate-in slide-in-from-bottom-8 duration-500">
+            {/* ─── EMR Header ─── */}
+            <div className="flex items-center justify-between p-6 sm:px-8 sm:py-6 bg-white/80 dark:bg-[var(--surface-container-low)]/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-white/5">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-sm">
+                  <UserPlus size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-[10px] font-black tracking-widest uppercase border border-orange-200 dark:border-orange-500/30 flex items-center gap-1">
+                      <ShieldCheck size={12} /> IPSG Standard
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-widest uppercase">
+                      Langkah {currentStep} dari 6 ({Math.round((currentStep / 6) * 100)}%)
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+                    {isEditing ? t('patients_v2.wizard.title_edit') || 'Edit Data Pasien' : t('patients_v2.wizard.title')}
+                  </h3>
+                </div>
               </div>
+              
               <button 
                 type="button" 
-                className="w-10 h-10 rounded-full hover:bg-surface-container-high flex-row items-center justify-center transition-colors text-on-surface-variant"
+                className="w-10 h-10 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-error/10 hover:text-error transition-all border border-slate-200 dark:border-white/10 shadow-xs"
                 onClick={() => setIsModalOpen(false)}
               >
-                <span className="material-symbols-outlined">close</span>
+                <ArrowRight size={20} className="rotate-180" />
               </button>
             </div>
 
-            <div className="wizard-stepper">
-              {[1, 2, 3, 4, 5, 6].map(s => (
-                <div key={s} className={`step-item ${currentStep === s ? 'active' : currentStep > s ? 'completed' : ''}`}>
-                  <div className="step-indicator">{currentStep > s ? '✓' : s}</div>
-                </div>
-              ))}
+            {/* ─── Quick Presets Bar ─── */}
+            <div className="flex items-center justify-between px-6 sm:px-8 py-2.5 bg-primary/5 dark:bg-primary/10 border-b border-primary/10 text-xs font-bold">
+              <div className="flex items-center gap-2 text-primary font-black uppercase tracking-wider text-[11px]">
+                <Zap size={14} className="text-amber-500 fill-amber-500 animate-pulse" />
+                Quick-Fill Demo Presets:
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  type="button" 
+                  onClick={() => applyPreset('wni')} 
+                  className="px-3 py-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 hover:border-primary hover:text-primary text-slate-700 dark:text-slate-300 font-extrabold text-[11px] transition-all flex items-center gap-1.5 shadow-2xs hover:scale-105 active:scale-95"
+                >
+                  🇮🇩 WNI Umum
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => applyPreset('bpjs')} 
+                  className="px-3 py-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 hover:border-emerald-500 text-emerald-700 dark:text-emerald-300 font-extrabold text-[11px] transition-all flex items-center gap-1.5 shadow-2xs hover:scale-105 active:scale-95"
+                >
+                  🟢 BPJS Emergency
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => applyPreset('wna')} 
+                  className="px-3 py-1 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 hover:border-purple-500 text-purple-700 dark:text-purple-300 font-extrabold text-[11px] transition-all flex items-center gap-1.5 shadow-2xs hover:scale-105 active:scale-95"
+                >
+                  ✈️ WNA Asuransi
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleRegister}>
+            {/* ─── Interactive Glassmorphic Stepper ─── */}
+            <div className="px-6 sm:px-12 pt-6 pb-4 bg-slate-50 dark:bg-slate-950">
+              <div className="flex items-center justify-between relative">
+                <div className="absolute left-4 right-4 top-4 -translate-y-1/2 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full z-0"></div>
+                <div 
+                  className="absolute left-4 top-4 -translate-y-1/2 h-1.5 bg-gradient-to-r from-primary to-emerald-500 rounded-full z-0 transition-all duration-500 ease-out shadow-sm" 
+                  style={{ width: `calc(${((currentStep - 1) / 5) * 100}% - 2rem)` }}
+                ></div>
+                
+                {[
+                  { step: 1, label: '1. Identitas' },
+                  { step: 2, label: '2. Demografi' },
+                  { step: 3, label: '3. Wali' },
+                  { step: 4, label: '4. Penjamin' },
+                  { step: 5, label: '5. Medis' },
+                  { step: 6, label: '6. Review & Legal' }
+                ].map(({ step: s, label }) => (
+                  <button 
+                    key={s} 
+                    type="button"
+                    onClick={() => setCurrentStep(s)}
+                    className="relative z-10 flex flex-col items-center group cursor-pointer focus:outline-none"
+                  >
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-[13px] font-black transition-all duration-300 ${
+                      currentStep === s 
+                        ? 'bg-primary text-white ring-[6px] ring-primary/20 scale-110 shadow-lg shadow-primary/30' 
+                        : currentStep > s 
+                          ? 'bg-emerald-500 text-white shadow-md hover:scale-105' 
+                          : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 border-2 border-slate-200 dark:border-slate-700 hover:border-primary/50'
+                    }`}>
+                      {currentStep > s ? <CheckCircle2 size={18} strokeWidth={3} /> : s}
+                    </div>
+                    <span className={`text-[11px] font-bold mt-1.5 transition-colors ${
+                      currentStep === s 
+                        ? 'text-primary dark:text-primary-light font-black' 
+                        : currentStep > s 
+                          ? 'text-emerald-600 dark:text-emerald-400 font-bold' 
+                          : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-600'
+                    }`}>
+                      {label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <form onSubmit={handleRegister} className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8">
+              <div className="bg-white/80 dark:bg-[var(--surface-container-low)]/80 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 shadow-sm border border-slate-200/50 dark:border-white/5 space-y-6">
               {/* STEP 1: IDENTITAS UTAMA (IPSG 1) */}
               {currentStep === 1 && (
-                <div className="flex-column gap-4">
-                  <p className="section-divider">{t('patient_form.emergency_contact')}</p>
-                  <div>
-                    <label className="metric-label mb-2 block">{t('patient_form.name')}</label>
-                    <input required className="form-input" value={form.name} onChange={e => updateField('name', e.target.value)} />
+                <div className="flex-column gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="flex items-center gap-3 mb-2 pb-4 border-b border-slate-100 dark:border-white/5">
+                    <div className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                      <User size={18} />
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                      {t('patients_v2.wizard.step1')}
+                    </h4>
                   </div>
-                  <div>
-                    <label className="metric-label mb-2 block">{t('patient_form.nik')}</label>
-                    <input required className="form-input" value={form.nik} onChange={e => updateField('nik', e.target.value)} />
+                  <div className="grid-3">
+                    <div className="col-span-1">
+                      <label className="metric-label mb-2 block">{t('patient_form.title') || 'Gelar/Sapaan'}</label>
+                      <select className="form-input" value={form.title} onChange={e => updateField('title', e.target.value)}>
+                        <option value="Tn">Tn. (Tuan)</option>
+                        <option value="Ny">Ny. (Nyonya)</option>
+                        <option value="Nn">Nn. (Nona)</option>
+                        <option value="An">An. (Anak)</option>
+                        <option value="By">By. (Bayi)</option>
+                        <option value="dr">dr. (Dokter)</option>
+                        <option value="Prof">Prof.</option>
+                      </select>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="metric-label mb-2 block">{t('patient_form.name')}</label>
+                      <input required className="form-input" value={form.name} onChange={e => updateField('name', e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid-2">
+                    <div>
+                      <label className="metric-label mb-2 block">{t('patient_form.nik')}</label>
+                      <input required className="form-input font-mono tracking-widest" value={form.nik} onChange={e => updateField('nik', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="metric-label mb-2 block">{t('patient_form.passport') || 'No. Paspor / KITAS'}</label>
+                      <input className="form-input font-mono tracking-widest" value={form.passport_no} onChange={e => updateField('passport_no', e.target.value)} placeholder="Opsional (WNA)" />
+                    </div>
                   </div>
                   <div className="grid-2">
                     <div>
@@ -849,17 +1112,36 @@ export default function PatientPage() {
                       <input required type="date" className="form-input" value={form.dob} onChange={e => updateField('dob', e.target.value)} />
                     </div>
                   </div>
-                  <div className="grid-3">
+                  <div className="grid-2">
                     <div>
                       <label className="metric-label mb-2 block">{t('patient_form.gender')}</label>
                       <select className="form-input" value={form.gender} onChange={e => updateField('gender', e.target.value)}>
                         <option value="M">{t('patient_form.gender_m')}</option>
                         <option value="F">{t('patient_form.gender_f')}</option>
+                        <option value="U">{t('patient_form.gender_u')}</option>
                       </select>
                     </div>
                     <div>
+                      <label className="metric-label mb-2 block">{t('patient_form.religion') || 'Agama'}</label>
+                      <select className="form-input" value={form.religion} onChange={e => updateField('religion', e.target.value)}>
+                        <option value="islam">Islam</option>
+                        <option value="kristen">Kristen Protestan</option>
+                        <option value="katolik">Katolik</option>
+                        <option value="hindu">Hindu</option>
+                        <option value="buddha">Buddha</option>
+                        <option value="konghucu">Konghucu</option>
+                        <option value="other">Lainnya</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid-3">
+                    <div>
                       <label className="metric-label mb-2 block">{t('patient_form.nationality')}</label>
                       <input className="form-input" value={form.nationality} onChange={e => updateField('nationality', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="metric-label mb-2 block">{t('patient_form.ethnicity') || 'Suku/Ras'}</label>
+                      <input className="form-input" value={form.ethnicity} onChange={e => updateField('ethnicity', e.target.value)} placeholder="Contoh: Jawa, Melayu" />
                     </div>
                     <div>
                       <label className="metric-label mb-2 block">{t('patient_form.marital_status')}</label>
@@ -876,19 +1158,50 @@ export default function PatientPage() {
 
               {/* STEP 2: DEMOGRAFI & KOMUNIKASI */}
               {currentStep === 2 && (
-                <div className="flex-column gap-4">
-                  <p className="section-divider">{t('patients_v2.wizard.step2')}</p>
+                <div className="flex-column gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="flex items-center gap-3 mb-2 pb-4 border-b border-slate-100 dark:border-white/5">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                      <Smartphone size={18} />
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                      {t('patients_v2.wizard.step2')}
+                    </h4>
+                  </div>
                   <div>
-                    <label className="metric-label mb-2 block">{t('patient_form.address')}</label>
-                    <textarea className="form-input" value={form.address} onChange={e => updateField('address', e.target.value)} rows="2" />
+                    <label className="metric-label mb-2">{t('patient_form.address')}</label>
+                    <textarea className="form-input" value={form.address} onChange={e => updateField('address', e.target.value)} rows="2" placeholder="Nama Jalan, RT/RW, Kelurahan" />
+                  </div>
+                  <div className="grid-3">
+                    <div>
+                      <label className="metric-label mb-2">{t('patient_form.city') || 'Kota/Kabupaten'}</label>
+                      <input className="form-input" value={form.city} onChange={e => updateField('city', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="metric-label mb-2">{t('patient_form.province') || 'Provinsi'}</label>
+                      <input className="form-input" value={form.province} onChange={e => updateField('province', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="metric-label mb-2">{t('patient_form.postal_code') || 'Kode Pos'}</label>
+                      <input className="form-input" value={form.postal_code} onChange={e => updateField('postal_code', e.target.value)} />
+                    </div>
                   </div>
                   <div className="grid-2">
                     <div>
-                      <label className="metric-label mb-2 block">{t('patient_form.occupation')}</label>
+                      <label className="metric-label mb-2">{t('patient_form.phone')}</label>
+                      <input className="form-input" value={form.phone} onChange={e => updateField('phone', e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="metric-label mb-2">{t('patient_form.email') || 'Email'}</label>
+                      <input type="email" className="form-input" value={form.email} onChange={e => updateField('email', e.target.value)} placeholder="email@contoh.com" />
+                    </div>
+                  </div>
+                  <div className="grid-2">
+                    <div>
+                      <label className="metric-label mb-2">{t('patient_form.occupation')}</label>
                       <input className="form-input" value={form.occupation} onChange={e => updateField('occupation', e.target.value)} />
                     </div>
                     <div>
-                      <label className="metric-label mb-2 block">{t('patient_form.education')}</label>
+                      <label className="metric-label mb-2">{t('patient_form.education')}</label>
                       <select className="form-input" value={form.education} onChange={e => updateField('education', e.target.value)}>
                         <option value="sd">{t('patient_form.education_options.sd')}</option>
                         <option value="smp">{t('patient_form.education_options.smp')}</option>
@@ -902,51 +1215,79 @@ export default function PatientPage() {
                   </div>
                   <div className="grid-2">
                     <div>
-                      <label className="metric-label mb-2 block">{t('patient_form.preferred_lang')}</label>
+                      <label className="metric-label mb-2">{t('patient_form.preferred_lang')}</label>
                       <input className="form-input" value={form.preferred_language} onChange={e => updateField('preferred_language', e.target.value)} />
                     </div>
                     <div className="flex-row items-center gap-2 mt-6">
-                      <input type="checkbox" id="interpreter" checked={form.interpreter_needed} onChange={e => updateField('interpreter_needed', e.target.checked)} />
-                      <label htmlFor="interpreter" className="text-xs font-bold">{t('patient_form.interpreter')}</label>
+                      <input type="checkbox" id="interpreter" checked={form.interpreter_needed} onChange={e => updateField('interpreter_needed', e.target.checked)} className="w-4 h-4 rounded text-primary focus:ring-primary cursor-pointer" />
+                      <label htmlFor="interpreter" className="text-[13px] font-bold cursor-pointer">{t('patient_form.interpreter')}</label>
                     </div>
-                  </div>
-                  <div>
-                    <label className="metric-label mb-2 block">{t('patient_form.phone')}</label>
-                    <input className="form-input" value={form.phone} onChange={e => updateField('phone', e.target.value)} />
                   </div>
                 </div>
               )}
 
               {/* STEP 3: WALI & PENANGGUNG JAWAB */}
               {currentStep === 3 && (
-                <div className="flex-column gap-4">
-                  <p className="section-divider">{t('patients_v2.wizard.step3')}</p>
-                  <div className="p-4 bg-surface-container-low rounded-lg border border-dashed border-outline-variant">
-                    <p className="text-[10px] font-black uppercase text-primary mb-3">{t('patient_form.emergency_contact')}</p>
+                <div className="flex-column gap-6 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="flex items-center gap-3 mb-2 pb-4 border-b border-slate-100 dark:border-white/5">
+                    <div className="w-8 h-8 rounded-xl bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                      <UserPlus size={18} />
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                      {t('patients_v2.wizard.step3')}
+                    </h4>
+                  </div>
+                  
+                  {/* Kontak Darurat (Emergency) */}
+                  <div className="p-5 bg-surface-container-lowest rounded-2xl border-2 border-dashed border-outline-variant/60 shadow-2xs">
+                    <p className="text-[11px] font-black uppercase text-primary mb-3 tracking-widest">{t('patient_form.emergency_contact')}</p>
                     <div className="grid-2 gap-4">
                       <div>
-                        <label className="metric-label mb-1 block">{t('patient_form.emergency_name')}</label>
+                        <label className="metric-label mb-2">{t('patient_form.emergency_name')}</label>
                         <input className="form-input" value={form.emergency_name} onChange={e => updateField('emergency_name', e.target.value)} />
                       </div>
                       <div>
-                        <label className="metric-label mb-1 block">{t('patient_form.relationship')}</label>
+                        <label className="metric-label mb-2">{t('patient_form.relationship')}</label>
                         <input className="form-input" value={form.relationship} onChange={e => updateField('relationship', e.target.value)} />
                       </div>
                     </div>
-                    <div className="mt-3">
-                      <label className="metric-label mb-1 block">{t('patient_form.emergency_phone')}</label>
-                      <input className="form-input" value={form.emergency_phone} onChange={e => updateField('emergency_phone', e.target.value)} />
+                    <div className="grid-2 gap-4 mt-4">
+                      <div>
+                        <label className="metric-label mb-2">{t('patient_form.emergency_phone')}</label>
+                        <input className="form-input" value={form.emergency_phone} onChange={e => updateField('emergency_phone', e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="metric-label mb-2">{t('patient_form.emergency_address') || 'Alamat Darurat'}</label>
+                        <input className="form-input" value={form.emergency_address} onChange={e => updateField('emergency_address', e.target.value)} />
+                      </div>
                     </div>
                   </div>
-                  <div className="p-4 bg-surface-container-low rounded-lg border border-dashed border-outline-variant">
-                    <p className="text-[10px] font-black uppercase text-secondary mb-3">{t('patient_form.guarantor')}</p>
+
+                  {/* Keluarga Terdekat (Next of Kin) */}
+                  <div className="p-5 bg-surface-container-lowest rounded-2xl border-2 border-dashed border-outline-variant/60 shadow-2xs mt-6">
+                    <p className="text-[11px] font-black uppercase text-indigo-600 mb-3 tracking-widest">{t('patient_form.next_of_kin') || 'Keluarga Terdekat (Next of Kin)'}</p>
                     <div className="grid-2 gap-4">
                       <div>
-                        <label className="metric-label mb-1 block">{t('patient_form.guarantor_name')}</label>
+                        <label className="metric-label mb-2">{t('patient_form.kin_name') || 'Nama Keluarga Terdekat'}</label>
+                        <input className="form-input" value={form.kin_name} onChange={e => updateField('kin_name', e.target.value)} />
+                      </div>
+                      <div>
+                        <label className="metric-label mb-2">{t('patient_form.kin_relation') || 'Hubungan'}</label>
+                        <input className="form-input" value={form.kin_relation} onChange={e => updateField('kin_relation', e.target.value)} />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Penanggung Jawab (Guarantor) */}
+                  <div className="p-5 bg-surface-container-lowest rounded-2xl border-2 border-dashed border-outline-variant/60 shadow-2xs mt-6">
+                    <p className="text-[11px] font-black uppercase text-secondary mb-3 tracking-widest">{t('patient_form.guarantor')}</p>
+                    <div className="grid-2 gap-4">
+                      <div>
+                        <label className="metric-label mb-2">{t('patient_form.guarantor_name')}</label>
                         <input className="form-input" value={form.guarantor_name} onChange={e => updateField('guarantor_name', e.target.value)} />
                       </div>
                       <div>
-                        <label className="metric-label mb-1 block">{t('patient_form.guarantor_phone')}</label>
+                        <label className="metric-label mb-2">{t('patient_form.guarantor_phone')}</label>
                         <input className="form-input" value={form.guarantor_phone} onChange={e => updateField('guarantor_phone', e.target.value)} />
                       </div>
                     </div>
@@ -956,31 +1297,70 @@ export default function PatientPage() {
 
               {/* STEP 4: DATA ASURANSI */}
               {currentStep === 4 && (
-                <div className="flex-column gap-4">
-                  <p className="section-divider">{t('patients_v2.wizard.sections.insurance')}</p>
-                  <div>
-                    <label className="metric-label">{t('patients_v2.wizard.fields.guarantor_type')}</label>
-                    <select className="form-input" value={form.insurance_type} onChange={e => updateField('insurance_type', e.target.value)}>
-                      <option value="UMUM">{t('patient_form.insurance_types.umum')}</option>
-                      <option value="BPJS KESEHATAN">{t('patient_form.insurance_types.bpjs')}</option>
-                      <option value="ASURANSI SWASTA">{t('patient_form.insurance_types.swasta')}</option>
-                      <option value="CORPORATE">{t('patient_form.insurance_types.corporate')}</option>
-                    </select>
+                <div className="flex-column gap-6 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="flex items-center gap-3 mb-2 pb-4 border-b border-slate-100 dark:border-white/5">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <CreditCard size={18} />
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                      {t('patients_v2.wizard.sections.insurance')}
+                    </h4>
                   </div>
-                  <div>
-                    <label className="metric-label">{t('patients_v2.wizard.fields.card_number')}</label>
-                    <input className="form-input" value={form.insurance_no} onChange={e => updateField('insurance_no', e.target.value)} placeholder={t('patients_v2.wizard.fields.card_number_placeholder')} />
+                  <div className="grid-2">
+                    <div>
+                      <label className="metric-label mb-2">{t('patients_v2.wizard.fields.guarantor_type')}</label>
+                      <select className="form-input" value={form.insurance_type} onChange={e => updateField('insurance_type', e.target.value)}>
+                        <option value="UMUM">{t('patient_form.insurance_types.umum')}</option>
+                        <option value="BPJS KESEHATAN">{t('patient_form.insurance_types.bpjs')}</option>
+                        <option value="ASURANSI SWASTA">{t('patient_form.insurance_types.swasta')}</option>
+                        <option value="CORPORATE">{t('patient_form.insurance_types.corporate')}</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="metric-label mb-2">{t('patients_v2.wizard.fields.payment_pref') || 'Preferensi Pembayaran'}</label>
+                      <select className="form-input" value={form.payment_preference} onChange={e => updateField('payment_preference', e.target.value)}>
+                        <option value="cash">Tunai / Transfer</option>
+                        <option value="credit_card">Kartu Kredit / Debit</option>
+                        <option value="insurance">Asuransi / BPJS</option>
+                      </select>
+                    </div>
                   </div>
+                  
+                  {form.insurance_type !== 'UMUM' && (
+                    <div className="p-5 bg-emerald-50 dark:bg-emerald-500/10 rounded-2xl border-2 border-emerald-100 dark:border-emerald-500/30 mt-6 shadow-2xs">
+                      <div className="grid-2 gap-4">
+                        <div className="col-span-2">
+                          <label className="metric-label mb-2">{t('patients_v2.wizard.fields.insurance_group') || 'Grup Asuransi / Perusahaan'}</label>
+                          <input className="form-input bg-white dark:bg-slate-950" value={form.insurance_group} onChange={e => updateField('insurance_group', e.target.value)} placeholder="Contoh: Mandiri Inhealth, Admedika" />
+                        </div>
+                        <div>
+                          <label className="metric-label mb-2">{t('patients_v2.wizard.fields.card_number')}</label>
+                          <input className="form-input bg-white dark:bg-slate-950" value={form.insurance_no} onChange={e => updateField('insurance_no', e.target.value)} placeholder={t('patients_v2.wizard.fields.card_number_placeholder')} />
+                        </div>
+                        <div>
+                          <label className="metric-label mb-2">{t('patients_v2.wizard.fields.insurance_valid') || 'Masa Berlaku (Valid Thru)'}</label>
+                          <input type="date" className="form-input bg-white dark:bg-slate-950" value={form.insurance_valid_thru} onChange={e => updateField('insurance_valid_thru', e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* STEP 5: MEDIS & SAFETY */}
               {currentStep === 5 && (
-                <div className="flex-column gap-4">
-                  <p className="section-divider">{t('patients_v2.wizard.sections.safety')}</p>
+                <div className="flex-column gap-6 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="flex items-center gap-3 mb-2 pb-4 border-b border-slate-100 dark:border-white/5">
+                    <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center">
+                      <Activity size={18} />
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                      {t('patients_v2.wizard.sections.safety')}
+                    </h4>
+                  </div>
                   <div className="grid-2">
                     <div>
-                      <label className="metric-label">{t('patients_v2.wizard.fields.blood_type')}</label>
+                      <label className="metric-label mb-2">{t('patients_v2.wizard.fields.blood_type')}</label>
                       <select className="form-input" value={form.blood_type} onChange={e => updateField('blood_type', e.target.value)}>
                         {['a', 'b', 'ab', 'o', 'unknown'].map(bt => (
                           <option key={bt} value={bt.toUpperCase()}>{t('patient_form.blood_types.' + bt)}</option>
@@ -988,7 +1368,7 @@ export default function PatientPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="metric-label">{t('patients_v2.wizard.fields.dpjp')}</label>
+                      <label className="metric-label mb-2">{t('patients_v2.wizard.fields.dpjp')}</label>
                       <select className="form-input" value={form.primary_physician_id} onChange={e => updateField('primary_physician_id', e.target.value)}>
                         <option value="">{t('patient_form.select_doctor')}</option>
                         {doctors.map(d => (
@@ -997,20 +1377,47 @@ export default function PatientPage() {
                       </select>
                     </div>
                   </div>
-                  <div>
-                    <label className="metric-label">{t('patients_v2.wizard.fields.allergy_history')}</label>
-                    <input className="form-input" value={form.allergies} onChange={e => updateField('allergies', e.target.value)} placeholder={t('patients_v2.wizard.fields.allergy_placeholder')} />
-                  </div>
-
-                  <div className="flex-row items-start gap-4 p-4 bg-error-container/20 rounded-xl border border-error/20 mt-4">
-                    <div className="bg-error text-white p-2 rounded-full">
-                      <span className="material-symbols-outlined text-sm">warning</span>
+                  
+                  <div className="grid-2 gap-4">
+                    <div>
+                      <label className="metric-label mb-2">{t('patients_v2.wizard.fields.allergy_history')}</label>
+                      <input className="form-input" value={form.allergies} onChange={e => updateField('allergies', e.target.value)} placeholder={t('patients_v2.wizard.fields.allergy_placeholder')} />
                     </div>
                     <div>
-                      <label className="text-sm font-black text-error block mb-1">{t('patients_v2.wizard.fields.fall_risk_title')}</label>
-                      <div className="flex-row items-center gap-2">
-                        <input type="checkbox" id="fall" checked={form.fall_risk} onChange={e => updateField('fall_risk', e.target.checked)} />
-                        <label htmlFor="fall" className="text-xs font-bold text-on-surface">{t('patients_v2.wizard.fields.fall_risk_desc')}</label>
+                      <label className="metric-label mb-2">{t('patients_v2.wizard.fields.disability') || 'Kebutuhan Khusus / Disabilitas'}</label>
+                      <input className="form-input" value={form.disability} onChange={e => updateField('disability', e.target.value)} placeholder="Misal: Tunanetra, Kursi Roda" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="metric-label mb-2">{t('patients_v2.wizard.fields.infectious') || 'Kewaspadaan Penyakit Menular'}</label>
+                    <input className="form-input" value={form.infectious_disease} onChange={e => updateField('infectious_disease', e.target.value)} placeholder="Kosongkan jika tidak ada. Misal: TBC, MRSA, Hepatitis" />
+                  </div>
+
+                  <div className="grid-2 gap-4 mt-6">
+                    <div className="flex-row items-start gap-4 p-5 bg-error-container/20 rounded-2xl border-2 border-error/20">
+                      <div className="bg-error text-white p-2 rounded-full shadow-sm">
+                        <span className="material-symbols-outlined text-sm">warning</span>
+                      </div>
+                      <div>
+                        <label className="text-[13px] font-black text-error block mb-2">{t('patients_v2.wizard.fields.fall_risk_title')}</label>
+                        <div className="flex-row items-center gap-3">
+                          <input type="checkbox" id="fall" checked={form.fall_risk} onChange={e => updateField('fall_risk', e.target.checked)} className="cursor-pointer w-4 h-4 rounded border-error text-error focus:ring-error" />
+                          <label htmlFor="fall" className="text-[13px] font-bold text-on-surface cursor-pointer opacity-90">{t('patients_v2.wizard.fields.fall_risk_desc')}</label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex-row items-start gap-4 p-5 bg-orange-500/10 rounded-2xl border-2 border-orange-500/20">
+                      <div className="bg-orange-500 text-white p-2 rounded-full shadow-sm flex items-center justify-center w-8 h-8">
+                        <span className="material-symbols-outlined text-sm">settings_input_hdmi</span>
+                      </div>
+                      <div>
+                        <label className="text-[13px] font-black text-orange-600 dark:text-orange-400 block mb-2">{t('patients_v2.wizard.fields.pacemaker') || 'Risiko Implan / MRI'}</label>
+                        <div className="flex-row items-center gap-3">
+                          <input type="checkbox" id="pacemaker" checked={form.implant_pacemaker} onChange={e => updateField('implant_pacemaker', e.target.checked)} className="cursor-pointer w-4 h-4 rounded border-orange-500 text-orange-500 focus:ring-orange-500" />
+                          <label htmlFor="pacemaker" className="text-[13px] font-bold text-on-surface cursor-pointer opacity-90">{t('patients_v2.wizard.fields.pacemaker_desc')}</label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1019,50 +1426,167 @@ export default function PatientPage() {
 
               {/* STEP 6: HAK PASIEN & LEGAL */}
               {currentStep === 6 && (
-                <div className="flex-column gap-4">
-                  <p className="section-divider">{t('patients_v2.wizard.sections.rights')}</p>
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-on-surface-variant mb-2 block">{t('patients_v2.wizard.fields.privacy')}</label>
-                    <select className="form-input text-xs" value={form.privacy_level} onChange={e => updateField('privacy_level', e.target.value)}>
-                      {['standard', 'vip', 'anonymous'].map(opt => (
-                        <option key={opt} value={opt.toUpperCase()}>{t(`patients_v2.wizard.fields.privacy_options.${opt}`)}</option>
-                      ))}
-                    </select>
+                <div className="flex-column gap-6 space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="flex items-center gap-3 mb-2 pb-4 border-b border-slate-100 dark:border-white/5">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                      <ShieldCheck size={18} />
+                    </div>
+                    <h4 className="text-sm font-black uppercase tracking-widest text-slate-800 dark:text-slate-200">
+                      {t('patients_v2.wizard.sections.rights')}
+                    </h4>
+                  </div>
+                  {/* Executive Pre-Submission Summary Card */}
+                  <div className="p-5 bg-slate-100 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-white/10 space-y-4">
+                    <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-3">
+                      <div className="flex items-center gap-2 text-primary font-black uppercase tracking-wider text-xs">
+                        <Sparkles size={16} className="text-amber-500 fill-amber-500" />
+                        Executive Pre-Submission Review (Ringkasan Data Pasien)
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-500">Periksa kembali data sebelum finalisasi</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      {/* Step 1 Summary */}
+                      <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">
+                            <span>1. Identitas Utama</span>
+                            <button type="button" onClick={() => setCurrentStep(1)} className="text-primary hover:underline flex items-center gap-0.5"><Edit2 size={10} /> Ubah</button>
+                          </div>
+                          <p className="font-extrabold text-slate-800 dark:text-slate-100">{form.title}. {form.name || '(Belum Diisi)'}</p>
+                          <p className="text-slate-500">NIK: <span className="font-mono">{form.nik || form.passport_no || '-'}</span> | {form.gender === 'M' ? 'Laki-laki' : form.gender === 'F' ? 'Perempuan' : 'Lainnya'}</p>
+                        </div>
+                      </div>
+
+                      {/* Step 2 Summary */}
+                      <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">
+                            <span>2. Demografi & Kontak</span>
+                            <button type="button" onClick={() => setCurrentStep(2)} className="text-primary hover:underline flex items-center gap-0.5"><Edit2 size={10} /> Ubah</button>
+                          </div>
+                          <p className="font-extrabold text-slate-800 dark:text-slate-100">{form.phone || '(No. HP Kosong)'}</p>
+                          <p className="text-slate-500 truncate">{form.address ? `${form.address}, ${form.city}` : 'Alamat belum diisi'}</p>
+                        </div>
+                      </div>
+
+                      {/* Step 3 Summary */}
+                      <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">
+                            <span>3. Wali / Emergency</span>
+                            <button type="button" onClick={() => setCurrentStep(3)} className="text-primary hover:underline flex items-center gap-0.5"><Edit2 size={10} /> Ubah</button>
+                          </div>
+                          <p className="font-extrabold text-slate-800 dark:text-slate-100">{form.emergency_name || '(Tidak ada)'}</p>
+                          <p className="text-slate-500">{form.relationship} | <span className="font-mono">{form.emergency_phone || '-'}</span></p>
+                        </div>
+                      </div>
+
+                      {/* Step 4 Summary */}
+                      <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-white/5 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">
+                            <span>4. Penjamin & Billing</span>
+                            <button type="button" onClick={() => setCurrentStep(4)} className="text-primary hover:underline flex items-center gap-0.5"><Edit2 size={10} /> Ubah</button>
+                          </div>
+                          <p className="font-extrabold text-emerald-600 dark:text-emerald-400">{form.insurance_type} {form.insurance_group ? `(${form.insurance_group})` : ''}</p>
+                          <p className="text-slate-500">No. Kartu: <span className="font-mono">{form.insurance_no || '-'}</span></p>
+                        </div>
+                      </div>
+
+                      {/* Step 5 Summary */}
+                      <div className="p-3 bg-white dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-white/5 col-span-full flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between font-bold text-slate-400 uppercase text-[10px] tracking-wider mb-1">
+                            <span>5. Skrining Medis & Safety (IPSG)</span>
+                            <button type="button" onClick={() => setCurrentStep(5)} className="text-primary hover:underline flex items-center gap-0.5"><Edit2 size={10} /> Ubah</button>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <span className="px-2 py-0.5 rounded bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-300 font-black">GolDarah: {form.blood_type.toUpperCase()}</span>
+                            <span className="px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-950/50 text-orange-700 dark:text-orange-300 font-bold">Alergi: {form.allergies || 'TIDAK ADA'}</span>
+                            {form.fall_risk && <span className="px-2 py-0.5 rounded bg-amber-500 text-white font-black">⚠️ RISIKO JATUH</span>}
+                            {form.implant_pacemaker && <span className="px-2 py-0.5 rounded bg-purple-600 text-white font-black">⚡ PACEMAKER/IMPLAN</span>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-on-surface-variant mb-2 block">{t('patients_v2.wizard.fields.spiritual')}</label>
-                    <textarea className="form-input" value={form.spiritual_needs} onChange={e => updateField('spiritual_needs', e.target.value)} rows="2" placeholder={t('patients_v2.wizard.fields.spiritual_placeholder')} />
+                  <div className="grid-2">
+                    <div>
+                      <label className="metric-label mb-2">{t('patients_v2.wizard.fields.privacy')}</label>
+                      <select className="form-input" value={form.privacy_level} onChange={e => updateField('privacy_level', e.target.value)}>
+                        {['standard', 'vip', 'anonymous'].map(opt => (
+                          <option key={opt} value={opt.toUpperCase()}>{t(`patients_v2.wizard.fields.privacy_options.${opt}`)}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="metric-label mb-2">{t('patients_v2.wizard.fields.spiritual')}</label>
+                      <textarea className="form-input" value={form.spiritual_needs} onChange={e => updateField('spiritual_needs', e.target.value)} rows="1" placeholder={t('patients_v2.wizard.fields.spiritual_placeholder')} />
+                    </div>
                   </div>
 
-                  <div className="p-5 border-2 border-primary/20 rounded-2xl bg-primary-container/5 mt-4">
-                    <div className="flex-row items-start gap-3">
-                      <input type="checkbox" id="consent" checked={form.consent} onChange={e => updateField('consent', e.target.checked)} required style={{ marginTop: '4px' }} />
-                      <label htmlFor="consent" className="text-xs leading-relaxed font-medium">
-                        {t('patients_v2.wizard.consent_label')}
-                      </label>
+                  <div className="grid-2 gap-4 mt-6">
+                    <div className="p-4 border-2 border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50">
+                      <div className="flex-row items-center justify-between">
+                        <label htmlFor="dnr" className="text-[13px] font-bold opacity-90 cursor-pointer">{t('patients_v2.wizard.fields.dnr')}</label>
+                        <input type="checkbox" id="dnr" checked={form.dnr_status} onChange={e => updateField('dnr_status', e.target.checked)} className="cursor-pointer w-4 h-4 rounded text-red-500 focus:ring-red-500" />
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1">{t('patients_v2.wizard.fields.dnr_desc')}</p>
+                    </div>
+                    <div className="p-4 border-2 border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50 dark:bg-slate-900/50">
+                      <div className="flex-row items-center justify-between">
+                        <label htmlFor="organ" className="text-[13px] font-bold opacity-90 cursor-pointer">{t('patients_v2.wizard.fields.organ_donor')}</label>
+                        <input type="checkbox" id="organ" checked={form.organ_donor} onChange={e => updateField('organ_donor', e.target.checked)} className="cursor-pointer w-4 h-4 rounded text-indigo-500 focus:ring-indigo-500" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-5 border-2 border-primary/20 rounded-2xl bg-primary-container/10 mt-6">
+                    <div className="flex-column gap-3">
+                      <div className="flex-row items-start gap-3">
+                        <input type="checkbox" id="data_release" checked={form.data_release} onChange={e => updateField('data_release', e.target.checked)} className="cursor-pointer w-4 h-4 mt-0.5 rounded border-primary text-primary focus:ring-primary" />
+                        <label htmlFor="data_release" className="text-[13px] leading-relaxed font-bold opacity-90 cursor-pointer">
+                          {t('patients_v2.wizard.fields.data_release_desc')}
+                        </label>
+                      </div>
+                      <div className="flex-row items-start gap-3 border-t border-primary/10 pt-3">
+                        <input type="checkbox" id="consent" checked={form.consent} onChange={e => updateField('consent', e.target.checked)} required className="cursor-pointer w-4 h-4 mt-0.5 rounded border-primary text-primary focus:ring-primary" />
+                        <label htmlFor="consent" className="text-[13px] leading-relaxed font-bold opacity-90 cursor-pointer">
+                          {t('patients_v2.wizard.consent_label')}
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="flex-row justify-between mt-8 pt-4 border-t">
-                {currentStep > 1 ? (
-                  <button type="button" className="btn-ghost" onClick={() => setCurrentStep(prev => prev - 1)}>{t('patients_v2.wizard.back')}</button>
-                ) : (
-                  <button type="button" className="btn-ghost" onClick={() => setIsModalOpen(false)}>{t('patients_v2.wizard.cancel')}</button>
-                )
-                }
-                
-                {currentStep < 6 ? (
-                  <button type="button" className="btn-primary" onClick={() => setCurrentStep(prev => prev + 1)}>
-                    {t('patients_v2.wizard.next', { next: currentStep + 1 })}
-                  </button>
-                ) : (
-                  <button type="submit" className="btn-primary">{isEditing ? t('patients_v2.wizard.save_changes') || 'Simpan Perubahan' : t('patients_v2.wizard.finalize')}</button>
-                )}
               </div>
             </form>
+            
+            {/* ─── EMR Footer Buttons ─── */}
+            <div className="flex items-center justify-between p-6 sm:px-8 sm:py-5 bg-slate-50 dark:bg-slate-900 border-t border-slate-200/50 dark:border-white/5">
+              {currentStep > 1 ? (
+                <button type="button" className="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 transition-all flex items-center gap-2" onClick={() => setCurrentStep(prev => prev - 1)}>
+                  <ArrowRight size={18} className="rotate-180" /> {t('patients_v2.wizard.back')}
+                </button>
+              ) : (
+                <button type="button" className="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-red-50 hover:text-red-600 transition-all flex items-center gap-2" onClick={() => setIsModalOpen(false)}>
+                  <span className="material-symbols-outlined text-[20px]">cancel</span> {t('patients_v2.wizard.cancel')}
+                </button>
+              )}
+              
+              {currentStep < 6 ? (
+                <button type="button" className="px-8 py-2.5 rounded-xl bg-primary text-white font-black hover:bg-primary-dark transition-all flex items-center gap-2 shadow-lg shadow-primary/30" onClick={() => setCurrentStep(prev => prev + 1)}>
+                  {t('patients_v2.wizard.next', { next: currentStep + 1 })} <ArrowRight size={18} />
+                </button>
+              ) : (
+                <button type="submit" className="px-8 py-2.5 rounded-xl bg-emerald-500 text-white font-black hover:bg-emerald-600 transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/30">
+                  <CheckCircle2 size={18} /> {isEditing ? t('patients_v2.wizard.save_changes') || 'Simpan Perubahan' : t('patients_v2.wizard.finalize')}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1087,6 +1611,20 @@ export default function PatientPage() {
         <AuditTrailModal 
           patient={selectedPatientForAudit}
           onClose={() => setIsAuditModalOpen(false)}
+        />
+      )}
+
+      {/* ─── MPI Record Merge Modal ─── */}
+      {isMergeModalOpen && (
+        <MergePatientModal 
+          sourcePatient={selectedPatientForMerge}
+          patients={patients}
+          currentUser={currentUser}
+          onClose={() => setIsMergeModalOpen(false)}
+          onSuccess={() => {
+            setIsMergeModalOpen(false);
+            fetchPatients();
+          }}
         />
       )}
     </div>
@@ -1196,6 +1734,235 @@ function AdmissionModal({ patient, onClose, currentUser, doctors, onSuccess }) {
                </button>
             </div>
          </form>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * MPI Patient Record Merge Modal (Standard Deduplication & Relinking)
+ */
+function MergePatientModal({ sourcePatient, patients, currentUser, onClose, onSuccess }) {
+  const [targetSearch, setTargetSearch] = useState('');
+  const [targetPatientId, setTargetPatientId] = useState('');
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [merging, setMerging] = useState(false);
+
+  const potentialTargets = patients.filter(p => 
+    p.id !== sourcePatient?.id && 
+    p.status !== 'MERGED' &&
+    (!targetSearch || 
+      p.name?.toLowerCase().includes(targetSearch.toLowerCase()) || 
+      p.mrn?.toLowerCase().includes(targetSearch.toLowerCase()) ||
+      p.demographics?.nik?.includes(targetSearch))
+  );
+
+  const handleMerge = async (e) => {
+    e.preventDefault();
+    if (!targetPatientId) {
+      toast.error('Pilih pasien master utama terlebih dahulu!');
+      return;
+    }
+    if (!consentChecked) {
+      toast.error('Centang konfirmasi keabsahan dokumen legal terlebih dahulu!');
+      return;
+    }
+
+    setMerging(true);
+    try {
+      const targetPatient = patients.find(p => p.id === targetPatientId);
+
+      // 1. Relink Encounters associated with sourcePatient to targetPatientId
+      const qEncounters = query(collection(db, COLLECTIONS.ENCOUNTERS), where('patientId', '==', sourcePatient.id));
+      const snap = await getDocs(qEncounters);
+      const updatePromises = snap.docs.map(docSnap => 
+        updateDoc(doc(db, COLLECTIONS.ENCOUNTERS, docSnap.id), {
+          patientId: targetPatientId,
+          mergedFromPatientId: sourcePatient.id,
+          mergedFromMrn: sourcePatient.mrn || 'TEMP',
+          mergedAt: serverTimestamp()
+        })
+      );
+      await Promise.all(updatePromises);
+
+      // 2. Soft-delete / Update source patient status to MERGED
+      await updateDoc(doc(db, COLLECTIONS.PATIENTS, sourcePatient.id), {
+        status: 'MERGED',
+        mergedIntoId: targetPatientId,
+        mergedIntoMrn: targetPatient?.mrn || 'MASTER',
+        mergedAt: serverTimestamp(),
+        mergedBy: currentUser?.email || 'system'
+      });
+
+      // 3. Log Audit Trail
+      await logAudit({
+        action: AUDIT_ACTIONS.UPDATE,
+        resource_type: COLLECTIONS.PATIENTS,
+        resource_id: targetPatientId,
+        delta: { 
+          sourcePatientName: sourcePatient.name, 
+          sourceMrn: sourcePatient.mrn,
+          targetPatientName: targetPatient?.name,
+          targetMrn: targetPatient?.mrn,
+          encountersTransferred: snap.docs.length
+        },
+        reason: 'MPI_PATIENT_RECORD_MERGE'
+      });
+
+      toast.success(`Berhasil Menggabungkan Rekam Medis ${sourcePatient.name} ke ${targetPatient?.name}!`);
+      onSuccess();
+    } catch (err) {
+      toast.error(`Gagal melakukan merger data: ${err.message}`);
+    } finally {
+      setMerging(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-slate-950 w-full max-w-3xl max-h-[90vh] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-white/10 animate-in slide-in-from-bottom-8 duration-500">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 sm:px-8 bg-purple-50 dark:bg-purple-950/40 border-b border-purple-100 dark:border-purple-900/40">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/20 shadow-sm">
+              <span className="material-symbols-outlined text-2xl">call_merge</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-[10px] font-black uppercase tracking-widest">
+                  MPI Deduplication Tool
+                </span>
+              </div>
+              <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+                Merger Rekam Medis (MPI Record Merge)
+              </h3>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            className="w-9 h-9 rounded-full bg-white dark:bg-slate-900 flex items-center justify-center text-slate-500 hover:text-error transition-all border border-slate-200 dark:border-white/10"
+            onClick={onClose}
+          >
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <form onSubmit={handleMerge} className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6 text-xs">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Left Column: Source Patient (Mr. X) */}
+            <div className="p-5 bg-orange-50/60 dark:bg-orange-950/20 rounded-2xl border-2 border-orange-200 dark:border-orange-900/40 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 rounded bg-orange-500 text-white font-black text-[10px] uppercase tracking-wider">
+                  Pasien Temporer / Mr. X
+                </span>
+                <span className="text-[10px] font-mono text-orange-700 dark:text-orange-400 font-bold">SOURCE</span>
+              </div>
+              <div>
+                <h4 className="text-lg font-black text-slate-800 dark:text-slate-100">{sourcePatient?.name}</h4>
+                <p className="text-slate-500 font-mono">No. RM: {sourcePatient?.mrn || 'TEMP'}</p>
+                <p className="text-slate-500 mt-1">NIK/Paspor: {sourcePatient?.demographics?.nik || sourcePatient?.demographics?.passport_no || 'Belum Terdaftar'}</p>
+                <p className="text-slate-500">Gender: {sourcePatient?.demographics?.gender === 'M' ? 'Laki-laki' : 'Perempuan'}</p>
+              </div>
+              <div className="p-3 bg-white dark:bg-slate-900 rounded-xl border border-orange-200/60 dark:border-orange-900/40 text-[11px] text-orange-800 dark:text-orange-300 space-y-1">
+                <p className="font-bold flex items-center gap-1"><span className="material-symbols-outlined text-sm">info</span> Data Yang Akan Dipindahkan:</p>
+                <ul className="list-disc list-inside opacity-90 space-y-0.5 pl-1">
+                  <li>Seluruh Riwayat Kunjungan / Encounters</li>
+                  <li>Catatan Medis & Tanda Vital (Vitals)</li>
+                  <li>Order Laboratorium & Resep Obat</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Right Column: Target Master Patient */}
+            <div className="p-5 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-2xl border-2 border-emerald-200 dark:border-emerald-900/40 space-y-3 flex flex-col">
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-black text-[10px] uppercase tracking-wider">
+                  Pasien Utama (Master Record)
+                </span>
+                <span className="text-[10px] font-mono text-emerald-700 dark:text-emerald-400 font-bold">TARGET</span>
+              </div>
+
+              <div>
+                <label className="metric-label mb-1.5 block">Cari Pasien Utama (Master MPI):</label>
+                <div className="relative">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                  <input 
+                    type="text" 
+                    className="form-input pl-9 text-xs" 
+                    placeholder="Ketik Nama / NIK / No. RM Master..." 
+                    value={targetSearch}
+                    onChange={e => setTargetSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Target List */}
+              <div className="flex-1 max-h-48 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                {potentialTargets.length === 0 ? (
+                  <p className="text-center py-6 text-slate-400 italic">Tidak ada pasien lain yang cocok.</p>
+                ) : (
+                  potentialTargets.map(target => (
+                    <label 
+                      key={target.id}
+                      className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                        targetPatientId === target.id 
+                          ? 'bg-emerald-500 text-white border-emerald-600 shadow-md' 
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 hover:border-emerald-400'
+                      }`}
+                    >
+                      <div>
+                        <p className="font-extrabold text-xs">{target.name}</p>
+                        <p className={`text-[10px] font-mono ${targetPatientId === target.id ? 'text-emerald-100' : 'text-slate-500'}`}>
+                          RM: {target.mrn} | NIK: {target.demographics?.nik || '-'}
+                        </p>
+                      </div>
+                      <input 
+                        type="radio" 
+                        name="targetPatient" 
+                        checked={targetPatientId === target.id}
+                        onChange={() => setTargetPatientId(target.id)}
+                        className="w-4 h-4 text-emerald-600 cursor-pointer"
+                      />
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Legal Consent Checkbox */}
+          <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-white/10 flex items-start gap-3">
+            <input 
+              type="checkbox" 
+              id="merge_consent"
+              checked={consentChecked}
+              onChange={e => setConsentChecked(e.target.checked)}
+              className="w-4 h-4 mt-0.5 rounded text-purple-600 focus:ring-purple-500 cursor-pointer"
+            />
+            <label htmlFor="merge_consent" className="text-[11px] font-bold text-slate-700 dark:text-slate-300 leading-relaxed cursor-pointer">
+              Saya mengonfirmasi keabsahan verifikasi identitas dan menyetujui penggabungan rekam medis pasien darurat di atas secara permanen sesuai standar akreditasi JCI / Permenkes RI.
+            </label>
+          </div>
+
+          {/* Footer Buttons */}
+          <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
+            <button type="button" className="btn-ghost" onClick={onClose} disabled={merging}>
+              Batal
+            </button>
+            <button 
+              type="submit" 
+              disabled={merging || !targetPatientId || !consentChecked}
+              className="px-8 py-2.5 rounded-xl bg-purple-600 text-white font-black hover:bg-purple-700 disabled:opacity-50 transition-all flex items-center gap-2 shadow-lg shadow-purple-600/30"
+            >
+              <span className="material-symbols-outlined text-lg">call_merge</span>
+              {merging ? 'Menggabungkan Data...' : 'Eksekusi Merger Rekam Medis'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

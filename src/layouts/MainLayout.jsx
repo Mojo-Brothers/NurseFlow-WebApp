@@ -79,12 +79,19 @@ const MainLayout = () => {
     setIsCreatingEmergency(true);
     try {
       // 1. Buat Pasien Anonim
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const uniqueCode = Math.random().toString(36).substring(2, 5).toUpperCase();
+      
       const newPatient = await addPatient({
-        name: `Anonim Darurat - ${new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`,
-        dob: '1970-01-01', // Default DOB for unknown
-        gender: 'UNKNOWN',
-        mrn: `EMR-${Math.floor(Math.random() * 10000)}`,
-        status: 'ACTIVE'
+        name: `Mr. X (${dateStr}, ${timeStr}) - #${uniqueCode}`,
+        demographics: {
+          dob: '1970-01-01',
+          gender: 'U'
+        },
+        mrn: `MRX-${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${uniqueCode}`,
+        status: 'EMERGENCY'
       }, currentUser?.email || 'system');
       
       // 2. Buat Encounter
@@ -92,7 +99,7 @@ const MainLayout = () => {
         patientId: newPatient.id,
         encounterType: 'emergency',
         chiefComplaint: '', // Provide empty string to prevent undefined crash
-        status: 'IN_PROGRESS',
+        status: 'TRIAGE',
         triageStatus: 'PENDING',
         department: 'IGD'
       }, currentUser?.email || 'system');

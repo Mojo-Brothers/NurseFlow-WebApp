@@ -162,12 +162,20 @@ export const getActiveEncounters = async (maxResults = 100) => {
           ENCOUNTER_STATUSES.TRIAGE, 
           ENCOUNTER_STATUSES.IN_TREATMENT,
           ENCOUNTER_STATUSES.TRANSFER_INTERNAL
-        ]),
-      limit(maxResults)
+        ])
     );
     const snap = await getDocs(q);
     
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    let encounters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    
+    // Sort descending client-side to avoid Firestore composite index errors
+    encounters.sort((a, b) => {
+      const timeA = a.admitted_at?.toDate ? a.admitted_at.toDate().getTime() : 0;
+      const timeB = b.admitted_at?.toDate ? b.admitted_at.toDate().getTime() : 0;
+      return timeB - timeA;
+    });
+
+    return encounters.slice(0, maxResults);
   } catch (error) {
     console.error('[EncounterService] Failed to fetch encounters:', error);
     return [];

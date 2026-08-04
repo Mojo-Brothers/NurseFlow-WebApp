@@ -76,7 +76,7 @@ export const submitTriage = async ({
       triage_screening: screeningQuestions,
       triage_status: 'COMPLETED',
       triaged_at: serverTimestamp(),
-      'status': 'in-progress',
+      'status': 'IN_TREATMENT',
       '_ehis.triage_priority': esiLevel // FHIR extension for easy querying
     };
 
