@@ -50,7 +50,7 @@ function calculateNEWS2(vitals) {
 
 exports.calculateEWS = functions.firestore
   .document('fhir_observations/{obsId}')
-  .onWrite(async (change, context) => {
+  .onWrite(async (change) => {
     // Only calculate on create or update
     if (!change.after.exists) return null;
 

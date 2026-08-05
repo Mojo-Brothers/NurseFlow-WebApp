@@ -16,7 +16,7 @@ exports.createSEP = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('permission-denied', 'Tidak memiliki hak akses VClaim.');
   }
 
-  const { noKartu, tglSep, jnsPelayanan, klsRawat, noMR, asalRujukan, tglRujukan, noRujukan, ppkRujukan, diagAwal, poli, user } = data;
+  const { noKartu, tglSep, klsRawat, noMR, diagAwal, poli } = data;
 
   if (!noKartu || !noMR || !diagAwal || !poli) {
     throw new functions.https.HttpsError('invalid-argument', 'Data payload BPJS tidak lengkap.');

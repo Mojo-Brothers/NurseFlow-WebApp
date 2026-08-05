@@ -8,12 +8,6 @@ export default function AuditTrailModal({ patient, onClose }) {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (patient?.id) {
-      fetchLogs();
-    }
-  }, [patient]);
-
   const fetchLogs = async () => {
     try {
       setIsLoading(true);
@@ -25,6 +19,12 @@ export default function AuditTrailModal({ patient, onClose }) {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (patient?.id) {
+      fetchLogs();
+    }
+  }, [patient]);
 
   return (
     <div className="modal-overlay">
