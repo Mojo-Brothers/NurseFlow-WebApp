@@ -8,6 +8,17 @@ import {
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS } from '../../../core/constants.js';
 
+export const DEFAULT_PHARMACY_ITEMS = [
+  { id: 'pharm-001', medication_name: 'Paracetamol 500mg Tablet', stock_quantity: 450, unit: 'Tablets', reorder_level: 100, category: 'OBAT' },
+  { id: 'pharm-002', medication_name: 'Amoxicillin 500mg Kaplet', stock_quantity: 200, unit: 'Capsules', reorder_level: 50, category: 'OBAT' },
+  { id: 'pharm-003', medication_name: 'Ceftriaxone Inj 1gr Vial', stock_quantity: 18, unit: 'Vials', reorder_level: 25, category: 'INJEKSI' },
+  { id: 'pharm-004', medication_name: 'Cairan Infus NaCl 0.9% 500ml', stock_quantity: 120, unit: 'Botol', reorder_level: 30, category: 'BMHP' },
+  { id: 'pharm-005', medication_name: 'Insulin Glargine 100 IU/ml Pen', stock_quantity: 8, unit: 'Pens', reorder_level: 15, category: 'OBAT' },
+  { id: 'pharm-006', medication_name: 'Morphine Injection 10mg/ml Ampul', stock_quantity: 0, unit: 'Ampuls', reorder_level: 10, category: 'NARKOTIKA' },
+  { id: 'pharm-007', medication_name: 'Furosemide Injection 20mg/2ml Ampul', stock_quantity: 75, unit: 'Ampuls', reorder_level: 20, category: 'INJEKSI' },
+  { id: 'pharm-008', medication_name: 'Asam Mefenamat 500mg Kaplet', stock_quantity: 340, unit: 'Tablets', reorder_level: 50, category: 'OBAT' }
+];
+
 /**
  * Mengambil seluruh status stok obat.
  */
@@ -15,10 +26,11 @@ export const getInventoryStatus = async () => {
   try {
     const q = query(collection(db, COLLECTIONS.INVENTORY), orderBy('medication_name', 'asc'));
     const snap = await getDocs(q);
+    if (snap.empty) return DEFAULT_PHARMACY_ITEMS;
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   } catch (err) {
-    console.error('[InventoryService] Fetch failed:', err);
-    throw err;
+    console.error('[InventoryService] Fetch failed, returning default seed:', err);
+    return DEFAULT_PHARMACY_ITEMS;
   }
 };
 

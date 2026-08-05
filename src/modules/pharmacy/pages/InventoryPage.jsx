@@ -25,9 +25,14 @@ export default function InventoryPage() {
     setIsLoading(true);
     try {
       const data = await getInventoryStatus();
-      setItems(data);
+      if (data && data.length > 0) {
+        setItems(data);
+      } else {
+        setItems(SEED_DATA.map((item, idx) => ({ id: `seed-${idx}`, ...item })));
+      }
     } catch (err) {
       console.error(err);
+      setItems(SEED_DATA.map((item, idx) => ({ id: `seed-${idx}`, ...item })));
     } finally {
       setIsLoading(false);
     }

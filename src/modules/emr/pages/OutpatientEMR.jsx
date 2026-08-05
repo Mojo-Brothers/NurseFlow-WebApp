@@ -38,8 +38,16 @@ import MedicalCertificateCauseOfDeathForm from '../components/MedicalCertificate
 import BPOMMESOPharmacovigilanceForm from '../components/BPOMMESOPharmacovigilanceForm.jsx';
 import WHOChildAnthropometryForm from '../components/WHOChildAnthropometryForm.jsx';
 import WHOHandHygieneAuditForm from '../components/WHOHandHygieneAuditForm.jsx';
+import PatientCarePanel from '../components/PatientCarePanel.jsx';
 
 const JCI_MODULE_GROUPS = [
+  {
+    title: 'PELAYANAN PASIEN TERPADU (CARE)',
+    icon: <Activity size={16} />,
+    modules: [
+      { id: 'patient-care-workspace', name: 'WORKSPACES PELAYANAN PASIEN', icon: <HeartPulse size={16} />, standard: 'JCI COP & ACC', highlight: true },
+    ]
+  },
   {
     title: 'PENGKAJIAN AWAL (AOP)',
     icon: <Search size={16} />,
@@ -468,6 +476,18 @@ export default function OutpatientEMR() {
     const moduleInfo = JCI_MODULE_GROUPS.flatMap(g => g.modules).find(m => m.name === selectedModule);
 
     // CPPT specialized workspace
+    if (selectedModule === 'WORKSPACES PELAYANAN PASIEN' || selectedModule === 'patient-care-workspace') {
+      return (
+        <PatientCarePanel 
+          patient={activePatient}
+          encounter={activeEncounter}
+          onDischargeSuccess={() => {
+             getPatientRecords(selectedPatientId).then(setSoapRecords).catch(console.error);
+          }}
+        />
+      );
+    }
+
     if (selectedModule === 'SOAP NOTES (CPPT)') {
       return (
         <CPPTWorkspace 

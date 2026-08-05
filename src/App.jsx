@@ -20,11 +20,19 @@ import Patients    from './modules/patient/pages/PatientPage';
 import Triage      from './modules/triage/pages/TriagePage';
 import EMR         from './modules/emr/pages/EMRPage';
 import OutpatientEMR from './modules/emr/pages/OutpatientEMR';
+import PatientCarePage from './modules/emr/pages/PatientCarePage';
 import Encounters  from './modules/encounter/pages/EncounterPage';
 import Pharmacy    from './modules/pharmacy/pages/PharmacyPage';
 import Worklist    from './modules/worklist/pages/WorklistPage';
 import Billing     from './modules/billing/pages/BillingPage';
 import AdminHub    from './modules/admin/pages/AdminHubPage';
+import MasterServicePage from './modules/admin/pages/MasterServicePage';
+import MaterialRequestPage from './modules/inventory/pages/MaterialRequestPage';
+import ItemDepartmentPage from './modules/inventory/pages/ItemDepartmentPage';
+import ReceiveMutasiPage from './modules/inventory/pages/ReceiveMutasiPage';
+import InternalUsePage from './modules/inventory/pages/InternalUsePage';
+import KartuStockPage from './modules/inventory/pages/KartuStockPage';
+import StockAdjustmentPage from './modules/inventory/pages/StockAdjustmentPage';
 import HealthCheck from './modules/core/pages/HealthCheckPage';
 import GuidePage   from './modules/core/pages/GuidePage';
 import LabPage     from './modules/lab/pages/LabPage';
@@ -32,6 +40,7 @@ import WardMonitor from './modules/dashboard/pages/WardMonitorPage';
 import BedManagement from './modules/ward/pages/BedManagementPage';
 import Analytics from './modules/dashboard/pages/AnalyticsDashboard';
 import EncounterSummary from './modules/reporting/pages/EncounterSummaryPage';
+import EnterpriseInventoryPage from './modules/inventory/pages/EnterpriseInventoryPage';
 import Inventory from './modules/pharmacy/pages/InventoryPage';
 import PatientPortal from './modules/patient/pages/PatientPortal';
 import WayfindingPortal from './modules/patient/pages/WayfindingPortal';
@@ -86,6 +95,10 @@ const router = createBrowserRouter([
           { path: "/patients",   element: <Wrap><Patients /></Wrap> },
           { path: "/encounters", element: <Wrap><Encounters /></Wrap> },
           { path: "/triage",     element: <Wrap><Triage /></Wrap> },
+          { path: "/patient-care", element: <Wrap><PatientCarePage /></Wrap> },
+          { path: "/admin/services", element: <Wrap><MasterServicePage /></Wrap> },
+          { path: "/inventory",  element: <Navigate to="/inventory/material-request" replace /> },
+          { path: "/inventory/*", element: <Wrap><EnterpriseInventoryPage /></Wrap> },
           { path: "/emr",        element: <Wrap><EMR /></Wrap> },
           { path: "/emr-rj",     element: <Wrap><OutpatientEMR /></Wrap> },
           { path: "/emr-ri",     element: <Wrap><OutpatientEMR /></Wrap> },
@@ -130,7 +143,7 @@ const router = createBrowserRouter([
           },
           {
             element: <ProtectedRoute allowedRoles={['PHARMACIST', 'ADMIN']} />,
-            children: [{ path: "/inventory", element: <Wrap><Inventory /></Wrap> }]
+            children: [{ path: "/pharmacy/inventory", element: <Wrap><Inventory /></Wrap> }]
           },
           {
             element: <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'SUPERVISOR', 'ADMIN']} />,

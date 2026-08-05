@@ -29,6 +29,14 @@ export default function EncounterPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // ─── View Mode Switcher State (Grid / Card vs Table) ───
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('nurseflow_view_mode') || 'grid');
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    localStorage.setItem('nurseflow_view_mode', mode);
+  };
   const [form, setForm] = useState({
     patientId:       '',
     encounterType:   ENCOUNTER_TYPES.EMERGENCY,
@@ -122,6 +130,36 @@ export default function EncounterPage() {
           <div className="h-10 w-[1px] bg-outline-variant/50 hidden md:block"></div>
           
           <div className="flex-row items-center gap-3">
+            {/* View Mode Switcher (Kartu vs Tabel) */}
+            <div className="flex items-center bg-surface-container-high/80 p-1 rounded-xl border border-outline-variant/30">
+              <button 
+                type="button"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === 'grid' 
+                    ? 'bg-primary text-white shadow-sm' 
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+                onClick={() => handleViewModeChange('grid')}
+                title="Tampilan Kartu (Grid)"
+              >
+                <span className="material-symbols-outlined text-[18px]">grid_view</span>
+                <span className="hidden sm:inline">Kartu</span>
+              </button>
+              <button 
+                type="button"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === 'table' 
+                    ? 'bg-primary text-white shadow-sm' 
+                    : 'text-on-surface-variant hover:text-on-surface'
+                }`}
+                onClick={() => handleViewModeChange('table')}
+                title="Tampilan Tabel (List)"
+              >
+                <span className="material-symbols-outlined text-[18px]">table_rows</span>
+                <span className="hidden sm:inline">Tabel</span>
+              </button>
+            </div>
+
             <button 
               className="btn-primary"
               onClick={() => setIsModalOpen(true)}
@@ -133,94 +171,187 @@ export default function EncounterPage() {
         </div>
       </div>
 
-      {/* ─── UNIFIED PREMIUM CARD GRID ─── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10 relative z-10">
-        {isLoading ? (
-          <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4">
-            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-            <span className="font-bold text-on-surface-variant/60 animate-pulse">Menyiapkan Data Kunjungan...</span>
-          </div>
-        ) : filteredEncounters.length === 0 ? (
-          <div className="col-span-full py-24 flex flex-col items-center justify-center gap-4 opacity-40">
-            <div className="w-24 h-24 bg-surface-container-high rounded-full flex items-center justify-center mb-2 shadow-inner">
-              <span className="material-symbols-outlined text-[64px] text-on-surface-variant">person_search</span>
+      {/* ─── DYNAMIC VIEW MODE (GRID CARD vs TABLE) ─── */}
+      {viewMode === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pb-10 relative z-10">
+          {isLoading ? (
+            <div className="col-span-full py-20 flex flex-col items-center justify-center gap-4">
+              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+              <span className="font-bold text-on-surface-variant/60 animate-pulse">Menyiapkan Data Kunjungan...</span>
             </div>
-            <h3 className="text-2xl font-headline font-black tracking-tight">Tidak Ada Data Kunjungan Aktif</h3>
-            <p className="text-sm max-w-[300px] mx-auto text-center">{t('encounter.empty_list_hint', { defaultValue: 'No active encounters.' })}</p>
-          </div>
-        ) : (
-          filteredEncounters.map(enc => {
-            const chip = STATUS_CHIP[enc.status] || STATUS_CHIP.ACTIVE;
-            const isEmergency = enc.encounter_type === 'EMERGENCY' || enc.encounter_type === 'IGD';
-            return (
-              <div 
-                key={enc.id} 
-                className="clinical-card group flex flex-col relative overflow-hidden cursor-pointer hover:border-primary transition-all"
-                onClick={() => {
-                  setLiveContext(enc.patient_id, enc.id);
-                  navigate('/emr-rj');
-                }}
-              >
-                {/* Status Edge Indicator */}
-                <div className={`absolute top-0 left-0 w-1.5 h-full ${isEmergency ? 'bg-error shadow-glow-error' : 'bg-primary'}`}></div>
-                
-                <div className="flex-row justify-between items-start mb-4 pl-3">
-                  <div>
-                    <h3 className="font-headline font-black text-lg text-on-surface leading-tight group-hover:text-primary transition-colors">{getPatientName(enc.patient_id)}</h3>
-                    <div className="flex-row items-center gap-2 mt-1">
-                      <span className="text-[10px] font-mono font-bold bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">{enc.encounter_type || 'EMERGENCY'}</span>
-                      <span className="text-[10px] font-bold text-on-surface-variant/50 uppercase">{formatTime(enc.admitted_at)}</span>
+          ) : filteredEncounters.length === 0 ? (
+            <div className="col-span-full py-24 flex flex-col items-center justify-center gap-4 opacity-40">
+              <div className="w-24 h-24 bg-surface-container-high rounded-full flex items-center justify-center mb-2 shadow-inner">
+                <span className="material-symbols-outlined text-[64px] text-on-surface-variant">person_search</span>
+              </div>
+              <h3 className="text-2xl font-headline font-black tracking-tight">Tidak Ada Data Kunjungan Aktif</h3>
+              <p className="text-sm max-w-[300px] mx-auto text-center">{t('encounter.empty_list_hint', { defaultValue: 'No active encounters.' })}</p>
+            </div>
+          ) : (
+            filteredEncounters.map(enc => {
+              const chip = STATUS_CHIP[enc.status] || STATUS_CHIP.ACTIVE;
+              const isEmergency = enc.encounter_type === 'EMERGENCY' || enc.encounter_type === 'IGD';
+              return (
+                <div 
+                  key={enc.id} 
+                  className="clinical-card group flex flex-col relative overflow-hidden cursor-pointer hover:border-primary transition-all"
+                  onClick={() => {
+                    setLiveContext(enc.patient_id, enc.id);
+                    navigate('/emr-rj');
+                  }}
+                >
+                  {/* Status Edge Indicator */}
+                  <div className={`absolute top-0 left-0 w-1.5 h-full ${isEmergency ? 'bg-error shadow-glow-error' : 'bg-primary'}`}></div>
+                  
+                  <div className="flex-row justify-between items-start mb-4 pl-3">
+                    <div>
+                      <h3 className="font-headline font-black text-lg text-on-surface leading-tight group-hover:text-primary transition-colors">{getPatientName(enc.patient_id)}</h3>
+                      <div className="flex-row items-center gap-2 mt-1">
+                        <span className="text-[10px] font-mono font-bold bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">{enc.encounter_type || 'EMERGENCY'}</span>
+                        <span className="text-[10px] font-bold text-on-surface-variant/50 uppercase">{formatTime(enc.admitted_at)}</span>
+                      </div>
+                    </div>
+                    
+                    <div className={`px-2 py-1 rounded-md border text-[9px] font-black uppercase tracking-wider ${chip.color}`}>
+                      {t(chip.label)}
                     </div>
                   </div>
-                  
-                  <div className={`px-2 py-1 rounded-md border text-[9px] font-black uppercase tracking-wider ${chip.color}`}>
-                    {t(chip.label)}
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-4 pl-3">
-                  <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30 flex flex-col gap-1">
-                    <span className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant/50">Lokasi / Ruang</span>
-                    <span className="text-xs font-bold truncate text-on-surface flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[12px] text-primary">bed</span> {enc.ward || '—'}
+                  <div className="grid grid-cols-2 gap-3 mb-4 pl-3">
+                    <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30 flex flex-col gap-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant/50">Lokasi / Ruang</span>
+                      <span className="text-xs font-bold truncate text-on-surface flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px] text-primary">bed</span> {enc.ward || '—'}
+                      </span>
+                    </div>
+                    <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30 flex flex-col gap-1">
+                      <span className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant/50">DPJP</span>
+                      <span className="text-xs font-bold truncate text-on-surface flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[12px] text-primary">stethoscope</span> {enc.admitting_doctor?.split('@')[0] || '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mb-4 pl-3">
+                    <span className="text-[10px] font-medium text-on-surface-variant/60 line-clamp-2 leading-relaxed bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/20 italic">
+                      <strong className="font-bold text-on-surface-variant not-italic block mb-0.5">Keluhan Utama:</strong> 
+                      {enc.chief_complaint || '—'}
                     </span>
                   </div>
-                  <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/30 flex flex-col gap-1">
-                    <span className="text-[9px] font-black uppercase tracking-wider text-on-surface-variant/50">DPJP</span>
-                    <span className="text-xs font-bold truncate text-on-surface flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[12px] text-primary">stethoscope</span> {enc.admitting_doctor?.split('@')[0] || '—'}
-                    </span>
+
+                  <div className="mt-auto pt-3 border-t border-outline-variant/30 pl-3 flex-row justify-between items-center">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant/60">
+                      <span className="material-symbols-outlined text-[14px]">medical_services</span> {enc.nurse_in_charge?.split('@')[0] || '—'}
+                    </div>
+                    {enc.status === 'ACTIVE' && (
+                      <button 
+                        className="text-[10px] font-black uppercase tracking-widest text-error hover:bg-error-container hover:text-on-error-container px-3 py-1.5 rounded-lg transition-colors border border-error/20"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDischarge(enc.id);
+                        }}
+                      >
+                        {t('encounter.status.discharged')}
+                      </button>
+                    )}
                   </div>
                 </div>
-
-                <div className="mb-4 pl-3">
-                  <span className="text-[10px] font-medium text-on-surface-variant/60 line-clamp-2 leading-relaxed bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/20 italic">
-                    <strong className="font-bold text-on-surface-variant not-italic block mb-0.5">Keluhan Utama:</strong> 
-                    {enc.chief_complaint || '—'}
-                  </span>
-                </div>
-
-                <div className="mt-auto pt-3 border-t border-outline-variant/30 pl-3 flex-row justify-between items-center">
-                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-on-surface-variant/60">
-                    <span className="material-symbols-outlined text-[14px]">medical_services</span> {enc.nurse_in_charge?.split('@')[0] || '—'}
-                  </div>
-                  {enc.status === 'ACTIVE' && (
-                    <button 
-                      className="text-[10px] font-black uppercase tracking-widest text-error hover:bg-error-container hover:text-on-error-container px-3 py-1.5 rounded-lg transition-colors border border-error/20"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDischarge(enc.id);
-                      }}
-                    >
-                      {t('encounter.status.discharged')}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
+      ) : (
+        /* ─── PREMIUM HIGH-DENSITY CLINICAL TABLE VIEW ─── */
+        <div className="glass-panel rounded-2xl overflow-hidden border border-outline-variant/30 shadow-premium-soft mb-10 relative z-10">
+          {isLoading ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-4">
+              <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+              <span className="font-bold text-on-surface-variant/60 animate-pulse">Menyiapkan Data Kunjungan...</span>
+            </div>
+          ) : filteredEncounters.length === 0 ? (
+            <div className="py-20 flex flex-col items-center justify-center gap-4 opacity-40">
+              <span className="material-symbols-outlined text-[64px] text-on-surface-variant">person_search</span>
+              <h3 className="text-xl font-black">Tidak Ada Data Kunjungan Aktif</h3>
+              <p className="text-sm">{t('encounter.empty_list_hint', { defaultValue: 'No active encounters.' })}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-surface-container-high/60 border-b border-outline-variant/30 text-[11px] font-black uppercase tracking-wider text-on-surface-variant">
+                    <th className="py-3.5 px-4">Nama Pasien</th>
+                    <th className="py-3.5 px-4">Tipe Kunjungan</th>
+                    <th className="py-3.5 px-4">Waktu Masuk</th>
+                    <th className="py-3.5 px-4">Lokasi / Ruang</th>
+                    <th className="py-3.5 px-4">DPJP</th>
+                    <th className="py-3.5 px-4">Keluhan Utama</th>
+                    <th className="py-3.5 px-4">Status</th>
+                    <th className="py-3.5 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20 text-sm">
+                  {filteredEncounters.map(enc => {
+                    const chip = STATUS_CHIP[enc.status] || STATUS_CHIP.ACTIVE;
+                    return (
+                      <tr key={enc.id} className="hover:bg-surface-container-low/60 transition-colors group">
+                        <td className="py-3.5 px-4 font-headline font-black text-on-surface group-hover:text-primary transition-colors">
+                          {getPatientName(enc.patient_id)}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2.5 py-1 bg-surface-container rounded text-xs font-mono font-bold text-on-surface-variant border border-outline-variant/30">
+                            {enc.encounter_type || 'EMERGENCY'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-xs font-semibold text-on-surface-variant">
+                          {formatTime(enc.admitted_at)}
+                        </td>
+                        <td className="py-3.5 px-4 text-xs font-bold text-on-surface">
+                          <span className="flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[14px] text-primary">bed</span>
+                            {enc.ward || '—'}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-xs font-bold text-on-surface">
+                          {enc.admitting_doctor?.split('@')[0] || '—'}
+                        </td>
+                        <td className="py-3.5 px-4 text-xs text-on-surface-variant max-w-[220px] truncate">
+                          {enc.chief_complaint || '—'}
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`px-2.5 py-1 rounded border text-[10px] font-black uppercase tracking-wider ${chip.color}`}>
+                            {t(chip.label)}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button 
+                              className="px-3 py-1.5 bg-primary text-white hover:bg-primary/90 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                              onClick={() => {
+                                setLiveContext(enc.patient_id, enc.id);
+                                navigate('/emr-rj');
+                              }}
+                            >
+                              <span className="material-symbols-outlined text-[16px]">clinical_notes</span> EMR
+                            </button>
+                            {enc.status === 'ACTIVE' && (
+                              <button 
+                                className="px-2.5 py-1.5 bg-surface-container hover:bg-error-container hover:text-on-error-container rounded-lg text-xs font-bold transition-all border border-outline-variant/30"
+                                onClick={() => handleDischarge(enc.id)}
+                              >
+                                Discharge
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ─── Premium Glass Modal ─── */}
       {isModalOpen && (

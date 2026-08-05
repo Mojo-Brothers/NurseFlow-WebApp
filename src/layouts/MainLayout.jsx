@@ -16,6 +16,7 @@ const NAV_SCHEMA = [
     { name: 'nav.patients',    path: '/patients',   icon: 'groups',              roles: null },
     { name: 'nav.encounters',  path: '/encounters', icon: 'local_hospital',      roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.triage',      path: '/triage',     icon: 'emergency',           roles: ['DOCTOR','NURSE','ADMIN'] },
+    { name: 'nav.patient_care', path: '/patient-care', icon: 'medical_services',    roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.emr_rj',      path: '/emr-rj',     icon: 'personal_injury',     roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.emr_ri',      path: '/emr-ri',     icon: 'bed',                 roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.surgery',     path: '/surgery',    icon: 'theater_comedy',      roles: ['DOCTOR','NURSE','ADMIN'] },
@@ -23,7 +24,23 @@ const NAV_SCHEMA = [
   { label: 'nav.operational', items: [
     { name: 'nav.worklist',    path: '/worklist',   icon: 'task_alt',            roles: ['NURSE','ADMIN'] },
     { name: 'nav.pharmacy',    path: '/pharmacy',   icon: 'local_pharmacy',      roles: ['PHARMACIST','DOCTOR','ADMIN'] },
+    { 
+      name: 'nav.inventory',   
+      path: '/inventory',  
+      icon: 'inventory_2',         
+      roles: ['NURSE','PHARMACIST','DOCTOR','ADMIN'],
+      children: [
+        { name: 'nav.inv_material_request', path: '/inventory/material-request', icon: 'assignment' },
+        { name: 'nav.inv_item_department',  path: '/inventory/item-department',  icon: 'inventory' },
+        { name: 'nav.inv_mutasi_barang',    path: '/inventory/mutasi-barang',    icon: 'swap_horiz' },
+        { name: 'nav.inv_receive_mutasi',   path: '/inventory/receive-mutasi',   icon: 'local_shipping' },
+        { name: 'nav.inv_internal_use',     path: '/inventory/internal-use',     icon: 'corporate_fare' },
+        { name: 'nav.inv_kartu_stock',      path: '/inventory/kartu-stock',      icon: 'menu_book' },
+        { name: 'nav.inv_stock_adjustment', path: '/inventory/stock-adjustment', icon: 'balance' },
+      ]
+    },
     { name: 'nav.billing',     path: '/billing',    icon: 'receipt_long',        roles: ['DOCTOR','ADMIN'] },
+    { name: 'nav.master_services', path: '/admin/services', icon: 'medical_information', roles: ['DOCTOR','ADMIN'] },
   ]},
   { label: 'nav.administration', items: [
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
@@ -152,24 +169,58 @@ const MainLayout = () => {
                   </li>
                   {visibleItems.map((item) => {
                     const isActive = location.pathname.startsWith(item.path);
+                    const hasChildren = item.children && item.children.length > 0;
+                    const isExpanded = isActive || location.pathname.startsWith(item.path);
+
                     return (
-                      <li key={item.name}>
+                      <li key={item.name} className="flex flex-col gap-1">
                         <Link
-                          to={item.path}
-                          className={`flex-row items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative ${
+                          to={hasChildren ? item.children[0].path : item.path}
+                          className={`flex-row items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-300 group relative ${
                             isActive 
                               ? 'bg-primary text-white shadow-glow-primary scale-[1.02]' 
                               : 'text-on-surface-variant hover:bg-surface-container hover:text-primary hover:scale-[1.01]'
                           }`}
                         >
-                          <span className={`material-symbols-outlined text-[20px] transition-transform ${isActive ? '' : 'group-hover:scale-110'}`}>
-                            {item.icon}
-                          </span>
-                          <span className="font-semibold text-[13px] tracking-wide">{t(item.name)}</span>
-                          {isActive && (
+                          <div className="flex items-center gap-3">
+                            <span className={`material-symbols-outlined text-[20px] transition-transform ${isActive ? '' : 'group-hover:scale-110'}`}>
+                              {item.icon}
+                            </span>
+                            <span className="font-semibold text-[13px] tracking-wide">{t(item.name)}</span>
+                          </div>
+                          {hasChildren && (
+                            <span className="material-symbols-outlined text-[16px]">
+                              {isExpanded ? 'expand_more' : 'chevron_right'}
+                            </span>
+                          )}
+                          {isActive && !hasChildren && (
                             <span className="absolute right-3 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
                           )}
                         </Link>
+
+                        {/* Render Sub-menu Children if present */}
+                        {hasChildren && isExpanded && (
+                          <ul className="pl-3 flex flex-col gap-1 my-1 border-l-2 border-primary/30 ml-4 animate-in slide-in-from-top-1 fade-in duration-200">
+                            {item.children.map(child => {
+                              const isChildActive = location.pathname === child.path;
+                              return (
+                                <li key={child.name}>
+                                  <Link
+                                    to={child.path}
+                                    className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                      isChildActive
+                                        ? 'bg-primary/20 text-primary font-black scale-105'
+                                        : 'text-on-surface-variant/80 hover:text-primary hover:bg-surface-container/60'
+                                    }`}
+                                  >
+                                    <span className="material-symbols-outlined text-[16px]">{child.icon}</span>
+                                    <span>{t(child.name)}</span>
+                                  </Link>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
                       </li>
                     );
                   })}

@@ -58,12 +58,13 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
   };
 
   const mergedData = useMemo(() => {
-    return activeEncounters.map(enc => {
-      const p = patients.find(pat => pat.id === enc.patient_id) || {};
+    // 1. Encounters Mapped
+    const encMapped = activeEncounters.map(enc => {
+      const p = patients.find(pat => pat.id === enc.patient_id || pat.id === enc.patientId) || {};
       return {
         encounterId: enc.id,
-        patientId: enc.patient_id,
-        noReg: enc.id.slice(-8).toUpperCase(),
+        patientId: enc.patient_id || enc.patientId || p.id,
+        noReg: enc.id?.slice(-8).toUpperCase() || 'REG-PENDING',
         noRM: p.mrn || '-',
         nama: p.name || enc.patient_name || 'UNKNOWN',
         kelamin: p.demographics?.gender === 'M' ? 'Laki-laki' : p.demographics?.gender === 'F' ? 'Perempuan' : '-',
@@ -71,12 +72,39 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
         umur: p.demographics?.dob ? calculateAge(p.demographics.dob) : '-',
         departemen: enc.department || enc.ward || '-',
         dokter: enc.admitting_doctor || '-',
-        penjamin: enc.insurance_provider || enc.guarantor || 'Umum',
+        penjamin: enc.insurance_provider || enc.guarantor || (p.insurance?.type || 'Umum').toUpperCase(),
         tanggalMasuk: enc.admitted_at?.toDate ? format(enc.admitted_at.toDate(), 'yyyy-MM-dd') : '',
         rawDate: enc.admitted_at?.toDate ? enc.admitted_at.toDate().getTime() : (enc.created_at?.toDate ? enc.created_at.toDate().getTime() : 0),
-        encounterType: enc.encounter_type || 'OPD' // Fallback to OPD
+        encounterType: enc.encounter_type || 'OPD',
+        status: p.status || 'ACTIVE',
+        patientObj: p
       };
-    });
+    }).filter(item => item.status !== 'MERGED');
+
+    // 2. Master Patients Without Active Encounters
+    const mappedPatientIds = new Set(encMapped.map(item => item.patientId));
+    const registeredPatientsOnly = patients
+      .filter(p => !mappedPatientIds.has(p.id) && p.status !== 'MERGED')
+      .map(p => ({
+        encounterId: null,
+        patientId: p.id,
+        noReg: 'DRAFT',
+        noRM: p.mrn || 'PENDING',
+        nama: p.name || 'TANPA NAMA',
+        kelamin: p.demographics?.gender === 'M' ? 'Laki-laki' : p.demographics?.gender === 'F' ? 'Perempuan' : '-',
+        tglLahir: p.demographics?.dob || '-',
+        umur: p.demographics?.dob ? calculateAge(p.demographics.dob) : '-',
+        departemen: 'Master Data / Registrasi',
+        dokter: p.primary_physician?.name || 'DPJP Utama',
+        penjamin: (p.insurance?.type || 'UMUM').toUpperCase(),
+        tanggalMasuk: p.registered_at ? (typeof p.registered_at.toDate === 'function' ? format(p.registered_at.toDate(), 'yyyy-MM-dd') : String(p.registered_at).substring(0, 10)) : '-',
+        rawDate: 0,
+        encounterType: 'MASTER',
+        status: p.status || 'ACTIVE',
+        patientObj: p
+      }));
+
+    return [...encMapped, ...registeredPatientsOnly];
   }, [activeEncounters, patients]);
 
   const filteredData = useMemo(() => {
@@ -112,13 +140,13 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
     <div className="fixed inset-0 z-[1000] flex animate-in fade-in duration-300">
       {/* Super Modern Backdrop - Lighter and respecting persistent sidebar */}
       <div 
-        className="absolute inset-0 bg-[var(--scrim)]/30 backdrop-blur-md transition-all cursor-zoom-out" 
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-md transition-all cursor-zoom-out" 
         onClick={onClose}
       />
       
-      {/* Content Area Centered Container */}
-      <div className="flex-1 flex items-center justify-center p-4 relative z-10 pointer-events-none">
-        <div className="bg-[var(--surface-container-lowest)] backdrop-blur-3xl rounded-[3rem] w-full max-w-[1550px] h-[95vh] flex flex-col shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] border border-[var(--outline-variant)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-700 pointer-events-auto">
+      {/* Content Area Centered Container (Respects Persistent Sidebar) */}
+      <div className="flex-1 flex items-center justify-center p-4 md:pl-72 md:pr-8 py-6 relative z-10 pointer-events-none">
+        <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] w-full max-w-[1350px] h-[92vh] flex flex-col shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 pointer-events-auto">
         
         {/* Modal Header */}
         <div className="relative flex justify-between items-center px-8 py-3 border-b border-[var(--outline-variant)] bg-gradient-to-r from-[var(--surface-container)] to-[var(--surface-container-low)]">

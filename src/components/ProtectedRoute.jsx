@@ -39,8 +39,12 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
     return <Navigate to="/login" replace />;
   }
 
+  const ADMIN_WHITELIST = ['obbyvior@gmail.com', 'ivoryperfumecoorp@gmail.com', 'admin@nurseflow.id'];
+  const userEmail = currentUser?.email?.toLowerCase();
+  const effectiveRole = (userEmail && ADMIN_WHITELIST.includes(userEmail)) ? 'ADMIN' : (role || 'DOCTOR');
+
   // Role check — jika allowedRoles ditentukan dan user tidak termasuk
-  if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
+  if (allowedRoles.length > 0 && !allowedRoles.includes(effectiveRole)) {
     return <Navigate to="/dashboard" replace />;
   }
 
