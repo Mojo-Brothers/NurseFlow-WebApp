@@ -8,6 +8,10 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
+import PatientDetailDrawerModal from './PatientDetailDrawerModal.jsx';
+import DischargeModalClassic from '../../appointment_review/components/DischargeModalClassic.jsx';
+import BmiModalSlider from '../../appointment_review/components/BmiModalSlider.jsx';
+import { DEMO_PATIENTS } from '../../../core/demoData.js';
 
 export default function PatientCarePanel({ patient, encounter, onDischargeSuccess }) {
   // ─── 1. Care Navigation State ───
@@ -17,39 +21,19 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
   // ─── 2. Discharge & Queue State ───
   const [dischargeQueueCount, setDischargeQueueCount] = useState(4);
   const [isDischargeModalOpen, setIsDischargeModalOpen] = useState(false);
+  const [isDischargeListModalOpen, setIsDischargeListModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isBbTbModalOpen, setIsBbTbModalOpen] = useState(false);
   const [isProcessingDischarge, setIsProcessingDischarge] = useState(false);
   const [dischargeStatus, setDischargeStatus] = useState(encounter?.status || 'PROSES');
 
   // ─── 3. Clinical Observation State (BB/TB/BMI) ───
-  const [isBbTbModalOpen, setIsBbTbModalOpen] = useState(false);
   const [clinicalObs, setClinicalObs] = useState({
-    catatanMasuk: 'Pasien masuk dengan keluhan nyeri dada ringan dan sesak napas pasca aktivitas.',
-    keadaanFisiologi: 'Compos Mentis (GCS 15), TD: 120/80 mmHg, Nadi: 82x/mnt, RR: 20x/mnt, SpO2: 98%',
+    catatanMasuk: 'Pasien masuk dengan keluhan fisik umum untuk evaluasi klinis.',
+    keadaanFisiologi: 'Compos Mentis (GCS 15), TD: 120/80 mmHg, Nadi: 80x/mnt, RR: 20x/mnt, SpO2: 98%',
     bb: 68,
     tb: 170
   });
-
-  // Calculate BMI = kg / (m^2)
-  const bmiData = useMemo(() => {
-    const heightInM = clinicalObs.tb / 100;
-    if (!heightInM || heightInM <= 0) return { val: '0.0', status: 'N/A', color: 'text-slate-400' };
-    const bmiVal = (clinicalObs.bb / (heightInM * heightInM)).toFixed(1);
-    let status = 'Normal';
-    let color = 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
-
-    if (bmiVal < 18.5) {
-      status = 'Kurus (Underweight)';
-      color = 'text-amber-500 bg-amber-500/10 border-amber-500/20';
-    } else if (bmiVal >= 23 && bmiVal < 25) {
-      status = 'Kelebihan BB (Overweight)';
-      color = 'text-amber-600 bg-amber-600/10 border-amber-600/20';
-    } else if (bmiVal >= 25) {
-      status = 'Obesitas (Obese)';
-      color = 'text-rose-500 bg-rose-500/10 border-rose-500/20';
-    }
-
-    return { val: bmiVal, status, color };
-  }, [clinicalObs.bb, clinicalObs.tb]);
 
   // ─── 4. Modals (Tindakan, Rujukan, BPJS Surat Kontrol) ───
   const [isAddActionModalOpen, setIsAddActionModalOpen] = useState(false);
@@ -80,32 +64,10 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
       qty: 1,
       jumlahHarga: 150000,
       statusTagih: 'BILLED'
-    },
-    {
-      id: 'act-103',
-      tanggal: '2026-08-05 09:10',
-      departemen: 'lab',
-      namaPelayanan: 'Panel Hematologi Lengkap & Troponin I',
-      sewaAlat: 0,
-      dokter: 'dr. Lani Santoso, Sp.PK',
-      qty: 1,
-      jumlahHarga: 320000,
-      statusTagih: 'BILLED'
-    },
-    {
-      id: 'act-104',
-      tanggal: '2026-08-05 09:30',
-      departemen: 'farmasi',
-      namaPelayanan: 'Paket Dispenser Infus Asetat 500ml + IV Catheter 20G',
-      sewaAlat: 20000,
-      dokter: 'Apt. Rian Hidayat, S.Farm',
-      qty: 1,
-      jumlahHarga: 125000,
-      statusTagih: 'UNBILLED'
     }
   ]);
 
-  // Form for New Action Modal
+  // ─── 6. Form & Pagination States ───
   const [newActionForm, setNewActionForm] = useState({
     namaPelayanan: '',
     departemen: 'perawatan',
@@ -115,7 +77,6 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
     jumlahHarga: 100000
   });
 
-  // Form for New Referral Modal
   const [referralForm, setReferralForm] = useState({
     tipe: 'INTERNAL',
     tujuanDept: 'POLI_JANTUNG',
@@ -123,7 +84,6 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
     alasan: 'Evaluasi nyeri dada pasca EKG Abnormal'
   });
 
-  // Form for BPJS Surat Kontrol
   const [suratKontrolForm, setSuratKontrolForm] = useState({
     noSuratKontrol: 'SK-BPJS-20260805-0089',
     tglRencanaKontrol: '2026-08-12',
@@ -131,11 +91,31 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
     dokter: 'dr. Siti Wijaya, Sp.PD'
   });
 
-  // Pagination for Actions Table
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
-  // ─── 6. Automatic Billing Calculations ───
+  // ─── 7. Computed Values (useMemo) ───
+  const bmiData = useMemo(() => {
+    const heightInM = clinicalObs.tb / 100;
+    if (!heightInM || heightInM <= 0) return { val: '0.0', status: 'N/A', color: 'text-slate-400' };
+    const bmiVal = (clinicalObs.bb / (heightInM * heightInM)).toFixed(1);
+    let status = 'Normal';
+    let color = 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
+
+    if (bmiVal < 18.5) {
+      status = 'Kurus (Underweight)';
+      color = 'text-amber-500 bg-amber-500/10 border-amber-500/20';
+    } else if (bmiVal >= 23 && bmiVal < 25) {
+      status = 'Kelebihan BB (Overweight)';
+      color = 'text-amber-600 bg-amber-600/10 border-amber-600/20';
+    } else if (bmiVal >= 25) {
+      status = 'Obesitas (Obese)';
+      color = 'text-rose-500 bg-rose-500/10 border-rose-500/20';
+    }
+
+    return { val: bmiVal, status, color };
+  }, [clinicalObs.bb, clinicalObs.tb]);
+
   const departmentTotal = useMemo(() => {
     return actionsList
       .filter(a => a.departemen === activeDeptTab)
@@ -146,7 +126,6 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
     return actionsList.reduce((sum, item) => sum + (item.jumlahHarga * item.qty) + item.sewaAlat, 0);
   }, [actionsList]);
 
-  // Filter actions for current department tab
   const departmentActions = useMemo(() => {
     return actionsList.filter(a => a.departemen === activeDeptTab);
   }, [actionsList, activeDeptTab]);
@@ -157,7 +136,59 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
     return departmentActions.slice(start, start + pageSize);
   }, [departmentActions, currentPage, pageSize]);
 
-  // Reset page when dept tab changes
+  // ─── 8. Effects (useEffect) ───
+  useEffect(() => {
+    if (patient) {
+      const mrnNum = parseInt(patient.mrn || '1001', 10);
+      const pWeight = patient.baseline_profile?.value || (45 + ((mrnNum * 3) % 45));
+      const pHeight = 150 + ((mrnNum * 2) % 35);
+      const vitals = encounter?.vitals;
+
+      const physioText = vitals 
+        ? `Compos Mentis, TD: ${vitals.bp} mmHg, Nadi: ${vitals.hr}x/mnt, RR: ${vitals.rr}x/mnt, SpO2: ${vitals.spo2}%${vitals.pain_scale ? `, Nyeri: ${vitals.pain_scale}` : ''}`
+        : `Compos Mentis (GCS 15), TD: 120/80 mmHg, Nadi: 80x/mnt, RR: 20x/mnt, SpO2: 98%`;
+
+      const complaintText = encounter?.chief_complaint || 'Pasien masuk untuk konsultasi & evaluasi medis terpadu.';
+
+      setClinicalObs({
+        catatanMasuk: complaintText,
+        keadaanFisiologi: physioText,
+        bb: pWeight,
+        tb: pHeight
+      });
+
+      setDischargeStatus(encounter?.status || 'PROSES');
+
+      const docName = encounter?.doctor_name || 'dr. Siti Wijaya, Sp.PD';
+      const deptName = encounter?.department || 'Poli Penyakit Dalam';
+
+      setActionsList([
+        {
+          id: `act-${patient.mrn || '001001'}-101`,
+          tanggal: '2026-08-06 08:30',
+          departemen: 'perawatan',
+          namaPelayanan: `Konsultasi & Pemeriksaan DPJP (${deptName.split(' ')[0]} ${deptName.split(' ')[1] || ''})`,
+          sewaAlat: 0,
+          dokter: docName,
+          qty: 1,
+          jumlahHarga: 250000,
+          statusTagih: 'BILLED'
+        },
+        {
+          id: `act-${patient.mrn || '001001'}-102`,
+          tanggal: '2026-08-06 08:45',
+          departemen: 'perawatan',
+          namaPelayanan: 'Pemeriksaan Observasi Tanda-Tanda Vital & Fisiologi Pasien',
+          sewaAlat: 25000,
+          dokter: docName,
+          qty: 1,
+          jumlahHarga: 120000,
+          statusTagih: 'BILLED'
+        }
+      ]);
+    }
+  }, [patient, encounter]);
+
   useEffect(() => {
     setCurrentPage(1);
   }, [activeDeptTab]);
@@ -245,12 +276,19 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
     }, 1200);
   };
 
-  const patientName = patient?.name || 'Ny. Dewi Sartika, S.Pd';
-  const patientMrn = patient?.mrn || '009944';
-  const patientNik = patient?.nik || '3273016508850001';
-  const patientDob = patient?.demographics?.dob || '1988-08-25';
+  const patientName = patient?.name || DEMO_PATIENTS[0]?.name || 'Ny. Siti Nurhaliza, S.Pd';
+  const patientMrn = patient?.mrn || '001001';
+  const patientNik = patient?.nik || '3273010001234567';
+  const patientDob = patient?.demographics?.dob || '2001-02-15';
   const patientGender = patient?.demographics?.gender || 'F';
-  const insuranceType = (patient?.insurance?.type || 'BPJS KESEHATAN').toUpperCase();
+  const insuranceType = (patient?.insurance?.type || patient?.insurance?.name || 'BPJS KESEHATAN').toUpperCase();
+  const insuranceNo = patient?.insurance?.no || `000192${patientMrn}`;
+  const regNo = encounter?.id ? encounter.id.toUpperCase() : `REG-2026-${patientMrn}-001`;
+  const departmentName = encounter?.department || (careScope === 'rawat_inap' ? 'Ruang Perawatan Chrysant (Kamar 302)' : 'Poli Penyakit Dalam (Lantai 2)');
+  const doctorName = encounter?.doctor_name || 'dr. Siti Wijaya, Sp.PD';
+  const tglKedatangan = encounter?.admitted_at?.toDate 
+    ? encounter.admitted_at.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) 
+    : '06 Agu 2026, 08.15 WIB';
 
   return (
     <div className="w-full max-w-full space-y-6 pb-12 text-slate-800 dark:text-slate-100 font-sans">
@@ -282,22 +320,21 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
 
         {/* Pemantauan Status Kepulangan + Counter Badge */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-xl border border-amber-500/20 text-xs font-bold">
+          <button 
+            onClick={() => setIsDischargeListModalOpen(true)}
+            className="flex items-center gap-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-xl border border-amber-500/20 text-xs font-bold transition-all cursor-pointer"
+          >
             <Clock size={15} className="animate-spin-slow" />
             <span>Antrean Pulang:</span>
             <span className="bg-amber-500 text-white px-2 py-0.5 rounded-full text-[10px] font-black">{dischargeQueueCount} Pasien</span>
-          </div>
+          </button>
 
           <button
-            onClick={handleProcessDischarge}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all shadow-md ${
-              dischargeStatus === 'PROSES_PULANG'
-                ? 'bg-amber-500 text-white hover:bg-amber-600'
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white'
-            }`}
+            onClick={() => setIsDischargeListModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black transition-all shadow-md cursor-pointer active:scale-95"
           >
             <LogOut size={16} />
-            <span>{dischargeStatus === 'PROSES_PULANG' ? 'Pasien Dalam Proses Pulang' : 'Pasien Proses Pulang'}</span>
+            <span>Pasien Proses Pulang</span>
           </button>
         </div>
       </div>
@@ -320,11 +357,11 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="bg-surface-container-low p-2.5 rounded-xl border border-outline-variant/20">
               <span className="text-[10px] font-black uppercase opacity-50 block mb-0.5">No. Registrasi</span>
-              <span className="font-mono font-bold text-on-surface text-sm">REG-2026-0805-002</span>
+              <span className="font-mono font-bold text-on-surface text-sm">{regNo}</span>
             </div>
             <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
               <span className="text-[10px] font-black uppercase opacity-50 block mb-0.5">Tgl. Kedatangan</span>
-              <span className="font-bold text-on-surface">05 Agu 2026, 08.15 WIB</span>
+              <span className="font-bold text-on-surface">{tglKedatangan}</span>
             </div>
             <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
               <span className="text-[10px] font-black uppercase opacity-50 block mb-0.5">Jenis Pasien / Penjamin</span>
@@ -334,7 +371,7 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
             </div>
             <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
               <span className="text-[10px] font-black uppercase opacity-50 block mb-0.5">Group Tarif / Perusahaan</span>
-              <span className="font-bold text-on-surface">Kelas III • BPJS PBI</span>
+              <span className="font-bold text-on-surface">{patient?.insurance?.name || 'Kelas III • BPJS PBI'}</span>
             </div>
           </div>
 
@@ -345,8 +382,8 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
                 <FileSignature size={18} />
               </div>
               <div>
-                <span className="text-[10px] font-black uppercase text-primary tracking-wider block">No. Kartu BPJS Kesehatan</span>
-                <span className="font-mono font-black text-sm">000192837465</span>
+                <span className="text-[10px] font-black uppercase text-primary tracking-wider block">No. Kartu BPJS / Penjamin</span>
+                <span className="font-mono font-black text-sm">{insuranceNo}</span>
               </div>
             </div>
 
@@ -368,8 +405,8 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
               <span>Identitas & Lokasi Medis</span>
             </div>
             <button 
-              onClick={() => toast('Membuka Rekam Medis Indikatif Pasien', { icon: 'ℹ️' })}
-              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1"
+              onClick={() => setIsDetailModalOpen(true)}
+              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
             >
               <span>Detail Info</span>
               <ExternalLink size={12} />
@@ -397,13 +434,13 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
             <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
               <span className="text-[10px] font-black uppercase opacity-50 block mb-0.5">Penplacement Poliklinik / Ruang</span>
               <span className="font-bold text-on-surface flex items-center gap-1">
-                <Building2 size={13} className="text-primary" /> {careScope === 'rawat_inap' ? 'Ruang Teratai - Kelas III Bed 04' : 'Poli Penyakit Dalam (Lantai 2)'}
+                <Building2 size={13} className="text-primary" /> {departmentName}
               </span>
             </div>
             <div className="bg-surface-container-low p-2.5 rounded-lg border border-outline-variant/20">
-              <span className="text-[10px] font-black uppercase opacity-50 block mb-0.5">Dokter DPJP Utam</span>
+              <span className="text-[10px] font-black uppercase opacity-50 block mb-0.5">Dokter DPJP Utama</span>
               <span className="font-bold text-on-surface flex items-center gap-1">
-                <Stethoscope size={13} className="text-primary" /> dr. Siti Wijaya, Sp.PD
+                <Stethoscope size={13} className="text-primary" /> {doctorName}
               </span>
             </div>
           </div>
@@ -683,60 +720,7 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
         </div>
       </div>
 
-      {/* ─── MODAL 1: EDIT BB/TB & BMI CALCULATOR ─── */}
-      {isBbTbModalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsBbTbModalOpen(false)}></div>
-          <div className="glass-panel w-full max-w-md rounded-3xl p-6 relative shadow-2xl animate-scale-in">
-            <div className="flex items-center justify-between border-b border-outline-variant/20 pb-4 mb-4">
-              <div className="flex items-center gap-2 text-primary font-black">
-                <Scale size={20} />
-                <span>Pembaruan Berat & Tinggi Badan</span>
-              </div>
-              <button onClick={() => setIsBbTbModalOpen(false)} className="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center">
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs font-bold">
-              <div>
-                <label className="block mb-1">Berat Badan (kg):</label>
-                <input
-                  type="number"
-                  value={clinicalObs.bb}
-                  onChange={e => setClinicalObs(prev => ({ ...prev, bb: Number(e.target.value) }))}
-                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 rounded-xl font-bold"
-                />
-              </div>
-              <div>
-                <label className="block mb-1">Tinggi Badan (cm):</label>
-                <input
-                  type="number"
-                  value={clinicalObs.tb}
-                  onChange={e => setClinicalObs(prev => ({ ...prev, tb: Number(e.target.value) }))}
-                  className="w-full bg-surface-container-low border border-outline-variant p-2.5 rounded-xl font-bold"
-                />
-              </div>
-
-              <div className={`p-3 rounded-xl border text-center ${bmiData.color}`}>
-                <span className="text-[10px] uppercase font-black tracking-widest block opacity-70">Hasil Kalkulasi IMT / BMI</span>
-                <span className="text-xl font-black">{bmiData.val}</span>
-                <span className="block text-xs font-bold mt-0.5">{bmiData.status}</span>
-              </div>
-
-              <button
-                onClick={() => {
-                  setIsBbTbModalOpen(false);
-                  toast.success('Data BB/TB & IMT berhasil diperbarui!');
-                }}
-                className="w-full py-3 bg-primary text-white font-black rounded-xl hover:bg-primary-dark transition-all mt-2 shadow-md"
-              >
-                Simpan Perubahan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ─── MODAL 1: EDIT BB/TB (Replaced with BmiModalSlider Ide Baru 2 at bottom) ─── */}
 
       {/* ─── MODAL 2: TAMBAH TINDAKAN / LAYANAN (SHORTCUT F6) ─── */}
       {isAddActionModalOpen && (
@@ -1056,6 +1040,30 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
         </div>
       )}
 
+      {/* Patient Detail Drawer Modal (Design Variant 3) */}
+      <PatientDetailDrawerModal 
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        patient={patient}
+      />
+
+      {/* Discharge Patient Modal (Design Variant 1 - Classic HIS Grid) */}
+      <DischargeModalClassic 
+        isOpen={isDischargeListModalOpen}
+        onClose={() => setIsDischargeListModalOpen(false)}
+      />
+
+      {/* BMI Edit BB/TB Modal (New Concept 2 - Quick Stepper & Visit Trend) */}
+      <BmiModalSlider 
+        isOpen={isBbTbModalOpen}
+        onClose={() => setIsBbTbModalOpen(false)}
+        initialBb={clinicalObs.bb}
+        initialTb={clinicalObs.tb}
+        onSave={(newBb, newTb) => {
+          setClinicalObs(prev => ({ ...prev, bb: newBb, tb: newTb }));
+          toast.success(`Berhasil memperbarui BB (${newBb} kg) & TB (${newTb} cm)`);
+        }}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTriageStore } from '../triage.store.js';
@@ -42,9 +42,51 @@ export default function TriagePage() {
   } = useTriageStore();
   const { user } = useAuthStore();
   
-  const { patients } = usePatientStore();
-  const { liveContext, fetchActiveEncounters } = useEncounterStore();
+  const { patients, addPatient } = usePatientStore();
+  const { liveContext, fetchActiveEncounters, openEncounter, setLiveContext } = useEncounterStore();
   
+  const [isCreatingEmergency, setIsCreatingEmergency] = useState(false);
+
+  const handleCreateEmergencyPatient = async () => {
+    if (isCreatingEmergency) return;
+    setIsCreatingEmergency(true);
+    try {
+      // 1. Buat Pasien Anonim
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+      const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      const uniqueCode = Math.random().toString(36).substring(2, 5).toUpperCase();
+      
+      const newPatient = await addPatient({
+        name: `Mr. X (${dateStr}, ${timeStr}) - #${uniqueCode}`,
+        demographics: {
+          dob: '1970-01-01',
+          gender: 'U'
+        },
+        mrn: `MRX-${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}-${uniqueCode}`,
+        status: 'EMERGENCY'
+      }, user?.email || 'system');
+      
+      // 2. Buat Encounter
+      const encounterId = await openEncounter({
+        patientId: newPatient.id,
+        encounterType: 'emergency',
+        chiefComplaint: '', // Provide empty string to prevent undefined crash
+        status: 'TRIAGE',
+        triageStatus: 'PENDING',
+        department: 'IGD'
+      }, user?.email || 'system');
+
+      // 3. Set Context & Navigate
+      setLiveContext(newPatient.id, encounterId);
+      setOperationalMode('RAPID');
+    } catch (error) {
+      console.error("Gagal membuat pasien darurat:", error);
+      toast.error("Gagal: " + (error?.message || "Kesalahan tidak diketahui"));
+    } finally {
+      setIsCreatingEmergency(false);
+    }
+  };
   useEffect(() => {
     fetchActiveEncounters();
   }, [fetchActiveEncounters]);
@@ -196,13 +238,27 @@ export default function TriagePage() {
                       Pilih pasien dari daftar antrean aktif atau buat rekam medis darurat baru untuk memulai proses Triase JCI.
                     </p>
                 </div>
-                <button 
-                  onClick={() => setOperationalMode('MONITOR')}
-                  className="mt-4 h-16 px-12 rounded-3xl bg-gradient-to-r from-primary to-blue-500 text-white flex flex-row items-center gap-4 text-sm font-black uppercase tracking-widest shadow-glow-primary hover:scale-105 active:scale-95 transition-all border border-primary-container/30 relative z-10"
-                >
-                  <Activity className="w-6 h-6" />
-                  BUKA DAFTAR MONITOR
-                </button>
+                <div className="flex flex-row flex-wrap justify-center gap-4 mt-4 relative z-10">
+                  <button 
+                    onClick={() => setOperationalMode('MONITOR')}
+                    className="h-16 px-10 rounded-3xl bg-surface-container-high text-on-surface flex flex-row items-center gap-3 text-[11px] font-black uppercase tracking-widest hover:scale-105 active:scale-95 transition-all border border-outline-variant/30 shadow-premium-soft"
+                  >
+                    <Activity className="w-5 h-5 text-on-surface-variant" />
+                    BUKA DAFTAR MONITOR
+                  </button>
+                  <button 
+                    onClick={handleCreateEmergencyPatient}
+                    disabled={isCreatingEmergency}
+                    className={`h-16 px-10 rounded-3xl bg-gradient-to-r from-error to-orange-500 text-white flex flex-row items-center gap-3 text-[11px] font-black uppercase tracking-widest shadow-glow-error hover:scale-105 active:scale-95 transition-all border border-error/30 ${isCreatingEmergency ? 'opacity-50 cursor-wait' : ''}`}
+                  >
+                    {isCreatingEmergency ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    ) : (
+                      <AlertCircle className="w-5 h-5" />
+                    )}
+                    BUAT PASIEN DARURAT (ANONIM)
+                  </button>
+                </div>
             </section>
         ) : null}
 

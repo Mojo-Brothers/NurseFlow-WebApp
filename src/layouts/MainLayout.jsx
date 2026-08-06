@@ -14,6 +14,8 @@ const NAV_SCHEMA = [
   { label: 'nav.clinical', items: [
     { name: 'nav.dashboard',   path: '/dashboard',  icon: 'dashboard',           roles: null },
     { name: 'nav.patients',    path: '/patients',   icon: 'groups',              roles: null },
+    { name: 'nav.appointments',path: '/appointments', icon: 'calendar_month',    roles: ['DOCTOR','NURSE','ADMIN'] },
+    { name: 'Review Design UI Modul!', path: '/review-design-ui-modul', icon: 'palette', roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.encounters',  path: '/encounters', icon: 'local_hospital',      roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.triage',      path: '/triage',     icon: 'emergency',           roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.patient_care', path: '/patient-care', icon: 'medical_services',    roles: ['DOCTOR','NURSE','ADMIN'] },

@@ -1,227 +1,191 @@
 /**
- * High-Fidelity JCI Demo Data for NurseFlow HIS
- * Designed for enterprise-grade demonstrations.
+ * Enterprise JCI Demo Data Generator for NurseFlow HIS
+ * 100 High-Fidelity Patient Records & Encounters (Indonesia Enterprise Medical Data)
+ * Replaces old legacy demo data completely.
  */
 
-export const DEMO_PATIENTS = [
-  {
-    id: 'demo-patient-dewi',
-    name: 'Ny. Dewi Sartika, S.Pd',
-    mrn: '009944',
-    nik: '3273016508850001',
-    demographics: {
-      gender: 'F',
-      dob: '1988-08-25',
-      pob: 'Bandung',
-      religion: 'Islam',
-      occupation: 'Guru SMA',
-      address: 'Jl. R.E. Martadinata No. 88, Cihapit, Bandung'
-    },
-    baseline_profile: {
-      value: 68,
-      chronic_flag: false,
-      last_updated: new Date().toISOString()
-    },
-    allergies: [
-      { type: 'DRUG', agent: 'Amoxicillin / Penicillin', reaction: 'Angioedema & Rash', severity: 'SEVERE' },
-      { type: 'FOOD', agent: 'Kepiting / Udang', reaction: 'Urtikaria Ringan', severity: 'MILD' }
-    ],
-    safety_flags: {
-      fall_risk: 'LOW',
-      pressure_ulcer: 'LOW',
-      isolation: 'NONE'
-    },
-    insurance: {
-      type: 'bpjs',
-      no: '000192837465',
-      name: 'BPJS KESEHATAN (PBI / NON-PBI)'
-    },
-    status: 'ACTIVE',
-    createdAt: new Date().toISOString(),
-    registered_at: new Date(Date.now() - 3600000 * 3).toISOString(), // 3 hours ago
-    is_demo: true,
-  },
-  {
-    id: 'demo-patient-1',
-    name: 'Fajar Susilo',
-    mrn: '005648',
-    nik: '3273012345670001',
-    demographics: {
-      gender: 'M',
-      dob: '1992-06-15',
-      pob: 'Bandung',
-      religion: 'Islam',
-      occupation: 'Software Engineer',
-      address: 'Jl. Surya Sumantri No. 12, Bandung'
-    },
-    baseline_profile: {
-      value: 72,
-      chronic_flag: false,
-      last_updated: new Date().toISOString()
-    },
-    allergies: [
-      { type: 'DRUG', agent: 'Penicillin', reaction: 'Urticaria', severity: 'MODERATE' }
-    ],
-    safety_flags: {
-      fall_risk: 'LOW',
-      pressure_ulcer: 'LOW',
-      isolation: 'NONE'
-    },
-    is_demo: true,
-    registered_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-  }
+const INDONESIAN_NAMES_FEMALE = [
+  'Siti Nurhaliza', 'Ratna Sari Dewi', 'Sri Mulyani', 'Dian Sastrowardoyo', 'Najwa Shihab',
+  'Aisyah Putri', 'Retno Marsudi', 'Rina Nose', 'Kartini Rahayu', 'Indah Permatasari',
+  'Nia Ramadhani', 'Titi Kamal', 'Raisa Andriana', 'Isyana Sarasvati', 'Laudya Cynthia',
+  'Maudy Ayunda', 'Bunga Citra', 'Agnez Monica', 'Chelsea Islan', 'Pevita Pearce',
+  'Yuni Shara', 'Krisdayanti', 'Rossa Roslaina', 'Inul Daratista', 'Desy Ratnasari',
+  'Venna Melinda', 'Arzetti Bilbina', 'Sophia Latjuba', 'Tamara Bleszynski', 'Ersa Mayori',
+  'Cut Tari', 'Luna Maya', 'Melaney Ricardo', 'Ayu Dewi', 'Olla Ramlan',
+  'Zaskia Adya', 'Shireen Sungkar', 'Zaskia Sungkar', 'Citra Kirana', 'Marshanda',
+  'Nabila Syakieb', 'Gita Gutawa', 'Sherina Munaf', 'Tasya Kamila', 'Cinta Laura',
+  'Alyssa Soebandono', 'Mikha Tambayong', 'Velove Vexia', 'Asmirandah', 'Ririn Dwi'
 ];
 
-export const DEMO_ENCOUNTERS = [
-  {
-    id: 'ENC-RJ-2026-001',
-    patient_id: 'demo-patient-dewi',
-    patient_name: 'Ny. Dewi Sartika, S.Pd',
-    type: 'OUTPATIENT',
-    department: 'Poli Bedah Umum & Digestif',
-    doctor_name: 'Dr. Robby Viory, Sp.B',
-    doctor_email: 'robby.viory@hospital.com',
-    guarantor: 'BPJS Kesehatan (PBI)',
-    admitted_at: { toDate: () => new Date(Date.now() - 3600000 * 2.5) },
-    status: 'IN_TREATMENT',
-    is_demo: true,
-    triage_level: 'YELLOW',
-    triage_score: 'P2 - Urgensi Sedang',
-    vitals: {
-      bp: '125/82',
-      hr: 92,
-      temp: 37.8,
-      rr: 20,
-      spo2: 99,
-      pain_scale: '6/10 (NRS)'
-    },
-    chief_complaint: 'Nyeri perut kanan bawah mendadak sejak 6 jam lalu, mual, demam sumeng-sumeng.'
-  },
-  {
-    id: 'GLPMBY4B',
-    patient_id: 'demo-patient-1',
-    patient_name: 'Fajar Susilo',
-    type: 'OUTPATIENT',
-    department: 'Poli Penyakit Dalam (Internis)',
-    doctor_name: 'Dr. Robby Viory, Sp.PD',
-    doctor_email: 'robby.viory@hospital.com',
-    guarantor: 'BPJS Kesehatan',
-    admitted_at: { toDate: () => new Date() },
-    status: 'ACTIVE',
-    is_demo: true,
-    vitals: {
-      bp: '120/80',
-      hr: 72,
-      temp: 36.5,
-      rr: 18,
-      spo2: 98
-    },
-    chief_complaint: 'Kontrol rutin diabetes, sering merasa lemas di sore hari.'
-  }
+const INDONESIAN_NAMES_MALE = [
+  'Bambang Pamungkas', 'Budi Gunawan', 'Agus Harimurti', 'Nicholas Saputra', 'Ahmad Dhani',
+  'Hendra Setiawan', 'Reza Rahadian', 'Raffi Ahmad', 'Deddy Corbuzier', 'Sule Sutisna',
+  'Andre Taulany', 'Parto Patrio', 'Denny Cagur', 'Raditya Dika', 'Ernest Prakasa',
+  'Iko Uwais', 'Joe Taslim', 'Chico Jericho', 'Vino G. Bastian', 'Abimana Aryasatya',
+  'Rio Dewanto', 'Gading Marten', 'Andhika Pratama', 'Irfan Hakim', 'Boy William',
+  'Daniel Mananta', 'Arie Untung', 'Teuku Wisnu', 'Irwansyah', 'Dude Harlino',
+  'Christian Sugiono', 'Ringgo Agus', 'Desta Mahendra', 'Vincent Rompies', 'Tora Sudiro',
+  'Amara Zanette', 'Indra Bekti', 'Uya Kuya', 'Anang Hermansyah', 'Judika Sihotang',
+  'Afgan Syahreza', 'Vidi Aldiano', 'Marcell Siahaan', 'Glenn Fredly', 'Once Mekel',
+  'Ari Lasso', 'Kaka Slank', 'Bimbim Slank', 'Ahmad Albar', 'Rhoma Irama'
 ];
 
-export const DEMO_RECORDS = [
-  // 1. PENGKAJIAN AWAL MEDIS DOKTER (AOP)
-  {
-    id: 'rec-dewi-aop',
-    patientId: 'demo-patient-dewi',
-    encounterId: 'ENC-RJ-2026-001',
-    doctor: 'robby.viory@hospital.com',
-    moduleName: 'PENGKAJIAN AWAL MEDIS (RJ)',
-    status: 'SIGNED',
-    subjective: 'Pasien datang dengan keluhan nyeri hebat pada perut kanan bawah sejak tadi pagi (sekitar 6 jam lalu). Awalnya nyeri tumpul di sekitar ulu hati lalu berpindah ke perut kanan bawah. Mual (+), muntah 1x, nafsu makan menurun. Demam dirasakan sejak 4 jam lalu.',
-    objective: 'KU: Tampak menahan nyeri, CM. TD: 125/82 mmHg, N: 92x/m, S: 37.8°C, RR: 20x/m. Abdomen: Nyeri tekan titik McBurney (+), Nyeri lepas (+), Rovsing sign (+), Psoas sign (+), Defans muskular ringan di regio RLQ.',
-    assessment: 'Acute Appendicitis (ICD-10: K35.8)',
-    icd10: [{ code: 'K35.8', name: 'Other and unspecified acute appendicitis' }],
-    plan_medications: [
-      { medication_name: 'Ceftriaxone 1g IV', dosage: '1 vial', route: 'Intravena', frequency: '1x1', instructions: 'Skin test dulu' },
-      { medication_name: 'Ketorolac 30mg IV', dosage: '1 amp', route: 'Intravena', frequency: '3x1', instructions: 'Analgetik anti inflamasi' },
-      { medication_name: 'Ondansetron 4mg IV', dosage: '1 amp', route: 'Intravena', frequency: '2x1', instructions: 'Anti emetik' }
-    ],
-    plan_instructions: 'Pasang IVFD RL 20 tpm, puasakan pasien, siapkan informed consent untuk tindakan Appendectomy Cito hari ini.',
-    created_at: { toDate: () => new Date(Date.now() - 3600000 * 2) },
-    signed_at: { toDate: () => new Date(Date.now() - 3600000 * 2) },
-    signed_by: 'robby.viory@hospital.com'
-  },
-  // 2. SOAP NOTES / CPPT DPJP (COP)
-  {
-    id: 'rec-dewi-cppt',
-    patientId: 'demo-patient-dewi',
-    encounterId: 'ENC-RJ-2026-001',
-    doctor: 'robby.viory@hospital.com',
-    moduleName: 'SOAP NOTES (CPPT)',
-    status: 'SIGNED',
-    subjective: 'Pasien mengeluh nyeri perut masih terasa skala 6/10. Menunggu hasil lab darah lengkap dan USG.',
-    objective: 'Hasil Lab Cito: Leukosit 15.400 /uL (Leukositosis), Neutrofil 84%. USG Abdomen: Tampak gambaran target sign dan penebalan dinding appendix 8.2 mm non-compressible (Appendisitis Akut).',
-    assessment: 'Acute Appendicitis Confirmed - Indikasi Cito Laparoscopic Appendectomy',
-    icd10: [{ code: 'K35.8', name: 'Acute appendicitis' }],
-    plan_medications: [],
-    plan_instructions: 'Rujuk ke Kamar Operasi (OK Sentral). Jadwalkan tindakan operasi pukul 14.00 WIB.',
-    created_at: { toDate: () => new Date(Date.now() - 3600000 * 1.5) },
-    signed_at: { toDate: () => new Date(Date.now() - 3600000 * 1.5) },
-    signed_by: 'robby.viory@hospital.com'
-  },
-  // 3. PERSETUJUAN TINDAKAN / INFORMED CONSENT (PFR)
-  {
-    id: 'rec-dewi-consent',
-    patientId: 'demo-patient-dewi',
-    encounterId: 'ENC-RJ-2026-001',
-    doctor: 'robby.viory@hospital.com',
-    moduleName: 'PERSETUJUAN TINDAKAN',
-    status: 'SIGNED',
-    assessment: 'PERSETUJUAN TINDAKAN',
-    data: {
-      tindakan: 'Laparoscopic Appendectomy (Operasi Usus Buntu Minimal Invasif)',
-      risiko: 'Pendarahan, infeksi luka operasi (SSI), konversi ke laparatomi terbuka, reaksi anestesi umum.',
-      alternatif: 'Appendectomy Laparatomi Terbuka, Terapi Konservatif Antibiotik (Risiko perforasi tinggi).',
-      saksi: 'Tn. Agus Pratama (Suami Pasien)',
-      status: 'SIGNED_AND_VERIFIED',
-      doctorSignature: 'robby.viory@hospital.com',
-      witnessSignature: 'TANDA TANGAN DIGITAL PASIEN VIA TABLET',
-      patientSignatureBase64: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 120" width="300" height="120"><path d="M20,70 Q50,10 90,60 T160,50 T220,90 T280,30" fill="none" stroke="%230284c7" stroke-width="4" stroke-linecap="round"/><path d="M70,95 Q140,80 260,85" fill="none" stroke="%230284c7" stroke-width="3" stroke-linecap="round"/></svg>'
-    },
-    created_at: { toDate: () => new Date(Date.now() - 3600000 * 1.2) },
-    signed_at: { toDate: () => new Date(Date.now() - 3600000 * 1.2) },
-    signed_by: 'robby.viory@hospital.com'
-  },
-  // 4. EDUKASI PASIEN & KELUARGA (PFE)
-  {
-    id: 'rec-dewi-pfe',
-    patientId: 'demo-patient-dewi',
-    encounterId: 'ENC-RJ-2026-001',
-    doctor: 'robby.viory@hospital.com',
-    moduleName: 'EDUKASI PASIEN',
-    status: 'SIGNED',
-    assessment: 'EDUKASI PASIEN',
-    data: {
-      topik: 'Pasca-Tindakan - Perawatan Luka & Kebersihan',
-      metode: 'Lisan & Demonstrasi',
-      penerima: 'Pasien & Suami',
-      pemahaman: 'Paham & Dapat Mengulang',
-      catatan: 'Pasien dan suami telah memahami pentingnya puasa 6 jam sebelum operasi serta tahapan mobilisasi dini pasca laparoskopi.'
-    },
-    created_at: { toDate: () => new Date(Date.now() - 3600000 * 1) },
-    signed_at: { toDate: () => new Date(Date.now() - 3600000 * 1) },
-    signed_by: 'robby.viory@hospital.com'
-  },
-  // 5. TRANSFER INTERNAL SBAR (ACC)
-  {
-    id: 'rec-dewi-transfer',
-    patientId: 'demo-patient-dewi',
-    encounterId: 'ENC-RJ-2026-001',
-    doctor: 'robby.viory@hospital.com',
-    moduleName: 'TRANSFER INTERNAL (SBAR)',
-    status: 'SIGNED',
-    assessment: 'TRANSFER INTERNAL (SBAR)',
-    data: {
-      tujuan: 'Kamar Operasi (OK Sentral)',
-      situation: 'Ny. Dewi Sartika (38 th), GCS 15, Post-Konsul Poli Bedah dengan Appendisitis Akut, dijadwalkan Cito Appendectomy Laparoskopi.',
-      background: 'Nyeri perut kanan bawah sejak 6 jam lalu. Alergi Amoxicillin (Severe). Telah terpasang IVFD RL 20 tpm pada tangan kiri.',
-      assessment: 'TTV Terakhir: TD 125/82, N 92, S 37.8, RR 20. Skala Nyeri 6/10. Puasa sejak pukul 08.00 WIB. Hasil Lab & USG terlampir di EMR.',
-      recommendation: 'Lanjutkan puasa, siapkan meja operasi laparoscopic tower, lakukan skin test antibiotik profilaksis non-penicillin di ruang persiapan OK.'
-    },
-    created_at: { toDate: () => new Date(Date.now() - 3600000 * 0.5) },
-    signed_at: { toDate: () => new Date(Date.now() - 3600000 * 0.5) },
-    signed_by: 'robby.viory@hospital.com'
-  }
+const DEPARTMENTS = [
+  { name: 'Poli Penyakit Dalam (Lantai 2)', type: 'OUTPATIENT', doctor: 'dr. Siti Wijaya, Sp.PD', email: 'siti.wijaya@hospital.com' },
+  { name: 'Poli Bedah Umum & Digestif (Lantai 2)', type: 'OUTPATIENT', doctor: 'Dr. Robby Viory, Sp.B', email: 'robby.viory@hospital.com' },
+  { name: 'Poli Anak & Tumbuh Kembang (Lantai 3)', type: 'OUTPATIENT', doctor: 'dr. Ahmad Hidayat, Sp.A', email: 'ahmad.hidayat@hospital.com' },
+  { name: 'Poli Kebidanan & Kandungan (Lantai 2)', type: 'OUTPATIENT', doctor: 'dr. Maya Indah, Sp.OG', email: 'maya.indah@hospital.com' },
+  { name: 'Poli Jantung & Pembuluh Darah (Lantai 3)', type: 'OUTPATIENT', doctor: 'dr. Hendra Gunawan, Sp.JP', email: 'hendra.gunawan@hospital.com' },
+  { name: 'Poli Saraf & Neurologi (Lantai 2)', type: 'OUTPATIENT', doctor: 'dr. Anisa Putri, Sp.S', email: 'anisa.putri@hospital.com' },
+  { name: 'Poli Mata (Lantai 3)', type: 'OUTPATIENT', doctor: 'dr. Rina Melati, Sp.M', email: 'rina.melati@hospital.com' },
+  { name: 'Poli THT-KL (Lantai 3)', type: 'OUTPATIENT', doctor: 'dr. Budi Santoso, Sp.THT', email: 'budi.santoso@hospital.com' },
+  { name: 'UGD & Unit Gawat Darurat (Zona Merah)', type: 'EMERGENCY', doctor: 'dr. Farhan Malik, Sp.An (KIC)', email: 'farhan.malik@hospital.com' },
+  { name: 'Ruang Perawatan Chrysant (Kamar 302)', type: 'INPATIENT', doctor: 'Dr. Robby Viory, Sp.B', email: 'robby.viory@hospital.com' },
+  { name: 'Ruang Perawatan Orchid (Kamar 205)', type: 'INPATIENT', doctor: 'dr. Siti Wijaya, Sp.PD', email: 'siti.wijaya@hospital.com' },
+  { name: 'Ruang VIP President Suite (Kamar 501)', type: 'INPATIENT', doctor: 'dr. Hendra Gunawan, Sp.JP', email: 'hendra.gunawan@hospital.com' },
 ];
+
+const COMPLAINTS = [
+  'Nyeri dada pasca aktivitas fisik, sesak napas ringan, riwayat hipertensi 5 tahun.',
+  'Demam tinggi 38.5°C sejak 3 hari disertai mual, muntah, dan mialgia seluruh tubuh.',
+  'Sesak napas mendadak serangan asma bronkial, batuk berdahak putih kental.',
+  'Nyeri perut kanan bawah tajam mendadak sejak 6 jam lalu, mual & anoreksia.',
+  'Kontrol rutin Hipertensi & Diabetes Mellitus Tipe 2, lemas, BAK sering malam hari.',
+  'Evaluasi pasca operasi SC H+3, luka terawat kering, nyeri luka operasi skala 3/10.',
+  'Pusing berputar (vertigo posisional) disertai mual saat perubahan posisi kepala.',
+  'Nyeri tenggorokan saat menelan (odinfagia), demam sumeng-sumeng 2 hari.',
+  'Mata merah gatal & berair pada kedua mata sejak kemarin pagi, pandangan agak kabur.',
+  'Benjolan keras di payudara kiri tanpa nyeri, evaluasi USG Mammae & Biopsi.',
+  'Cedera pergelangan kaki kanan pasca tergelincir, bengkak & nyeri tekan lokal.',
+  'Diare cair 5-6 kali sehari, lemas, dehidrasi ringan pasca konsumsi makanan pedas.'
+];
+
+const GUARANTORS = [
+  'BPJS Kesehatan (PBI)',
+  'BPJS Kesehatan (NON-PBI Kelas 1)',
+  'BPJS Kesehatan (NON-PBI Kelas 2)',
+  'Asuransi Mandiri Inhealth',
+  'Asuransi Prudential Syariah',
+  'Asuransi AXA Mandiri Platinum',
+  'Umum / Mandiri Cash'
+];
+
+const ALLERGIES_LIST = [
+  [{ type: 'DRUG', agent: 'Amoxicillin / Penicillin', reaction: 'Angioedema & Rash', severity: 'SEVERE' }],
+  [{ type: 'FOOD', agent: 'Kepiting / Udang', reaction: 'Urtikaria Ringan', severity: 'MILD' }],
+  [{ type: 'DRUG', agent: 'Ciprofloxacin', reaction: 'Mual & Ruam Kulit', severity: 'MODERATE' }],
+  [{ type: 'DRUG', agent: 'Aspirin / NSAID', reaction: 'Bronkospasme & Gatal', severity: 'SEVERE' }],
+  [{ type: 'FOOD', agent: 'Kacang Tanah', reaction: 'Anafilaksis Ringan', severity: 'MODERATE' }],
+  []
+];
+
+function generate100Patients() {
+  const patients = [];
+  const encounters = [];
+
+  for (let i = 1; i <= 100; i++) {
+    const isFemale = i % 2 === 1;
+    const nameList = isFemale ? INDONESIAN_NAMES_FEMALE : INDONESIAN_NAMES_MALE;
+    const rawName = nameList[(i - 1) % nameList.length];
+    const prefix = isFemale ? (i % 4 === 1 ? 'Ny. ' : i % 4 === 3 ? 'An. ' : 'Sdri. ') : (i % 4 === 2 ? 'Tn. ' : 'An. ');
+    const title = isFemale ? (i % 5 === 0 ? ', S.Pd' : i % 7 === 0 ? ', S.E' : '') : (i % 6 === 0 ? ', S.T' : i % 8 === 0 ? ', M.T' : '');
+    const fullName = `${prefix}${rawName}${title}`;
+
+    const mrn = String(100000 + i).slice(-6); // 001001 to 001100
+    const nik = `32730${String(10000000000 + i * 1234567).slice(0, 11)}`;
+    const ageYears = 18 + ((i * 7) % 65); // age 18 to 83
+    const birthYear = 2026 - ageYears;
+    const dob = `${birthYear}-0${(i % 9) + 1}-15`;
+
+    const deptObj = DEPARTMENTS[(i - 1) % DEPARTMENTS.length];
+    const guarantor = GUARANTORS[(i - 1) % GUARANTORS.length];
+    const complaint = COMPLAINTS[(i - 1) % COMPLAINTS.length];
+    const allergy = ALLERGIES_LIST[(i - 1) % ALLERGIES_LIST.length];
+
+    const weight = 45 + ((i * 3) % 45);
+    const height = 150 + ((i * 2) % 35);
+    const systolic = 110 + ((i * 4) % 40);
+    const diastolic = 70 + ((i * 2) % 25);
+    const hr = 68 + ((i * 3) % 32);
+    const temp = (36.3 + ((i % 15) * 0.1)).toFixed(1);
+    const rr = 18 + (i % 6);
+
+    const patientId = `demo-patient-${i}`;
+
+    const statusOptions = ['IN_TREATMENT', 'PROSES_PULANG', 'DISCHARGED'];
+    const encStatus = i % 5 === 0 ? 'PROSES_PULANG' : i % 7 === 0 ? 'DISCHARGED' : 'IN_TREATMENT';
+
+    patients.push({
+      id: patientId,
+      name: fullName,
+      mrn: mrn,
+      nik: nik,
+      demographics: {
+        gender: isFemale ? 'F' : 'M',
+        dob: dob,
+        pob: 'Bandung',
+        religion: 'Islam',
+        occupation: isFemale ? 'Wiraswasta / Ibu Rumah Tangga' : 'Karyawan Swasta',
+        address: `Jl. Soekarno Hatta No. ${i * 3}, Buah Batu, Bandung`
+      },
+      baseline_profile: {
+        value: weight,
+        chronic_flag: i % 3 === 0,
+        last_updated: new Date().toISOString()
+      },
+      allergies: allergy,
+      safety_flags: {
+        fall_risk: i % 4 === 0 ? 'HIGH' : i % 3 === 0 ? 'MODERATE' : 'LOW',
+        pressure_ulcer: 'LOW',
+        isolation: 'NONE'
+      },
+      insurance: {
+        type: guarantor.toLowerCase().includes('bpjs') ? 'bpjs' : 'mandiri',
+        no: `00019${String(10000000 + i * 9876).slice(0, 7)}`,
+        name: guarantor
+      },
+      status: 'ACTIVE',
+      createdAt: new Date(Date.now() - 3600000 * i).toISOString(),
+      registered_at: new Date(Date.now() - 3600000 * (i + 2)).toISOString(),
+      is_demo: true
+    });
+
+    encounters.push({
+      id: `ENC-RJ-2026-${String(i).padStart(3, '0')}`,
+      patient_id: patientId,
+      patient_name: fullName,
+      type: deptObj.type,
+      department: deptObj.name,
+      doctor_name: deptObj.doctor,
+      doctor_email: deptObj.email,
+      guarantor: guarantor,
+      admitted_at: { toDate: () => new Date(Date.now() - 3600000 * i) },
+      status: encStatus,
+      is_demo: true,
+      triage_level: i % 10 === 0 ? 'RED' : i % 3 === 0 ? 'YELLOW' : 'GREEN',
+      triage_score: i % 10 === 0 ? 'P1 - Resusitasi Cito' : i % 3 === 0 ? 'P2 - Urgensi Sedang' : 'P3 - Non-Urgensi',
+      vitals: {
+        bp: `${systolic}/${diastolic}`,
+        hr: hr,
+        temp: Number(temp),
+        rr: rr,
+        spo2: 98 + (i % 3),
+        pain_scale: `${i % 6}/10 (NRS)`
+      },
+      chief_complaint: complaint
+    });
+  }
+
+  return { patients, encounters };
+}
+
+const generatedData = generate100Patients();
+
+export const DEMO_PATIENTS = generatedData.patients;
+export const DEMO_ENCOUNTERS = generatedData.encounters;
+export const DEMO_RECORDS = generatedData.encounters.map(e => ({
+  id: e.id,
+  patientId: e.patient_id,
+  patient_id: e.patient_id,
+  ...e
+}));

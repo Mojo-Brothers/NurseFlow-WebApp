@@ -58,6 +58,8 @@ import MasterDataHub from './modules/admin/pages/MasterDataHub';
 import Teleconsultation from './modules/telemedicine/pages/TeleconsultationPage';
 import VirtualWaitingRoom from './modules/telemedicine/components/VirtualWaitingRoom';
 import SignaturePadEndpoint from './modules/emr/pages/SignaturePadEndpoint';
+import AppointmentPage from './modules/appointment/pages/AppointmentPage';
+import AppointmentReviewPage from './modules/appointment_review/pages/AppointmentReviewPage';
 import { useAuth } from './contexts/useAuth';
 import { Toaster } from 'react-hot-toast';
 
@@ -93,9 +95,12 @@ const router = createBrowserRouter([
             ),
           },
           { path: "/patients",   element: <Wrap><Patients /></Wrap> },
+          { path: "/appointments", element: <Wrap><AppointmentPage /></Wrap> },
+          { path: "/review-design-ui-modul", element: <Wrap><AppointmentReviewPage /></Wrap> },
           { path: "/encounters", element: <Wrap><Encounters /></Wrap> },
           { path: "/triage",     element: <Wrap><Triage /></Wrap> },
           { path: "/patient-care", element: <Wrap><PatientCarePage /></Wrap> },
+          { path: "/patient_care", element: <Navigate to="/patient-care" replace /> },
           { path: "/admin/services", element: <Wrap><MasterServicePage /></Wrap> },
           { path: "/inventory",  element: <Navigate to="/inventory/material-request" replace /> },
           { path: "/inventory/*", element: <Wrap><EnterpriseInventoryPage /></Wrap> },
