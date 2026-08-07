@@ -18,13 +18,13 @@ export default function DesignVariantMinimal() {
   return (
     <div className="space-y-4">
       {/* Variant Info Banner with View Mode Switcher */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-extrabold text-sm uppercase tracking-wider text-teal-700 dark:text-teal-400">
+            <span className="font-extrabold text-sm uppercase tracking-wider text-[#007399] dark:text-cyan-400">
               Varian 3: Clinical Minimalist Timeline
             </span>
-            <span className="px-2 py-0.5 bg-teal-100 dark:bg-teal-900/60 text-teal-800 dark:text-teal-300 rounded-full text-[10px] font-bold border border-teal-300 dark:border-teal-700">
+            <span className="px-2.5 py-0.5 bg-[#007399]/15 text-[#007399] dark:text-cyan-300 rounded-full text-[10px] font-extrabold border border-[#007399]/30">
               Terpilih ⭐
             </span>
           </div>
@@ -34,35 +34,35 @@ export default function DesignVariantMinimal() {
         </div>
 
         {/* View Switcher Controls */}
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-full border border-slate-200 dark:border-slate-700">
           <button 
             onClick={() => setViewMode('card')}
-            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
               viewMode === 'card' 
-                ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-300 shadow-xs' 
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                ? 'bg-[#007399] text-white shadow-sm shadow-[#007399]/25' 
+                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <span className="material-symbols-outlined text-sm">grid_view</span> Tampilan Kartu
+            <span className="material-symbols-outlined text-sm">grid_view</span> Kartu
           </button>
           
           <button 
             onClick={() => setViewMode('table')}
-            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer ${
               viewMode === 'table' 
-                ? 'bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-300 shadow-xs' 
-                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                ? 'bg-[#007399] text-white shadow-sm shadow-[#007399]/25' 
+                : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-200'
             }`}
           >
-            <span className="material-symbols-outlined text-sm">table_rows</span> Tampilan Tabel
+            <span className="material-symbols-outlined text-sm">table_rows</span> Tabel
           </button>
         </div>
       </div>
 
       {/* Doctor Card */}
-      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs flex items-center justify-between">
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold shadow-xs">
+          <div className="w-10 h-10 rounded-2xl bg-[#007399] text-white flex items-center justify-center font-bold shadow-md shadow-[#007399]/25">
             <span className="material-symbols-outlined text-xl">stethoscope</span>
           </div>
           <div>
@@ -71,7 +71,7 @@ export default function DesignVariantMinimal() {
           </div>
         </div>
         <div className="text-right">
-          <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Total Slot: <strong className="text-teal-600">2 / 9 Terisi</strong></span>
+          <span className="text-xs font-bold text-slate-600 dark:text-slate-400">Total Slot: <strong className="text-[#007399] dark:text-cyan-400">2 / 9 Terisi</strong></span>
         </div>
       </div>
 
@@ -81,10 +81,10 @@ export default function DesignVariantMinimal() {
           {TIMELINE_SLOTS.map((s) => (
             <div 
               key={s.time}
-              className={`p-4 rounded-xl border transition-all duration-200 flex flex-col justify-between h-44 relative ${
+              className={`p-4 rounded-2xl border transition-all duration-200 flex flex-col justify-between h-44 relative ${
                 s.status === 'BOOKED' 
-                  ? 'bg-teal-50/40 dark:bg-teal-950/20 border-teal-300 dark:border-teal-800 shadow-xs' 
-                  : 'bg-white dark:bg-slate-900 border-dashed border-slate-300 dark:border-slate-800 hover:border-teal-500 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                  ? 'bg-gradient-to-br from-[#007399]/10 via-sky-50/60 to-[#007399]/5 dark:bg-sky-950/30 border-[#007399]/30 dark:border-cyan-700/50 shadow-sm' 
+                  : 'bg-white dark:bg-slate-900 border-dashed border-slate-300 dark:border-slate-800 hover:border-[#007399] hover:bg-slate-50 dark:hover:bg-slate-800/40'
               }`}
             >
               {/* Header with Slot Number & Time */}
@@ -97,12 +97,12 @@ export default function DesignVariantMinimal() {
                 </div>
 
                 {s.status === 'BOOKED' ? (
-                  <span className="text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800 flex items-center gap-1">
+                  <span className="text-[10px] font-extrabold bg-[#007399]/15 text-[#007399] dark:text-cyan-300 px-2.5 py-0.5 rounded-full border border-[#007399]/30 flex items-center gap-1">
                     APPT <span className="material-symbols-outlined text-[10px]">check</span>
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded">
-                    KOSONG ({s.duration})
+                  <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-2 py-0.5 rounded-full">
+                    SLOT KOSONG
                   </span>
                 )}
               </div>
@@ -110,23 +110,23 @@ export default function DesignVariantMinimal() {
               {s.status === 'BOOKED' ? (
                 <div className="my-1.5">
                   <div className="text-[10px] font-mono font-bold text-slate-400">RM: {s.rm}</div>
-                  <div className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">{s.patient}</div>
-                  <div className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold">{s.type}</div>
+                  <div className="font-extrabold text-xs text-slate-900 dark:text-slate-100 truncate">{s.patient}</div>
+                  <div className="text-[10px] text-[#007399] dark:text-cyan-400 font-extrabold uppercase">{s.type}</div>
                 </div>
               ) : (
                 <div className="my-1.5 text-[11px] text-slate-400 font-medium">
-                  Tersedia untuk pendaftaran pasien.
+                  Siap menerima registrasi pasien.
                 </div>
               )}
 
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-end">
+              <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800 flex justify-end">
                 {s.status === 'BOOKED' ? (
-                  <button className="text-xs font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1 cursor-pointer">
-                    Edit Slot <span className="material-symbols-outlined text-xs">edit</span>
+                  <button className="px-3 py-1 bg-[#007399] hover:bg-[#005e7e] text-white rounded-full text-[11px] font-extrabold shadow-sm flex items-center gap-1 cursor-pointer transition-all">
+                    <span className="material-symbols-outlined text-xs">edit</span> Edit Slot
                   </button>
                 ) : (
-                  <button className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1 cursor-pointer">
-                    Pilih Slot <span className="material-symbols-outlined text-xs">add_circle</span>
+                  <button className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-full text-[11px] font-extrabold shadow-sm flex items-center gap-1 cursor-pointer transition-all">
+                    <span className="material-symbols-outlined text-xs">add_circle</span> Pilih Slot
                   </button>
                 )}
               </div>

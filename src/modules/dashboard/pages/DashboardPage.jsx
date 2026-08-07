@@ -95,7 +95,7 @@ export default function DashboardPage() {
       {/* ─── Header ─── */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
         <div>
-          <h2 className="text-2xl md:text-3xl font-headline font-black tracking-tighter text-on-surface leading-tight bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">
+          <h2 className="text-2xl md:text-3xl font-headline font-black tracking-tighter text-on-surface leading-tight bg-gradient-to-r from-[#007399] to-cyan-500 bg-clip-text text-transparent">
             {t('dashboard_v2.title')}
           </h2>
           <p className="text-on-surface-variant text-sm mt-1 font-bold opacity-70 uppercase tracking-widest">
@@ -126,11 +126,11 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             {/* Triage Active */}
-            <div className="clinical-card group overflow-hidden relative shadow-premium-soft flex flex-col p-6 border border-white/10 hover:border-primary/30 transition-all hover:-translate-y-1">
-              <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+            <div className="clinical-card group overflow-hidden relative shadow-premium-soft flex flex-col p-6 border border-white/10 hover:border-[#007399]/30 transition-all hover:-translate-y-1">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-[#007399]/5 rounded-full blur-2xl group-hover:bg-[#007399]/20 transition-all"></div>
               <div className="flex-row justify-between items-start mb-4 relative z-10">
                 <span className="text-[10px] tracking-[0.2em] uppercase font-black text-on-surface-variant">{t('dashboard_v2.metrics.triage_active')}</span>
-                <Activity size={18} className="text-primary/50 group-hover:text-primary transition-colors" />
+                <Activity size={18} className="text-[#007399]/70 group-hover:text-[#007399] transition-colors" />
               </div>
               <div className="flex-row items-baseline gap-2 mb-4 relative z-10">
                 <h3 className="font-headline font-black text-5xl text-on-surface tracking-tighter">
@@ -145,10 +145,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Ventilators */}
-            <div className="clinical-card group overflow-hidden relative shadow-premium-soft flex flex-col p-6 border border-white/10 hover:border-primary/30 transition-all hover:-translate-y-1">
+            <div className="clinical-card group overflow-hidden relative shadow-premium-soft flex flex-col p-6 border border-white/10 hover:border-[#007399]/30 transition-all hover:-translate-y-1">
               <div className="flex-row justify-between items-start mb-4 relative z-10">
                 <span className="text-[10px] tracking-[0.2em] uppercase font-black text-on-surface-variant">{t('dashboard_v2.metrics.ventilators')}</span>
-                <Wind size={18} className="text-blue-400/50 group-hover:text-blue-400 transition-colors" />
+                <Wind size={18} className="text-[#007399]/70 group-hover:text-[#007399] transition-colors" />
               </div>
               <div className="flex-row items-baseline gap-2 mb-4 relative z-10">
                 <h3 className="font-headline font-black text-5xl text-on-surface tracking-tighter">
@@ -157,7 +157,7 @@ export default function DashboardPage() {
                 <span className="font-body text-xs font-bold text-on-surface-variant uppercase">/ {metrics?.ventilators?.total || 24} {t('dashboard_v2.metrics.available')}</span>
               </div>
               <div className="mt-auto w-full bg-surface-container-lowest border border-outline-variant/30 h-1.5 rounded-full overflow-hidden relative z-10">
-                <div className="bg-blue-400 h-full transition-all duration-1000 shadow-glow-primary" style={{ width: `${isLoading ? 0 : 100 - ((metrics?.ventilators?.available || 0) / (metrics?.ventilators?.total || 24) * 100)}%` }}></div>
+                <div className="bg-[#007399] h-full transition-all duration-1000 shadow-glow-primary" style={{ width: `${isLoading ? 0 : 100 - ((metrics?.ventilators?.available || 0) / (metrics?.ventilators?.total || 24) * 100)}%` }}></div>
               </div>
             </div>
 

@@ -4,12 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 :root {
-  /* Colors - Rich Deep Oceanic (EHIS 2026 Premium) */
-  --primary: #026b96; 
-  --primary-rgb: 2, 107, 150;
-  --primary-container: #014d6e;
+  /* Colors - Rich Deep Oceanic Teal (EHIS 2026 Premium matching screenshot) */
+  --primary: #007399; 
+  --primary-rgb: 0, 115, 153;
+  --primary-container: #005978;
   --on-primary: #ffffff;
-  --on-primary-container: #80cfff;
+  --on-primary-container: #a3e7ff;
 
   --secondary: #0f172a;
   --secondary-container: #1e293b;

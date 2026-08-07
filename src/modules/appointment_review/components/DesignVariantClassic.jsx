@@ -25,19 +25,21 @@ export default function DesignVariantClassic() {
       </div>
 
       {/* Top Filter Bar */}
-      <div className="bg-emerald-50 dark:bg-emerald-950/30 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800/50 flex flex-wrap items-center gap-3 text-xs font-semibold">
+      <div className="bg-slate-50 dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3 text-xs font-semibold shadow-xs">
         <div className="flex items-center gap-1.5">
-          <span className="text-emerald-800 dark:text-emerald-300 font-bold">Dokter:</span>
-          <input readOnly value="dr. Kevin Moses Hanky Jr Tandayu, Sp.Jp, FIHA" className="bg-white dark:bg-slate-900 px-2 py-1 rounded border border-emerald-300 dark:border-emerald-700 w-80 font-bold text-slate-800 dark:text-slate-100" />
+          <span className="text-[#007399] dark:text-cyan-400 font-bold">Dokter:</span>
+          <input readOnly value="dr. Kevin Moses Hanky Jr Tandayu, Sp.Jp, FIHA" className="bg-white dark:bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 w-80 font-bold text-slate-800 dark:text-slate-100 shadow-xs" />
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-emerald-800 dark:text-emerald-300 font-bold">Tanggal:</span>
-          <input readOnly value="07-08-2026" className="bg-white dark:bg-slate-900 px-2 py-1 rounded border border-emerald-300 dark:border-emerald-700 font-bold text-slate-800 dark:text-slate-100" />
+          <span className="text-[#007399] dark:text-cyan-400 font-bold">Tanggal:</span>
+          <input readOnly value="07-08-2026" className="bg-white dark:bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 font-bold text-slate-800 dark:text-slate-100 shadow-xs" />
         </div>
-        <button className="px-3 py-1 bg-cyan-600 text-white font-bold rounded shadow-xs">Cari</button>
-        <button className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-300 font-bold rounded">Reset</button>
-        <button className="px-3 py-1 bg-white dark:bg-slate-800 border border-slate-300 font-bold rounded">Jadwal Dokter</button>
-        <button className="px-3 py-1 bg-slate-200 dark:bg-slate-700 font-bold rounded">Laporan</button>
+        <button className="px-4 py-1.5 bg-[#007399] hover:bg-[#005e7e] text-white font-extrabold rounded-full shadow-sm cursor-pointer transition-all flex items-center gap-1">
+          <span className="material-symbols-outlined text-xs">search</span> Cari
+        </button>
+        <button className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-bold rounded-full text-slate-600 dark:text-slate-300">Reset</button>
+        <button className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 font-bold rounded-full text-slate-600 dark:text-slate-300">Jadwal Dokter</button>
+        <button className="px-3 py-1.5 bg-slate-200 dark:bg-slate-700 font-bold rounded-full text-slate-700 dark:text-slate-300">Laporan</button>
       </div>
 
       {/* Legacy Table Layout */}

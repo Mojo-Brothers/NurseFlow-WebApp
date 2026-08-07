@@ -60,6 +60,7 @@ import { AUDIT_ACTIONS, COLLECTIONS, ENCOUNTER_TYPES } from '../../../core/const
 import { useAuth } from '../../../contexts/useAuth.js';
 import { functions } from '../../../core/firebase.js';
 import AuditTrailModal from '../components/AuditTrailModal.jsx';
+import AdvancedPatientSearchBar from '../../emr/components/AdvancedPatientSearchBar.jsx';
 import '../styles/Patients.css';
 
 const DUMMY_DOCTORS = [
@@ -556,30 +557,24 @@ export default function PatientPage() {
         </div>
       </div>
 
-      {/* ─── Premium Glass Command Bar ─── */}
-      <div className="relative mb-8 z-20">
-        <div className="glass-panel rounded-2xl p-3 flex-row items-center justify-between gap-4 shadow-premium-soft">
-          <div className="flex-1 flex-row items-center gap-3 px-3">
-            <span className="material-symbols-outlined text-primary/70 text-[24px]">search</span>
-            <input 
-              type="text" 
-              placeholder="Cari Pasien (Nama, MRN, NIK)..."
-              className="w-full bg-transparent border-none text-on-surface focus:ring-0 font-medium placeholder-on-surface-variant/50 h-10 px-2"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="h-10 w-[1px] bg-outline-variant/50 hidden md:block"></div>
-          
-          <div className="flex-row items-center gap-3">
+      {/* ─── Premium Glass Command Bar WITH ADVANCED PATIENT SEARCH BAR ─── */}
+      <div className="relative mb-6 z-20 space-y-3">
+        <AdvancedPatientSearchBar 
+          onSelectPatient={(p) => {
+            selectPatient(p.id);
+            setSearchTerm(p.name || '');
+          }} 
+        />
+
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white/60 dark:bg-slate-900/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2">
             {/* View Mode Switcher (Kartu vs Tabel) */}
-            <div className="flex items-center bg-surface-container-high/80 p-1 rounded-xl border border-outline-variant/30">
+            <div className="flex items-center bg-surface-container-high/80 p-1 rounded-full border border-outline-variant/30">
               <button 
                 type="button"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
                   viewMode === 'grid' 
-                    ? 'bg-primary text-white shadow-sm' 
+                    ? 'bg-[#007399] text-white shadow-sm shadow-[#007399]/25' 
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
                 onClick={() => handleViewModeChange('grid')}
@@ -590,9 +585,9 @@ export default function PatientPage() {
               </button>
               <button 
                 type="button"
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all cursor-pointer ${
                   viewMode === 'table' 
-                    ? 'bg-primary text-white shadow-sm' 
+                    ? 'bg-[#007399] text-white shadow-sm shadow-[#007399]/25' 
                     : 'text-on-surface-variant hover:text-on-surface'
                 }`}
                 onClick={() => handleViewModeChange('table')}
@@ -604,32 +599,32 @@ export default function PatientPage() {
             </div>
 
             <button 
-              className={`flex-row items-center gap-2 px-4 py-2.5 rounded-xl transition-all font-bold text-sm ${activeFilterCount > 0 ? 'bg-primary/10 text-primary' : 'hover:bg-surface-container text-on-surface-variant'}`}
+              className={`flex-row items-center gap-2 px-4 py-2 rounded-full transition-all font-bold text-xs border border-slate-200 dark:border-slate-700 ${activeFilterCount > 0 ? 'bg-[#007399]/10 text-[#007399]' : 'hover:bg-surface-container text-on-surface-variant'}`}
               onClick={() => setIsFilterOpen(true)}
             >
-              <span className="material-symbols-outlined text-[20px]">tune</span>
+              <span className="material-symbols-outlined text-[18px]">tune</span>
               <span className="hidden md:inline">Filter</span>
               {activeFilterCount > 0 && (
-                <span className="w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] ml-1">{activeFilterCount}</span>
+                <span className="w-5 h-5 bg-[#007399] text-white rounded-full flex items-center justify-center text-[10px] ml-1 font-bold">{activeFilterCount}</span>
               )}
             </button>
-
-            <button 
-              id="btn-new-patient-registration"
-              className="btn-primary"
-              onClick={(e) => { 
-                e.preventDefault();
-                e.stopPropagation();
-                setIsEditing(false);
-                setForm(initialFormState);
-                setIsModalOpen(true); 
-                setCurrentStep(1); 
-              }}
-            >
-              <span className="material-symbols-outlined text-[20px]">person_add</span>
-              <span className="font-bold text-sm hidden sm:inline">Daftar Pasien</span>
-            </button>
           </div>
+
+          <button 
+            id="btn-new-patient-registration"
+            className="px-5 py-2 bg-[#007399] hover:bg-[#005e7e] text-white rounded-full text-xs font-extrabold shadow-sm transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+            onClick={(e) => { 
+              e.preventDefault();
+              e.stopPropagation();
+              setIsEditing(false);
+              setForm(initialFormState);
+              setIsModalOpen(true); 
+              setCurrentStep(1); 
+            }}
+          >
+            <span className="material-symbols-outlined text-[18px]">person_add</span>
+            <span className="font-bold hidden sm:inline">Daftar Pasien Baru</span>
+          </button>
         </div>
       </div>
 

@@ -93,7 +93,7 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
         {/* Input Field + Auto-Suggest Dropdown Launcher */}
         <div className="flex-1 min-w-[280px] relative">
           <div className="relative flex items-center">
-            <Search size={18} className="absolute left-3.5 text-primary opacity-80" />
+            <Search size={18} className="absolute left-4 text-[#007399] font-bold" />
             <input
               type="text"
               placeholder="Cari pasien canggih (Nama, No. RM, NIK, No. Kartu BPJS)..."
@@ -103,12 +103,12 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
                 setSearchQuery(e.target.value);
                 setIsOpenDropdown(true);
               }}
-              className="w-full bg-surface-container-low/90 border border-outline-variant/40 rounded-2xl pl-10 pr-24 py-2.5 text-xs font-bold text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all shadow-inner"
+              className="w-full bg-white dark:bg-slate-900 border-2 border-[#007399] rounded-full pl-11 pr-28 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-4 focus:ring-[#007399]/20 transition-all shadow-xs"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-12 text-on-surface-variant hover:text-on-surface p-1"
+                className="absolute right-24 text-slate-400 hover:text-slate-600 p-1"
               >
                 <X size={14} />
               </button>
@@ -116,11 +116,11 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
             
             <button
               onClick={() => setIsFullModalOpen(true)}
-              className="absolute right-2 px-2.5 py-1 bg-primary/10 hover:bg-primary text-primary hover:text-white rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1"
-              title="Membuka Pencarian Komprehensif"
+              className="absolute right-2 px-3 py-1 bg-[#007399]/10 hover:bg-[#007399] text-[#007399] hover:text-white border border-[#007399]/30 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title="Membuka Pencarian Komprehensif Command Center"
             >
               <SlidersHorizontal size={12} />
-              <span className="hidden sm:inline">Advanced</span>
+              <span className="hidden sm:inline">ADVANCED</span>
             </button>
           </div>
 

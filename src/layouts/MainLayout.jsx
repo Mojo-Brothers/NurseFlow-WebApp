@@ -16,6 +16,7 @@ const NAV_SCHEMA = [
     { name: 'nav.patients',    path: '/patients',   icon: 'groups',              roles: null },
     { name: 'nav.appointments',path: '/appointments', icon: 'calendar_month',    roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'Review Design UI Modul!', path: '/review-design-ui-modul', icon: 'palette', roles: ['DOCTOR','NURSE','ADMIN'] },
+    { name: 'Galeri Komponen Modular', path: '/modular-design-review', icon: 'widgets', roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.encounters',  path: '/encounters', icon: 'local_hospital',      roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.triage',      path: '/triage',     icon: 'emergency',           roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.patient_care', path: '/patient-care', icon: 'medical_services',    roles: ['DOCTOR','NURSE','ADMIN'] },
@@ -48,6 +49,7 @@ const NAV_SCHEMA = [
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
     { name: 'SDM & Hak Akses (RBAC)', path: '/admin/staff-access', icon: 'badge', roles: ['ADMIN', 'SUPERVISOR'] },
     { name: 'nav.executive',    path: '/executive',    icon: 'monitoring',        roles: ['ADMIN', 'SUPERVISOR'] },
+    { name: 'System Performance Suite', path: '/performance-diagnostics', icon: 'speed', roles: null },
   ]},
 ];
 
@@ -139,26 +141,26 @@ const MainLayout = () => {
   return (
     <div className="bg-background text-on-surface font-body antialiased flex flex-col lg:flex-row h-screen relative overflow-hidden">
       
-      {/* ─── Premium Glass Sidebar ─── */}
+      {/* ─── Premium Sidebar Matching Screenshot ─── */}
       <nav 
-        className={`hidden lg:flex flex-col h-screen w-[260px] fixed left-0 top-0 z-40 glass-panel border-r border-white/10 dark:border-white/5 transition-all duration-300 ${stressLevel === 'critical' ? 'shadow-[inset_-4px_0_15px_rgba(220,38,38,0.2)]' : ''}`}
+        className={`hidden lg:flex flex-col h-screen w-[260px] fixed left-0 top-0 z-40 bg-white dark:bg-slate-950 border-r border-slate-200/80 dark:border-slate-800 transition-all duration-300 shadow-sm ${stressLevel === 'critical' ? 'shadow-[inset_-4px_0_15px_rgba(220,38,38,0.2)]' : ''}`}
         ref={scrollRef}
       >
-        {/* Branding & Status */}
-        <div className="px-6 py-8 border-b border-outline-variant/30">
-          <div className="flex-row items-center gap-3 group cursor-pointer" onClick={() => navigate('/dashboard')}>
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-container rounded-xl flex items-center justify-center shadow-glow-primary group-hover:scale-105 transition-transform">
-              <span className="material-symbols-outlined text-white text-[22px]">medical_services</span>
+        {/* Branding Header */}
+        <div className="px-6 py-6 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="flex items-center gap-3.5 group cursor-pointer" onClick={() => navigate('/dashboard')}>
+            <div className="w-10 h-10 bg-[#007399] rounded-2xl flex items-center justify-center text-white shadow-md shadow-[#007399]/30 group-hover:scale-105 transition-transform">
+              <span className="material-symbols-outlined text-[22px]">medical_services</span>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-xl font-headline font-black tracking-tight leading-none bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-500">NurseFlow</h1>
-              <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-[0.2em] mt-0.5">EHIS 2026</span>
+              <h1 className="text-xl font-headline font-black tracking-tight leading-none text-[#1E40AF] dark:text-cyan-400">NurseFlow</h1>
+              <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-[0.2em] mt-0.5">EHIS 2026</span>
             </div>
           </div>
         </div>
 
         {/* Navigation Links */}
-        <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-6">
+        <div className="flex-1 overflow-y-auto no-scrollbar px-3 py-4">
           <ul className="flex flex-col gap-1">
             {NAV_SCHEMA.map((section, idx) => {
               const visibleItems = section.items.filter(isVisible);
@@ -166,9 +168,9 @@ const MainLayout = () => {
 
               return (
                 <React.Fragment key={idx}>
-                  {idx > 0 && <div className="h-px bg-outline-variant/30 my-3 mx-2"></div>}
-                  <li className="px-3 mb-1">
-                    <p className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">{t(section.label)}</p>
+                  {idx > 0 && <div className="h-px bg-slate-100 dark:bg-slate-800/80 my-3 mx-2"></div>}
+                  <li className="px-3.5 mb-1.5 mt-2">
+                    <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">{t(section.label)}</p>
                   </li>
                   {visibleItems.map((item) => {
                     const hasChildren = item.children && item.children.length > 0;
@@ -181,41 +183,39 @@ const MainLayout = () => {
                       <li key={item.name} className="flex flex-col gap-1">
                         <Link
                           to={hasChildren ? item.children[0].path : item.path}
-                          className={`flex-row items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-300 group relative ${
+                          className={`flex items-center justify-between px-3.5 py-3 rounded-2xl transition-all duration-200 group relative cursor-pointer ${
                             isActive 
-                              ? 'bg-primary text-white shadow-glow-primary scale-[1.02]' 
-                              : 'text-on-surface-variant hover:bg-surface-container hover:text-primary hover:scale-[1.01]'
+                              ? 'bg-[#007399] text-white shadow-md shadow-[#007399]/25 scale-[1.01]' 
+                              : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-[#007399] font-bold'
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <span className={`material-symbols-outlined text-[20px] transition-transform ${isActive ? '' : 'group-hover:scale-110'}`}>
+                            <span className={`material-symbols-outlined text-[20px] transition-transform ${isActive ? 'text-white' : 'text-slate-500 group-hover:scale-110'}`}>
                               {item.icon}
                             </span>
-                            <span className="font-semibold text-[13px] tracking-wide">{t(item.name)}</span>
+                            <span className="font-extrabold text-[13px] tracking-tight">{t(item.name)}</span>
                           </div>
-                          {hasChildren && (
-                            <span className="material-symbols-outlined text-[16px]">
-                              {isExpanded ? 'expand_more' : 'chevron_right'}
-                            </span>
+                          {hasChildren && !isActive && (
+                            <span className="material-symbols-outlined text-[16px] text-slate-400">chevron_right</span>
                           )}
-                          {isActive && !hasChildren && (
-                            <span className="absolute right-3 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)]"></span>
+                          {isActive && (
+                            <span className="w-2.5 h-2.5 rounded-full bg-white shadow-sm ml-auto shrink-0"></span>
                           )}
                         </Link>
 
                         {/* Render Sub-menu Children if present */}
                         {hasChildren && isExpanded && (
-                          <ul className="pl-3 flex flex-col gap-1 my-1 border-l-2 border-primary/30 ml-4 animate-in slide-in-from-top-1 fade-in duration-200">
+                          <ul className="pl-3 flex flex-col gap-1 my-1 border-l-2 border-[#007399]/30 ml-4 animate-in slide-in-from-top-1 fade-in duration-200">
                             {item.children.map(child => {
                               const isChildActive = location.pathname === child.path;
                               return (
                                 <li key={child.name}>
                                   <Link
                                     to={child.path}
-                                    className={`flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                    className={`flex items-center gap-2.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                                       isChildActive
-                                        ? 'bg-primary/20 text-primary font-black scale-105'
-                                        : 'text-on-surface-variant/80 hover:text-primary hover:bg-surface-container/60'
+                                        ? 'bg-[#007399]/15 text-[#007399] dark:text-cyan-400 font-black'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-[#007399] hover:bg-slate-100 dark:hover:bg-slate-900'
                                     }`}
                                   >
                                     <span className="material-symbols-outlined text-[16px]">{child.icon}</span>
@@ -236,21 +236,21 @@ const MainLayout = () => {
         </div>
 
         {/* User & Settings Panel */}
-        <div className="p-4 border-t border-outline-variant/30 bg-surface-container-lowest/50 backdrop-blur-md">
-          <div className="flex-row items-center justify-between mb-4 p-2 bg-surface-container rounded-xl border border-outline-variant/50">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950">
+          <div className="flex items-center justify-between mb-3 p-2 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs">
             <LanguageSwitcher compact />
-            <div className="h-4 w-px bg-outline-variant"></div>
+            <div className="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
             <ThemeToggle />
           </div>
-          <div className="flex-row items-center gap-3 px-2">
-            <div className="w-8 h-8 rounded-full bg-primary-container text-primary flex items-center justify-center font-bold text-xs uppercase">
-              {currentUser?.email?.charAt(0) || 'U'}
+          <div className="flex items-center gap-3 px-1">
+            <div className="w-9 h-9 rounded-2xl bg-[#007399] text-white flex items-center justify-center font-black text-xs uppercase shadow-sm">
+              {currentUser?.email?.charAt(0) || 'A'}
             </div>
             <div className="flex flex-col flex-1 overflow-hidden">
-              <span className="text-xs font-bold text-on-surface truncate">{currentUser?.email}</span>
-              <span className="text-[9px] font-black text-primary uppercase tracking-wider">{effectiveRole}</span>
+              <span className="text-xs font-bold text-slate-900 dark:text-white truncate">{currentUser?.email || 'admin@nurseflow.id'}</span>
+              <span className="text-[10px] font-black text-[#007399] dark:text-cyan-400 uppercase tracking-wider">{effectiveRole}</span>
             </div>
-            <button onClick={handleLogout} className="w-8 h-8 rounded-full hover:bg-error-container text-on-surface-variant hover:text-error flex items-center justify-center transition-colors">
+            <button onClick={handleLogout} className="w-8 h-8 rounded-xl hover:bg-rose-100 dark:hover:bg-rose-950/50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer" title="Keluar">
               <span className="material-symbols-outlined text-[18px]">logout</span>
             </button>
           </div>

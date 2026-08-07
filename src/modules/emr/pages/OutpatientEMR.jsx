@@ -39,6 +39,7 @@ import BPOMMESOPharmacovigilanceForm from '../components/BPOMMESOPharmacovigilan
 import WHOChildAnthropometryForm from '../components/WHOChildAnthropometryForm.jsx';
 import WHOHandHygieneAuditForm from '../components/WHOHandHygieneAuditForm.jsx';
 import PatientCarePanel from '../components/PatientCarePanel.jsx';
+import PatientSearchModal from '../components/PatientSearchModal.jsx';
 
 const JCI_MODULE_GROUPS = [
   {
@@ -1131,100 +1132,16 @@ export default function OutpatientEMR() {
       </div>
 
       {/* ─── PATIENT PICKER MODAL (ENTERPRISE MASTERPIECE) ─── */}
-      {isPatientPickerOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-[var(--surface-container-lowest)] rounded-3xl border border-[var(--outline-variant)]/40 shadow-2xl max-w-xl w-full overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-300">
-            <div className="p-6 border-b border-[var(--outline-variant)]/30 flex items-center justify-between bg-[var(--surface-container-low)]">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[var(--primary)] text-white flex items-center justify-center shadow-md">
-                  <UserPlus size={20} />
-                </div>
-                <div>
-                  <h3 className="text-lg font-black text-[var(--on-surface)] tracking-tight uppercase">Pilih Pasien / Antrean Rawat Jalan</h3>
-                  <p className="text-xs text-[var(--on-surface-variant)]">Pilih pasien aktif untuk membuka seluruh rekam medisnya</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setIsPatientPickerOpen(false)}
-                className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/5 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-slate-500 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="p-4 border-b border-[var(--outline-variant)]/20 bg-[var(--surface-container-lowest)]">
-              <div className="relative">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)]" />
-                <input
-                  type="text"
-                  placeholder="Cari pasien berdasarkan Nama, No. RM, atau NIK..."
-                  value={patientSearchQuery}
-                  onChange={e => setPatientSearchQuery(e.target.value)}
-                  className="w-full bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/40 rounded-2xl py-3 pl-12 pr-4 text-xs font-bold text-[var(--on-surface)] placeholder:text-[var(--on-surface-variant)]/50 focus:outline-none focus:border-[var(--primary)] transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
-              {patients
-                .filter(p => {
-                  const q = patientSearchQuery.toLowerCase();
-                  return !q || p.name?.toLowerCase().includes(q) || p.mrn?.includes(q) || p.nik?.includes(q);
-                })
-                .map(p => {
-                  const isCurrent = p.id === selectedPatientId;
-                  return (
-                    <div
-                      key={p.id}
-                      onClick={() => {
-                        selectPatient(p.id);
-                        setSelectedModule(null);
-                        setIsPatientPickerOpen(false);
-                      }}
-                      className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
-                        isCurrent 
-                          ? 'bg-[var(--primary)]/10 border-[var(--primary)] shadow-sm' 
-                          : 'bg-[var(--surface-container-low)] hover:bg-[var(--surface-container-high)] border-[var(--outline-variant)]/30'
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${
-                          isCurrent ? 'bg-[var(--primary)] text-white shadow-md' : 'bg-[var(--surface-container-highest)] text-[var(--on-surface)]'
-                        }`}>
-                          <User size={22} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-black text-[var(--on-surface)]">{p.name}</span>
-                            {isCurrent && (
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[9px] font-black uppercase">
-                                Aktif Saat Ini
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-[var(--on-surface-variant)] font-bold mt-0.5">
-                            No. RM: <span className="font-black text-[var(--primary)]">{p.mrn}</span> • {p.demographics?.gender === 'M' ? 'Laki-laki' : 'Perempuan'}
-                          </p>
-                          {p.allergies?.length > 0 && (
-                            <span className="inline-block mt-1 text-[9px] font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-md border border-red-500/20">
-                              Alergi: {p.allergies[0].agent}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div className="text-right">
-                        <span className="text-xs font-black text-[var(--primary)] uppercase tracking-wider block">
-                          Buka Rekam Medis →
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ─── OFFICIAL COMMAND CENTER PATIENT SEARCH MODAL ─── */}
+      <PatientSearchModal 
+        isOpen={isPatientPickerOpen} 
+        onClose={() => setIsPatientPickerOpen(false)} 
+        onSelect={(selected) => {
+          selectPatient(selected.patientId || selected.id);
+          setSelectedModule(null);
+          setIsPatientPickerOpen(false);
+        }} 
+      />
 
       {/* ─── DOCUMENT PREVIEW & AUDIT MODAL (JCI CERTIFIED) ─── */}
       {previewRecord && (

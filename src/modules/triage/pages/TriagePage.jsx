@@ -141,18 +141,18 @@ export default function TriagePage() {
         <div className="max-w-none flex flex-row flex-wrap justify-between items-center gap-4">
           <div className="flex flex-row items-center gap-8 min-w-0">
             <div className="flex flex-col">
-                <h1 className="text-xl font-headline font-black text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-500 tracking-tighter leading-none">{t('nav.clinical').toUpperCase()}</h1>
+                <h1 className="text-xl font-headline font-black text-transparent bg-clip-text bg-gradient-to-r from-[#007399] to-cyan-500 tracking-tighter leading-none">{t('nav.clinical').toUpperCase()}</h1>
                 <span className="text-[10px] font-bold text-on-surface-variant tracking-[0.3em] uppercase">{t('triage_v2.triase')} OS v2.0</span>
             </div>
             
-            <nav className="flex flex-row bg-surface-container/50 backdrop-blur-md p-1.5 rounded-2xl border border-outline-variant/30 min-w-0 shadow-inner">
+            <nav className="flex flex-row bg-surface-container/50 backdrop-blur-md p-1.5 rounded-full border border-outline-variant/30 min-w-0 shadow-inner">
               {MODES.map(mode => (
                 <button
                   key={mode.id}
                   onClick={() => setOperationalMode(mode.id)}
-                  className={`flex flex-row items-center gap-2 px-6 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 ${
+                  className={`flex flex-row items-center gap-2 px-6 py-2.5 rounded-full text-[11px] font-extrabold uppercase tracking-widest transition-all duration-300 cursor-pointer ${
                     operationalMode === mode.id 
-                    ? 'bg-gradient-to-r from-primary to-primary-container text-white shadow-glow-primary scale-[1.02]' 
+                    ? 'bg-[#007399] text-white shadow-md shadow-[#007399]/25 scale-[1.02]' 
                     : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high/50'
                   }`}
                 >

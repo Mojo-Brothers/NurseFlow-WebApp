@@ -394,10 +394,10 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
             </div>
 
             <div className="flex items-center gap-2">
-              <button onClick={resetFilters} className="bg-[var(--surface-container-high)] hover:bg-[var(--outline-variant)] hover:-translate-y-0.5 border border-[var(--outline-variant)] text-[var(--on-surface)] h-[36px] px-5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 group shadow-sm">
+              <button onClick={resetFilters} className="bg-[var(--surface-container-high)] hover:bg-[var(--outline-variant)] hover:-translate-y-0.5 border border-[var(--outline-variant)] text-[var(--on-surface)] h-[36px] px-5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 group shadow-sm cursor-pointer">
                 <RotateCcw size={12} className="group-hover:-rotate-180 transition-transform duration-500" /> Reset
               </button>
-              <button onClick={handleSearch} className="bg-[var(--primary)] hover:bg-blue-600 hover:-translate-y-0.5 hover:shadow-[0_10px_20px_rgba(var(--primary-rgb),0.3)] text-white h-[36px] px-6 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 group ring-2 ring-[var(--primary-container)]">
+              <button onClick={handleSearch} className="bg-[#007399] hover:bg-[#005e7e] hover:-translate-y-0.5 hover:shadow-[0_10px_20px_rgba(0,115,153,0.3)] text-white h-[36px] px-6 rounded-full text-[9px] font-extrabold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 group cursor-pointer">
                 <Search size={14} className="group-hover:scale-110 transition-transform" /> Mulai Pencarian
               </button>
             </div>
@@ -429,75 +429,84 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
             </div>
           ) : (
             <table className="w-full text-left border-collapse min-w-[1200px]">
-              <thead className="bg-[var(--surface-container-lowest)] sticky top-0 z-20 shadow-md">
+              <thead className="bg-slate-100 dark:bg-slate-900 sticky top-0 z-20 shadow-sm border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-10 py-2.5 text-[9px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] border-b border-[var(--outline-variant)]">Pasien</th>
-                  <th className="px-8 py-2.5 text-[9px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] border-b border-[var(--outline-variant)]">Identifikasi</th>
-                  <th className="px-8 py-2.5 text-[9px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] border-b border-[var(--outline-variant)]">Klinis</th>
-                  <th className="px-8 py-2.5 text-[9px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] border-b border-[var(--outline-variant)]">Departemen & Dokter</th>
-                  <th className="px-8 py-2.5 text-[9px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] border-b border-[var(--outline-variant)]">Administrasi</th>
-                  <th className="px-10 py-2.5 text-[9px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] border-b border-[var(--outline-variant)] text-right">Aksi</th>
+                  <th className="px-10 py-3 text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Pasien</th>
+                  <th className="px-8 py-3 text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Identifikasi</th>
+                  <th className="px-8 py-3 text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Klinis</th>
+                  <th className="px-8 py-3 text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Departemen & Dokter</th>
+                  <th className="px-8 py-3 text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">Administrasi</th>
+                  <th className="px-10 py-3 text-[10px] font-black uppercase tracking-wider text-slate-800 dark:text-slate-200 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="text-sm font-bold divide-y divide-[var(--outline-variant)]">
+              <tbody className="text-sm font-bold divide-y divide-slate-100 dark:divide-slate-800/80">
                 {paginatedData.map((item) => (
                   <tr 
-                    key={item.encounterId} 
+                    key={item.encounterId || item.patientId} 
                     onClick={() => onSelect(item.patientId, item.encounterId)}
-                    className="hover:bg-[var(--surface-container-low)] transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                    className="hover:bg-[#007399]/5 dark:hover:bg-slate-900/60 transition-all duration-200 cursor-pointer group relative overflow-hidden"
                   >
-                    <td className="px-10 py-2 relative">
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--primary)] scale-y-0 group-hover:scale-y-100 transition-transform origin-center"></div>
+                    <td className="px-10 py-3.5 relative">
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#007399] scale-y-0 group-hover:scale-y-100 transition-transform origin-center"></div>
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-[var(--surface-container-high)] border border-[var(--outline-variant)] flex items-center justify-center text-[var(--on-surface-variant)] group-hover:text-[var(--primary)] group-hover:border-[var(--primary)] group-hover:bg-[var(--primary-fixed)] transition-all">
+                        <div className="w-11 h-11 rounded-full bg-[#007399]/10 border border-[#007399]/30 flex items-center justify-center text-[#007399] font-black group-hover:bg-[#007399] group-hover:text-white transition-all shadow-2xs shrink-0">
                           <User size={20} />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <div className="text-sm font-black text-[var(--on-surface)] group-hover:text-[var(--primary)] transition-colors uppercase tracking-tight">{item.nama}</div>
-                            <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest ${item.encounterType === 'IPD' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' : 'bg-blue-500/10 text-blue-500 border border-blue-500/20'}`}>
+                            <div className="text-sm font-black text-slate-900 dark:text-white group-hover:text-[#007399] transition-colors uppercase tracking-tight">{item.nama}</div>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${item.encounterType === 'IPD' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30' : 'bg-[#007399]/15 text-[#007399] dark:text-cyan-300 border border-[#007399]/30'}`}>
                               {item.encounterType === 'IPD' ? 'RI' : 'RJ'}
                             </span>
                           </div>
-                          <div className="text-[11px] text-[var(--on-surface-variant)] mt-1 flex items-center gap-2">
-                            <span className={item.kelamin === 'Perempuan' ? 'text-pink-500' : 'text-blue-500'}>{item.kelamin}</span>
-                            <span className="w-1 h-1 rounded-full bg-[var(--outline-variant)]"></span>
-                            <span>{item.umur}</span>
+                          <div className="text-[11px] text-slate-600 dark:text-slate-300 font-bold mt-0.5 flex items-center gap-2">
+                            <span className={item.kelamin === 'Perempuan' ? 'text-pink-600 font-extrabold' : 'text-[#007399] font-extrabold'}>{item.kelamin}</span>
+                            <span className="w-1 h-1 rounded-full bg-slate-400"></span>
+                            <span className="font-extrabold text-slate-800 dark:text-slate-200">{item.umur}</span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-8 py-2">
-                      <div className="text-[var(--error)] flex items-center gap-1.5 font-black font-mono text-[12px]">
-                        <Hash size={12} className="opacity-50" /> {item.noReg}
+                    <td className="px-8 py-3.5">
+                      <div className="text-rose-600 dark:text-rose-400 flex items-center gap-1.5 font-black font-mono text-[12px]">
+                        <Hash size={13} className="text-rose-500 shrink-0" />
+                        <span>{item.noReg}</span>
                       </div>
-                      <div className="text-[var(--on-surface-variant)] flex items-center gap-1.5 mt-1 font-mono text-[10px]">
-                        <Fingerprint size={12} className="opacity-50" /> {item.noRM}
-                      </div>
-                    </td>
-                    <td className="px-8 py-2">
-                      <div className="text-[var(--on-surface)] flex items-center gap-1.5 text-xs">
-                        <CalendarDays size={14} className="opacity-50 text-[var(--primary)]" />
-                        Masuk: {item.tanggalMasuk}
+                      <div className="text-slate-700 dark:text-slate-200 flex items-center gap-1.5 mt-1 font-mono text-[11px] font-bold">
+                        <Fingerprint size={13} className="text-slate-500 shrink-0" />
+                        <span>{item.noRM}</span>
                       </div>
                     </td>
-                    <td className="px-8 py-2">
-                      <div className="flex flex-col gap-1.5 items-start">
-                        <span className="inline-flex items-center gap-1.5 bg-[var(--primary-fixed)] text-[var(--on-primary-container)] border border-[var(--outline-variant)] px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider">
-                          <Building2 size={10} /> {item.departemen}
+                    <td className="px-8 py-3.5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-800 dark:text-slate-100">
+                        <CalendarDays size={15} className="text-[#007399] shrink-0" />
+                        <span>Masuk: <strong className="font-black text-slate-900 dark:text-white">{item.tanggalMasuk}</strong></span>
+                      </div>
+                    </td>
+                    <td className="px-8 py-3.5">
+                      <div className="flex flex-col gap-1 items-start">
+                        <span className="inline-flex items-center gap-1.5 bg-[#007399]/15 text-[#007399] dark:text-cyan-300 border border-[#007399]/30 px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider shadow-2xs">
+                          <Building2 size={12} className="text-[#007399] dark:text-cyan-300 shrink-0" />
+                          <span>{item.departemen}</span>
                         </span>
-                        <span className="text-[var(--on-surface-variant)] text-[9px] font-bold flex items-center gap-1.5">
-                          <Stethoscope size={10} /> {item.dokter}
+                        <span className="text-slate-700 dark:text-slate-300 text-[10px] font-extrabold flex items-center gap-1.5 mt-0.5">
+                          <Stethoscope size={12} className="text-slate-500 shrink-0" />
+                          <span>{item.dokter}</span>
                         </span>
                       </div>
                     </td>
-                    <td className="px-8 py-2">
-                      <span className="inline-flex items-center gap-1.5 bg-[var(--surface-container-high)] border border-[var(--outline-variant)] px-2.5 py-1 rounded-lg text-[9px] font-black text-[var(--on-surface)] uppercase tracking-wider">
-                        <ShieldCheck size={10} className="text-green-500" /> {item.penjamin}
+                    <td className="px-8 py-3.5">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border shadow-2xs ${
+                        item.penjamin?.includes('BPJS')
+                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30'
+                          : 'bg-[#007399]/15 text-[#007399] dark:text-cyan-300 border-[#007399]/30'
+                      }`}>
+                        <ShieldCheck size={12} className={item.penjamin?.includes('BPJS') ? 'text-emerald-600' : 'text-[#007399]'} />
+                        <span>{item.penjamin}</span>
                       </span>
                     </td>
-                    <td className="px-10 py-2 text-right">
-                      <div className="inline-flex w-8 h-8 rounded-full bg-[var(--surface-container-high)] items-center justify-center text-[var(--on-surface-variant)] group-hover:bg-[var(--primary)] group-hover:text-white group-hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.5)] transition-all">
+                    <td className="px-10 py-3.5 text-right">
+                      <div className="inline-flex w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-[#007399] group-hover:text-white group-hover:shadow-md transition-all">
                         <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
                       </div>
                     </td>
@@ -540,7 +549,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
           </div>
           <button 
             onClick={onClose}
-            className="bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--outline-variant)] text-[var(--on-surface)] px-10 py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-sm"
+            className="bg-[var(--surface-container-high)] border border-[var(--outline-variant)] hover:bg-[var(--outline-variant)] text-[var(--on-surface)] px-10 py-3 rounded-full text-xs font-black uppercase tracking-wider transition-all hover:scale-105 active:scale-95 shadow-sm cursor-pointer"
           >
             Tutup Windows
           </button>

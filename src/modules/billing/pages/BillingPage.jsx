@@ -13,6 +13,7 @@ import { formatPatientName } from '../../../utils/displayUtils.js';
 import EmptyState from '../../../components/ui/EmptyState.jsx';
 import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
 import PaymentModal from '../components/PaymentModal.jsx';
+import AdvancedPatientSearchBar from '../../emr/components/AdvancedPatientSearchBar.jsx';
 import { toast } from 'react-hot-toast';
 
 const getStatusBadgeConfig = (t) => ({
@@ -130,6 +131,11 @@ export default function BillingPage() {
             })}
           </p>
         </div>
+      </div>
+
+      {/* Advanced Patient Search Bar Component */}
+      <div className="mb-6 z-20 relative">
+        <AdvancedPatientSearchBar />
       </div>
 
       <div className={`grid grid-cols-1 ${selectedBill ? 'lg:grid-cols-12' : ''} gap-6`}>

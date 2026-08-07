@@ -60,8 +60,10 @@ import Teleconsultation from './modules/telemedicine/pages/TeleconsultationPage'
 import VirtualWaitingRoom from './modules/telemedicine/components/VirtualWaitingRoom';
 import SignaturePadEndpoint from './modules/emr/pages/SignaturePadEndpoint';
 import AppointmentPage from './modules/appointment/pages/AppointmentPage';
-import AppointmentReviewPage from './modules/appointment_review/pages/AppointmentReviewPage';
+import UiDesignReviewPage from './modules/appointment_review/pages/UiDesignReviewPage';
+import ModularDesignSystemReviewPage from './modules/admin/pages/ModularDesignSystemReviewPage';
 import VerificationEndpoint from './modules/inventory/pages/VerificationEndpoint';
+import SystemPerformanceSuite from './modules/diagnostics/pages/SystemPerformanceSuite';
 import { useAuth } from './contexts/useAuth';
 import { Toaster } from 'react-hot-toast';
 
@@ -106,7 +108,8 @@ const router = createBrowserRouter([
           },
           { path: "/patients",   element: <Wrap><Patients /></Wrap> },
           { path: "/appointments", element: <Wrap><AppointmentPage /></Wrap> },
-          { path: "/review-design-ui-modul", element: <Wrap><AppointmentReviewPage /></Wrap> },
+          { path: "/review-design-ui-modul", element: <Wrap><UiDesignReviewPage /></Wrap> },
+          { path: "/modular-design-review", element: <Wrap><ModularDesignSystemReviewPage /></Wrap> },
           { path: "/encounters", element: <Wrap><Encounters /></Wrap> },
           { path: "/triage",     element: <Wrap><Triage /></Wrap> },
           { path: "/patient-care", element: <Wrap><PatientCarePage /></Wrap> },
@@ -140,6 +143,7 @@ const router = createBrowserRouter([
               { path: "/admin/master-hub", element: <Wrap><MasterDataHub /></Wrap> },
               { path: "/admin/dev-tools", element: <Wrap><DevTools /></Wrap> },
               { path: "/health", element: <Wrap><HealthCheck /></Wrap> },
+              { path: "/performance-diagnostics", element: <Wrap><SystemPerformanceSuite /></Wrap> },
               { path: "/lab", element: <Wrap><LabPage /></Wrap> },
               { path: "/wayfinding-admin", element: <WayfindingAdmin /> }
             ]

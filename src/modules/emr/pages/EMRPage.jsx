@@ -447,15 +447,15 @@ export default function EMRPage() {
             <div className="flex-row gap-4 px-2 mb-2">
                <button 
                  onClick={() => setActiveSidebarTab('TIMELINE')}
-                 className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all 
-                   ${activeSidebarTab === 'TIMELINE' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant opacity-40'}`}
+                 className={`text-[10px] font-extrabold uppercase tracking-widest pb-2 border-b-2 transition-all cursor-pointer 
+                   ${activeSidebarTab === 'TIMELINE' ? 'border-[#007399] text-[#007399] dark:text-cyan-400' : 'border-transparent text-on-surface-variant opacity-40'}`}
                >
                  {t('emr_v2.history')}
                </button>
                <button 
                  onClick={() => setActiveSidebarTab('DIAGNOSTICS')}
-                 className={`text-[10px] font-black uppercase tracking-widest pb-2 border-b-2 transition-all 
-                   ${activeSidebarTab === 'DIAGNOSTICS' ? 'border-secondary text-secondary' : 'border-transparent text-on-surface-variant opacity-40'}`}
+                 className={`text-[10px] font-extrabold uppercase tracking-widest pb-2 border-b-2 transition-all cursor-pointer 
+                   ${activeSidebarTab === 'DIAGNOSTICS' ? 'border-[#007399] text-[#007399] dark:text-cyan-400' : 'border-transparent text-on-surface-variant opacity-40'}`}
                >
                  {t('emr_v2.diagnostics')}
                </button>

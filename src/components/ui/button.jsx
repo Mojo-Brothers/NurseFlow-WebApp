@@ -4,12 +4,12 @@ import { cva } from "class-variance-authority"
 import { cn } from "../../lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-xs font-black uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-100 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-95",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-xs font-black uppercase tracking-widest transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#007399]/20 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 active:scale-95",
   {
     variants: {
       variant: {
         default:
-          "bg-blue-600 text-white shadow-xl shadow-blue-900/20 hover:bg-blue-700",
+          "bg-[#007399] text-white shadow-xl shadow-[#007399]/25 hover:bg-[#005e7e]",
         destructive:
           "bg-red-500 text-white shadow-xl shadow-red-900/20 hover:bg-red-600",
         outline:
@@ -17,7 +17,7 @@ const buttonVariants = cva(
         secondary:
           "bg-slate-100 text-slate-900 hover:bg-slate-200",
         ghost: "hover:bg-slate-100 text-slate-600",
-        link: "text-blue-600 underline-offset-4 hover:underline",
+        link: "text-[#007399] underline-offset-4 hover:underline",
         jci: "bg-emerald-600 text-white shadow-xl shadow-emerald-900/20 hover:bg-emerald-700",
       },
       size: {
