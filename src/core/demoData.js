@@ -179,13 +179,6 @@ function generate100Patients() {
   return { patients, encounters };
 }
 
-const generatedData = generate100Patients();
-
-export const DEMO_PATIENTS = generatedData.patients;
-export const DEMO_ENCOUNTERS = generatedData.encounters;
-export const DEMO_RECORDS = generatedData.encounters.map(e => ({
-  id: e.id,
-  patientId: e.patient_id,
-  patient_id: e.patient_id,
-  ...e
-}));
+export const DEMO_PATIENTS = [];
+export const DEMO_ENCOUNTERS = [];
+export const DEMO_RECORDS = [];

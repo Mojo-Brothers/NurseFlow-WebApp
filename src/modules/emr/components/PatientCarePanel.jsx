@@ -13,7 +13,10 @@ import DischargeModalClassic from '../../appointment_review/components/Discharge
 import BmiModalSlider from '../../appointment_review/components/BmiModalSlider.jsx';
 import { DEMO_PATIENTS } from '../../../core/demoData.js';
 
+import { useNavigate } from 'react-router-dom';
+
 export default function PatientCarePanel({ patient, encounter, onDischargeSuccess }) {
+  const navigate = useNavigate();
   // ─── 1. Care Navigation State ───
   const [careScope, setCareScope] = useState('rawat_jalan'); // rawat_jalan | rawat_inap | pelayanan
   const [activeDeptTab, setActiveDeptTab] = useState('perawatan'); // perawatan | farmasi | lab | radiologi | ugd
@@ -26,6 +29,31 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
   const [isBbTbModalOpen, setIsBbTbModalOpen] = useState(false);
   const [isProcessingDischarge, setIsProcessingDischarge] = useState(false);
   const [dischargeStatus, setDischargeStatus] = useState(encounter?.status || 'PROSES');
+
+  // If no patient is selected or registered (0 patients in system)
+  if (!patient) {
+    return (
+      <div className="w-full p-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl bg-slate-50/50 dark:bg-slate-950/30 space-y-4 my-6">
+        <div className="w-16 h-16 rounded-full bg-cyan-500/10 text-[#007399] dark:text-cyan-400 flex items-center justify-center mx-auto font-black">
+          <Activity size={32} />
+        </div>
+        <h3 className="text-lg font-black text-slate-800 dark:text-slate-200">
+          Belum Ada Pasien Yang Dipilih (0 Pasien Aktif)
+        </h3>
+        <p className="text-xs font-semibold text-slate-500 max-w-md mx-auto">
+          Pasien yang Anda maksud telah dihapus dari sistem. Silakan pilih pasien lain atau gunakan <strong>Smart Multi-Inject Generator</strong> untuk meng-generate data master pasien baru.
+        </p>
+        <div className="pt-2 flex items-center justify-center gap-3">
+          <button
+            onClick={() => navigate('/admin/dummy-data')}
+            className="bg-[#007399] hover:bg-[#005e7e] text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center gap-2"
+          >
+            <Zap size={16} className="text-amber-400 fill-amber-400" /> Buka Smart Multi-Inject Generator
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // ─── 3. Clinical Observation State (BB/TB/BMI) ───
   const [clinicalObs, setClinicalObs] = useState({

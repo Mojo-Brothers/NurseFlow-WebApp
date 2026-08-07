@@ -7,19 +7,19 @@ import { DEMO_PATIENTS } from '../../../core/demoData.js';
 export default function PatientDetailDrawerModal({ isOpen, onClose, patient }) {
   const [copiedField, setCopiedField] = useState(null);
 
-  if (!isOpen) return null;
+  if (!isOpen || !patient) return null;
 
-  const patientName = patient?.name || patient?.nama || DEMO_PATIENTS[0]?.name || 'Ny. Siti Nurhaliza, S.Pd';
-  const patientMrn = patient?.mrn || patient?.medical_record_no || '009944';
-  const patientNik = patient?.nik || patient?.identity_number || '3273016508850001';
-  const patientDob = patient?.dob || patient?.birth_date || '1988-08-25';
+  const patientName = patient?.name || patient?.nama || 'Pasien Tanpa Nama';
+  const patientMrn = patient?.mrn || patient?.medical_record_no || '-';
+  const patientNik = patient?.nik || patient?.identity_number || '-';
+  const patientDob = patient?.dob || patient?.birth_date || '-';
   const patientGender = patient?.gender === 'F' || patient?.gender === 'Perempuan' ? 'Perempuan' : 'Laki-laki';
-  const patientPhone = patient?.phone || patient?.mobile_phone || '08129695149';
-  const patientEmail = patient?.email || 'dewi.sartika@example.com';
-  const patientAddress = patient?.address || 'KP RAWADAS RT 010/003, Kel. Pondok Kopi, Kec. Duren Sawit';
-  const bloodType = patient?.blood_type || 'O+';
-  const maritalStatus = patient?.marital_status || 'Menikah';
-  const religion = patient?.religion || 'Islam';
+  const patientPhone = patient?.phone || patient?.mobile_phone || '-';
+  const patientEmail = patient?.email || '-';
+  const patientAddress = patient?.address || '-';
+  const bloodType = patient?.blood_type || '-';
+  const maritalStatus = patient?.marital_status || '-';
+  const religion = patient?.religion || '-';
 
   const handleCopy = (text, fieldName) => {
     if (!text) return;

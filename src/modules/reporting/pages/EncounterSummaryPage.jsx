@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFullEncounterContext } from '../services/reporting.service.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
+import OceanicTealLoadingSpinner from '../../../components/ui/OceanicTealLoadingSpinner.jsx';
 
 export default function EncounterSummaryPage() {
   const { encounterId } = useParams();
@@ -24,7 +25,13 @@ export default function EncounterSummaryPage() {
     fetch();
   }, [encounterId]);
 
-  if (isLoading) return <div className="p-20 text-center opacity-40 font-black uppercase">Compiling Medical Summary...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8 bg-slate-950/20">
+        <OceanicTealLoadingSpinner variant="v1" label="Menyusun Ringkasan Rekam Medis Pasien (Encounter Summary)..." />
+      </div>
+    );
+  }
   if (!data) return <div className="p-20 text-center text-error font-black uppercase">Summary not found.</div>;
 
   const { encounter, patient, triageLogs, soapRecords, billing } = data;

@@ -1,11 +1,38 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Users, UserPlus, Search, ShieldCheck, KeyRound, Lock, 
-  Award, FileText, CheckCircle2, AlertCircle, Edit, Trash2, X, Save, RefreshCw, Eye, EyeOff
+  Award, FileText, CheckCircle2, AlertCircle, Edit, Trash2, X, Save, RefreshCw, Eye, EyeOff,
+  Fingerprint, Briefcase, Building2, BookOpen, Clock, 
+  CheckSquare, Wallet, BarChart3, GraduationCap, HeartPulse, 
+  FolderCheck, Key, Laptop, ShieldAlert, FileSignature, History, Cpu, Copy
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getStaffList, saveStaffMember } from '../services/staffManagement.service';
 import RbacMatrixTable from '../components/RbacMatrixTable';
+import StaffPortfolioDetailModal from '../components/StaffPortfolioDetailModal.jsx';
+
+const STAFF_PORTFOLIO_NAV_ITEMS = [
+  { id: 'identitas', label: '1. Demografi', icon: Fingerprint },
+  { id: 'kepegawaian', label: '2. Kepegawaian', icon: Briefcase },
+  { id: 'organisasi', label: '3. Organisasi', icon: Building2 },
+  { id: 'lisensi', label: '4. Lisensi STR/SIP', icon: Award },
+  { id: 'pendidikan', label: '5. Pendidikan', icon: GraduationCap },
+  { id: 'pengalaman', label: '6. Pengalaman', icon: BookOpen },
+  { id: 'kredensial', label: '7. JCI Credence', icon: ShieldCheck },
+  { id: 'jadwal', label: '8. Shift & Roster', icon: Clock },
+  { id: 'absensi', label: '9. Absensi & Cuti', icon: CheckSquare },
+  { id: 'payroll', label: '10. Payroll & Bank', icon: Wallet },
+  { id: 'kpi', label: '11. KPI & Evaluasi', icon: BarChart3 },
+  { id: 'cme', label: '12. CME SKP', icon: BookOpen },
+  { id: 'kesehatan', label: '13. Health & MCU', icon: HeartPulse },
+  { id: 'dokumen', label: '14. Vault File', icon: FolderCheck },
+  { id: 'akses', label: '15. RBAC & MFA', icon: Key },
+  { id: 'aset', label: '16. Inventaris Aset', icon: Laptop },
+  { id: 'disiplin', label: '17. Reward & SP', icon: ShieldAlert },
+  { id: 'esign', label: '18. E-Signature BSRE', icon: FileSignature },
+  { id: 'audit', label: '19. Audit Trail', icon: History },
+  { id: 'integrasi', label: '20. SATUSEHAT FHIR', icon: Cpu }
+];
 
 export default function StaffManagementPage() {
   const [staffList, setStaffList] = useState(() => getStaffList());
@@ -13,6 +40,10 @@ export default function StaffManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
   const [showPin, setShowPin] = useState(false);
+
+  // 20-Category Portfolio Inspection Modal State
+  const [selectedStaffPortfolio, setSelectedStaffPortfolio] = useState(null);
+  const [staffPortfolioActiveCategory, setStaffPortfolioActiveCategory] = useState('identitas');
 
   // Modal States
   const [isStaffModalOpen, setIsStaffModalOpen] = useState(false);
@@ -297,13 +328,23 @@ export default function StaffManagementPage() {
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleOpenEditModal(stf)}
-                      className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-[#007399] hover:text-white text-slate-600 dark:text-slate-300 transition-all cursor-pointer"
-                      title="Edit Staf"
-                    >
-                      <Edit size={14} />
-                    </button>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => setSelectedStaffPortfolio(stf)}
+                        className="px-2.5 py-1 rounded-full bg-emerald-500/10 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:text-emerald-400 font-bold text-[10px] transition-all cursor-pointer flex items-center gap-1 border border-emerald-500/20"
+                        title="Lihat atau Edit Detail Portfolio Karyawan"
+                      >
+                        <Eye size={12} />
+                        <span>Lihat atau Edit</span>
+                      </button>
+                      <button
+                        onClick={() => handleOpenEditModal(stf)}
+                        className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-[#007399] hover:text-white text-slate-600 dark:text-slate-300 transition-all cursor-pointer"
+                        title="Edit Staf"
+                      >
+                        <Edit size={14} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-0.5">
@@ -312,15 +353,27 @@ export default function StaffManagementPage() {
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                      <span className="text-[10px] font-semibold text-slate-500">STR Expiry:</span>
-                      <span className="text-[11px] font-mono text-slate-700 dark:text-slate-200 font-bold">{stf.strExpiry || '-'}</span>
-                    </div>
+                    {['ADMIN_OFFICER', 'LOGISTICS_ADMIN', 'BILLING_OFFICER', 'SUPER_ADMIN'].includes(stf.role) ? (
+                      <div className="p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-900/20 border border-amber-500/20 text-amber-700 dark:text-amber-300">
+                        <div className="text-[10px] font-black uppercase tracking-wider flex items-center justify-between">
+                          <span>Legalitas: Non-Medis</span>
+                          <span className="px-1.5 py-0.2 bg-amber-500/20 rounded text-[9px]">Bebas STR</span>
+                        </div>
+                        <div className="text-[11px] font-mono font-bold mt-1">SK Kontrak: SK-RS/2026/{stf.role}</div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                          <span className="text-[10px] font-semibold text-slate-500">STR Expiry:</span>
+                          <span className="text-[11px] font-mono text-slate-700 dark:text-slate-200 font-bold">{stf.strExpiry || '-'}</span>
+                        </div>
 
-                    <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                      <span className="text-[10px] font-semibold text-slate-500">SIP Expiry:</span>
-                      <span className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200">{stf.sipExpiry || '-'}</span>
-                    </div>
+                        <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                          <span className="text-[10px] font-semibold text-slate-500">SIP Expiry:</span>
+                          <span className="text-[11px] font-mono font-bold text-slate-700 dark:text-slate-200">{stf.sipExpiry || '-'}</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="flex justify-between items-center text-[10px] pt-2 border-t border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400">
@@ -343,7 +396,7 @@ export default function StaffManagementPage() {
                     <tr className="bg-slate-50 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800 text-[10px] uppercase font-bold tracking-wider">
                       <th className="p-3.5 px-4">Informasi Staf / NIP</th>
                       <th className="p-3.5 px-4">Role & Departemen</th>
-                      <th className="p-3.5 px-4">Legal Credentialing (STR / SIP)</th>
+                      <th className="p-3.5 px-4">Legal Credentialing (STR / SIP / SK)</th>
                       <th className="p-3.5 px-4 text-center">PIN Security</th>
                       <th className="p-3.5 px-4 text-center">Status</th>
                       <th className="p-3.5 px-4 text-right">Aksi</th>
@@ -374,10 +427,19 @@ export default function StaffManagementPage() {
                         </td>
 
                         <td className="py-3 px-4">
-                          <div className="space-y-0.5 text-[11px]">
-                            <div><strong className="text-slate-700 dark:text-slate-300">STR:</strong> <span className="font-mono">{stf.strNumber || '-'}</span> (Exp: {stf.strExpiry || '-'})</div>
-                            <div><strong className="text-slate-700 dark:text-slate-300">SIP:</strong> <span className="font-mono">{stf.sipNumber || '-'}</span> (Exp: {stf.sipExpiry || '-'})</div>
-                          </div>
+                          {['ADMIN_OFFICER', 'LOGISTICS_ADMIN', 'BILLING_OFFICER', 'SUPER_ADMIN'].includes(stf.role) ? (
+                            <div className="text-[11px]">
+                              <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold font-mono text-[10px] inline-block mb-0.5">
+                                NON-KLINIS (BEBAS STR)
+                              </span>
+                              <div className="text-[10px] text-slate-400 font-mono">SK RS: SK-RS/2026</div>
+                            </div>
+                          ) : (
+                            <div className="space-y-0.5 text-[11px]">
+                              <div><strong className="text-slate-700 dark:text-slate-300">STR:</strong> <span className="font-mono">{stf.strNumber || '-'}</span> (Exp: {stf.strExpiry || '-'})</div>
+                              <div><strong className="text-slate-700 dark:text-slate-300">SIP:</strong> <span className="font-mono">{stf.sipNumber || '-'}</span> (Exp: {stf.sipExpiry || '-'})</div>
+                            </div>
+                          )}
                         </td>
 
                         <td className="py-3 px-4 text-center">
@@ -394,13 +456,23 @@ export default function StaffManagementPage() {
                         </td>
 
                         <td className="py-3 px-4 text-right">
-                          <button
-                            onClick={() => handleOpenEditModal(stf)}
-                            className="px-3 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-[#007399] hover:text-white rounded-full text-slate-600 dark:text-slate-300 text-xs font-bold transition-all flex items-center gap-1 ml-auto cursor-pointer"
-                          >
-                            <Edit size={12} />
-                            <span>Edit</span>
-                          </button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setSelectedStaffPortfolio(stf)}
+                              className="px-3 py-1 bg-emerald-500/10 hover:bg-emerald-600 hover:text-white rounded-full text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer border border-emerald-500/20"
+                              title="Lihat atau Edit Detail Portfolio Karyawan"
+                            >
+                              <Eye size={12} />
+                              <span>Lihat atau Edit</span>
+                            </button>
+                            <button
+                              onClick={() => handleOpenEditModal(stf)}
+                              className="px-3 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-[#007399] hover:text-white rounded-full text-slate-600 dark:text-slate-300 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                            >
+                              <Edit size={12} />
+                              <span>Edit</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -568,6 +640,12 @@ export default function StaffManagementPage() {
           </div>
         </div>
       )}
+
+      {/* ─── ENTERPRISE STAFF DUMMY DATA PORTFOLIO MODAL (20 CATEGORIES JCI SQE & SATUSEHAT) ─── */}
+      <StaffPortfolioDetailModal
+        staff={selectedStaffPortfolio}
+        onClose={() => setSelectedStaffPortfolio(null)}
+      />
 
     </div>
   );

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Search, RotateCcw, Fingerprint, CalendarDays, Activity, Building2, User, ChevronRight, Hash, ShieldCheck, Stethoscope } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { X, Search, RotateCcw, Fingerprint, CalendarDays, Activity, Building2, User, ChevronRight, Hash, ShieldCheck, Stethoscope, Copy, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
@@ -20,6 +22,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
   });
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [copiedId, setCopiedId] = useState(null);
   const pageSize = 10;
 
   useEffect(() => {
@@ -134,19 +137,55 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
     return filteredData.slice(start, start + pageSize);
   }, [filteredData, currentPage, pageSize]);
 
+  const handleRowClick = (item, e) => {
+    // Prevents modal from closing when user is highlighting/selecting text (e.g. copying name/MRN)
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) {
+      return;
+    }
+    onSelect(item.patientId, item.encounterId);
+  };
+
+  const handleCopyText = (text, idKey, label, e) => {
+    if (e) e.stopPropagation();
+    if (!text) return;
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      console.warn('Clipboard write fallback:', err);
+    }
+
+    setCopiedId(idKey);
+    toast.dismiss('copy-toast');
+    toast.success(`${label} (${text}) disalin ke clipboard!`, { id: 'copy-toast', icon: '📋' });
+    setTimeout(() => setCopiedId(null), 1500);
+  };
+
   if (!isOpen) return null;
 
-   return (
-    <div className="fixed inset-0 z-[1000] flex animate-in fade-in duration-300">
-      {/* Super Modern Backdrop - Lighter and respecting persistent sidebar */}
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-hidden animate-in fade-in duration-300">
+      {/* Super Modern Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-950/60 backdrop-blur-md transition-all cursor-zoom-out" 
+        className="absolute inset-0 bg-slate-950/70 backdrop-blur-md transition-all cursor-zoom-out" 
         onClick={onClose}
       />
       
-      {/* Content Area Centered Container (Respects Persistent Sidebar) */}
-      <div className="flex-1 flex items-center justify-center p-4 md:pl-72 md:pr-8 py-6 relative z-10 pointer-events-none">
-        <div className="bg-white dark:bg-slate-950 rounded-[2.5rem] w-full max-w-[1350px] h-[92vh] flex flex-col shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 pointer-events-auto">
+      {/* Perfectly Centered Modal Window */}
+      <div className="bg-white dark:bg-slate-950 rounded-[2rem] sm:rounded-[2.5rem] w-full max-w-[1300px] h-[85vh] max-h-[800px] flex flex-col min-h-0 shadow-[0_30px_90px_rgba(0,0,0,0.6)] border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-300 relative z-10 pointer-events-auto">
         
         {/* Modal Header */}
         <div className="relative flex justify-between items-center px-8 py-3 border-b border-[var(--outline-variant)] bg-gradient-to-r from-[var(--surface-container)] to-[var(--surface-container-low)]">
@@ -405,7 +444,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
         </div>
 
         {/* Modal Body - Table */}
-        <div className="flex-1 overflow-auto bg-[var(--surface-container-lowest)] relative custom-scrollbar">
+        <div className="flex-1 min-h-0 overflow-auto bg-[var(--surface-container-lowest)] relative custom-scrollbar">
           {isLoading ? (
             <div className="flex flex-col justify-center items-center h-64 gap-4">
               <div className="w-12 h-12 rounded-full border-4 border-white/10 border-t-[var(--primary)] animate-spin"></div>
@@ -443,7 +482,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
                 {paginatedData.map((item) => (
                   <tr 
                     key={item.encounterId || item.patientId} 
-                    onClick={() => onSelect(item.patientId, item.encounterId)}
+                    onClick={(e) => handleRowClick(item, e)}
                     className="hover:bg-[#007399]/5 dark:hover:bg-slate-900/60 transition-all duration-200 cursor-pointer group relative overflow-hidden"
                   >
                     <td className="px-10 py-3.5 relative">
@@ -468,13 +507,46 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
                       </div>
                     </td>
                     <td className="px-8 py-3.5">
-                      <div className="text-rose-600 dark:text-rose-400 flex items-center gap-1.5 font-black font-mono text-[12px]">
-                        <Hash size={13} className="text-rose-500 shrink-0" />
-                        <span>{item.noReg}</span>
+                      <div className="flex items-center gap-2">
+                        <div className="text-rose-600 dark:text-rose-400 flex items-center gap-1.5 font-black font-mono text-[12px]">
+                          <Hash size={13} className="text-rose-500 shrink-0" />
+                          <span>{item.noReg}</span>
+                        </div>
+                        {item.noReg && item.noReg !== '-' && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyText(item.noReg, `reg-${item.noReg}`, 'No. Reg', e)}
+                            className="p-1 rounded bg-slate-100 dark:bg-slate-800 hover:bg-[#007399] hover:text-white text-slate-400 hover:text-white transition-colors border border-slate-200 dark:border-slate-700 cursor-pointer"
+                            title="Salin No. Registrasi"
+                          >
+                            {copiedId === `reg-${item.noReg}` ? (
+                              <Check size={10} className="text-emerald-500 font-bold" />
+                            ) : (
+                              <Copy size={10} />
+                            )}
+                          </button>
+                        )}
                       </div>
-                      <div className="text-slate-700 dark:text-slate-200 flex items-center gap-1.5 mt-1 font-mono text-[11px] font-bold">
-                        <Fingerprint size={13} className="text-slate-500 shrink-0" />
-                        <span>{item.noRM}</span>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="text-slate-700 dark:text-slate-200 flex items-center gap-1.5 font-mono text-[11px] font-bold">
+                          <Fingerprint size={13} className="text-slate-500 shrink-0" />
+                          <span>{item.noRM}</span>
+                        </div>
+                        {item.noRM && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleCopyText(item.noRM, `rm-${item.noRM}`, 'No. RM', e)}
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 hover:bg-[#007399] hover:text-white text-[9px] font-mono text-slate-600 dark:text-slate-300 hover:text-white transition-all border border-slate-200 dark:border-slate-700 cursor-pointer group/copy"
+                            title="Salin No. RM (Atau tekan Ctrl+C)"
+                          >
+                            {copiedId === `rm-${item.noRM}` ? (
+                              <Check size={10} className="text-emerald-500 font-bold" />
+                            ) : (
+                              <Copy size={10} className="text-slate-400 group-hover/copy:text-white" />
+                            )}
+                            <span>Copy</span>
+                          </button>
+                        )}
                       </div>
                     </td>
                     <td className="px-8 py-3.5">
@@ -554,8 +626,8 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
             Tutup Windows
           </button>
         </div>
-         </div>
-       </div>
-     </div>
-   );
+      </div>
+    </div>,
+    document.body
+  );
 }

@@ -9,6 +9,7 @@ import { useStressMonitor } from '../core/hooks/useStressMonitor.js';
 import { usePatientStore } from '../modules/patient/patient.store.js';
 import { useEncounterStore } from '../modules/encounter/encounter.store.js';
 import { useTriageStore } from '../modules/triage/triage.store.js';
+import { usePatientClipboardShortcuts } from '../hooks/usePatientClipboardShortcuts.js';
 
 const NAV_SCHEMA = [
   { label: 'nav.clinical', items: [
@@ -47,6 +48,7 @@ const NAV_SCHEMA = [
   ]},
   { label: 'nav.administration', items: [
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
+    { name: 'Manajemen Data Dummy HIS', path: '/admin/dummy-data', icon: 'tune', roles: null },
     { name: 'SDM & Hak Akses (RBAC)', path: '/admin/staff-access', icon: 'badge', roles: ['ADMIN', 'SUPERVISOR'] },
     { name: 'nav.executive',    path: '/executive',    icon: 'monitoring',        roles: ['ADMIN', 'SUPERVISOR'] },
     { name: 'System Performance Suite', path: '/performance-diagnostics', icon: 'speed', roles: null },
@@ -66,6 +68,9 @@ const MainLayout = () => {
   const { openEncounter, setLiveContext } = useEncounterStore();
   const { setOperationalMode } = useTriageStore();
   const [isCreatingEmergency, setIsCreatingEmergency] = useState(false);
+
+  // Global Keyboard Shortcuts (Ctrl+A scope protection, Ctrl+C MRN copy, Ctrl+V MRN paste)
+  usePatientClipboardShortcuts();
   
   const ADMIN_WHITELIST = ['obbyvior@gmail.com', 'ivoryperfumecoorp@gmail.com', 'admin@nurseflow.id'];
   const effectiveRole = (currentUser?.email && ADMIN_WHITELIST.includes(currentUser.email.toLowerCase())) ? 'ADMIN' : (role || 'DOCTOR');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   Search, QrCode, Fingerprint, Filter, ShieldCheck, User, 
   Sparkles, X, ChevronDown, Activity, AlertTriangle, Building2, 
@@ -7,10 +7,14 @@ import {
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
+import { DEMO_PATIENTS } from '../../../core/demoData.js';
 import PatientSearchModal from './PatientSearchModal.jsx';
 import toast from 'react-hot-toast';
+import usePatientClipboardShortcuts from '../../../hooks/usePatientClipboardShortcuts.js';
 
-export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatientId }) {
+import PillSearchBar from '../../../components/ui/PillSearchBar.jsx';
+
+export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatientId, compact = false }) {
   const { patients, fetchPatients, selectPatient } = usePatientStore();
   const { activeEncounters, fetchActiveEncounters } = useEncounterStore();
 
@@ -19,6 +23,7 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
   const [isOpenDropdown, setIsOpenDropdown] = useState(false);
   const [isFullModalOpen, setIsFullModalOpen] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const containerRef = useRef(null);
 
@@ -26,6 +31,20 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
     fetchPatients();
     fetchActiveEncounters();
   }, [fetchPatients, fetchActiveEncounters]);
+
+  // Global Ctrl+C and Ctrl+V Shortcut Handler
+  const handlePasteShortcut = useCallback((text) => {
+    const val = text || '';
+    setSearchQuery(val);
+    if (val.trim().length > 0) {
+      setIsOpenDropdown(true);
+    } else {
+      setIsOpenDropdown(false);
+    }
+    setSelectedIndex(0);
+  }, []);
+
+  usePatientClipboardShortcuts({ onPasteMrn: handlePasteShortcut });
 
   // Click outside listener to close autocomplete dropdown
   useEffect(() => {
@@ -38,9 +57,11 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter patients based on query and active chip
+  // Filter patients based on query and active chip (with DEMO_PATIENTS fallback & NRM paste cleaning)
   const filteredPatients = useMemo(() => {
-    return patients.filter(p => {
+    const list = (patients && patients.length > 0) ? patients : DEMO_PATIENTS;
+    
+    return list.filter(p => {
       // Exclude merged
       if (p.status === 'MERGED') return false;
 
@@ -51,11 +72,20 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
 
       if (!searchQuery.trim()) return true;
 
-      const q = searchQuery.toLowerCase();
-      const nameMatch = p.name?.toLowerCase().includes(q);
-      const mrnMatch = p.mrn?.toLowerCase().includes(q);
-      const nikMatch = p.nik?.includes(q);
-      const cardMatch = p.insurance?.no?.includes(q) || p.insurance?.card_number?.includes(q);
+      const raw = searchQuery.trim().toLowerCase();
+      // Clean potential prefixes from pasted NRM text (e.g. "MRN: 100001", "RM-100001", "No. RM: 100001", "#100001")
+      const cleanQ = raw.replace(/^(mrn[:\s-]*|rm[:\s-]*|no\.?\s*rm[:\s-]*|#\s*)/i, '').trim();
+      const digitsOnly = cleanQ.replace(/\D/g, '');
+
+      const pName = (p.name || '').toLowerCase();
+      const pMrn = String(p.mrn || '').toLowerCase();
+      const pNik = String(p.nik || '');
+      const pCard = String(p.insurance?.no || p.insurance?.card_number || '');
+
+      const nameMatch = pName.includes(raw) || pName.includes(cleanQ);
+      const mrnMatch = pMrn.includes(raw) || pMrn.includes(cleanQ) || (digitsOnly.length >= 3 && pMrn.includes(digitsOnly));
+      const nikMatch = pNik.includes(raw) || (digitsOnly.length >= 4 && pNik.includes(digitsOnly));
+      const cardMatch = pCard.includes(raw) || (digitsOnly.length >= 4 && pCard.includes(digitsOnly));
 
       return nameMatch || mrnMatch || nikMatch || cardMatch;
     });
@@ -66,14 +96,14 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
     if (onSelectPatient) onSelectPatient(patient);
     setSearchQuery('');
     setIsOpenDropdown(false);
-    toast.success(`Konteks pasien diganti ke: ${patient.name}`);
+    toast.success(`Konteks pasien diganti ke: ${patient.name}`, { icon: '🧑‍⚕️' });
   };
 
   const handleSimulateScan = () => {
     setIsScanModalOpen(true);
     setTimeout(() => {
-      // Pick random active patient
-      const target = patients.find(p => p.status !== 'MERGED') || patients[0];
+      const list = (patients && patients.length > 0) ? patients : DEMO_PATIENTS;
+      const target = list.find(p => p.status !== 'MERGED') || list[0];
       if (target) {
         setIsScanModalOpen(false);
         handleSelect(target);
@@ -82,100 +112,127 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
     }, 1500);
   };
 
-  const activePatient = patients.find(p => p.id === currentPatientId) || patients[0] || null;
+  const renderSearchInputAndDropdown = () => (
+    <div className="relative w-full">
+      <PillSearchBar
+        value={searchQuery}
+        onChange={(val) => {
+          setSearchQuery(val);
+          if (val && val.trim().length > 0) {
+            setIsOpenDropdown(true);
+          } else {
+            setIsOpenDropdown(false);
+          }
+        }}
+        onFocus={() => {
+          if (searchQuery && searchQuery.trim().length > 0) {
+            setIsOpenDropdown(true);
+          }
+        }}
+        onClick={() => {
+          if (searchQuery && searchQuery.trim().length > 0) {
+            setIsOpenDropdown(true);
+          }
+        }}
+        onSearch={() => {
+          if (searchQuery && searchQuery.trim().length > 0) {
+            setIsOpenDropdown(true);
+          }
+        }}
+        onAdvancedClick={() => {
+          setIsOpenDropdown(false);
+          setIsFullModalOpen(true);
+        }}
+        placeholder="Cari pasien canggih (Nama, No. RM, NIK, No. Kartu BPJS)..."
+        advancedLabel="ADVANCED"
+        variant="primary"
+      />
+
+      {/* AUTO-COMPLETE DROPDOWN RESULTS (Only shown when searchQuery is non-empty) */}
+      {isOpenDropdown && !isFullModalOpen && searchQuery.trim().length > 0 && (
+        <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-950 rounded-2xl border border-slate-300 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden z-[999] max-h-[360px] overflow-y-auto animate-scale-in">
+          <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
+            <span>Daftar Antrean & Hasil Pencarian Pasien ({filteredPatients.length})</span>
+            <button 
+              onClick={(e) => { e.stopPropagation(); setIsOpenDropdown(false); }}
+              className="hover:text-rose-500 font-bold text-xs"
+            >
+              Tutup ✕
+            </button>
+          </div>
+
+          {filteredPatients.length === 0 ? (
+            <div className="py-8 text-center text-xs font-bold text-slate-400">
+              Tidak ditemukan pasien dengan kueri "{searchQuery}".
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
+              {filteredPatients.slice(0, 8).map(patient => (
+                <div
+                  key={patient.id}
+                  onClick={() => handleSelect(patient)}
+                  className={`p-3.5 hover:bg-primary/10 cursor-pointer transition-all flex items-center justify-between gap-3 ${
+                    patient.id === currentPatientId ? 'bg-primary/5 border-l-4 border-primary' : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-primary flex items-center justify-center font-black text-xs border border-slate-200 dark:border-slate-700 shrink-0">
+                      {patient.demographics?.gender === 'F' ? 'P' : 'L'}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-black text-sm text-slate-900 dark:text-white truncate">{patient.name}</span>
+                        <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-[10px] font-mono font-bold rounded text-slate-700 dark:text-slate-300">
+                          MRN: {patient.mrn || 'PENDING'}
+                        </span>
+                        {patient.status === 'EMERGENCY' && (
+                          <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded uppercase">IGD</span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block mt-0.5 truncate">
+                        NIK: {patient.nik || '-'} • {patient.demographics?.dob ? `${calculateAge(patient.demographics.dob)} Thn` : '--'} • Penjamin: <strong className="text-slate-700 dark:text-slate-200 font-bold">{(patient.insurance?.type || 'UMUM').toUpperCase()}</strong>
+                      </span>
+                    </div>
+                  </div>
+
+                  <button className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-black hover:bg-primary-dark transition-all shadow-sm shrink-0">
+                    Pilih Pasien
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <div ref={containerRef} className="w-full relative">
+        {renderSearchInputAndDropdown()}
+
+        {/* FULL SEARCH MODAL LAUNCHER */}
+        <PatientSearchModal
+          isOpen={isFullModalOpen}
+          onClose={() => setIsFullModalOpen(false)}
+          onSelect={(selectedObj) => {
+            setIsFullModalOpen(false);
+            const targetId = typeof selectedObj === 'object' ? (selectedObj.patientId || selectedObj.id) : selectedObj;
+            const target = patients.find(p => p.id === targetId) || { id: targetId, name: selectedObj.nama || selectedObj.name || 'Pasien', mrn: selectedObj.noRM || selectedObj.mrn || '-' };
+            handleSelect(target);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="w-full space-y-3 relative z-30">
       
       {/* SEARCH BAR CONTAINER WITH GLASSMORPHISM */}
       <div className="glass-panel p-3 sm:p-4 rounded-3xl border border-outline-variant/40 shadow-premium-soft flex flex-wrap items-center justify-between gap-3">
-        
-        {/* Input Field + Auto-Suggest Dropdown Launcher */}
-        <div className="flex-1 min-w-[280px] relative">
-          <div className="relative flex items-center">
-            <Search size={18} className="absolute left-4 text-[#007399] font-bold" />
-            <input
-              type="text"
-              placeholder="Cari pasien canggih (Nama, No. RM, NIK, No. Kartu BPJS)..."
-              value={searchQuery}
-              onFocus={() => setIsOpenDropdown(true)}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setIsOpenDropdown(true);
-              }}
-              className="w-full bg-white dark:bg-slate-900 border-2 border-[#007399] rounded-full pl-11 pr-28 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-4 focus:ring-[#007399]/20 transition-all shadow-xs"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-24 text-slate-400 hover:text-slate-600 p-1"
-              >
-                <X size={14} />
-              </button>
-            )}
-            
-            <button
-              onClick={() => setIsFullModalOpen(true)}
-              className="absolute right-2 px-3 py-1 bg-[#007399]/10 hover:bg-[#007399] text-[#007399] hover:text-white border border-[#007399]/30 rounded-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-              title="Membuka Pencarian Komprehensif Command Center"
-            >
-              <SlidersHorizontal size={12} />
-              <span className="hidden sm:inline">ADVANCED</span>
-            </button>
-          </div>
-
-          {/* AUTO-COMPLETE DROPDOWN RESULTS */}
-          {isOpenDropdown && (searchQuery.trim().length > 0 || activeChip !== 'ALL') && (
-            <div className="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-950 rounded-2xl border border-slate-300 dark:border-slate-800 shadow-[0_20px_60px_rgba(0,0,0,0.4)] overflow-hidden z-[999] max-h-[360px] overflow-y-auto animate-scale-in">
-              <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
-                <span>Hasil Pencarian Pasien ({filteredPatients.length})</span>
-                <span className="text-primary font-mono font-bold">Tekan Esc untuk menutup</span>
-              </div>
-
-              {filteredPatients.length === 0 ? (
-                <div className="py-8 text-center text-xs font-bold text-slate-400">
-                  Tidak ditemukan pasien dengan kueri "{searchQuery}".
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {filteredPatients.slice(0, 8).map(patient => (
-                    <div
-                      key={patient.id}
-                      onClick={() => handleSelect(patient)}
-                      className={`p-3.5 hover:bg-primary/10 cursor-pointer transition-all flex items-center justify-between gap-3 ${
-                        patient.id === currentPatientId ? 'bg-primary/5 border-l-4 border-primary' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-primary flex items-center justify-center font-black text-xs border border-slate-200 dark:border-slate-700 shrink-0">
-                          {patient.demographics?.gender === 'F' ? 'P' : 'L'}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-black text-sm text-slate-900 dark:text-white truncate">{patient.name}</span>
-                            <span className="px-2 py-0.5 bg-slate-200 dark:bg-slate-800 text-[10px] font-mono font-bold rounded text-slate-700 dark:text-slate-300">
-                              MRN: {patient.mrn || 'PENDING'}
-                            </span>
-                            {patient.status === 'EMERGENCY' && (
-                              <span className="px-2 py-0.5 bg-rose-500 text-white text-[9px] font-black rounded uppercase">IGD</span>
-                            )}
-                          </div>
-                          <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block mt-0.5 truncate">
-                            NIK: {patient.nik || '-'} • {patient.demographics?.dob ? `${calculateAge(patient.demographics.dob)} Thn` : '--'} • Penjamin: <strong className="text-slate-700 dark:text-slate-200 font-bold">{(patient.insurance?.type || 'UMUM').toUpperCase()}</strong>
-                          </span>
-                        </div>
-                      </div>
-
-                      <button className="px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-black hover:bg-primary-dark transition-all shadow-sm shrink-0">
-                        Pilih Pasien
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {renderSearchInputAndDropdown()}
 
         {/* QUICK FILTER CHIPS */}
         <div className="flex items-center gap-1.5 overflow-x-auto">
@@ -227,7 +284,8 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
         onClose={() => setIsFullModalOpen(false)}
         onSelect={(selectedObj) => {
           setIsFullModalOpen(false);
-          const target = patients.find(p => p.id === selectedObj.patientId) || { id: selectedObj.patientId, name: selectedObj.nama, mrn: selectedObj.noRM };
+          const targetId = typeof selectedObj === 'object' ? (selectedObj.patientId || selectedObj.id) : selectedObj;
+          const target = patients.find(p => p.id === targetId) || { id: targetId, name: selectedObj.nama || selectedObj.name || 'Pasien', mrn: selectedObj.noRM || selectedObj.mrn || '-' };
           handleSelect(target);
         }}
       />

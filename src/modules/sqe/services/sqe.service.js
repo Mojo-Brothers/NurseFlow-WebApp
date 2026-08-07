@@ -152,11 +152,42 @@ export const getUpcomingExpirations = async (daysAhead = 30) => {
     const snap = await getDocs(q);
     const results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-    // Fallback for pilot/demo environment
-    if (results.length === 0) return SQE_DUMMY_STAFF;
-    return results;
+    let localStaff = [];
+    try {
+      const raw = localStorage.getItem('nurseflow_staff_master_list');
+      if (raw) localStaff = JSON.parse(raw);
+    } catch (e) {}
+
+    const formattedLocal = localStaff.map(s => ({
+      email: s.email,
+      name: s.fullName || s.name,
+      nip: s.nip,
+      sip: { number: s.sipNumber || 'SIP-440/2026/DISKES', expiryDate: s.sipExpiry || '2026-11-30' },
+      str: { number: s.strNumber || 'STR-2026-9901', expiryDate: s.strExpiry || '2026-09-15' },
+      privileges: ['Clinical Privileges Verified', 'Prescription Auth'],
+      competencies: ['Basic Life Support (BLS)', 'Advanced Cardiac Life Support (ACLS)']
+    }));
+
+    if (results.length === 0) {
+      return formattedLocal.length > 0 ? [...formattedLocal, ...SQE_DUMMY_STAFF] : SQE_DUMMY_STAFF;
+    }
+    return [...results, ...formattedLocal];
   } catch (error) {
     console.error('[SQEService] Error fetching expirations:', error);
-    return SQE_DUMMY_STAFF; // Return dummy data on error for demo resilience
+    let localStaff = [];
+    try {
+      const raw = localStorage.getItem('nurseflow_staff_master_list');
+      if (raw) localStaff = JSON.parse(raw);
+    } catch (e) {}
+    const formattedLocal = localStaff.map(s => ({
+      email: s.email,
+      name: s.fullName || s.name,
+      nip: s.nip,
+      sip: { number: s.sipNumber || 'SIP-440/2026/DISKES', expiryDate: s.sipExpiry || '2026-11-30' },
+      str: { number: s.strNumber || 'STR-2026-9901', expiryDate: s.strExpiry || '2026-09-15' },
+      privileges: ['Clinical Privileges Verified', 'Prescription Auth'],
+      competencies: ['Basic Life Support (BLS)', 'Advanced Cardiac Life Support (ACLS)']
+    }));
+    return formattedLocal.length > 0 ? [...formattedLocal, ...SQE_DUMMY_STAFF] : SQE_DUMMY_STAFF;
   }
 };

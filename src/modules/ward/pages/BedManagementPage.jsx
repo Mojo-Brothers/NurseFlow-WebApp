@@ -9,6 +9,7 @@ import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { formatPatientName } from '../../../utils/displayUtils.js';
 import EmptyState from '../../../components/ui/EmptyState.jsx';
+import OceanicTealLoadingSpinner from '../../../components/ui/OceanicTealLoadingSpinner.jsx';
 
 export default function BedManagementPage() {
   const { currentUser } = useAuth();
@@ -85,7 +86,13 @@ export default function BedManagementPage() {
     }
   };
 
-  if (isLoading) return <div className="p-20 text-center opacity-40 font-black uppercase">Memuat Peta Bangsal...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8 bg-slate-950/20">
+        <OceanicTealLoadingSpinner variant="v1" label="Memuat Peta Spasial Tempat Tidur Bangsal Rawat Inap..." />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 w-full">

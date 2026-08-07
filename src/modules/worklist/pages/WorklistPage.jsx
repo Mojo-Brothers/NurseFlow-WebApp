@@ -9,6 +9,7 @@ import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { formatPatientName } from '../../../utils/displayUtils.js';
 import EmptyState from '../../../components/ui/EmptyState.jsx';
+import OceanicTealLoadingSpinner from '../../../components/ui/OceanicTealLoadingSpinner.jsx';
 
 const TASK_ICONS = {
   MEDICATION:   'medication',
@@ -144,8 +145,8 @@ export default function WorklistPage() {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
         {isLoading ? (
-          <div className="card" style={{ padding: '2rem', textAlign: 'center', gridColumn: '1/-1' }}>
-            <span className="material-symbols-outlined anim-spin text-primary">progress_activity</span>
+          <div style={{ gridColumn: '1/-1' }}>
+            <OceanicTealLoadingSpinner variant="v1" label="Memuat Daftar Tugas & Instruksi Klinis Perawat (Worklist HIS)..." />
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ gridColumn: '1/-1' }}>

@@ -5,6 +5,8 @@ import ClinicalCard from '../../../components/ui/ClinicalCard';
 import { useNavigate } from 'react-router-dom';
 import PaymentModal from '../../billing/components/PaymentModal.jsx';
 import VirtualWaitingRoom from '../../telemedicine/components/VirtualWaitingRoom';
+import EmptyState from '../../../components/ui/EmptyState.jsx';
+import OceanicTealLoadingSpinner from '../../../components/ui/OceanicTealLoadingSpinner.jsx';
 
 /**
  * PatientPortalPage — The digital front-door for patients.
@@ -36,11 +38,8 @@ export default function PatientPortalPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex-row items-center justify-center">
-         <div className="text-center">
-            <span className="material-symbols-outlined text-primary text-6xl anim-spin mb-4">clinical_notes</span>
-            <p className="text-lg font-bold opacity-40 uppercase tracking-widest">Securing your health data...</p>
-         </div>
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-8">
+        <OceanicTealLoadingSpinner variant="v1" label="Mengamankan & Memuat Rekam Kesehatan Digital Pasien..." />
       </div>
     );
   }

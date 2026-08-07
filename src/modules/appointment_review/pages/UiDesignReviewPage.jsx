@@ -30,6 +30,8 @@ import LoginVariantHybridV5V2 from '../components/LoginVariantHybridV5V2.jsx';
 import StaffRbacVariant1_ClassicGrid from '../components/StaffRbacVariant1_ClassicGrid.jsx';
 import StaffRbacVariant2_PassportKanban from '../components/StaffRbacVariant2_PassportKanban.jsx';
 import StaffRbacVariant3_TacticalMatrixHUD from '../components/StaffRbacVariant3_TacticalMatrixHUD.jsx';
+import StaffPortfolioDetailModal from '../../admin/components/StaffPortfolioDetailModal.jsx';
+import OceanicTealLoadingSpinner from '../../../components/ui/OceanicTealLoadingSpinner.jsx';
 
 /**
  * UiDesignReviewPage - Hub Peninjauan & Comparative Testing UI Design NurseFlow HIS
@@ -38,12 +40,40 @@ export default function UiDesignReviewPage() {
   const [activeTab, setActiveTab] = useState('variant3');
   const [activeLoginVariant, setActiveLoginVariant] = useState('hybrid_v5_v2');
   const [activeStaffVariant, setActiveStaffVariant] = useState('staff_v2');
+  const [selectedPortfolioStaff, setSelectedPortfolioStaff] = useState(null);
+
+  const demoStaffSample = {
+    id: 'STF-DEMO-001',
+    nip: 'NIP-19860512-2026-0559',
+    nik: '3273811829891732',
+    fullName: 'Rina Rahayu, S.Gz, RD (Registered Dietitian)',
+    degree: 'S.Gz, RD',
+    email: 'rina.rahayu559@nurseflow.id',
+    phone: '+6281244467421',
+    gender: 'Perempuan',
+    birthPlace: 'Bandung',
+    birthDate: '1986-05-12',
+    age: 39,
+    bloodType: 'O',
+    religion: 'Islam',
+    maritalStatus: 'Menikah',
+    citizenship: 'WNI',
+    role: 'LAB_RADIOLOGY_TECH',
+    professionTitle: 'Ahli Gizi (Dietitian)',
+    professionCategory: 'GIZI',
+    departmentName: 'Asuhan Dietetik Pasien Inpatient',
+    strNumber: 'STR-19940512-2026-0559',
+    strExpiry: '2029-12-31',
+    sipNumber: 'SIP-440/3212/DISKES',
+    sipExpiry: '2028-06-30'
+  };
 
   // Modal test states
   const [activeModal, setActiveModal] = useState(null); // 'classic' | 'passport' | 'drawer' | null
   const [activeDischargeModal, setActiveDischargeModal] = useState(null); // 'd_classic' | 'd_kanban' | 'd_list' | null
   const [activeBmiModal, setActiveBmiModal] = useState(null); // 'bmi_classic' | 'bmi_slider' | 'bmi_touch' | null
   const [activeSearchModal, setActiveSearchModal] = useState(null); // 'search_hud' | 'search_split' | 'search_dock' | null
+  const [activeLoadingModal, setActiveLoadingModal] = useState(null); // 'v1' | 'v2' | 'v3' | null
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 p-6 space-y-6 text-slate-800 dark:text-slate-100">
@@ -96,6 +126,245 @@ export default function UiDesignReviewPage() {
           >
             Varian 3: Minimal Timeline ⭐
           </button>
+        </div>
+      </div>
+
+      {/* Modal Renderer for Portfolio Variations */}
+      {selectedPortfolioStaff && (
+        <StaffPortfolioDetailModal
+          staff={selectedPortfolioStaff}
+          onClose={() => setSelectedPortfolioStaff(null)}
+        />
+      )}
+
+      {/* SECTION 0.0: REVIEW 3 VARIAN DESAIN UI (SERBA OCEANIC TEAL #007399) ⭐ */}
+      <div className="bg-gradient-to-r from-slate-950 via-[#00384b] to-slate-950 p-6 rounded-2xl border border-[#007399]/40 text-white shadow-xl space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#007399]/30 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-cyan-400 text-3xl">fingerprint</span>
+              <h2 className="text-lg font-black text-white uppercase tracking-wider">
+                Review 3 Varian Desain UI Modal Portfolio (Serba Theme Oceanic Teal #007399) ⭐
+              </h2>
+            </div>
+            <p className="text-xs text-cyan-200 font-medium mt-1">
+              Pilih dan bandingkan 3 Tata Letak & Arsitektur UI Berbeda — Seluruhnya Menggunakan Warna Utama Oceanic Teal (#007399).
+            </p>
+          </div>
+
+          <div className="flex flex-wrap bg-slate-950/80 p-1.5 rounded-xl border border-[#007399]/40 gap-1.5">
+            <button
+              onClick={() => setSelectedPortfolioStaff({ ...demoStaffSample, _uiVariant: 'v1' })}
+              className="px-4 py-2 text-xs font-black rounded-lg bg-[#007399] text-white shadow-lg cursor-pointer flex items-center gap-1.5 border border-cyan-400/40"
+            >
+              <span>⭐ Varian 1: Oceanic Glass (TERPILIH RESMI)</span>
+            </button>
+            <button
+              onClick={() => setSelectedPortfolioStaff({ ...demoStaffSample, _uiVariant: 'v2' })}
+              className="px-3 py-2 text-xs font-bold rounded-lg bg-white/10 text-slate-300 hover:text-white shadow-lg cursor-pointer flex items-center gap-1.5"
+            >
+              <span>Varian 2: Oceanic Minimalist</span>
+            </button>
+            <button
+              onClick={() => setSelectedPortfolioStaff({ ...demoStaffSample, _uiVariant: 'v3' })}
+              className="px-3 py-2 text-xs font-bold rounded-lg bg-white/10 text-slate-300 hover:text-white shadow-lg cursor-pointer font-mono flex items-center gap-1.5"
+            >
+              <span>Varian 3: Oceanic HUD</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Preview Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div 
+            onClick={() => setSelectedPortfolioStaff({ ...demoStaffSample, _uiVariant: 'v1' })}
+            className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-[#003d52] to-slate-900 border-2 border-cyan-400 shadow-xl cursor-pointer transition-all hover:scale-[1.02] space-y-3 relative"
+          >
+            <span className="absolute -top-3 right-4 px-3 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px] uppercase shadow-md flex items-center gap-1">
+              ⭐ TERPILIH RESMI
+            </span>
+            <div className="flex items-center justify-between">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#007399] text-white font-black text-[10px] uppercase border border-cyan-400">Varian 1</span>
+              <span className="text-[10px] text-cyan-300 font-bold">Executive Glass</span>
+            </div>
+            <h4 className="text-sm font-black text-white">Oceanic Executive Glass</h4>
+            <p className="text-xs text-slate-200">Gradient slate & oceanic teal (#007399), glassmorphism accent, kartu rounded-2xl formal dengan kontras tinggi untuk akreditasi JCI.</p>
+            <div className="pt-2 flex justify-end">
+              <span className="text-xs font-black text-cyan-300 flex items-center gap-1 bg-[#007399]/40 px-3 py-1 rounded-xl border border-cyan-400/30">Pratinjau Live ➔</span>
+            </div>
+          </div>
+
+          <div 
+            onClick={() => setSelectedPortfolioStaff({ ...demoStaffSample, _uiVariant: 'v2' })}
+            className="p-5 rounded-2xl bg-slate-900 border border-teal-500/40 hover:border-white cursor-pointer transition-all hover:scale-[1.02] space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <span className="px-2.5 py-0.5 rounded-full bg-white text-[#007399] font-bold text-[10px] uppercase border border-[#007399]">Varian 2 (BARU)</span>
+              <span className="text-[10px] text-slate-400 font-bold">Clean Floating Pills</span>
+            </div>
+            <h4 className="text-sm font-black text-white">Oceanic Minimalist Card-Grid</h4>
+            <p className="text-xs text-slate-300">Header putih bersih ber-border teal #007399, capsule floating pills navigation, dan kartu rounded-3xl yang sangat ringan & cepat dibaca.</p>
+            <div className="pt-2 flex justify-end">
+              <span className="text-xs font-bold text-[#007399] dark:text-cyan-300 flex items-center gap-1">Uji Coba Live ➔</span>
+            </div>
+          </div>
+
+          <div 
+            onClick={() => setSelectedPortfolioStaff({ ...demoStaffSample, _uiVariant: 'v3' })}
+            className="p-5 rounded-2xl bg-[#02131b] border border-[#007399]/60 hover:border-cyan-300 cursor-pointer transition-all hover:scale-[1.02] space-y-3 font-mono"
+          >
+            <div className="flex items-center justify-between">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#007399]/30 text-cyan-300 font-bold text-[10px] uppercase border border-cyan-400/40">Varian 3 (BARU)</span>
+              <span className="text-[10px] text-cyan-400 font-bold">Command HUD 2026</span>
+            </div>
+            <h4 className="text-sm font-black text-cyan-300">Oceanic Command HUD ⚡</h4>
+            <p className="text-xs text-slate-300">Header obsidian oceanic black #02131b ber-border glowing teal, monospace HUD tabs with live pulse dot ala ICU Command Center.</p>
+            <div className="pt-2 flex justify-end">
+              <span className="text-xs font-bold text-cyan-300 flex items-center gap-1">Uji Coba Live ➔</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Fullscreen Loading Test Overlay */}
+      {activeLoadingModal && (
+        <div className="fixed inset-0 z-[99999]">
+          <OceanicTealLoadingSpinner 
+            variant={activeLoadingModal} 
+            size="full" 
+            label={`Pratinjau Live Animasi Loading ${activeLoadingModal.toUpperCase()} (Oceanic Teal #007399)...`} 
+            progress={78}
+          />
+          <button
+            onClick={() => setActiveLoadingModal(null)}
+            className="fixed top-6 right-6 z-[100000] px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-black text-xs rounded-full shadow-2xl cursor-pointer flex items-center gap-1.5"
+          >
+            ✕ Tutup Pratinjau Loading
+          </button>
+        </div>
+      )}
+
+      {/* SECTION 0.1: REVIEW 3 VARIAN DESAIN ANIMASI PROSES LOADING (THEME OCEANIC TEAL #007399) ⭐ */}
+      <div className="bg-gradient-to-r from-slate-950 via-[#002b3a] to-slate-950 p-6 rounded-2xl border border-[#007399]/40 text-white shadow-xl space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#007399]/30 pb-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-cyan-400 text-3xl">hourglass_top</span>
+              <h2 className="text-lg font-black text-white uppercase tracking-wider">
+                Review 3 Varian Desain Animasi Proses Loading (Theme Oceanic Teal #007399) ⭐
+              </h2>
+            </div>
+            <p className="text-xs text-cyan-200 font-medium mt-1">
+              Pratinjau langsung 3 gaya animasi proses loading medis 2026 berbasis identitas warna resmi Oceanic Teal (#007399).
+            </p>
+          </div>
+
+          <div className="flex flex-wrap bg-slate-950/80 p-1.5 rounded-xl border border-[#007399]/40 gap-1.5">
+            <button
+              onClick={() => setActiveLoadingModal('v1')}
+              className="px-4 py-2 text-xs font-bold rounded-lg bg-[#007399] hover:bg-[#005e7e] text-white shadow-lg cursor-pointer flex items-center gap-1.5"
+            >
+              <span>⚡ Fullscreen V1: Vital ECG Pulse</span>
+            </button>
+            <button
+              onClick={() => setActiveLoadingModal('v2')}
+              className="px-4 py-2 text-xs font-bold rounded-lg bg-white/10 hover:bg-white/20 text-cyan-200 shadow-lg cursor-pointer flex items-center gap-1.5"
+            >
+              <span>🧬 Fullscreen V2: Biometric DNA</span>
+            </button>
+            <button
+              onClick={() => setActiveLoadingModal('v3')}
+              className="px-4 py-2 text-xs font-bold rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 shadow-lg cursor-pointer font-mono flex items-center gap-1.5 border border-cyan-400/40"
+            >
+              <span>📡 Fullscreen V3: Command HUD</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Live Side-by-Side Inline Cards for 3 Loading Animation Variations */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          {/* Card V1: Vital ECG Pulse (TERPILIH RESMI) */}
+          <div className="bg-gradient-to-br from-slate-900 via-[#003848] to-slate-900 rounded-2xl border-2 border-cyan-400 p-4 shadow-xl flex flex-col justify-between space-y-4 relative">
+            <span className="absolute -top-3 right-4 px-3 py-0.5 rounded-full bg-emerald-500 text-slate-950 font-black text-[10px] uppercase shadow-md flex items-center gap-1">
+              ⭐ TERPILIH RESMI
+            </span>
+            <div className="flex items-center justify-between border-b border-[#007399]/40 pb-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-[#007399] text-white font-black text-[10px] uppercase border border-cyan-400">
+                Varian 1
+              </span>
+              <span className="text-[10px] font-black text-cyan-300">Clinical ECG Pulse</span>
+            </div>
+            
+            {/* Inline Preview Component V1 */}
+            <div className="bg-slate-950 rounded-xl overflow-hidden border border-cyan-400/40">
+              <OceanicTealLoadingSpinner 
+                variant="v1" 
+                label="Sinkronisasi Rekam Medis EMR..." 
+                progress={84}
+              />
+            </div>
+
+            <button
+              onClick={() => setActiveLoadingModal('v1')}
+              className="w-full py-2 bg-[#007399] hover:bg-[#005e7e] text-white font-black text-xs rounded-xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-1 border border-cyan-400/30"
+            >
+              <span>Uji Coba Layar Penuh (Fullscreen V1) ➔</span>
+            </button>
+          </div>
+
+          {/* Card V2: Biometric DNA Helix */}
+          <div className="bg-slate-900/90 rounded-2xl border border-[#007399]/40 p-4 shadow-lg flex flex-col justify-between space-y-4">
+            <div className="flex items-center justify-between border-b border-[#007399]/30 pb-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-cyan-200 font-bold text-[10px] uppercase border border-cyan-400/30">
+                Varian 2
+              </span>
+              <span className="text-[10px] font-bold text-slate-300">Biometric DNA Helix</span>
+            </div>
+            
+            {/* Inline Preview Component V2 */}
+            <div className="bg-slate-950 rounded-xl overflow-hidden border border-[#007399]/30">
+              <OceanicTealLoadingSpinner 
+                variant="v2" 
+                label="Mengonkstruksi Struktur Profesi SDM..." 
+                progress={62}
+              />
+            </div>
+
+            <button
+              onClick={() => setActiveLoadingModal('v2')}
+              className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs rounded-xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-1 border border-[#007399]/40"
+            >
+              <span>Uji Coba Layar Penuh (Fullscreen V2) ➔</span>
+            </button>
+          </div>
+
+          {/* Card V3: Command HUD 2026 */}
+          <div className="bg-[#02131b] rounded-2xl border border-cyan-500/40 p-4 shadow-lg flex flex-col justify-between space-y-4 font-mono">
+            <div className="flex items-center justify-between border-b border-[#007399]/30 pb-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold text-[10px] uppercase border border-cyan-400/40">
+                Varian 3
+              </span>
+              <span className="text-[10px] font-bold text-cyan-400">Command HUD Scanner</span>
+            </div>
+            
+            {/* Inline Preview Component V3 */}
+            <div className="bg-slate-950 rounded-xl overflow-hidden border border-cyan-500/30">
+              <OceanicTealLoadingSpinner 
+                variant="v3" 
+                label="VERIFYING_JCI_SECURITY_VAULT..." 
+                progress={95}
+              />
+            </div>
+
+            <button
+              onClick={() => setActiveLoadingModal('v3')}
+              className="w-full py-2 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 font-mono font-bold text-xs rounded-xl shadow-md cursor-pointer transition-all flex items-center justify-center gap-1 border border-cyan-400/40"
+            >
+              <span>Uji Coba Layar Penuh (Fullscreen V3) ➔</span>
+            </button>
+          </div>
+
         </div>
       </div>
 

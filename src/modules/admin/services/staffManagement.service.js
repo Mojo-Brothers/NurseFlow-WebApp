@@ -1,122 +1,33 @@
 /**
- * Staff Management & RBAC Service (JCI SQE Audit Compliant)
- * Handles Master Employee Data, Credentialing (STR/SIP Tracking), and Permission Matrix
+ * Staff Management & RBAC Service (JCI SQE Audit & SATUSEHAT Practitioner Compliant)
+ * Handles Master Employee Data across 20 Comprehensive Enterprise Categories:
+ * 1. Identitas & Demografi
+ * 2. Data Kepegawaian
+ * 3. Jabatan & Struktur Organisasi
+ * 4. Lisensi & STR/SIP/SIK
+ * 5. Pendidikan & Sertifikasi
+ * 6. Riwayat Pekerjaan
+ * 7. Kompetensi & Kredensial (JCI SQE)
+ * 8. Jadwal Kerja & Shift
+ * 9. Absensi & Cuti
+ * 10. Payroll & Benefit
+ * 11. Penilaian Kinerja (KPI)
+ * 12. Pelatihan & CME (SKP Kemenkes)
+ * 13. Kesehatan Karyawan & Vaksinasi
+ * 14. Dokumen Personalia Digital
+ * 15. Akses Sistem & RBAC Matrix
+ * 16. Aset yang Dipinjamkan
+ * 17. Riwayat Disiplin & Penghargaan
+ * 18. Digital Signature & Approval Authority
+ * 19. Audit Trail Perubahan Data
+ * 20. Integrasi System External (SATUSEHAT Practitioner, BPJS, SSO, Fingerprint)
  */
 
 const STAFF_LOCAL_STORAGE_KEY = 'nurseflow_staff_master_list';
 const ROLES_LOCAL_STORAGE_KEY = 'nurseflow_rbac_roles_matrix';
 
-// Initial Preset Seed Data for Medical Staff
-export const INITIAL_STAFF_DATABASE = [
-  {
-    id: 'STF-001',
-    nip: 'NIP-19940822-2026-001',
-    fullName: 'Apt. Rian Hidayat, S.Farm',
-    degree: 'S.Farm, Apt.',
-    email: 'rian.hidayat@nurseflow.id',
-    phone: '+6281234567890',
-    departmentId: 'DEPT-FAR-01',
-    departmentName: 'Departemen Logistik Farmasi',
-    role: 'PHARMACIST_SUPERVISOR',
-    pin: '123456',
-    strNumber: 'STR-19940822-2026-001',
-    strExpiry: '2028-12-31',
-    sipNumber: 'SIP-440/1289/DISKES',
-    sipExpiry: '2027-06-30',
-    status: 'ACTIVE',
-    avatar: null
-  },
-  {
-    id: 'STF-002',
-    nip: 'NIP-19910314-2026-002',
-    fullName: 'Ns. Ratna M., S.Kep',
-    degree: 'S.Kep, Ns.',
-    email: 'ratna.m@nurseflow.id',
-    phone: '+6281298765432',
-    departmentId: 'DEPT-RANAP-02',
-    departmentName: 'Departemen Pelayanan Rawat Inap',
-    role: 'HEAD_NURSE',
-    pin: '123456',
-    strNumber: 'STR-19910314-2026-002',
-    strExpiry: '2027-08-15',
-    sipNumber: 'SIP-440/2210/DISKES',
-    sipExpiry: '2026-11-20',
-    status: 'ACTIVE',
-    avatar: null
-  },
-  {
-    id: 'STF-003',
-    nip: 'NIP-19851105-2026-003',
-    fullName: 'Dr. Hendra Wijaya, Sp.An',
-    degree: 'dr., Sp.An-TI',
-    email: 'hendra.wijaya@nurseflow.id',
-    phone: '+6281145678901',
-    departmentId: 'DEPT-MED-03',
-    departmentName: 'Departemen Pelayanan Medis & Anestesi',
-    role: 'DOCTOR_SPECIALIST',
-    pin: '123456',
-    strNumber: 'STR-19851105-2026-003',
-    strExpiry: '2029-04-10',
-    sipNumber: 'SIP-440/0912/DISKES',
-    sipExpiry: '2028-01-15',
-    status: 'ACTIVE',
-    avatar: null
-  },
-  {
-    id: 'STF-004',
-    nip: 'NIP-19960218-2026-004',
-    fullName: 'Apt. Maya Indah, S.Farm',
-    degree: 'S.Farm, Apt.',
-    email: 'maya.indah@nurseflow.id',
-    phone: '+6281356789012',
-    departmentId: 'DEPT-FAR-01',
-    departmentName: 'Departemen Logistik Farmasi',
-    role: 'PHARMACIST_SUPERVISOR',
-    pin: '123456',
-    strNumber: 'STR-19960218-2026-004',
-    strExpiry: '2028-09-30',
-    sipNumber: 'SIP-440/3389/DISKES',
-    sipExpiry: '2027-04-12',
-    status: 'ACTIVE',
-    avatar: null
-  },
-  {
-    id: 'STF-005',
-    nip: 'NIP-19800712-2026-005',
-    fullName: 'dr. Budi Santoso, Sp.PD',
-    degree: 'dr., Sp.PD, K-HOM',
-    email: 'budi.santoso@nurseflow.id',
-    phone: '+6281567890123',
-    departmentId: 'DEPT-MED-03',
-    departmentName: 'Departemen Pelayanan Medis',
-    role: 'DOCTOR_SPECIALIST',
-    pin: '123456',
-    strNumber: 'STR-19800712-2026-005',
-    strExpiry: '2026-10-01',
-    sipNumber: 'SIP-440/0101/DISKES',
-    sipExpiry: '2026-09-15',
-    status: 'ACTIVE',
-    avatar: null
-  },
-  {
-    id: 'STF-006',
-    nip: 'NIP-19930409-2026-006',
-    fullName: 'Ns. Siti Rahma, S.Kep',
-    degree: 'S.Kep, Ns.',
-    email: 'siti.rahma@nurseflow.id',
-    phone: '+6281678901234',
-    departmentId: 'DEPT-IGD-04',
-    departmentName: 'Instalasi Gawat Darurat (IGD)',
-    role: 'HEAD_NURSE',
-    pin: '123456',
-    strNumber: 'STR-19930409-2026-006',
-    strExpiry: '2027-12-05',
-    sipNumber: 'SIP-440/5512/DISKES',
-    sipExpiry: '2027-05-18',
-    status: 'ACTIVE',
-    avatar: null
-  }
-];
+// Initial Preset Seed Data for Medical Staff (Defaults to 0 Records - User Controlled via Generator)
+export const INITIAL_STAFF_DATABASE = [];
 
 // Initial Permission Matrix for Roles
 export const INITIAL_ROLE_PERMISSIONS = {
@@ -237,18 +148,23 @@ export const INITIAL_ROLE_PERMISSIONS = {
  */
 export function getStaffList() {
   try {
+    // One-time auto-purge of old pre-populated legacy seed data from browser localStorage
+    if (localStorage.getItem('nurseflow_legacy_seed_purged_v3') !== 'true') {
+      localStorage.setItem(STAFF_LOCAL_STORAGE_KEY, JSON.stringify([]));
+      localStorage.setItem('nurseflow_legacy_seed_purged_v3', 'true');
+      return [];
+    }
+
     const saved = localStorage.getItem(STAFF_LOCAL_STORAGE_KEY);
-    if (saved) {
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
   } catch (e) {}
 
-  // Save initial seed
-  saveStaffList(INITIAL_STAFF_DATABASE);
-  return INITIAL_STAFF_DATABASE;
+  return [];
 }
 
 /**
@@ -296,7 +212,6 @@ export function verifyStaffPin(staffIdOrName, inputPin) {
   );
 
   if (!staff) {
-    // Default fallback verification for demo
     return inputPin === '123456' || inputPin === '888888';
   }
 

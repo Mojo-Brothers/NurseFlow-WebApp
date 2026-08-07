@@ -56,6 +56,7 @@ import MOIInformationGovernanceHub from './modules/moi/pages/InformationGovernan
 import PFRInformedConsent from './modules/pfr/pages/InformedConsentPage';
 import PFRPatientRightsDashboard from './modules/pfr/pages/PatientRightsDashboard';
 import MasterDataHub from './modules/admin/pages/MasterDataHub';
+import DummyDataManagementPage from './modules/admin/pages/DummyDataManagementPage';
 import Teleconsultation from './modules/telemedicine/pages/TeleconsultationPage';
 import VirtualWaitingRoom from './modules/telemedicine/components/VirtualWaitingRoom';
 import SignaturePadEndpoint from './modules/emr/pages/SignaturePadEndpoint';
@@ -142,6 +143,7 @@ const router = createBrowserRouter([
               { path: "/information-governance", element: <Wrap><MOIInformationGovernanceHub /></Wrap> },
               { path: "/admin/master-hub", element: <Wrap><MasterDataHub /></Wrap> },
               { path: "/admin/dev-tools", element: <Wrap><DevTools /></Wrap> },
+              { path: "/admin/dummy-data", element: <Wrap><DummyDataManagementPage /></Wrap> },
               { path: "/health", element: <Wrap><HealthCheck /></Wrap> },
               { path: "/performance-diagnostics", element: <Wrap><SystemPerformanceSuite /></Wrap> },
               { path: "/lab", element: <Wrap><LabPage /></Wrap> },
@@ -211,7 +213,26 @@ function App() {
 
   return (
     <AuthProvider>
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster 
+        position="top-right" 
+        reverseOrder={false}
+        containerStyle={{
+          zIndex: 999999,
+        }}
+        toastOptions={{
+          duration: 2500,
+          style: {
+            background: '#0f172a',
+            color: '#fff',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            borderRadius: '16px',
+            padding: '12px 18px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.4)',
+            border: '1px solid rgba(255, 255, 255, 0.15)',
+          },
+        }}
+      />
       <RouterProvider router={router} />
     </AuthProvider>
   );

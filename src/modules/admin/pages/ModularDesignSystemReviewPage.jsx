@@ -12,6 +12,7 @@ import SegmentedTabs from '../../../components/ui/SegmentedTabs.jsx';
 import FilterToolbar from '../../../components/ui/FilterToolbar.jsx';
 import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
 import ClinicalAlertBanner from '../../../components/ui/ClinicalAlertBanner.jsx';
+import PillSearchBar from '../../../components/ui/PillSearchBar.jsx';
 import AdvancedPatientSearchBar from '../../emr/components/AdvancedPatientSearchBar.jsx';
 import PatientSearchModal from '../../emr/components/PatientSearchModal.jsx';
 
@@ -23,6 +24,7 @@ export default function ModularDesignSystemReviewPage() {
   const [activeCategory, setActiveCategory] = useState('data-display');
   const [copiedCodeId, setCopiedCodeId] = useState(null);
   const [viewModeMap, setViewModeMap] = useState({}); // id -> 'preview' | 'code'
+  const [showCatalogModal, setShowCatalogModal] = useState(false);
   
   // Interactive Component States
   const [segmentedTabState, setSegmentedTabState] = useState('rj');
@@ -30,6 +32,23 @@ export default function ModularDesignSystemReviewPage() {
   const [selectedDept, setSelectedDept] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Katalog Kode Identifikasi Komponen Resmi
+  const COMPONENT_MATRIX = [
+    { code: '[COMP-UI-01]', name: 'Data Table Grid', file: 'DataTable.jsx', category: 'data-display' },
+    { code: '[COMP-UI-02]', name: 'Table Pagination', file: 'TablePagination.jsx', category: 'data-display' },
+    { code: '[COMP-UI-03]', name: 'Status Badge Semantik', file: 'StatusBadge.jsx', category: 'data-display' },
+    { code: '[COMP-UI-04]', name: 'Segmented Tabs Pill', file: 'SegmentedTabs.jsx', category: 'wayfinding' },
+    { code: '[COMP-UI-05]', name: 'Filter Toolbar Terpadu', file: 'FilterToolbar.jsx', category: 'interaction-forms' },
+    { code: '[COMP-UI-06]', name: 'Clinical Card Data', file: 'ClinicalCard.jsx', category: 'data-display' },
+    { code: '[COMP-UI-07]', name: 'Clinical Alert Banner', file: 'ClinicalAlertBanner.jsx', category: 'feedback-modal' },
+    { code: '[COMP-UI-13]', name: 'Pill Search Bar (Oceanic Teal)', file: 'PillSearchBar.jsx', category: 'interaction-forms' },
+    { code: '[COMP-EMR-01]', name: 'Advanced Patient Search Bar', file: 'AdvancedPatientSearchBar.jsx', category: 'interaction-forms' },
+    { code: '[COMP-EMR-02]', name: 'Patient Search Modal Command Center', file: 'PatientSearchModal.jsx', category: 'feedback-modal' },
+    { code: '[PAGE-ADM-01]', name: 'Design System Review Page', file: 'ModularDesignSystemReviewPage.jsx', category: 'wayfinding' },
+    { code: '[PAGE-AUTH-01]', name: 'Login Screen Enterprise', file: 'LoginPage.jsx', category: 'wayfinding' },
+    { code: '[PAGE-EMR-01]', name: 'EMR Outpatient Command Center', file: 'OutpatientEMR.jsx', category: 'wayfinding' }
+  ];
 
   const copyToClipboard = (text, id) => {
     navigator.clipboard.writeText(text);
@@ -135,6 +154,19 @@ const columns = [
   onSelectPatient={(patient) => console.log('Pasien terpilih:', patient)}
 />`,
 
+    pill_search_bar: `import PillSearchBar from '@/components/ui/PillSearchBar.jsx';
+
+// [COMP-UI-13] Bilah Pencarian Lonjong Terstandar (Oceanic Teal #007399)
+<PillSearchBar 
+  value={searchQuery}
+  onChange={(val) => setSearchQuery(val)}
+  onSearch={(query) => console.log('Search:', query)}
+  onAdvancedClick={() => setIsModalOpen(true)}
+  placeholder="Cari pasien canggih (Nama, No. RM, NIK, No. Kartu BPJS)..."
+  advancedLabel="ADVANCED"
+  variant="primary"
+/>`,
+
     patient_search_modal: `import PatientSearchModal from '@/modules/emr/components/PatientSearchModal.jsx';
 
 // Modal Resmi Command Center Outpatient
@@ -186,6 +218,49 @@ const columns = [
         />
       </div>
 
+      {/* QUICK REFERENCE KODE KOMPONEN MODULAR */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-[#004d66] p-6 rounded-3xl text-white shadow-md border border-slate-700/50 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/80 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-2 rounded-xl bg-rose-500/20 text-rose-400 font-mono font-black text-xs border border-rose-500/30 flex items-center gap-1">
+              <Hash size={14} /> KODE MATRIX
+            </span>
+            <h2 className="text-base font-black tracking-tight text-white">
+              Papan Referensi Kode Komponen Modular (Komponen ID)
+            </h2>
+          </div>
+          <span className="text-[11px] text-cyan-300 font-medium">
+            Gunakan kode ini saat memberi instruksi perbaikan / fitur kepada AI Agent!
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+          {COMPONENT_MATRIX.map((item) => (
+            <div 
+              key={item.code}
+              onClick={() => copyToClipboard(item.code, item.code)}
+              className="bg-slate-950/60 hover:bg-slate-950 p-2.5 rounded-xl border border-slate-700/60 hover:border-[#007399] transition-all cursor-pointer group flex items-center justify-between gap-2"
+              title="Klik untuk menyalin Kode Komponen"
+            >
+              <div className="min-w-0">
+                <span className="font-mono text-rose-400 font-black text-xs block group-hover:text-rose-300">
+                  {item.code}
+                </span>
+                <span className="text-[11px] font-bold text-slate-300 truncate block">
+                  {item.name}
+                </span>
+                <span className="text-[9px] font-mono text-slate-400 block truncate">
+                  {item.file}
+                </span>
+              </div>
+              <button className="p-1 rounded-lg bg-slate-800 text-slate-400 group-hover:text-white group-hover:bg-[#007399] transition-all shrink-0">
+                {copiedCodeId === item.code ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* CATEGORY 1: PRESENTASI DATA */}
       {activeCategory === 'data-display' && (
         <div className="space-y-8 animate-in fade-in duration-300">
@@ -196,7 +271,10 @@ const columns = [
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <Tag size={20} className="text-[#007399]" />
-                  <span>1. Lencana Status Semantik (StatusBadge.jsx)</span>
+                  <span className="font-mono px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black">
+                    [COMP-UI-03]
+                  </span>
+                  <span>Lencana Status Semantik (StatusBadge.jsx)</span>
                 </h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Lencana status visual presisi dengan varian warna semantik baku untuk prioritas klinis.
@@ -253,7 +331,10 @@ const columns = [
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <TableIcon size={20} className="text-[#007399]" />
-                  <span>2. Data Grid & Pagination (DataTable.jsx & TablePagination.jsx)</span>
+                  <span className="font-mono px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black">
+                    [COMP-UI-01] & [COMP-UI-02]
+                  </span>
+                  <span>Data Grid & Pagination (DataTable.jsx & TablePagination.jsx)</span>
                 </h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Tabel data grid terstandar dengan perataan No. RM monospaced, row height uniform, dan navigasi halaman lonjong.
@@ -309,7 +390,10 @@ const columns = [
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <Search size={20} className="text-[#007399]" />
-                  <span>1. Bilah Pencarian Pasien Resmi (AdvancedPatientSearchBar.jsx)</span>
+                  <span className="font-mono px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black">
+                    [COMP-EMR-01]
+                  </span>
+                  <span>Bilah Pencarian Pasien Resmi (AdvancedPatientSearchBar.jsx)</span>
                 </h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Bilah pencarian lonjong terpadu dengan border-2 Oceanic Teal #007399 dan peluncur modal Command Center.
@@ -348,13 +432,69 @@ const columns = [
             )}
           </div>
 
+          {/* Component Card: PillSearchBar [COMP-UI-13] */}
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 lg:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                  <Search size={20} className="text-[#007399]" />
+                  <span className="font-mono px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black">
+                    [COMP-UI-13]
+                  </span>
+                  <span>Bilah Pencarian Lonjong Modern (PillSearchBar.jsx)</span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Komponen modular pencarian lonjong presisi sesuai referensi spesifikasi dengan border Oceanic Teal #007399 dan tombol ADVANCED.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => toggleViewMode('pill_search_bar')} 
+                  className="px-3.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                >
+                  {viewModeMap['pill_search_bar'] === 'code' ? <Eye size={14} /> : <Code size={14} />}
+                  <span>{viewModeMap['pill_search_bar'] === 'code' ? 'Tampilan Live' : 'Lihat Kode JSX'}</span>
+                </button>
+                
+                <button 
+                  onClick={() => copyToClipboard(CODE_SNIPPETS.pill_search_bar, 'pill_search_bar')} 
+                  className="px-4 py-1.5 rounded-full bg-[#007399] hover:bg-[#005e7e] text-white text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95"
+                >
+                  {copiedCodeId === 'pill_search_bar' ? <Check size={14} /> : <Copy size={14} />}
+                  <span>{copiedCodeId === 'pill_search_bar' ? 'Tersalin!' : 'Salin Kode'}</span>
+                </button>
+              </div>
+            </div>
+
+            {viewModeMap['pill_search_bar'] === 'code' ? (
+              <pre className="bg-slate-950 text-cyan-300 p-5 rounded-2xl text-xs font-mono overflow-x-auto border border-slate-800">
+                {CODE_SNIPPETS.pill_search_bar}
+              </pre>
+            ) : (
+              <div className="p-6 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+                <div>
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Presisi Sesuai Referensi Gambar (Oceanic Teal #007399):</span>
+                  <PillSearchBar 
+                    placeholder="Cari pasien canggih (Nama, No. RM, NIK, No. Kartu BPJS)..."
+                    onAdvancedClick={() => setIsModalOpen(true)}
+                    onSearch={(q) => alert(`Memulai pencarian: ${q}`)}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Component Card: FilterToolbar */}
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 lg:p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <Sliders size={20} className="text-[#007399]" />
-                  <span>2. Bilah Filter & Pencarian Terpadu (FilterToolbar.jsx)</span>
+                  <span className="font-mono px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black">
+                    [COMP-UI-05]
+                  </span>
+                  <span>Bilah Filter & Pencarian Terpadu (FilterToolbar.jsx)</span>
                 </h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Toolbar filter terpadu untuk pencarian teks, dropdown departemen, date picker, dan aksi Tampilkan Data / Reset.
@@ -420,7 +560,10 @@ const columns = [
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <Layout size={20} className="text-[#007399]" />
-                  <span>1. Tabulasi Navigasi Lonjong (SegmentedTabs.jsx)</span>
+                  <span className="font-mono px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black">
+                    [COMP-UI-04]
+                  </span>
+                  <span>Tabulasi Navigasi Lonjong (SegmentedTabs.jsx)</span>
                 </h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Pill tab switcher terstandar untuk berpindah modul/tampilan cepat dengan warna aktif Oceanic Teal #007399.
@@ -478,7 +621,10 @@ const columns = [
               <div>
                 <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
                   <BellRing size={20} className="text-[#007399]" />
-                  <span>1. Modal Pasien Resmi Command Center (PatientSearchModal.jsx)</span>
+                  <span className="font-mono px-2 py-0.5 rounded-md bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 text-xs font-black">
+                    [COMP-EMR-02]
+                  </span>
+                  <span>Modal Pasien Resmi Command Center (PatientSearchModal.jsx)</span>
                 </h3>
                 <p className="text-xs text-slate-500 font-medium mt-0.5">
                   Modal terpusat resmi untuk pencarian data grid pasien dengan 6 filter atribut dan warna kontras tinggi.

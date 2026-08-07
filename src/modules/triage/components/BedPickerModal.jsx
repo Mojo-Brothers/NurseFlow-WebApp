@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, BedDouble, Search } from 'lucide-react';
 import { getAllBeds } from '../../ward/services/bed.service.js';
+import OceanicTealLoadingSpinner from '../../../components/ui/OceanicTealLoadingSpinner.jsx';
 
 export default function BedPickerModal({ isOpen, onClose, onSelectBed }) {
   const [beds, setBeds] = useState([]);
@@ -78,9 +79,7 @@ export default function BedPickerModal({ isOpen, onClose, onSelectBed }) {
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-surface">
           {isLoading ? (
-            <div className="flex items-center justify-center p-12">
-              <span className="text-sm font-black uppercase animate-pulse">Memuat Data Bed...</span>
-            </div>
+            <OceanicTealLoadingSpinner variant="v1" label="Memuat Peta Ketersediaan Tempat Tidur IGD & Rawat Inap..." />
           ) : filteredBeds.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center border-[3px] border-black bg-white">
               <BedDouble className="w-12 h-12 text-on-surface-variant mb-4 opacity-50" />

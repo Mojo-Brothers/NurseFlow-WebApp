@@ -11,8 +11,9 @@ import {
   HelpCircle, Thermometer, Info, Scissors, Microscope, Settings, 
   Workflow, PlusSquare, ScrollText, AlertCircle, UserPlus, ClipboardList,
   FileSignature, LogOut, Share2, Clipboard, Zap, History, Eye, Plus, Edit2, RefreshCw, Sparkles, Brain,
-  Droplets, PenTool, Clock, LayoutDashboard, ChevronDown, HeartPulse, Filter
+  Droplets, PenTool, Clock, LayoutDashboard, ChevronDown, HeartPulse, Filter, Copy, Check
 } from 'lucide-react';
+import usePatientClipboardShortcuts from '../../../hooks/usePatientClipboardShortcuts.js';
 import { saveSoapNote, getPatientRecords, saveClinicalRecord } from '../services/emr.service.js';
 import { DEMO_ENCOUNTERS } from '../../../core/demoData.js';
 import CPPTWorkspace from '../components/CPPTWorkspace.jsx';
@@ -40,6 +41,8 @@ import WHOChildAnthropometryForm from '../components/WHOChildAnthropometryForm.j
 import WHOHandHygieneAuditForm from '../components/WHOHandHygieneAuditForm.jsx';
 import PatientCarePanel from '../components/PatientCarePanel.jsx';
 import PatientSearchModal from '../components/PatientSearchModal.jsx';
+import AdvancedPatientSearchBar from '../components/AdvancedPatientSearchBar.jsx';
+import PillSearchBar from '../../../components/ui/PillSearchBar.jsx';
 
 const JCI_MODULE_GROUPS = [
   {
@@ -137,6 +140,10 @@ export default function OutpatientEMR() {
   const [isGenericSaving, setIsGenericSaving] = useState(false);
   const [historySearchQuery, setHistorySearchQuery] = useState('');
   const [historyModuleFilter, setHistoryModuleFilter] = useState('ALL');
+  const [isMrnCopied, setIsMrnCopied] = useState(false);
+
+  // Global Ctrl+C and Ctrl+V keyboard shortcuts hook
+  usePatientClipboardShortcuts();
 
   useEffect(() => {
     fetchPatients().then(() => {
@@ -950,7 +957,7 @@ export default function OutpatientEMR() {
       {/* ─── COCKPIT HEADER ─── */}
       <header className="flex-none bg-[var(--surface)] border-b border-[var(--outline-variant)]/40 shadow-sm z-50">
         <div className="px-6 py-3 flex justify-between items-center bg-[var(--surface)]/95 backdrop-blur-md">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="w-10 h-10 rounded-2xl bg-[var(--primary)] text-white flex items-center justify-center shadow-lg shadow-[var(--primary)]/30">
               <Activity size={24} strokeWidth={2.5} />
             </div>
@@ -961,14 +968,16 @@ export default function OutpatientEMR() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsPatientPickerOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-[var(--surface-container-high)] hover:bg-[var(--primary)] hover:text-white text-[var(--on-surface)] rounded-xl border border-[var(--outline-variant)]/40 text-xs font-black uppercase tracking-wider transition-all shadow-sm active:scale-95"
-            >
-              <UserPlus size={15} className="text-[var(--primary)] group-hover:text-white" />
-              <span>Ganti Pasien / Antrean</span>
-            </button>
+
+          {/* Embedded Modular Pill Search Bar [COMP-UI-13] with Patient Switcher */}
+          <div className="flex-1 max-w-2xl ml-6 hidden sm:block">
+            <AdvancedPatientSearchBar
+              compact={true}
+              currentPatientId={selectedPatientId}
+              onSelectPatient={(patient) => {
+                selectPatient(patient.id);
+              }}
+            />
           </div>
         </div>
 
@@ -988,7 +997,26 @@ export default function OutpatientEMR() {
                   <span className="bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
                     <CheckCircle2 size={10} /> JCI VERIFIED
                   </span>
-                  <span className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-widest opacity-80">MRN: {noRM}</span>
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!noRM) return;
+                      navigator.clipboard.writeText(noRM);
+                      setIsMrnCopied(true);
+                      toast.dismiss('copy-toast');
+                      toast.success(`No. RM (${noRM}) disalin ke clipboard!`, { id: 'copy-toast', icon: '📋' });
+                      setTimeout(() => setIsMrnCopied(false), 2000);
+                    }}
+                    className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-[#007399] hover:text-white px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider cursor-pointer transition-all border border-slate-200 dark:border-slate-700 group/copy"
+                    title="Klik untuk menyalin No. RM (Atau tekan Ctrl+C)"
+                  >
+                    <span>MRN: {noRM}</span>
+                    {isMrnCopied ? (
+                      <Check size={11} className="text-emerald-500 font-bold" />
+                    ) : (
+                      <Copy size={11} className="text-slate-400 group-hover/copy:text-white transition-colors" />
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <h2 
@@ -1091,14 +1119,14 @@ export default function OutpatientEMR() {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <main className="flex-1 bg-[var(--surface-container-lowest)] p-6 lg:p-8 overflow-y-auto custom-scrollbar relative">
+        <main className="flex-1 bg-[var(--surface-container-lowest)] p-6 lg:p-8 overflow-y-auto custom-scrollbar relative flex flex-col justify-center items-center min-h-[calc(100vh-90px)]">
           
           {/* Subtle Background Elements */}
           <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-[var(--primary)]/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
-          <div className="relative z-10 min-h-full flex flex-col max-w-[1400px] mx-auto pb-16">
+          <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center max-w-[1400px] mx-auto my-auto py-6">
              {!selectedPatientId ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto animate-in zoom-in-95 duration-500">
+                <div className="w-full flex flex-col items-center justify-center text-center max-w-md mx-auto my-auto py-12 animate-in zoom-in-95 duration-500">
                   <div className="w-24 h-24 bg-[var(--surface-container-high)] rounded-[2rem] flex items-center justify-center text-[var(--primary)] shadow-inner mb-6 border border-[var(--outline-variant)]/30">
                     <User size={40} />
                   </div>

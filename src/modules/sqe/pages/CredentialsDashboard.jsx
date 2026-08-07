@@ -4,6 +4,7 @@ import PresentationCard from '../../../components/ui/PresentationCard.jsx';
 import ClinicalCard from '../../../components/ui/ClinicalCard.jsx';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { ROLES } from '../../../core/constants.js';
+import OceanicTealLoadingSpinner from '../../../components/ui/OceanicTealLoadingSpinner.jsx';
 
 /**
  * CredentialsDashboard — Staff Qualifications & Education (SQE).
@@ -34,7 +35,13 @@ export default function CredentialsDashboard() {
     fetchData();
   }, [currentUser.email, isAdmin]);
 
-  if (loading) return <div className="p-12 text-center opacity-30">Verifying Credentials...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8 bg-slate-950/20">
+        <OceanicTealLoadingSpinner variant="v1" label="Verifikasi Kredensial Medis & Masa Berlaku STR/SIP JCI SQE..." />
+      </div>
+    );
+  }
 
   const getStatusChip = (expiryDate) => {
     if (!expiryDate) return <span className="chip bg-error-container text-error">Missing</span>;

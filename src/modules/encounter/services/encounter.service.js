@@ -154,6 +154,12 @@ export const transitionEncounter = async ({
 };
 
 export const getActiveEncounters = async (maxResults = 100) => {
+  let localEncounters = [];
+  try {
+    const raw = localStorage.getItem('nurseflow_encounters_master');
+    if (raw) localEncounters = JSON.parse(raw);
+  } catch (e) {}
+
   try {
     const q = query(
       collection(db, COLLECTIONS.ENCOUNTERS),
@@ -166,19 +172,34 @@ export const getActiveEncounters = async (maxResults = 100) => {
     );
     const snap = await getDocs(q);
     
-    let encounters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    let firestoreEncounters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const combined = [...firestoreEncounters, ...localEncounters, ...DEMO_ENCOUNTERS];
     
-    // Sort descending client-side to avoid Firestore composite index errors
-    encounters.sort((a, b) => {
+    const seen = new Set();
+    const unique = combined.filter(e => {
+      const key = e.id || e.encounter_id;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    unique.sort((a, b) => {
       const timeA = a.admitted_at?.toDate ? a.admitted_at.toDate().getTime() : 0;
       const timeB = b.admitted_at?.toDate ? b.admitted_at.toDate().getTime() : 0;
       return timeB - timeA;
     });
 
-    return encounters.slice(0, maxResults);
+    return unique.slice(0, maxResults);
   } catch (error) {
     console.error('[EncounterService] Failed to fetch encounters:', error);
-    return [];
+    const combined = [...localEncounters, ...DEMO_ENCOUNTERS];
+    const seen = new Set();
+    return combined.filter(e => {
+      const key = e.id || e.encounter_id;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 };
 

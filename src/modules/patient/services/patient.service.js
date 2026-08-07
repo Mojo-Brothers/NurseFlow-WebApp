@@ -74,10 +74,13 @@ export const registerPatient = async (patientData, staffEmail) => {
 
 import { DEMO_PATIENTS } from '../../../core/demoData.js';
 
-/**
- * Get all patients with cursor pagination support.
- */
 export const getAllPatients = async (maxResults = 100) => {
+  let localPatients = [];
+  try {
+    const raw = localStorage.getItem('nurseflow_patients_master');
+    if (raw) localPatients = JSON.parse(raw);
+  } catch (e) {}
+
   try {
     const q = query(
       collection(db, COLLECTIONS.PATIENTS),
@@ -86,16 +89,25 @@ export const getAllPatients = async (maxResults = 100) => {
     );
     const snapshot = await getDocs(q);
     const firestorePatients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    
-    // Always include DEMO_PATIENTS (Ny. Dewi Sartika, etc.) at the top
-    const firestoreIds = new Set(firestorePatients.map(p => p.id));
-    return [
-      ...DEMO_PATIENTS.filter(p => !firestoreIds.has(p.id)),
-      ...firestorePatients
-    ];
+
+    const combined = [...firestorePatients, ...localPatients, ...DEMO_PATIENTS];
+    const seen = new Set();
+    return combined.filter(p => {
+      const key = p.id || p.mrn;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).slice(0, maxResults);
   } catch (error) {
     console.error('[PatientService] Failed to fetch patients:', error);
-    return DEMO_PATIENTS;
+    const combined = [...localPatients, ...DEMO_PATIENTS];
+    const seen = new Set();
+    return combined.filter(p => {
+      const key = p.id || p.mrn;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 };
 

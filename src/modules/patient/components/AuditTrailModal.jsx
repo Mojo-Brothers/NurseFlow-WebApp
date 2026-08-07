@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { getAuditLogs } from '../../../core/services/audit.service.js';
 import { useTranslation } from 'react-i18next';
+import OceanicTealLoadingSpinner from '../../../components/ui/OceanicTealLoadingSpinner.jsx';
 
 export default function AuditTrailModal({ patient, onClose }) {
   const { t } = useTranslation();
@@ -56,7 +57,7 @@ export default function AuditTrailModal({ patient, onClose }) {
 
         <div className="audit-timeline max-h-[400px] overflow-y-auto pr-2">
           {isLoading ? (
-            <div className="py-12 text-center opacity-40">Memuat log audit...</div>
+            <OceanicTealLoadingSpinner variant="v1" label="Memuat Log Audit Trail JCI Pasien..." />
           ) : logs.length === 0 ? (
             <div className="py-12 text-center">
               <span className="material-symbols-outlined text-4xl opacity-20 block mb-2">history</span>
