@@ -120,7 +120,15 @@ export default function AdminHubPage() {
           <h2 className="title">{t('admin_cc.title')}</h2>
           <p className="text-on-surface-variant text-sm mt-1">{t('admin_cc.desc')}</p>
         </div>
-        <div className="flex-row gap-3 shrink-0">
+        <div className="flex-row gap-3 shrink-0 flex-wrap">
+          <button 
+            onClick={() => navigate('/admin/staff-access')} 
+            className="btn-primary"
+            style={{ borderRadius: 'var(--radius-full)', padding: '0.5rem 1rem', fontSize: '0.75rem', gap: '0.4rem' }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>badge</span>
+            Manajemen SDM & Hak Akses (RBAC)
+          </button>
           {activeAlerts.length > 0 && (
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.4rem',

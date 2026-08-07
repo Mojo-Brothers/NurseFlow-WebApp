@@ -46,6 +46,7 @@ const NAV_SCHEMA = [
   ]},
   { label: 'nav.administration', items: [
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
+    { name: 'SDM & Hak Akses (RBAC)', path: '/admin/staff-access', icon: 'badge', roles: ['ADMIN', 'SUPERVISOR'] },
     { name: 'nav.executive',    path: '/executive',    icon: 'monitoring',        roles: ['ADMIN', 'SUPERVISOR'] },
   ]},
 ];
@@ -170,9 +171,11 @@ const MainLayout = () => {
                     <p className="text-[10px] font-black text-on-surface-variant/50 uppercase tracking-widest">{t(section.label)}</p>
                   </li>
                   {visibleItems.map((item) => {
-                    const isActive = location.pathname.startsWith(item.path);
                     const hasChildren = item.children && item.children.length > 0;
-                    const isExpanded = isActive || location.pathname.startsWith(item.path);
+                    const isActive = item.path === '/admin' 
+                      ? location.pathname === '/admin'
+                      : (location.pathname === item.path || (hasChildren && location.pathname.startsWith(item.path)));
+                    const isExpanded = isActive || (hasChildren && location.pathname.startsWith(item.path));
 
                     return (
                       <li key={item.name} className="flex flex-col gap-1">

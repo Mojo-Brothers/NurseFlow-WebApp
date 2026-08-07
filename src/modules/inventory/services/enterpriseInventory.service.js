@@ -4534,36 +4534,8 @@ export const DEMO_DEPO_ITEMS = [
   }
 ];
 
-// DEMO SEED DATA FOR MATERIAL REQUESTS
-export const DEMO_MATERIAL_REQUESTS = [
-  {
-    id: 'req-2026-001',
-    requestCode: 'REQ-2026-0805-01',
-    requestDate: '2026-08-05 08:30',
-    fromDepo: 'DEPO_IGD',
-    toDepo: 'GUDANG_UTAMA',
-    priority: 'URGENT',
-    requestedBy: 'Ns. Ratna M., S.Kep',
-    status: 'PENDING_APPROVAL',
-    items: [
-      { code: 'BMHP-IVC-20G', name: 'IV Catheter 20G Pink', qtyRequested: 100, unit: 'Pcs' },
-      { code: 'BMHP-INF-NS5', name: 'Cairan Infus NaCl 0.9% 500ml', qtyRequested: 50, unit: 'Botol' }
-    ]
-  },
-  {
-    id: 'req-2026-002',
-    requestCode: 'REQ-2026-0804-09',
-    requestDate: '2026-08-04 14:15',
-    fromDepo: 'DEPO_OK',
-    toDepo: 'GUDANG_UTAMA',
-    priority: 'NORMAL',
-    requestedBy: 'Ns. Budi Santoso',
-    status: 'APPROVED',
-    items: [
-      { code: 'BMHP-GLV-STER', name: 'Sarung Tangan Steril Size M', qtyRequested: 200, unit: 'Pasang' }
-    ]
-  }
-];
+// DEMO SEED DATA FOR MATERIAL REQUESTS (EMPTY DEFAULT FOR PRODUCTION HIS)
+export const DEMO_MATERIAL_REQUESTS = [];
 
 // DEMO SEED DATA FOR RECEIVE MUTASI
 export const DEMO_RECEIVE_MUTASI = [

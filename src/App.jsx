@@ -47,6 +47,7 @@ import WayfindingPortal from './modules/patient/pages/WayfindingPortal';
 import WayfindingAdmin from './modules/enterprise/pages/WayfindingAdmin';
 import SurgeryDashboard from './modules/emr/pages/SurgeryDashboard';
 import InfectionSurveillance from './modules/admin/pages/InfectionSurveillance';
+import StaffManagementPage from './modules/admin/pages/StaffManagementPage';
 import ExecutiveDashboard from './modules/enterprise/pages/ExecutiveDashboard';
 import IncidentReporting from './modules/gld/pages/IncidentReportingPage';
 import DevTools from './modules/admin/pages/DevTools';
@@ -60,6 +61,7 @@ import VirtualWaitingRoom from './modules/telemedicine/components/VirtualWaiting
 import SignaturePadEndpoint from './modules/emr/pages/SignaturePadEndpoint';
 import AppointmentPage from './modules/appointment/pages/AppointmentPage';
 import AppointmentReviewPage from './modules/appointment_review/pages/AppointmentReviewPage';
+import VerificationEndpoint from './modules/inventory/pages/VerificationEndpoint';
 import { useAuth } from './contexts/useAuth';
 import { Toaster } from 'react-hot-toast';
 
@@ -79,6 +81,14 @@ const router = createBrowserRouter([
   {
     path: "/e-sign/:requestId",
     element: <SignaturePadEndpoint />
+  },
+  {
+    path: "/auth/verify/:rqId",
+    element: <VerificationEndpoint />
+  },
+  {
+    path: "/verify/:rqId",
+    element: <VerificationEndpoint />
   },
   {
 //    element: <ProtectedRoute />,
@@ -123,6 +133,7 @@ const router = createBrowserRouter([
             element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR']} />,
             children: [
                { path: "/admin", element: <Wrap><AdminHub /></Wrap> },
+               { path: "/admin/staff-access", element: <Wrap><StaffManagementPage /></Wrap> },
                { path: "/surveillance", element: <Wrap><InfectionSurveillance /></Wrap> },
                { path: "/executive",    element: <Wrap><ExecutiveDashboard /></Wrap> },
               { path: "/information-governance", element: <Wrap><MOIInformationGovernanceHub /></Wrap> },
