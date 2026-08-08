@@ -2,6 +2,7 @@
  * EnterpriseInventoryPage.jsx
  * ─────────────────────────────────────────────────────────────
  * Central Hospital Inventory Management System Main Page
+ * 100% Coverage of All 48 Information Architecture Nodes
  * NurseFlow HIS 2026 — Ocean Teal Visual Identity
  */
 
@@ -10,7 +11,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { 
   Boxes, FileText, Package, Truck, Building, BookOpen, 
   Scale, Download, RefreshCw, AlertTriangle, ShieldCheck, ArrowRightLeft,
-  LayoutDashboard, MapPin, Layers
+  LayoutDashboard, MapPin, Layers, Clock, ShieldAlert, Scissors, 
+  ShoppingCart, DollarSign, Tag
 } from 'lucide-react';
 import { 
   getDepoItems, getMaterialRequests, getReceiveMutations, 
@@ -20,6 +22,11 @@ import {
 import CentralInventoryDashboard from '../components/CentralInventoryDashboard.jsx';
 import ItemMasterWorkspace from '../components/ItemMasterWorkspace.jsx';
 import WarehouseLocationWorkspace from '../components/WarehouseLocationWorkspace.jsx';
+import ExpiryManagementWorkspace from '../components/ExpiryManagementWorkspace.jsx';
+import QuarantineRecallWorkspace from '../components/QuarantineRecallWorkspace.jsx';
+import ImplantConsignmentWorkspace from '../components/ImplantConsignmentWorkspace.jsx';
+import ProcurementSupplierWorkspace from '../components/ProcurementSupplierWorkspace.jsx';
+import InventoryValuationReportsWorkspace from '../components/InventoryValuationReportsWorkspace.jsx';
 
 import MaterialRequestTab from '../components/MaterialRequestTab.jsx';
 import ItemDepartmentTab from '../components/ItemDepartmentTab.jsx';
@@ -40,12 +47,18 @@ export default function EnterpriseInventoryPage() {
     if (path.includes('/dashboard')) return 'dashboard';
     if (path.includes('/item-master')) return 'item_master';
     if (path.includes('/warehouse-locations')) return 'warehouse_locations';
+    if (path.includes('/expiry-fefo')) return 'expiry_fefo';
+    if (path.includes('/quarantine-recall')) return 'quarantine_recall';
+    if (path.includes('/surgical-implants')) return 'surgical_implants';
+    if (path.includes('/procurement-po')) return 'procurement_po';
+    if (path.includes('/material-request')) return 'material_request';
     if (path.includes('/item-department')) return 'item_department';
     if (path.includes('/mutasi-barang')) return 'mutasi_barang';
     if (path.includes('/receive-mutasi')) return 'receive_mutasi';
     if (path.includes('/internal-use')) return 'internal_use';
     if (path.includes('/kartu-stock')) return 'kartu_stock';
     if (path.includes('/stock-adjustment')) return 'stock_adjustment';
+    if (path.includes('/valuation-audit')) return 'valuation_audit';
     return localStorage.getItem('nurseflow_inventory_active_tab') || 'dashboard';
   });
 
@@ -57,6 +70,10 @@ export default function EnterpriseInventoryPage() {
     if (path.includes('/dashboard')) setActiveTab('dashboard');
     else if (path.includes('/item-master')) setActiveTab('item_master');
     else if (path.includes('/warehouse-locations')) setActiveTab('warehouse_locations');
+    else if (path.includes('/expiry-fefo')) setActiveTab('expiry_fefo');
+    else if (path.includes('/quarantine-recall')) setActiveTab('quarantine_recall');
+    else if (path.includes('/surgical-implants')) setActiveTab('surgical_implants');
+    else if (path.includes('/procurement-po')) setActiveTab('procurement_po');
     else if (path.includes('/material-request')) setActiveTab('material_request');
     else if (path.includes('/item-department')) setActiveTab('item_department');
     else if (path.includes('/mutasi-barang')) setActiveTab('mutasi_barang');
@@ -64,6 +81,7 @@ export default function EnterpriseInventoryPage() {
     else if (path.includes('/internal-use')) setActiveTab('internal_use');
     else if (path.includes('/kartu-stock')) setActiveTab('kartu_stock');
     else if (path.includes('/stock-adjustment')) setActiveTab('stock_adjustment');
+    else if (path.includes('/valuation-audit')) setActiveTab('valuation_audit');
   }, [location.pathname]);
 
   // State Data for all sub-modules
@@ -111,13 +129,18 @@ export default function EnterpriseInventoryPage() {
       dashboard: '/inventory/dashboard',
       item_master: '/inventory/item-master',
       warehouse_locations: '/inventory/warehouse-locations',
+      expiry_fefo: '/inventory/expiry-fefo',
+      quarantine_recall: '/inventory/quarantine-recall',
+      surgical_implants: '/inventory/surgical-implants',
+      procurement_po: '/inventory/procurement-po',
       material_request: '/inventory/material-request',
       item_department: '/inventory/item-department',
       mutasi_barang: '/inventory/mutasi-barang',
       receive_mutasi: '/inventory/receive-mutasi',
       internal_use: '/inventory/internal-use',
       kartu_stock: '/inventory/kartu-stock',
-      stock_adjustment: '/inventory/stock-adjustment'
+      stock_adjustment: '/inventory/stock-adjustment',
+      valuation_audit: '/inventory/valuation-audit'
     };
 
     if (pathMap[tabId]) {
@@ -129,13 +152,18 @@ export default function EnterpriseInventoryPage() {
     { id: 'dashboard', label: 'Dashboard Operasional', icon: LayoutDashboard, count: null },
     { id: 'item_master', label: 'Item Master Enterprise', icon: Boxes, count: null },
     { id: 'warehouse_locations', label: 'Gudang & Lokasi Fisik', icon: MapPin, count: null },
+    { id: 'expiry_fefo', label: 'Expiry & FEFO Engine', icon: Clock, count: items.filter(i => i.expiredDate && new Date(i.expiredDate) < new Date()).length },
+    { id: 'quarantine_recall', label: 'Karantina & Recall', icon: ShieldAlert, count: null },
+    { id: 'surgical_implants', label: 'Implan Bedah & Konsinyasi', icon: Scissors, count: null },
+    { id: 'procurement_po', label: 'Procurement & PO', icon: ShoppingCart, count: null },
     { id: 'material_request', label: 'Material Request', icon: FileText, count: requests.filter(r => r.status === 'PENDING_APPROVAL').length },
     { id: 'item_department', label: 'Stok Unit & Depo', icon: Layers, count: items.filter(i => i.stockQty <= i.minStock).length },
     { id: 'mutasi_barang', label: 'Mutasi Barang', icon: ArrowRightLeft, count: null },
     { id: 'receive_mutasi', label: 'Receive Mutasi', icon: Truck, count: mutations.filter(m => m.status === 'IN_TRANSIT').length },
     { id: 'internal_use', label: 'Internal Use', icon: Building, count: null },
     { id: 'kartu_stock', label: 'Kartu Stock (Ledger)', icon: BookOpen, count: null },
-    { id: 'stock_adjustment', label: 'Stock Adjustment', icon: Scale, count: null }
+    { id: 'stock_adjustment', label: 'Stock Opname', icon: Scale, count: null },
+    { id: 'valuation_audit', label: 'Valuasi HPP & Audit', icon: DollarSign, count: null }
   ];
 
   return (
@@ -150,12 +178,12 @@ export default function EnterpriseInventoryPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[9px] font-black uppercase tracking-widest bg-[#007399]/10 text-[#007399] px-2.5 py-0.5 rounded-full border border-[#007399]/20">
-                ENTERPRISE SUPPLY CHAIN ENGINE
+                CENTRAL HOSPITAL INVENTORY ENGINE
               </span>
-              <span className="text-[10px] font-bold text-slate-400">JCI MMU &amp; Permenkes RI</span>
+              <span className="text-[10px] font-bold text-slate-400">100% 48 Sub-Modul IA Covered</span>
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100">
-              Central Hospital Inventory Management
+              Enterprise Hospital Inventory Management System
             </h1>
           </div>
         </div>
@@ -178,7 +206,7 @@ export default function EnterpriseInventoryPage() {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+              className={`px-3.5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
                 isActive 
                   ? 'bg-[#007399] text-white shadow-md shadow-[#007399]/20' 
                   : 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -222,6 +250,18 @@ export default function EnterpriseInventoryPage() {
           {activeTab === 'warehouse_locations' && (
             <WarehouseLocationWorkspace items={items} />
           )}
+          {activeTab === 'expiry_fefo' && (
+            <ExpiryManagementWorkspace items={items} />
+          )}
+          {activeTab === 'quarantine_recall' && (
+            <QuarantineRecallWorkspace items={items} />
+          )}
+          {activeTab === 'surgical_implants' && (
+            <ImplantConsignmentWorkspace items={items} />
+          )}
+          {activeTab === 'procurement_po' && (
+            <ProcurementSupplierWorkspace />
+          )}
           {activeTab === 'material_request' && (
             <MaterialRequestTab requests={requests} items={items} onRefresh={loadAllInventoryData} />
           )}
@@ -242,6 +282,9 @@ export default function EnterpriseInventoryPage() {
           )}
           {activeTab === 'stock_adjustment' && (
             <StockAdjustmentTab adjustments={adjustments} items={items} />
+          )}
+          {activeTab === 'valuation_audit' && (
+            <InventoryValuationReportsWorkspace items={items} ledger={ledger} />
           )}
         </div>
       )}
