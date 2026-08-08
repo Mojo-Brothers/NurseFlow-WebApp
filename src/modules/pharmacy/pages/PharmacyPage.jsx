@@ -1,235 +1,131 @@
-import React, { useEffect, useState, useCallback } from 'react';
+/**
+ * PharmacyPage.jsx
+ * ─────────────────────────────────────────────────────────────
+ * Enterprise Hospital Pharmacy Platform Main Page
+ * NurseFlow HIS 2026 — Ocean Teal Visual Identity
+ */
+
+import React, { useEffect, useState } from 'react';
 import { usePharmacyStore } from '../pharmacy.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
-import { calculateAge } from '../../../utils/clinicalCalculators.js';
-import { useClinicalMetrics } from '../../../core/hooks/useClinicalMetrics';
-import ClinicalCard from '../../../components/ui/ClinicalCard';
-import { deductByName } from '../services/inventory.service.js';
-import { useTranslation } from 'react-i18next';
-import EmptyState from '../../../components/ui/EmptyState.jsx';
+import { 
+  Pill, ShieldCheck, FileText, Lock, Stethoscope, 
+  RefreshCw, LayoutDashboard, AlertTriangle, Layers
+} from 'lucide-react';
 
-const ROUTE_CONFIG = {
-  PO:  { labelKey: 'pharmacy_v2.routes.oral', defaultLabel: 'Oral', icon: 'pill', bg: 'var(--surface-container-high)', text: 'var(--on-surface)' },
-  IV:  { labelKey: 'pharmacy_v2.routes.iv', defaultLabel: 'Intravena', icon: 'colorize', bg: '#fee2e2', text: '#b91c1c', highAlert: true },
-  SC:  { labelKey: 'pharmacy_v2.routes.sc', defaultLabel: 'Subkutan', icon: 'syringe', bg: '#fee2e2', text: '#b91c1c', highAlert: true },
-  IM:  { labelKey: 'pharmacy_v2.routes.im', defaultLabel: 'Intramuskular', icon: 'syringe', bg: '#fee2e2', text: '#b91c1c', highAlert: true },
-};
+import PharmacyDashboardWorkspace from '../components/PharmacyDashboardWorkspace.jsx';
+import PharmacistVerificationWorkspace from '../components/PharmacistVerificationWorkspace.jsx';
+import MedicationReconciliationWorkspace from '../components/MedicationReconciliationWorkspace.jsx';
+import ControlledDrugsWorkspace from '../components/ControlledDrugsWorkspace.jsx';
+import AntibioticStewardshipWorkspace from '../components/AntibioticStewardshipWorkspace.jsx';
+import DispenseQueue from '../components/DispenseQueue.jsx';
+
+import toast from 'react-hot-toast';
 
 export default function PharmacyPage() {
-  const { t } = useTranslation();
-  const { currentUser, isPharmacist, isAdmin } = useAuth();
-  const { pendingQueue, isLoading, fetchQueue, dispense, cancel } = usePharmacyStore();
-  const { patients, fetchPatients } = usePatientStore();
-  const { logAction } = useClinicalMetrics('PHARMACY_QUEUE');
+  const { currentUser } = useAuth();
+  const { pendingQueue, isLoading, fetchQueue } = usePharmacyStore();
+  const { fetchPatients } = usePatientStore();
 
-  const [verifyingMed, setVerifyingMed] = useState(null);
-  const [ipsgInput, setIpsgInput] = useState('');
-  const [ipsgError, setIpsgError] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   useEffect(() => {
     fetchQueue();
     fetchPatients();
   }, [fetchQueue, fetchPatients]);
 
-  const getPatient = (pid) => patients.find(p => p.id === pid);
-
-  const startDispense = (med) => {
-    logAction('pharmacy_dispense_init');
-    setVerifyingMed(med);
-    setIpsgInput('');
-    setIpsgError(false);
-  };
-
-  const handleFinalDispense = async (witness = null) => {
-    const patient = getPatient(verifyingMed.patient_id);
-    if (ipsgInput.trim().toUpperCase() !== patient.mrn.toUpperCase()) {
-      setIpsgError(true);
-      return;
-    }
-
-    try { 
-      logAction('pharmacy_dispense_complete');
-      await deductByName(verifyingMed.medication_name, 1);
-      await dispense(verifyingMed.id, currentUser.email, witness); 
-      setVerifyingMed(null);
-      fetchQueue();
-    } catch (e) { 
-      alert(t('pharmacy_v2.alerts.inventory_failure') + ': ' + e.message); 
-    }
-  };
+  const TABS = [
+    { id: 'dashboard', label: 'Dashboard Operasional', icon: LayoutDashboard, count: null },
+    { id: 'verification', label: 'Verifikasi Apoteker', icon: ShieldCheck, count: pendingQueue.length },
+    { id: 'reconciliation', label: 'Rekonsiliasi Obat', icon: FileText, count: null },
+    { id: 'controlled_drugs', label: 'Narkotika & Psikotropika', icon: Lock, count: null },
+    { id: 'antibiotic_stewardship', label: 'Antibiotic Stewardship (PPRA)', icon: Stethoscope, count: null },
+    { id: 'dispensing_queue', label: 'Antrean Dispensing', icon: Pill, count: pendingQueue.length }
+  ];
 
   return (
-    <div className="p-8 h-full flex-column gap-6 overflow-hidden relative">
-      {/* 🚀 Header Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
-         <ClinicalCard padding="1.5rem">
-            <span className="text-[10px] font-black uppercase text-on-surface-variant opacity-60">{t('pharmacy_v2.metrics.pending_queue')}</span>
-            <div className="text-3xl font-black text-primary">{pendingQueue.length}</div>
-         </ClinicalCard>
-         <ClinicalCard padding="1.5rem">
-            <span className="text-[10px] font-black uppercase text-on-surface-variant opacity-60">{t('pharmacy_v2.metrics.high_alert')}</span>
-            <div className="text-3xl font-black text-error">
-               {pendingQueue.filter(m => ['IV','SC','IM'].includes(m.route)).length}
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1700px] mx-auto text-slate-800 dark:text-slate-100 font-sans">
+
+      {/* PAGE HEADER */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-[#007399]/10 text-[#007399] flex items-center justify-center font-black shadow-inner border border-[#007399]/20">
+            <Pill size={24} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-black uppercase tracking-widest bg-[#007399]/10 text-[#007399] px-2.5 py-0.5 rounded-full border border-[#007399]/20">
+                ENTERPRISE PHARMACY PLATFORM
+              </span>
+              <span className="text-[10px] font-bold text-slate-400">JCI MMU &amp; Permenkes RI Standar</span>
             </div>
-         </ClinicalCard>
-         <ClinicalCard padding="1.5rem">
-            <span className="text-[10px] font-black uppercase text-on-surface-variant opacity-60">{t('pharmacy_v2.metrics.impacted_patients')}</span>
-            <div className="text-3xl font-black">{new Set(pendingQueue.map(m => m.patient_id)).size}</div>
-         </ClinicalCard>
-         <ClinicalCard padding="1.5rem" className="bg-secondary-container">
-            <span className="text-[10px] font-black uppercase text-on-secondary-container opacity-60">{t('pharmacy_v2.metrics.current_session')}</span>
-            <div className="text-sm font-bold text-on-secondary-container">{t('pharmacy_v2.metrics.pharmacist')}: {currentUser?.email?.split('@')[0].toUpperCase()}</div>
-         </ClinicalCard>
+            <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-slate-100">
+              Instalasi Farmasi &amp; Clinical Pharmacy Management
+            </h1>
+          </div>
+        </div>
+
+        <button
+          onClick={fetchQueue}
+          className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-[#007399] hover:text-white border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-sm"
+        >
+          <RefreshCw size={15} className={isLoading ? 'animate-spin' : ''} />
+          <span>Refresh Queue Data</span>
+        </button>
       </div>
 
-      {/* 📋 Dispensing Bento Queue */}
-      <div className="flex-1 overflow-y-auto pr-2 pb-20">
-         <div className="flex-row items-center justify-between mb-4 min-w-0">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">{t('pharmacy_v2.queue_title')}</h3>
-            <button onClick={fetchQueue} className="btn-ghost text-[10px] font-bold">{t('pharmacy_v2.refresh_queue')}</button>
-         </div>
-
-         <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.5rem' }}>
-            {pendingQueue.length === 0 ? (
-               <div className="col-span-full">
-                 <EmptyState icon="inventory_2" title={t('pharmacy_v2.zero_pending')} description="" colorClass="text-success" />
-               </div>
-            ) : pendingQueue.map(med => {
-                const p = getPatient(med.patient_id);
-                const routeInfo = ROUTE_CONFIG[med.route] || { labelKey: '', defaultLabel: med.route, icon: 'medication' };
-                const lasaConflict = med.lasaWarning;
-                const highAlert = med.isHighAlert || routeInfo.highAlert;
-
-                return (
-                   <ClinicalCard key={med.id} padding="1.5rem" className="hover-lift transition-all">
-                      {highAlert && (
-                         <div className="absolute top-0 right-0 px-3 py-1 bg-error text-white text-[10px] font-black uppercase rounded-bl-lg animate-pulse">
-                            {t('admin_hub.safety.high_alert')}
-                         </div>
-                      )}
-                      
-                      <div className="flex-column gap-4 min-w-0">
-                         <div className="flex-row gap-2 shrink-0 min-w-0">
-                            <div className="flex-column gap-1 min-w-0">
-                               <span className="text-[10px] font-black text-primary uppercase">{t('pharmacy_v2.patient_id_label')}</span>
-                               <div className="text-base font-black truncate">{p ? p.name : t('pharmacy_v2.labels.unknown')}</div>
-                               <div className="text-[10px] font-bold text-on-surface-variant">{t('patient_form.mrn')}: {p ? p.mrn : '---'} • {t('patient_form.dob')}: {p ? p.demographics?.dob : '---'}</div>
-                            </div>
-                         </div>
-
-                          <div className="p-3 rounded-xl border-2 flex-row items-center gap-4 min-w-0" style={{ backgroundColor: routeInfo.bg, borderColor: lasaConflict ? 'var(--error)' : 'transparent' }}>
-                             <span className="material-symbols-outlined shrink-0" style={{ color: routeInfo.text }}>{routeInfo.icon}</span>
-                             <div className="flex-1 min-w-0">
-                                <div className="text-sm font-black truncate" style={{ color: routeInfo.text }}>{med.medication_name}</div>
-                                <div className="text-[10px] font-bold opacity-70 truncate">
-                                   {med.dosage || t('pharmacy_v2.dosage_standard', { defaultValue: 'Standard Dosage' })} • {routeInfo.labelKey ? t(routeInfo.labelKey) : routeInfo.defaultLabel}
-                                </div>
-                                {lasaConflict && (
-                                  <div className="mt-1 flex-row items-center gap-1 text-error text-[8px] font-black uppercase animate-bounce-short min-w-0">
-                                     <span className="material-symbols-outlined text-[10px] shrink-0">warning</span>
-                                      <span className="truncate">LASA: {t('pharmacy_v2.lasa_warning', { defaultValue: 'Confused with' })} {lasaConflict}?</span>
-                                  </div>
-                                )}
-                             </div>
-                          </div>
-
-                          <div className="flex-row justify-between items-center mt-2 gap-4 min-w-0">
-                             <div className="flex-column min-w-0">
-                                <span className="text-[10px] font-black opacity-40 uppercase">{t('pharmacy_v2.prescribed_by')}</span>
-                                <span className="text-[10px] font-bold uppercase truncate">{med.prescribed_by?.split('@')[0]}</span>
-                             </div>
-                             <button 
-                                onClick={() => startDispense(med)}
-                                className="btn-primary py-2 px-4 text-xs font-black uppercase tracking-wider shrink-0"
-                             >
-                                {t('pharmacy_v2.dispensing_btn')}
-                             </button>
-                          </div>
-                      </div>
-                   </ClinicalCard>
-                );
-            })}
-         </div>
+      {/* NAVIGATION TABS BAR */}
+      <div className="bg-white dark:bg-slate-900 p-2 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-1.5 overflow-x-auto custom-scrollbar">
+        {TABS.map(tab => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                isActive 
+                  ? 'bg-[#007399] text-white shadow-md shadow-[#007399]/20' 
+                  : 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+            >
+              <Icon size={16} />
+              <span>{tab.label}</span>
+              {tab.count > 0 && (
+                <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-black ${
+                  isActive ? 'bg-white/20 text-white' : 'bg-rose-500/10 text-rose-600'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
-      {/* 🛡️ IPSG DOUBLE-CHECK MODAL */}
-      {verifyingMed && (
-         <div className="absolute inset-0 bg-surface-lowest-transparent backdrop-blur-sm z-50 flex items-center justify-center p-8">
-            <ClinicalCard maxWidth="500px" padding="2rem" className="shadow-2xl border-t-8 border-secondary animate-scale-in">
-               <div className="text-center mb-6">
-                  <span className="material-symbols-outlined text-secondary text-6xl mb-4">how_to_reg</span>
-                  <h2 className="text-2xl font-black text-on-surface">{t('pharmacy_v2.ipsg.title')}</h2>
-                  <p className="text-sm text-on-surface-variant mt-2 font-medium">{t('pharmacy_v2.ipsg.subtitle')}</p>
-               </div>
+      {/* ACTIVE TAB CONTENT */}
+      <div className="animate-in fade-in duration-300">
+        {activeTab === 'dashboard' && (
+          <PharmacyDashboardWorkspace pendingQueue={pendingQueue} onNavigateTab={setActiveTab} />
+        )}
+        {activeTab === 'verification' && (
+          <PharmacistVerificationWorkspace pendingQueue={pendingQueue} onVerifySuccess={fetchQueue} />
+        )}
+        {activeTab === 'reconciliation' && (
+          <MedicationReconciliationWorkspace />
+        )}
+        {activeTab === 'controlled_drugs' && (
+          <ControlledDrugsWorkspace />
+        )}
+        {activeTab === 'antibiotic_stewardship' && (
+          <AntibioticStewardshipWorkspace />
+        )}
+        {activeTab === 'dispensing_queue' && (
+          <DispenseQueue />
+        )}
+      </div>
 
-                <div className="bg-surface-container-low p-4 rounded-xl mb-6 flex-column gap-3 min-w-0">
-                   <div className="flex-row justify-between border-b pb-2 mb-2 min-w-0">
-                      <span className="text-[10px] font-black uppercase opacity-50 shrink-0">{t('pharmacy_v2.ipsg.patient_name')}</span>
-                      <span className="text-xs font-black truncate">{getPatient(verifyingMed.patient_id)?.name}</span>
-                   </div>
-                   <div className="flex-row justify-between min-w-0">
-                      <span className="text-[10px] font-black uppercase opacity-50 shrink-0">{t('pharmacy_v2.ipsg.order')}</span>
-                      <span className="text-xs font-black text-secondary truncate">{verifyingMed.medication_name}</span>
-                   </div>
-                </div>
-
-               <div className="flex-column gap-2 mb-6">
-                  <label className="text-xs font-bold text-on-surface-variant">{t('pharmacy_v2.ipsg.mrn_label')}</label>
-                  <input 
-                     type="text" 
-                     className={`form-input w-full text-center text-xl font-black tabular-nums ${ipsgError ? 'border-error' : ''}`}
-                     placeholder={t('pharmacy_v2.ipsg.placeholder')}
-                     value={ipsgInput}
-                     onChange={(e) => { setIpsgInput(e.target.value); setIpsgError(false); }}
-                     autoFocus
-                  />
-                  {ipsgError && <p className="text-[10px] text-error font-bold italic">{t('pharmacy_v2.ipsg.mismatch')}</p>}
-               </div>
-
-                {/* derived highAlert status from route or data */}
-                {(verifyingMed.isHighAlert || (ROUTE_CONFIG[verifyingMed.route]?.highAlert)) && (
-                   <div className="p-4 bg-error-container text-on-error-container rounded-xl mb-6 border border-error animate-pulse min-w-0">
-                      <div className="flex-row items-center gap-2 mb-2 min-w-0">
-                         <span className="material-symbols-outlined text-sm shrink-0">security</span>
-                         <span className="text-[10px] font-black uppercase truncate">{t('pharmacy_v2.ipsg.high_alert_protocol')}</span>
-                      </div>
-                     <p className="text-[10px] font-bold mb-3">{t('pharmacy_v2.ipsg.double_check_msg')}</p>
-                     <input 
-                        type="email" 
-                        className="form-input w-full text-xs" 
-                        placeholder={t('pharmacy_v2.ipsg.witness_placeholder')} 
-                        required 
-                        id="witness_email"
-                     />
-                  </div>
-                )}
-
-                <div className="flex-column gap-3 min-w-0">
-                   <button 
-                      onClick={() => {
-                         const witness = document.getElementById('witness_email')?.value;
-                         const isHighAlert = verifyingMed.isHighAlert || ROUTE_CONFIG[verifyingMed.route]?.highAlert;
-                         if (isHighAlert && (!witness || witness === currentUser.email)) {
-                            alert(t('pharmacy_v2.ipsg.witness_mandatory'));
-                            return;
-                         }
-                         handleFinalDispense(witness);
-                      }} 
-                      className="btn-primary w-full py-4 font-black uppercase tracking-widest text-lg flex-row items-center justify-center gap-2" 
-                      style={{ backgroundColor: 'var(--secondary)' }}
-                   >
-                      <span className="material-symbols-outlined shrink-0">check_circle</span>
-                      <span className="truncate">{t('pharmacy_v2.ipsg.confirm_btn')}</span>
-                   </button>
-                   <button onClick={() => setVerifyingMed(null)} className="btn-ghost w-full font-bold opacity-60 flex-row items-center justify-center gap-2">
-                      <span className="material-symbols-outlined text-sm">close</span>
-                      {t('pharmacy_v2.ipsg.cancel_btn')}
-                   </button>
-                </div>
-            </ClinicalCard>
-         </div>
-      )}
     </div>
   );
 }

@@ -20,6 +20,23 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Central Enterprise Hospital Pharmacy Platform (NurseFlow HIS 2026)
+
+**Kategori:** `[MAJOR]` `[FEATURE]` `[ARCHITECTURE]` `[CLINICAL-PHARMACY]` `[SAFETY]`  
+**Status:** Completed & Verified via Build  
+**Komponen Terdampak:** `src/modules/pharmacy/pages/PharmacyPage.jsx`, `src/modules/pharmacy/components/PharmacyDashboardWorkspace.jsx`, `src/modules/pharmacy/components/PharmacistVerificationWorkspace.jsx`, `src/modules/pharmacy/components/MedicationReconciliationWorkspace.jsx`, `src/modules/pharmacy/components/ControlledDrugsWorkspace.jsx`, `src/modules/pharmacy/components/AntibioticStewardshipWorkspace.jsx`
+
+#### Detail Perbaikan:
+* **`[ENTERPRISE PHARMACY PLATFORM]` Platform Pengelolaan Medikasi Klinis & Operasional Berstandar JCI:**
+  1. **Pengembangan Pharmacy Dashboard Operasional & Safety (`PharmacyDashboardWorkspace.jsx`):** Menampilkan KPI Prescriptions Queue, High Alert Meds, Peringatan LASA (Tall Man), Alergi Obat, Narkotika/Psikotropika, Antibiotic Stewardship, dan Rekonsiliasi Obat.
+  2. **Pengembangan Pharmacist Verification Workspace (`PharmacistVerificationWorkspace.jsx`):** Verifikasi keselamatan klinis apoteker mencakup 12 Parameter (*Right Patient, Medication, Dosage, Route, Frequency, Allergy Check, Drug Interactions, Renal Function eGFR, High Alert Double-Check*) dan Generator **Etiket Obat Digital (Dispensing Thermal Label)**.
+  3. **Pengembangan Medication Reconciliation Engine (`MedicationReconciliationWorkspace.jsx`):** Lembar komparasi obat pra-admisi vs obat bangsal saat Admisi 24 Jam Pertama, Transfer Bangsal/ICU, dan Pemulangan Pasien (*Discharge Summary*).
+  4. **Pengembangan Controlled Drugs & Witness Attestation (`ControlledDrugsWorkspace.jsx`):** Pengelolaan brankas narkotika/psikotropika dengan otentikasi saksi ganda (*Double-Sign Witness Log*) dan pencatatan sisa sediaan (*Waste Log*).
+  5. **Pengembangan Antibiotic Stewardship Program / PPRA (`AntibioticStewardshipWorkspace.jsx`):** Penatalaksanaan penggunaan antibiotik spektrum luas terintegrasi dengan hasil kultur mikrobiologi & intervensi de-eskalasi terapi.
+  6. **Penyelarasan Visual Identity Ocean Teal:** Mengadopsi bahasa desain **Ocean Teal NurseFlow** (Professional, Clinical, Clean, Premium Enterprise).
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — 100% Completion of 48 Information Architecture Sub-Modules in Central Inventory Engine
 
 **Kategori:** `[MAJOR]` `[FEATURE]` `[COMPLIANCE]` `[ARCHITECTURE]`  
