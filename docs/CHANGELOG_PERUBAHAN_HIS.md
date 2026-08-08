@@ -20,6 +20,19 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Fix Patient Detail Side Inspector Dynamic Data Mapping
+
+**Kategori:** `[FIX]` `[ENHANCEMENT]`  
+**Status:** Completed  
+**Komponen Terdampak:** `src/modules/emr/components/PatientDetailDrawerModal.jsx`
+
+#### Detail Perbaikan:
+* **`[FIX]` Pemetaan Alamat Lengkap Pasien:** Memperbaiki pengecekan properti alamat agar membaca dari `patient.address`, `patient.alamat_lengkap`, `patient.alamat`, `patient.street_address`, maupun `patient.demographics.address` sehingga tidak lagi menampilkan `-`.
+* **`[FIX]` Eliminasi Hardcoded Kota & Provinsi:** Mengubah nilai hardcoded `Jakarta Timur` dan `DKI Jakarta, INDONESIA` menjadi pemetaan dinamis `patient.city` / `patient.demographics.city` / `patient.demographics.pob` dan `patient.province`.
+* **`[FIX]` Pemetaan No. HP / WhatsApp & Email:** Memperbaiki pembacaan variabel `patient.phone`, `patient.phone_number`, `patient.mobile_phone`, `patient.no_hp`, `patient.demographics.phone`, serta menambahkan info Kontak Darurat jika tersedia.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Synchronize Remote & Enterprise EMR Phase 1-8 Rollout
 
 **Kategori:** `[MAJOR]` `[FEATURE]` `[DOCS]`  

@@ -9,20 +9,30 @@ export default function PatientDetailDrawerModal({ isOpen, onClose, patient }) {
 
   if (!isOpen || !patient) return null;
 
-  const patientName = patient?.name || patient?.nama || 'Pasien Tanpa Nama';
-  const patientMrn = patient?.mrn || patient?.medical_record_no || '-';
-  const patientNik = patient?.nik || patient?.identity_number || '-';
-  const patientDob = patient?.dob || patient?.birth_date || '-';
-  const patientGender = patient?.gender === 'F' || patient?.gender === 'Perempuan' ? 'Perempuan' : 'Laki-laki';
-  const patientPhone = patient?.phone || patient?.mobile_phone || '-';
-  const patientEmail = patient?.email || '-';
-  const patientAddress = patient?.address || '-';
-  const bloodType = patient?.blood_type || '-';
-  const maritalStatus = patient?.marital_status || '-';
-  const religion = patient?.religion || '-';
+  const patientName = patient?.name || patient?.nama || patient?.fullName || 'Pasien Tanpa Nama';
+  const patientMrn = patient?.mrn || patient?.medical_record_no || patient?.no_rm || '-';
+  const patientNik = patient?.nik || patient?.identity_number || patient?.no_ktp || patient?.demographics?.nik || '-';
+  const patientDob = patient?.dob || patient?.birth_date || patient?.tgl_lahir || patient?.demographics?.dob || '-';
+  const genderRaw = patient?.gender || patient?.jenis_kelamin || patient?.demographics?.gender || '';
+  const patientGender = genderRaw === 'F' || genderRaw === 'Perempuan' || genderRaw === 'P' ? 'Perempuan' : 'Laki-laki';
+  
+  const patientPhone = patient?.phone || patient?.mobile_phone || patient?.phone_number || patient?.no_hp || patient?.demographics?.phone || patient?.contact?.phone || '-';
+  const patientEmail = patient?.email || patient?.demographics?.email || patient?.contact?.email || '-';
+  
+  const patientAddress = patient?.address || patient?.alamat_lengkap || patient?.alamat || patient?.street_address || patient?.demographics?.address || '-';
+  const patientCity = patient?.city || patient?.kota || patient?.kabupaten || patient?.demographics?.city || patient?.demographics?.pob || 'Bandung';
+  const patientProvince = patient?.province || patient?.provinsi || patient?.demographics?.province || 'Jawa Barat, INDONESIA';
+  
+  const bloodType = patient?.blood_type || patient?.golongan_darah || patient?.demographics?.blood_type || '-';
+  const maritalStatus = patient?.marital_status || patient?.status_perkawinan || patient?.demographics?.marital_status || '-';
+  const religion = patient?.religion || patient?.agama || patient?.demographics?.religion || '-';
+
+  const emergencyName = patient?.emergency_name || patient?.emergency_contact?.name || patient?.penanggung_jawab?.nama || '-';
+  const emergencyPhone = patient?.emergency_phone || patient?.emergency_contact?.phone || patient?.penanggung_jawab?.phone || '-';
+  const emergencyRel = patient?.relationship || patient?.emergency_contact?.relation || patient?.penanggung_jawab?.hubungan || 'Wali / Keluarga';
 
   const handleCopy = (text, fieldName) => {
-    if (!text) return;
+    if (!text || text === '-') return;
     navigator.clipboard.writeText(text);
     setCopiedField(fieldName);
     toast.success(`${fieldName} tersalin ke clipboard!`, {
@@ -147,11 +157,11 @@ export default function PatientDetailDrawerModal({ isOpen, onClose, patient }) {
                 </div>
                 <div className="flex justify-between py-1 border-t border-outline-variant/10">
                   <span className="text-on-surface-variant">Kota / Kabupaten:</span>
-                  <span className="font-bold text-on-surface">Jakarta Timur</span>
+                  <span className="font-bold text-on-surface">{patientCity}</span>
                 </div>
                 <div className="flex justify-between py-1 border-t border-outline-variant/10">
                   <span className="text-on-surface-variant">Provinsi & Negara:</span>
-                  <span className="font-bold text-on-surface">DKI Jakarta, INDONESIA</span>
+                  <span className="font-bold text-on-surface">{patientProvince}</span>
                 </div>
               </div>
             </div>
@@ -167,30 +177,40 @@ export default function PatientDetailDrawerModal({ isOpen, onClose, patient }) {
                   <span className="text-on-surface-variant">Ponsel / WhatsApp:</span>
                   <div className="flex items-center gap-1.5">
                     <span className="font-mono font-bold text-emerald-600 flex items-center gap-1">
-                      <CheckCircle2 size={13} /> {patientPhone}
+                      {patientPhone !== '-' && <CheckCircle2 size={13} />} {patientPhone}
                     </span>
-                    <button 
-                      onClick={() => handleCopy(patientPhone, 'Nomor HP')} 
-                      title="Copy No. HP" 
-                      className="p-1 hover:bg-surface-container-high rounded text-emerald-600 transition-colors cursor-pointer"
-                    >
-                      {copiedField === 'Nomor HP' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
-                    </button>
+                    {patientPhone !== '-' && (
+                      <button 
+                        onClick={() => handleCopy(patientPhone, 'Nomor HP')} 
+                        title="Copy No. HP" 
+                        className="p-1 hover:bg-surface-container-high rounded text-emerald-600 transition-colors cursor-pointer"
+                      >
+                        {copiedField === 'Nomor HP' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div className="flex justify-between items-center py-1">
+                <div className="flex justify-between items-center py-1 border-b border-outline-variant/10">
                   <span className="text-on-surface-variant">Email Terdaftar:</span>
                   <div className="flex items-center gap-1.5">
                     <span className="font-mono text-on-surface truncate max-w-[180px]">{patientEmail}</span>
-                    <button 
-                      onClick={() => handleCopy(patientEmail, 'Email')} 
-                      title="Copy Email" 
-                      className="p-1 hover:bg-surface-container-high rounded text-primary transition-colors cursor-pointer"
-                    >
-                      {copiedField === 'Email' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
-                    </button>
+                    {patientEmail !== '-' && (
+                      <button 
+                        onClick={() => handleCopy(patientEmail, 'Email')} 
+                        title="Copy Email" 
+                        className="p-1 hover:bg-surface-container-high rounded text-primary transition-colors cursor-pointer"
+                      >
+                        {copiedField === 'Email' ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                      </button>
+                    )}
                   </div>
                 </div>
+                {emergencyName !== '-' && (
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-on-surface-variant">Kontak Darurat ({emergencyRel}):</span>
+                    <span className="font-bold text-on-surface">{emergencyName} ({emergencyPhone})</span>
+                  </div>
+                )}
               </div>
             </div>
 
