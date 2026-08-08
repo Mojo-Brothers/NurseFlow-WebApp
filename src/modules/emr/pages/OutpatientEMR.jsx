@@ -155,14 +155,7 @@ export default function OutpatientEMR() {
   usePatientClipboardShortcuts();
 
   useEffect(() => {
-    fetchPatients().then(() => {
-      const dewi = patients.find(p => p.id === 'demo-patient-dewi');
-      if (dewi) {
-        selectPatient(dewi.id);
-      } else if (!selectedPatientId && patients.length > 0) {
-        selectPatient(patients[0].id);
-      }
-    });
+    fetchPatients();
   }, [fetchPatients]);
 
   useEffect(() => {
@@ -1376,7 +1369,8 @@ export default function OutpatientEMR() {
         isOpen={isPatientPickerOpen} 
         onClose={() => setIsPatientPickerOpen(false)} 
         onSelect={(selected) => {
-          selectPatient(selected.patientId || selected.id);
+          const targetId = typeof selected === 'object' ? (selected.patientId || selected.id) : selected;
+          if (targetId) selectPatient(targetId);
           setSelectedModule(null);
           setIsPatientPickerOpen(false);
         }} 

@@ -20,6 +20,19 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Fix Patient Context Switcher & Search Modal Selection Override Bug
+
+**Kategori:** `[FIX]` `[ENHANCEMENT]`  
+**Status:** Completed  
+**Komponen Terdampak:** `src/modules/emr/pages/OutpatientEMR.jsx`, `src/modules/emr/pages/InpatientEMR.jsx`, `src/modules/emr/components/PatientSearchModal.jsx`
+
+#### Detail Perbaikan:
+* **`[ROOT CAUSE FIX 1]` Eliminasi Hardcoded Patient Override Effect:** Menghapus efek `useEffect` di [OutpatientEMR.jsx](file:///c:/Users/Mojo/NurseFlow-WebApp/src/modules/emr/pages/OutpatientEMR.jsx) yang sebelumnya memaksa memanggil `selectPatient('demo-patient-dewi')` setiap kali daftar pasien di-fetch, sehingga menimpa (*override*) pilihan pasien yang diklik pengguna di modal/bar pencarian.
+* **`[ROOT CAUSE FIX 2]` Pemetaan Parameter `onSelect` Modal Pencarian:** Memperbaiki handler `onSelect` di [OutpatientEMR.jsx](file:///c:/Users/Mojo/NurseFlow-WebApp/src/modules/emr/pages/OutpatientEMR.jsx#L1371) dan [InpatientEMR.jsx](file:///c:/Users/Mojo/NurseFlow-WebApp/src/modules/emr/pages/InpatientEMR.jsx#L443) agar mampu menangani parameter string ID (`item.patientId`) maupun objek pasien (`selected.id` / `selected.patientId`) sehingga `selectPatient(targetId)` tidak lagi memanggil `undefined`.
+* **`[ENHANCEMENT]` Dukungan Polimorfik `PatientSearchModal.jsx`:** Memperbarui callback `onSelect` agar melewatkan `(patientId, encounterId, item)` secara aman untuk seluruh konsumen modul EMR.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Integration of Clinical Dashboard & Analytics Seeder to Dummy Data Management Hub
 
 **Kategori:** `[FEATURE]` `[ENHANCEMENT]`  

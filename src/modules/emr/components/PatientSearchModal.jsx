@@ -143,7 +143,7 @@ export default function PatientSearchModal({ isOpen, onClose, onSelect, initialC
     if (selection && selection.toString().trim().length > 0) {
       return;
     }
-    onSelect(item.patientId, item.encounterId);
+    onSelect(item.patientId, item.encounterId, item);
   };
 
   const handleCopyText = (text, idKey, label, e) => {

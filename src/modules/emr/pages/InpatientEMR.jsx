@@ -440,7 +440,15 @@ export default function InpatientEMR() {
         </main>
       </div>
 
-      <PatientSearchModal isOpen={isPatientPickerOpen} onClose={() => setIsPatientPickerOpen(false)} onSelect={(s) => { selectPatient(s.id); setIsPatientPickerOpen(false); }} />
+      <PatientSearchModal 
+        isOpen={isPatientPickerOpen} 
+        onClose={() => setIsPatientPickerOpen(false)} 
+        onSelect={(s) => { 
+          const targetId = typeof s === 'object' ? (s.patientId || s.id) : s; 
+          if (targetId) selectPatient(targetId); 
+          setIsPatientPickerOpen(false); 
+        }} 
+      />
     </div>
   );
 }
