@@ -32,3 +32,11 @@ Every development task MUST follow:
 - DO NOT maintain legacy designs/workflows just because they exist. Use them ONLY as a reference.
 - AI has FULL AUTHORITY to: delete ineffective components, change layouts, restructure menus, alter navigation, split/merge modules, and perform massive refactoring/redesigns if it aligns with international HIS standards.
 - If a root cause of a problem is architectural, database-related, or workflow-related, REDESIGN it. Do not just patch bugs.
+
+## Mandatory Update Logging Protocol (Wajib Catat Log Perubahan)
+- ALL updates (from small bugfixes, UI tweaks, to major architectural features) MUST be documented in **Bahasa Indonesia** inside [`docs/CHANGELOG_PERUBAHAN_HIS.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/CHANGELOG_PERUBAHAN_HIS.md).
+- Whenever changes are made or pulled, append a new log entry at the top of the chronological update section detailing:
+  - Date & Commit/Phase Info
+  - Update Category (`[MAJOR]`, `[FEATURE]`, `[ENHANCEMENT]`, `[FIX]`, `[DOCS]`, `[CHORE]`)
+  - Detailed summary of affected components/files and business logic impact.
+
