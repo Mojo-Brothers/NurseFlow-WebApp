@@ -20,6 +20,24 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Complete Unification & Standardization of Outpatient & Inpatient Clinical Dashboards
+
+**Kategori:** `[MAJOR]` `[FEATURE]` `[ARCHITECTURE]` `[UI/UX]`  
+**Status:** Completed & Verified via Build  
+**Komponen Terdampak:** `src/modules/emr/pages/InpatientEMR.jsx`, `src/modules/emr/pages/OutpatientEMR.jsx`, `src/modules/emr/components/PatientDetailDrawerModal.jsx`
+
+#### Detail Perbaikan:
+* **`[ARCHITECTURAL UNIFICATION]` Penggabungan Komponen & Fitur Unggulan Rajal & Ranap:**
+  1. **Unified Enterprise Context Header**: Menyelaraskan top ribbon context di Rawat Jalan dan Rawat Inap, menggabungkan Avatar Pasien, Badges Alergi/Penjamin/JCI, Indikator Bangsal/Kamar/Bed/LOS, serta tombol peluncur **Side Inspector 👁️ (`PatientDetailDrawerModal`)** untuk 21 kategori data master pasien.
+  2. **Unified 4-Card Dashboard Overview Grid**:
+     * 🫀 *Card 1: Tanda Vital & Live NEWS2 Indicator* (BP, HR, Suhu, SpO2, & Kalkulasi Skor EWS NEWS2 Live Risk Badge).
+     * 👨‍⚕️ *Card 2: DPJP & Tim Asuhan Multidisiplin (PPA)* (DPJP Utama, Perawat Shift, Apoteker Klinik, Dietisien).
+     * 🛡️ *Card 3: Clinical Safety Flags & Risk Assessments* (Alergi Obat/Makanan, Skala Morse Fall Risk, Braden Pressure Ulcer Risk, Status Isolasi).
+     * ⚡ *Card 4: Quick Command Action Hub* (Akses Cepat 1-Klik membuka Lembar Kerja SOAP Harian/Poli, CPOE Resep, Handover SBAR, Informed Consent, & Resume Pulang).
+  3. **Unified Berkas Rekam Medis Sah & Terverifikasi**: Menyelaraskan kontainer rekam medis terverifikasi lengkap dengan bilah pencarian real-time, filter kategori modul, lisensi tanda tangan digital, modal preview dokumen (`previewRecord`), serta tombol pengaksesan formulir.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Implementation of Verified Medical Records Section & Preview Modal in Inpatient EMR
 
 **Kategori:** `[FIX]` `[FEATURE]` `[UI/UX]`  

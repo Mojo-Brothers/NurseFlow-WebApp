@@ -56,6 +56,7 @@ import DischargeSummaryForm from '../components/DischargeSummaryForm.jsx';
 import ConsultationRequestForm from '../components/ConsultationRequestForm.jsx';
 import ConsultationResponseForm from '../components/ConsultationResponseForm.jsx';
 import ReferralLetterForm from '../components/ReferralLetterForm.jsx';
+import PatientDetailDrawerModal from '../components/PatientDetailDrawerModal.jsx';
 
 // ─── INPATIENT SPECIFIC MODULE GROUPS ─────────────────────────
 const INPATIENT_MODULE_GROUPS = [
@@ -126,6 +127,7 @@ export default function InpatientEMR() {
   const { selectedEncounterId, fetchPatientActiveEncounter, activeEncounters } = useEncounterStore();
 
   const [isPatientPickerOpen, setIsPatientPickerOpen] = useState(false);
+  const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
   const [expandedGroups, setExpandedGroups] = useState({ 'CPPT & MONITORING HARIAN (COP)': true, 'PENGKAJIAN ADMISI (AOP)': true });
   const [soapRecords, setSoapRecords] = useState([]);
@@ -214,65 +216,125 @@ export default function InpatientEMR() {
             </div>
           </div>
 
-          {/* Quick Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Vitals */}
-            <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm">
-              <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
-                <Activity size={16} className="text-[var(--primary)]" /> Tanda Vital Terakhir
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between items-center p-2.5 bg-[var(--surface-container)] rounded-xl">
-                  <span className="text-xs font-bold text-[var(--on-surface-variant)]">Tekanan Darah</span>
-                  <span className="text-sm font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.bp || '120/80'} mmHg</span>
+          {/* ─── UNIFIED 4-CARD DASHBOARD OVERVIEW GRID ─── */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Card 1: Vitals & Live NEWS2 Indicator */}
+            <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
+                  <Activity size={16} className="text-[var(--primary)]" /> Tanda Vital &amp; EWS NEWS2
+                </h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
+                    <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Tekanan Darah</span>
+                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.bp || '120/80'} <span className="text-[9px] text-slate-400">mmHg</span></span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
+                    <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Detak Jantung</span>
+                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.hr || '82'} <span className="text-[9px] text-slate-400">bpm</span></span>
+                  </div>
+                  <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
+                    <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Suhu Tubuh</span>
+                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.temp || '36.8'} <span className="text-[9px] text-slate-400">°C</span></span>
+                  </div>
                 </div>
-                <div className="flex justify-between items-center p-2.5 bg-[var(--surface-container)] rounded-xl">
-                  <span className="text-xs font-bold text-[var(--on-surface-variant)]">Detak Jantung</span>
-                  <span className="text-sm font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.hr || '82'} bpm</span>
-                </div>
-                <div className="flex justify-between items-center p-2.5 bg-[var(--surface-container)] rounded-xl">
-                  <span className="text-xs font-bold text-[var(--on-surface-variant)]">Suhu Tubuh</span>
-                  <span className="text-sm font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.temp || '36.8'} °C</span>
+              </div>
+              <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between">
+                <span className="text-[9px] font-black uppercase text-emerald-700">EWS NEWS2 SCORE</span>
+                <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {activeEncounter?.news2_score || 1} (LOW RISK)
+                </span>
+              </div>
+            </div>
+
+            {/* Card 2: DPJP & Tim Asuhan Multidisiplin */}
+            <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
+                  <UserCheck size={16} className="text-teal-600" /> DPJP &amp; Tim Asuhan (PPA)
+                </h3>
+                <div className="space-y-2">
+                  <div className="p-2 bg-teal-500/8 border border-teal-500/20 rounded-xl">
+                    <span className="text-[8px] font-black uppercase text-teal-700 block">DPJP UTAMA</span>
+                    <span className="text-xs font-black text-[var(--on-surface)] truncate block">{activeEncounter?.doctor_name || 'dr. Robby Viory, Sp.B'}</span>
+                  </div>
+                  <div className="p-2 bg-[var(--surface-container)] rounded-xl">
+                    <span className="text-[8px] font-black uppercase text-[var(--on-surface-variant)] block">PERAWAT SHIFT</span>
+                    <span className="text-xs font-bold text-[var(--on-surface)] truncate block">Ns. Sarah, S.Kep</span>
+                  </div>
+                  <div className="p-2 bg-[var(--surface-container)] rounded-xl">
+                    <span className="text-[8px] font-black uppercase text-[var(--on-surface-variant)] block">APOTEKER KLINIK</span>
+                    <span className="text-xs font-bold text-[var(--on-surface)] truncate block">Apt. Siti Aminah, S.Farm</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* DPJP & Care Team */}
-            <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm">
-              <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
-                <UserCheck size={16} className="text-teal-600" /> DPJP &amp; Tim Asuhan
-              </h3>
-              <div className="space-y-2">
-                <div className="p-2.5 bg-teal-500/8 border border-teal-500/20 rounded-xl">
-                  <span className="text-[9px] font-black uppercase text-teal-700 block">DPJP UTAMA</span>
-                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.doctor_name || 'dr. Alexander, Sp.PD'}</span>
-                </div>
-                <div className="p-2.5 bg-[var(--surface-container)] rounded-xl">
-                  <span className="text-[9px] font-black uppercase text-[var(--on-surface-variant)] block">Perawat Penanggung Jawab</span>
-                  <span className="text-xs font-bold text-[var(--on-surface)]">Ns. Sarah, S.Kep</span>
+            {/* Card 3: Clinical Safety Flags & Risk Assessments */}
+            <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
+                  <ShieldAlert size={16} className="text-red-500" /> Safety Flags &amp; Risk
+                </h3>
+                <div className="space-y-2">
+                  {activePatient?.allergies?.length > 0 ? (
+                    <div className="p-2 bg-red-500/10 border border-red-500/25 rounded-xl text-red-700 text-xs font-bold flex items-center gap-1.5 truncate">
+                      <ShieldAlert size={13} className="shrink-0" /> Alergi: {activePatient.allergies[0].agent}
+                    </div>
+                  ) : (
+                    <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 text-xs font-bold flex items-center gap-1.5">
+                      <ShieldCheck size={13} className="shrink-0" /> NKDA (Tidak ada alergi)
+                    </div>
+                  )}
+                  <div className="p-2 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-700 text-[11px] font-bold flex items-center gap-1.5">
+                    <AlertTriangle size={13} className="shrink-0" /> Morse Fall Risk: SEDANG (35)
+                  </div>
+                  <div className="p-2 bg-blue-500/10 border border-blue-500/25 rounded-xl text-blue-700 text-[11px] font-bold flex items-center gap-1.5">
+                    <Scale size={13} className="shrink-0" /> Braden Score: 18 (LOW RISK)
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Inpatient Safety Flags */}
-            <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm">
-              <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
-                <ShieldAlert size={16} className="text-red-500" /> Clinical Safety Flags
-              </h3>
-              <div className="space-y-2">
-                {activePatient?.allergies?.length > 0 ? (
-                  <div className="p-2.5 bg-red-500/10 border border-red-500/25 rounded-xl text-red-700 text-xs font-bold flex items-center gap-2">
-                    <ShieldAlert size={14} /> Alergi: {activePatient.allergies[0].agent}
-                  </div>
-                ) : (
-                  <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 text-xs font-bold flex items-center gap-2">
-                    <ShieldCheck size={14} /> NKDA (Tidak ada alergi obat)
-                  </div>
-                )}
-                <div className="p-2.5 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-700 text-xs font-bold flex items-center gap-2">
-                  <AlertTriangle size={14} /> Risiko Jatuh Morse: SEDANG (Skor 35)
+            {/* Card 4: Quick Command Action Hub */}
+            <div className="p-6 glass-panel rounded-3xl border border-indigo-500/20 shadow-sm bg-indigo-500/5 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xs font-black uppercase text-indigo-700 mb-3 flex items-center gap-2">
+                  <Zap size={16} className="text-indigo-600 fill-indigo-600" /> Command Action Hub
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <button 
+                    onClick={() => setSelectedModule('SOAP NOTES (CPPT HARIAN)')}
+                    className="p-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all text-center shadow-xs cursor-pointer"
+                  >
+                    + SOAP Harian
+                  </button>
+                  <button 
+                    onClick={() => setSelectedModule('ORDER RESEP / CPOE')}
+                    className="p-2 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-teal-700 transition-all text-center shadow-xs cursor-pointer"
+                  >
+                    + CPOE Resep
+                  </button>
+                  <button 
+                    onClick={() => setSelectedModule('TRANSFER INTERNAL (SBAR)')}
+                    className="p-2 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-purple-700 transition-all text-center shadow-xs cursor-pointer"
+                  >
+                    + Handover SBAR
+                  </button>
+                  <button 
+                    onClick={() => setSelectedModule('PERSETUJUAN TINDAKAN')}
+                    className="p-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-amber-700 transition-all text-center shadow-xs cursor-pointer"
+                  >
+                    + Consent Form
+                  </button>
                 </div>
               </div>
+              <button 
+                onClick={() => setSelectedModule('RESUME MEDIS RAWAT INAP')}
+                className="mt-3 w-full py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all text-center shadow-xs cursor-pointer"
+              >
+                + Resume Pulang (Discharge)
+              </button>
             </div>
           </div>
 
@@ -507,6 +569,14 @@ export default function InpatientEMR() {
                   <UserCheck size={12} className="text-teal-600" />
                   <span className="text-[10px] font-black text-teal-700 uppercase">DPJP: {activeEncounter?.doctor_name || 'dr. Alexander, Sp.PD'}</span>
                 </div>
+                <button
+                  onClick={() => setIsDetailDrawerOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007399]/15 border border-[#007399]/30 rounded-xl text-[10px] font-black text-[#007399] dark:text-cyan-300 hover:bg-[#007399] hover:text-white transition-all cursor-pointer shadow-xs"
+                  title="Buka Side Inspector Master Data Pasien (21 Kategori)"
+                >
+                  <Eye size={12} />
+                  <span>Side Inspector 👁️</span>
+                </button>
               </div>
             </div>
           </div>
@@ -653,6 +723,12 @@ export default function InpatientEMR() {
           if (targetId) selectPatient(targetId); 
           setIsPatientPickerOpen(false); 
         }} 
+      />
+
+      <PatientDetailDrawerModal
+        isOpen={isDetailDrawerOpen}
+        onClose={() => setIsDetailDrawerOpen(false)}
+        patient={activePatient}
       />
     </div>
   );

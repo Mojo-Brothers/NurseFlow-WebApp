@@ -49,6 +49,7 @@ import PhysicalExaminationForm from '../components/PhysicalExaminationForm.jsx';
 import ConsultationRequestForm from '../components/ConsultationRequestForm.jsx';
 import ConsultationResponseForm from '../components/ConsultationResponseForm.jsx';
 import ReferralLetterForm from '../components/ReferralLetterForm.jsx';
+import PatientDetailDrawerModal from '../components/PatientDetailDrawerModal.jsx';
 
 const JCI_MODULE_GROUPS = [
   {
@@ -139,6 +140,7 @@ export default function OutpatientEMR() {
   const { selectedEncounterId, fetchPatientActiveEncounter, activeEncounters, setLiveContext, liveContext } = useEncounterStore();
   
   const [isPatientPickerOpen, setIsPatientPickerOpen] = useState(false);
+  const [isDetailDrawerOpen, setIsDetailDrawerOpen] = useState(false);
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
   const [previewRecord, setPreviewRecord] = useState(null);
   const [selectedModule, setSelectedModule] = useState(null);
@@ -1176,6 +1178,15 @@ export default function OutpatientEMR() {
                     </span>
                   </div>
                 )}
+
+                <button
+                  onClick={() => setIsDetailDrawerOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#007399]/15 border border-[#007399]/30 rounded-xl text-[10px] font-black text-[#007399] dark:text-cyan-300 hover:bg-[#007399] hover:text-white transition-all cursor-pointer shadow-xs"
+                  title="Buka Side Inspector Master Data Pasien (21 Kategori)"
+                >
+                  <Eye size={12} />
+                  <span>Side Inspector 👁️</span>
+                </button>
               </div>
 
               {/* Row 3: Safety Flags — always visible when present */}
@@ -1588,6 +1599,12 @@ export default function OutpatientEMR() {
           </div>
         </div>
       )}
+      {/* Patient Side Inspector Drawer */}
+      <PatientDetailDrawerModal
+        isOpen={isDetailDrawerOpen}
+        onClose={() => setIsDetailDrawerOpen(false)}
+        patient={activePatient}
+      />
     </div>
   );
 }
