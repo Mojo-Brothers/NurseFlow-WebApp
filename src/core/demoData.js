@@ -188,9 +188,32 @@ function generate100Patients() {
       chief_complaint: complaint
     });
 
-    // Populate JCI-Certified Medical Records for each patient
+    // Populate Chronological JCI-Certified Medical Records Journey (Rajal -> SPRI -> Ranap)
+    // 1. Episode Rajal Awal (Pengkajian Poliklinik 3 Hari Lalu)
     records.push({
-      id: `rec-cppt-${patientId}`,
+      id: `rec-aop-rajal-${patientId}`,
+      patientId: patientId,
+      patient_id: patientId,
+      mrn: mrn,
+      patientName: fullName,
+      doctor: deptObj.doctor,
+      doctor_name: deptObj.doctor,
+      moduleName: 'PENGKAJIAN AWAL MEDIS (RJ)',
+      chapter: 'AOP',
+      title: 'Pengkajian Awal Poliklinik & UGD (Episode Rajal Awal)',
+      status: 'SIGNED_VERIFIED',
+      subjective: `Pasien ${fullName} pertama kali datang berobat ke Poliklinik/UGD dengan keluhan utama: ${complaint}`,
+      objective: `Pemeriksaan TTV Awal Poli: TD ${systolic}/${diastolic} mmHg, HR ${hr} bpm, Temp ${temp}°C, SpO2 97%. Status GCS 15.`,
+      assessment: `Diagnosis Kerja Poliklinik: ${complaint.split(',')[0]} (ICD-10: A91 / J45). Indikasi Kuat Perlu Perawatan Rawat Inap.`,
+      plan: `Keputusan Medis DPJP (${deptObj.doctor}): Terbitkan Surat Perintah Rawat Inap (SPRI) & Transfer Pasien ke Bangsal.`,
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-AOP-POLI`,
+      created_at: new Date(Date.now() - 3600000 * 72).toISOString(),
+      date: new Date(Date.now() - 3600000 * 72).toISOString().replace('T', ' ').substring(0, 16)
+    });
+
+    // 2. Episode Rajal Awal (SOAP Konsultasi Poli 3 Hari Lalu)
+    records.push({
+      id: `rec-cppt-rajal-${patientId}`,
       patientId: patientId,
       patient_id: patientId,
       mrn: mrn,
@@ -199,40 +222,86 @@ function generate100Patients() {
       doctor_name: deptObj.doctor,
       moduleName: 'SOAP NOTES (CPPT)',
       chapter: 'COP',
-      title: 'Catatan CPPT & SOAP Perkembangan Pasien',
+      title: 'Catatan SOAP Konsultasi Poliklinik Awal',
       status: 'SIGNED_VERIFIED',
-      subjective: `Pasien ${fullName} mengeluhkan: ${complaint}`,
-      objective: `TD: ${systolic}/${diastolic} mmHg, HR: ${hr} bpm, Temp: ${temp}°C, SpO2: 98%`,
-      assessment: `Keluhan Terkontrol - Diagnosis Utama: ${complaint.split(',')[0]}`,
-      plan: `Instruksi DPJP (${deptObj.doctor}): Terapi medikasi oral & evaluasi berkala 24 jam.`,
-      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-COP`,
-      created_at: new Date(Date.now() - 3600000 * i).toISOString(),
-      date: new Date(Date.now() - 3600000 * i).toISOString().replace('T', ' ').substring(0, 16)
+      subjective: `S: Pasien mengeluhkan gejala memberat sejak 2 hari: ${complaint}`,
+      objective: `O: Keadaan umum sedang, tampak lemas. TTV Awal: TD ${systolic}/${diastolic} mmHg, HR ${hr} bpm.`,
+      assessment: `A: ${complaint.split(',')[0]} - Perlu Observasi Intensif & Terapi Cairan Intravena di Bangsal.`,
+      plan: `P: Pro-admisi Rawat Inap. Siapkan transfer SBAR ke Unit Rawat Inap (Bangsal Chrysant/Orchid).`,
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-COP-POLI`,
+      created_at: new Date(Date.now() - 3600000 * 70).toISOString(),
+      date: new Date(Date.now() - 3600000 * 70).toISOString().replace('T', ' ').substring(0, 16)
     });
 
+    // 3. Surat Perintah Rawat Inap / Transfer SBAR (2 Hari Lalu)
     records.push({
-      id: `rec-aop-${patientId}`,
+      id: `rec-transfer-spri-${patientId}`,
       patientId: patientId,
       patient_id: patientId,
       mrn: mrn,
       patientName: fullName,
       doctor: deptObj.doctor,
       doctor_name: deptObj.doctor,
-      moduleName: 'PENGKAJIAN AWAL (AOP)',
-      chapter: 'AOP',
-      title: 'Pengkajian Awal Medis & Keperawatan JCI',
+      moduleName: 'TRANSFER INTERNAL (SBAR)',
+      chapter: 'ACC',
+      title: 'Surat Perintah Rawat Inap (SPRI) & Transfer SBAR Rajal ke Ranap',
       status: 'SIGNED_VERIFIED',
-      subjective: `Pengkajian awal admisi poliklinik / rawat jalan untuk ${fullName}.`,
-      objective: `Status Fisiologis: GCS 15 (E4V5M6), Compos Mentis. Risiko Jatuh: ${i % 4 === 0 ? 'HIGH' : 'LOW'}.`,
-      assessment: `Pasien Terbuka Untuk Perawatan Terpadu. Alergi Obat: ${allergy.length > 0 ? allergy[0].agent : 'Tidak Ada'}.`,
-      plan: `Penetapan DPJP Utama: ${deptObj.doctor}. Edukasi Pasien & Keluarga (JCI PFR).`,
-      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-AOP`,
-      created_at: new Date(Date.now() - 3600000 * (i + 1)).toISOString(),
-      date: new Date(Date.now() - 3600000 * (i + 1)).toISOString().replace('T', ' ').substring(0, 16)
+      subjective: `Handover Transfer Pasien dari Poliklinik/UGD ke Bangsal Rawat Inap.`,
+      objective: `Pasien dipindahkan dalam kondisi stabil. TTV: TD ${systolic}/${diastolic} mmHg, HR ${hr} bpm. Terpasang Infus RL.`,
+      assessment: `Transfer Pasien Rawat Jalan ke Rawat Inap Disetujui DPJP Utama ${deptObj.doctor}.`,
+      plan: `Instruksi Bangsal: Lakukan Pengkajian Admisi 24 Jam, Monitoring NEWS2, & Terapi Medikasi IV.`,
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-SPRI-TRANSFER`,
+      created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+      date: new Date(Date.now() - 3600000 * 48).toISOString().replace('T', ' ').substring(0, 16)
     });
 
+    // 4. Episode Rawat Inap (Catatan Admisi Bangsal 24 Jam - 1 Hari Lalu)
     records.push({
-      id: `rec-mmu-${patientId}`,
+      id: `rec-admisi-ranap-${patientId}`,
+      patientId: patientId,
+      patient_id: patientId,
+      mrn: mrn,
+      patientName: fullName,
+      doctor: deptObj.doctor,
+      doctor_name: deptObj.doctor,
+      moduleName: 'CATATAN ADMISI RAWAT INAP',
+      chapter: 'AOP',
+      title: 'Pengkajian Admisi Rawat Inap 24 Jam JCI',
+      status: 'SIGNED_VERIFIED',
+      subjective: `Admisi Rawat Inap Bangsal Hari Ke-1. Keluhan utama pasca rujukan Poli: ${complaint}`,
+      objective: `TTV Bangsal: TD ${systolic}/${diastolic} mmHg, HR ${hr} bpm, Temp ${temp}°C. Skala Braden: 18 (Low Risk), Morse: Low Risk.`,
+      assessment: `Pasien Resmi Dirawat di Bangsal Rawat Inap di bawah DPJP Utama ${deptObj.doctor}.`,
+      plan: `Rencana Asuhan Keperawatan (COP), Visite DPJP Harian, & Rekonsiliasi Obat eMAR.`,
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-AOP-RANAP`,
+      created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
+      date: new Date(Date.now() - 3600000 * 24).toISOString().replace('T', ' ').substring(0, 16)
+    });
+
+    // 5. Episode Rawat Inap (SOAP CPPT Visite Harian Bangsal - Hari Ini)
+    records.push({
+      id: `rec-cppt-ranap-${patientId}`,
+      patientId: patientId,
+      patient_id: patientId,
+      mrn: mrn,
+      patientName: fullName,
+      doctor: deptObj.doctor,
+      doctor_name: deptObj.doctor,
+      moduleName: 'SOAP NOTES (CPPT)',
+      chapter: 'COP',
+      title: 'Catatan Visite DPJP & CPPT Harian Bangsal Rawat Inap',
+      status: 'SIGNED_VERIFIED',
+      subjective: `S: Pasien melaporkan keluhan membaik pasca terapi IV & perawatan bangsal hari ke-2.`,
+      objective: `O: TD ${systolic}/${diastolic} mmHg, HR ${hr} bpm, Temp 36.6°C, SpO2 99%. EWS NEWS2 Score: 1 (LOW RISK).`,
+      assessment: `A: Perkembangan Klinis Membaik pasca Perawatan Rawat Inap.`,
+      plan: `P: Lanjutkan terapi oral, evaluasi laboratorium darah rutin besok, pertimbangkan discharge planning.`,
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-COP-RANAP`,
+      created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+      date: new Date(Date.now() - 3600000 * 2).toISOString().replace('T', ' ').substring(0, 16)
+    });
+
+    // 6. Order Resep & eMAR Medikasi Bangsal (MMU)
+    records.push({
+      id: `rec-mmu-ranap-${patientId}`,
       patientId: patientId,
       patient_id: patientId,
       mrn: mrn,
@@ -241,15 +310,15 @@ function generate100Patients() {
       doctor_name: deptObj.doctor,
       moduleName: 'ORDER RESEP / CPOE (MMU)',
       chapter: 'MMU',
-      title: 'Resep Elektronik & Rekonsiliasi Obat JCI',
+      title: 'Resep Elektronik & eMAR Medikasi Rawat Inap',
       status: 'SIGNED_VERIFIED',
-      subjective: 'E-Prescribing CPOE Order',
-      objective: 'Rx: Paracetamol 500mg 3x1 (No. X), Vitamin C 500mg 1x1 (No. X), Antasida Doen 3x1 (No. X)',
-      assessment: 'Rekonsiliasi Obat Terverifikasi Tanpa Interaksi Obat Berbahaya',
-      plan: 'Dispensing via Depo Farmasi & Edukasi Aturan Pakai Obat oleh Apoteker.',
-      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-MMU`,
-      created_at: new Date(Date.now() - 3600000 * (i + 2)).toISOString(),
-      date: new Date(Date.now() - 3600000 * (i + 2)).toISOString().replace('T', ' ').substring(0, 16)
+      subjective: 'E-Prescribing CPOE Order Bangsal Rawat Inap',
+      objective: 'Rx: Infus Ringer Laktat 20 tpm, Paracetamol 500mg 3x1 IV/Oral, Omeprazole 40mg 1x1 IV',
+      assessment: 'Rekonsiliasi Obat Terverifikasi Tanpa Interaksi Berbahaya oleh Apoteker Bangsal.',
+      plan: 'Pemberian Obat Berjadwal via eMAR & Depo Farmasi Rawat Inap.',
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-MMU-RANAP`,
+      created_at: new Date(Date.now() - 3600000 * 1).toISOString(),
+      date: new Date(Date.now() - 3600000 * 1).toISOString().replace('T', ' ').substring(0, 16)
     });
   }
 

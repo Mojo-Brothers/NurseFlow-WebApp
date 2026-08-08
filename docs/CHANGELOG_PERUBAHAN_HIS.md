@@ -20,6 +20,24 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Chronological Patient Journey Integration (Rajal Awal ➔ SPRI Transfer ➔ Admisi Ranap)
+
+**Kategori:** `[FEATURE]` `[ENHANCEMENT]` `[WORKFLOW]`  
+**Status:** Completed & Verified via Build  
+**Komponen Terdampak:** `src/core/demoData.js`, `src/modules/emr/services/emr.service.js`, `src/modules/admin/pages/DummyDataManagementPage.jsx`
+
+#### Detail Perbaikan:
+* **`[WORKFLOW REDESIGN]` Generasi Rantai Rekam Medis Kronologis Multisekuens:** Memperbarui generator [demoData.js](file:///c:/Users/Mojo/NurseFlow-WebApp/src/core/demoData.js#L190) untuk secara otomatis memproduksi **6-Fase Berkas Rekam Medis Berurutan** bagi setiap pasien:
+  1. 📄 **Fase 1 (Poli Rajal Awal - 3 Hari Lalu):** `PENGKAJIAN AWAL MEDIS (RJ)` oleh DPJP Poli.
+  2. 📝 **Fase 2 (Poli Rajal Awal - 3 Hari Lalu):** `SOAP NOTES (CPPT)` Konsultasi Poli.
+  3. 📑 **Fase 3 (Admisi Transfer - 2 Hari Lalu):** `SURAT PERINTAH RAWAT INAP (SPRI / TRANSFER SBAR)` Rujukan Poli ke Bangsal.
+  4. 🏢 **Fase 4 (Bangsal Ranap - 1 Hari Lalu):** `CATATAN ADMISI RAWAT INAP` Asesmen 24 Jam Bangsal.
+  5. ✍️ **Fase 5 (Bangsal Ranap - Hari Ini):** `SOAP NOTES (CPPT HARIAN)` Visite DPJP & Asuhan Keperawatan.
+  6. 💊 **Fase 6 (Bangsal Ranap - Hari Ini):** `ORDER RESEP / CPOE (MMU)` & eMAR Medikasi Bangsal.
+* **`[BENEFIT]` Garansi Kontinuitas Rekam Medis:** Memastikan bahwa begitu user membuka EMR Rawat Inap di `/emr-ri`, riwayat awal pengkajian dan catatan SOAP dari Poliklinik/UGD sebelumnya **100% tampil secara utuh dan kronologis**.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Fix WebApp Blank Screen Crash (ReferenceError Fix)
 
 **Kategori:** `[FIX]` `[HOTFIX]`  
