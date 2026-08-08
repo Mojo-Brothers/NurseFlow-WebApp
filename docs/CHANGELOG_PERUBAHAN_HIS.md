@@ -20,6 +20,18 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Implementation of Verified Medical Records Section & Preview Modal in Inpatient EMR
+
+**Kategori:** `[FIX]` `[FEATURE]` `[UI/UX]`  
+**Status:** Completed & Verified via Build  
+**Komponen Terdampak:** `src/modules/emr/pages/InpatientEMR.jsx`
+
+#### Detail Perbaikan:
+* **`[ROOT CAUSE FIX]` Penambahan Komponen "BERKAS REKAM MEDIS PASIEN TERISI & SAH" di Inpatient EMR:** Memperbaiki halaman [InpatientEMR.jsx](file:///c:/Users/Mojo/NurseFlow-WebApp/src/modules/emr/pages/InpatientEMR.jsx#L249) yang sebelumnya belum merender kontainer daftar berkas rekam medis di bawah kartu *Quick Overview Cards*.
+* **`[FEATURE]` Fitur Pencarian, Filter Kategori, & Modal Preview Dokumen:** Menambahkan bilah pencarian real-time, dropdown filter kategori formulir, kartu ringkasan dokumen berlisensi digital, serta modal pratinjau dokumen terperinci (`previewRecord`) untuk melihat detail SOAP, TTV, Diagnosa, dan instruksi DPJP episode Rajal maupun Ranap secara lengkap.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Chronological Patient Journey Integration (Rajal Awal ➔ SPRI Transfer ➔ Admisi Ranap)
 
 **Kategori:** `[FEATURE]` `[ENHANCEMENT]` `[WORKFLOW]`  

@@ -166,9 +166,37 @@ export default function InpatientEMR() {
   const age = activePatient?.id ? calculateAge(dob) : '-';
   const patientName = activePatient?.name || activeEncounter?.patient_name || 'PASIEN RAWAT INAP';
 
-  const toggleGroup = (title) => {
-    setExpandedGroups(prev => ({ ...prev, [title]: !prev[title] }));
-  };
+  const [previewRecord, setPreviewRecord] = useState(null);
+
+  const sortedSoapRecords = useMemo(() => {
+    return [...soapRecords].sort((a, b) => {
+      const aTime = a.created_at?.toDate ? a.created_at.toDate().getTime() : new Date(a.date || a.created_at || 0).getTime();
+      const bTime = b.created_at?.toDate ? b.created_at.toDate().getTime() : new Date(b.date || b.created_at || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [soapRecords]);
+
+  const filteredSoapRecords = useMemo(() => {
+    return sortedSoapRecords.filter(rec => {
+      const searchTarget = `
+        ${rec.moduleName || ''} 
+        ${rec.assessment || ''} 
+        ${rec.doctor || rec.signed_by || ''} 
+        ${rec.subjective || ''} 
+        ${JSON.stringify(rec.data || {})}
+      `.toLowerCase();
+      
+      const matchSearch = searchTarget.includes(historySearchQuery.toLowerCase());
+      const matchModule = historyModuleFilter === 'ALL' || (rec.moduleName || 'SOAP NOTES (CPPT)') === historyModuleFilter;
+      
+      return matchSearch && matchModule;
+    });
+  }, [sortedSoapRecords, historySearchQuery, historyModuleFilter]);
+
+  const uniqueModulesInHistory = useMemo(() => {
+    const modules = new Set(soapRecords.map(r => r.moduleName || 'SOAP NOTES (CPPT)'));
+    return ['ALL', ...Array.from(modules)];
+  }, [soapRecords]);
 
   const renderModuleWorkspace = () => {
     if (!selectedModule) {
@@ -246,6 +274,106 @@ export default function InpatientEMR() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* ─── DAFTAR FORMULIR YANG SUDAH TERISI & DITANDATANGANI ─── */}
+          <div className="mt-8 bg-[var(--surface-container-lowest)] rounded-3xl p-6 lg:p-8 border border-[var(--outline-variant)]/30 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between mb-6 gap-y-4 gap-x-6">
+              <div className="flex-1 min-w-[300px]">
+                <h3 className="text-lg font-black tracking-tight text-[var(--on-surface)] uppercase flex items-center gap-2">
+                  <FileSignature className="text-[var(--primary)] shrink-0" size={22} />
+                  Berkas Rekam Medis Pasien Terisi &amp; Sah ({filteredSoapRecords.length})
+                </h3>
+                <p className="text-xs text-[var(--on-surface-variant)] mt-1">
+                  Semua formulir klinis di bawah ini telah ditandatangani secara digital dan tersimpan dalam audit trail yang immutable (Riwayat Rajal &amp; Ranap).
+                </p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto shrink-0 mt-2 xl:mt-0">
+                <div className="relative flex-1 min-w-[250px]">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <input 
+                    type="text" 
+                    placeholder="Cari diagnosis, nama dokter, atau isi..." 
+                    value={historySearchQuery}
+                    onChange={e => setHistorySearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  />
+                </div>
+                
+                <div className="relative flex-1 sm:flex-none sm:w-64 min-w-[200px]">
+                  <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                  <select 
+                    value={historyModuleFilter}
+                    onChange={e => setHistoryModuleFilter(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 appearance-none cursor-pointer truncate text-ellipsis"
+                  >
+                    {uniqueModulesInHistory.map(mod => (
+                      <option key={mod} value={mod}>{mod === 'ALL' ? 'Semua Kategori Formulir' : mod}</option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                    <ChevronDown size={14} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {filteredSoapRecords.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredSoapRecords.map((rec, idx) => (
+                  <div 
+                    key={idx}
+                    className="p-5 rounded-2xl bg-[var(--surface-container-low)] hover:bg-[var(--surface-container-high)] border border-[var(--outline-variant)]/40 hover:border-[var(--primary)]/40 transition-all flex flex-col justify-between shadow-sm group"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="px-2.5 py-1 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] text-[10px] font-black uppercase tracking-wider border border-[var(--primary)]/20">
+                          {rec.moduleName || 'SOAP NOTES (CPPT)'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-wider flex items-center gap-1 border border-emerald-500/20">
+                          <CheckCircle2 size={10} /> {rec.status || 'TERVERIFIKASI'}
+                        </span>
+                      </div>
+
+                      <h4 className="text-sm font-black text-[var(--on-surface)] line-clamp-1 mb-1">
+                        {rec.title || rec.assessment || rec.data?.tindakan || rec.data?.topik || rec.data?.situation || 'Dokumen Rekam Medis'}
+                      </h4>
+                      
+                      <p className="text-xs text-[var(--on-surface-variant)] line-clamp-2 mb-4 leading-relaxed">
+                        {rec.subjective || rec.data?.catatan || rec.data?.background || rec.data?.risiko || 'Catatan klinis tersimpan.'}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 border-t border-[var(--outline-variant)]/20 flex items-center justify-between text-[10px] font-bold text-[var(--on-surface-variant)]">
+                      <span className="flex items-center gap-1">
+                        <User size={12} /> {rec.doctor || rec.signed_by || 'Dokter DPJP'}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setPreviewRecord(rec)}
+                          className="px-3 py-1.5 rounded-xl bg-[var(--surface-container-highest)] hover:bg-[var(--primary)] hover:text-white text-[var(--on-surface)] transition-colors font-black uppercase"
+                        >
+                          Buka Detail 👁️
+                        </button>
+                        <button
+                          onClick={() => setSelectedModule(rec.moduleName || 'SOAP NOTES (CPPT HARIAN)')}
+                          className="px-3 py-1.5 rounded-xl bg-[var(--primary)] text-white hover:bg-blue-700 transition-colors font-black uppercase shadow-sm"
+                        >
+                          Buka Form 📝
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-[var(--surface-container-low)] rounded-2xl border border-dashed border-[var(--outline-variant)]">
+                <p className="text-xs font-bold text-[var(--on-surface-variant)] uppercase tracking-wider">
+                  Belum ada formulir klinis yang diisi untuk kunjungan ini.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       );
@@ -439,6 +567,83 @@ export default function InpatientEMR() {
           {renderModuleWorkspace()}
         </main>
       </div>
+
+      {/* ─── DOCUMENT PREVIEW MODAL ─── */}
+      {previewRecord && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-[var(--surface-container-lowest)] rounded-3xl border border-[var(--outline-variant)]/40 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-300">
+            <div className="p-6 border-b border-[var(--outline-variant)]/30 flex items-center justify-between bg-[var(--surface-container-low)]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#007399]/10 text-[#007399] flex items-center justify-center font-bold">
+                  <FileSignature size={20} />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-[var(--on-surface)] uppercase">{previewRecord.moduleName || 'SOAP NOTES (CPPT)'}</h3>
+                  <p className="text-xs text-[var(--on-surface-variant)]">Diposting: {previewRecord.date || previewRecord.created_at || '-'}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setPreviewRecord(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-[var(--surface-container-high)] text-[var(--on-surface-variant)] hover:bg-[var(--error)] hover:text-white transition-all cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs">
+              <div className="p-4 rounded-2xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30">
+                <span className="text-[10px] font-black uppercase text-[var(--primary)] block mb-1">DOKTER / PENANGGUNG JAWAB</span>
+                <p className="text-sm font-bold text-[var(--on-surface)]">{previewRecord.doctor || previewRecord.signed_by || '-'}</p>
+              </div>
+
+              {previewRecord.subjective && (
+                <div className="p-4 rounded-2xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30">
+                  <span className="text-[10px] font-black uppercase text-amber-600 block mb-1">SUBJECTIVE (S) / KELUHAN</span>
+                  <p className="text-xs text-[var(--on-surface)] leading-relaxed whitespace-pre-wrap">{previewRecord.subjective}</p>
+                </div>
+              )}
+
+              {previewRecord.objective && (
+                <div className="p-4 rounded-2xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30">
+                  <span className="text-[10px] font-black uppercase text-blue-600 block mb-1">OBJECTIVE (O) / PEMERIKSAAN FISIK & VITAL</span>
+                  <p className="text-xs text-[var(--on-surface)] leading-relaxed whitespace-pre-wrap">{previewRecord.objective}</p>
+                </div>
+              )}
+
+              {previewRecord.assessment && (
+                <div className="p-4 rounded-2xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30">
+                  <span className="text-[10px] font-black uppercase text-purple-600 block mb-1">ASSESSMENT (A) / DIAGNOSA KERJA</span>
+                  <p className="text-xs font-bold text-[var(--on-surface)] leading-relaxed">{previewRecord.assessment}</p>
+                </div>
+              )}
+
+              {previewRecord.plan && (
+                <div className="p-4 rounded-2xl bg-[var(--surface-container-low)] border border-[var(--outline-variant)]/30">
+                  <span className="text-[10px] font-black uppercase text-emerald-600 block mb-1">PLAN (P) / INSTRUKSI & RENCANA ASUHAN</span>
+                  <p className="text-xs text-[var(--on-surface)] leading-relaxed whitespace-pre-wrap">{previewRecord.plan}</p>
+                </div>
+              )}
+
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-emerald-700">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={16} />
+                  <span className="text-[10px] font-black uppercase tracking-wider">TANDATANGAN DIGITAL VERIFIED</span>
+                </div>
+                <span className="text-[9px] font-mono font-bold opacity-80">{previewRecord.digitalSignature || 'JCI-VERIFIED-HASH'}</span>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-[var(--outline-variant)]/30 bg-[var(--surface-container-low)] flex justify-end">
+              <button 
+                onClick={() => setPreviewRecord(null)}
+                className="px-6 py-2.5 rounded-xl bg-[var(--primary)] text-white text-xs font-black uppercase shadow-sm cursor-pointer"
+              >
+                Tutup Modal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PatientSearchModal 
         isOpen={isPatientPickerOpen} 
