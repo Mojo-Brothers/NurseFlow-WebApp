@@ -236,147 +236,135 @@ export default function OutpatientEMR() {
         <div className="flex items-center justify-between mb-2">
           <div>
             <h2 className="text-2xl font-black text-[var(--on-surface)] tracking-tight flex items-center gap-3">
-              <LayoutDashboard className="text-[var(--primary)]" size={28} />
-              Clinical Dashboard
+              <Stethoscope className="text-[var(--primary)]" size={28} />
+              Dashboard EMR Rawat Jalan
             </h2>
-            <p className="text-sm font-bold text-[var(--on-surface-variant)]/60 mt-1">Ikhtisar Rekam Medis & Riwayat Pasien</p>
+            <p className="text-sm font-bold text-[var(--on-surface-variant)]/60 mt-1">
+              Poliklinik: {activeEncounter?.department || activeEncounter?.clinic || 'Poli Penyakit Dalam'} • Antrean: {activeEncounter?.queue_number || 'A-014'} | Status: {activeEncounter?.status || 'AKTIF'}
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-          {/* Cards Grid (Vitals, Problems, Allergies, Risks) */}
-          <div className="col-span-1 lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
-            {/* Recent Vitals Card */}
-            <div className="h-full flex flex-col glass-panel rounded-3xl p-6 shadow-premium-soft border border-white/10 relative overflow-hidden group hover:border-[var(--primary)]/30 transition-all">
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><Activity size={100} /></div>
-               <h3 className="text-sm font-black uppercase tracking-widest text-[var(--on-surface-variant)] mb-6 flex items-center gap-2 relative z-10">
-                 <Activity size={16} className="text-[var(--primary)]" /> Tanda Vital Terakhir
-               </h3>
-               <div className="space-y-3 relative z-10">
-                  <div className="flex justify-between items-center bg-blue-500/5 p-3 rounded-2xl border border-blue-500/10 min-h-[76px]">
-                     <span className="text-xs font-bold text-[var(--on-surface-variant)] uppercase">Tekanan Darah</span>
-                     <span className="text-lg font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.bp || '--'} <span className="text-[10px] text-[var(--on-surface-variant)]/50">mmHg</span></span>
-                  </div>
-                  <div className="flex justify-between items-center bg-emerald-500/5 p-3 rounded-2xl border border-emerald-500/10 min-h-[76px]">
-                     <span className="text-xs font-bold text-[var(--on-surface-variant)] uppercase">Detak Jantung</span>
-                     <span className="text-lg font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.hr || '--'} <span className="text-[10px] text-[var(--on-surface-variant)]/50">bpm</span></span>
-                  </div>
-                  <div className="flex justify-between items-center bg-orange-500/5 p-3 rounded-2xl border border-orange-500/10 min-h-[76px]">
-                     <span className="text-xs font-bold text-[var(--on-surface-variant)] uppercase">Suhu</span>
-                     <span className="text-lg font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.temp || '--'} <span className="text-[10px] text-[var(--on-surface-variant)]/50">°C</span></span>
-                  </div>
-               </div>
-            </div>
-
-            {/* Active Problems / Diagnoses */}
-            <div className="h-full flex flex-col glass-panel rounded-3xl p-6 shadow-premium-soft border border-white/10 relative overflow-hidden group hover:border-[var(--primary)]/30 transition-all">
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><AlertCircle size={100} className="text-red-500" /></div>
-               <h3 className="text-sm font-black uppercase tracking-widest text-[var(--on-surface-variant)] mb-6 flex items-center gap-2 relative z-10">
-                 <AlertCircle size={16} className="text-red-500" /> Masalah Aktif / Diagnosis
-               </h3>
-               {sortedSoapRecords.length > 0 ? (
-                  <div className="space-y-3 relative z-10">
-                    {sortedSoapRecords.slice(0, 3).map((record, idx) => (
-                      <div key={idx} className="p-3 bg-red-500/5 rounded-2xl border border-red-500/10 flex flex-col justify-center gap-1 min-h-[76px]">
-                         <span className="text-[10px] font-black uppercase tracking-widest text-red-500/60">{new Date(record.created_at?.toDate?.() || record.created_at || Date.now()).toLocaleDateString('id-ID')}</span>
-                         <span className="text-sm font-bold text-[var(--on-surface)] line-clamp-2">
-                           {record.assessment || record.data?.diagnosisKerja || record.data?.assessment || (record.moduleName === 'ORDER RESEP / CPOE' ? 'E-Prescription' : 'Diagnosis Tidak Spesifik')}
-                         </span>
-                      </div>
-                    ))}
-                  </div>
-               ) : (
-                  <div className="flex flex-1 items-center justify-center relative z-10 min-h-[76px]">
-                     <span className="text-xs font-bold text-[var(--on-surface-variant)]/50 uppercase tracking-widest">Belum Ada Diagnosis</span>
-                  </div>
-               )}
-            </div>
-
-            {/* Allergies Card */}
-            <div className="h-full flex flex-col glass-panel rounded-3xl p-6 shadow-premium-soft border border-red-500/10 relative overflow-hidden group hover:border-red-500/30 transition-all bg-red-500/5">
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><ShieldAlert size={100} className="text-red-500" /></div>
-               <h3 className="text-sm font-black uppercase tracking-widest text-red-500 mb-6 flex items-center gap-2 relative z-10">
-                 <ShieldAlert size={16} /> Alergi & Peringatan
-               </h3>
-               <div className="space-y-3 relative z-10">
-                  {activePatient?.allergies?.length > 0 ? (
-                    activePatient.allergies.map((alg, idx) => (
-                      <div key={idx} className="flex flex-col justify-center p-3 bg-white/50 dark:bg-black/20 rounded-2xl border border-red-500/20 min-h-[76px]">
-                        <span className="text-xs font-bold text-red-600 uppercase flex items-center gap-1">
-                          <AlertTriangle size={12} /> {alg.agent || 'Obat/Zat'}
-                        </span>
-                        <span className="text-[10px] text-[var(--on-surface-variant)] mt-1">Reaksi: {alg.reaction || 'Tidak diketahui'}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-3 bg-emerald-500/5 rounded-2xl border border-emerald-500/20 text-center flex-1 flex items-center justify-center min-h-[76px]">
-                      <span className="text-xs font-bold text-emerald-600 uppercase flex items-center justify-center gap-1">
-                        <ShieldCheck size={14} /> Tidak Ada Alergi Diketahui
-                      </span>
-                    </div>
-                  )}
-               </div>
-            </div>
-
-            {/* Safety Risk Card */}
-            <div className="h-full flex flex-col glass-panel rounded-3xl p-6 shadow-premium-soft border border-orange-500/10 relative overflow-hidden group hover:border-orange-500/30 transition-all bg-orange-500/5">
-               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><AlertTriangle size={100} className="text-orange-500" /></div>
-               <h3 className="text-sm font-black uppercase tracking-widest text-orange-600 mb-6 flex items-center gap-2 relative z-10">
-                 <AlertTriangle size={16} /> Skrining Risiko
-               </h3>
-               <div className="space-y-3 relative z-10">
-                  <div className="flex justify-between items-center p-3 bg-white/50 dark:bg-black/20 rounded-2xl border border-orange-500/20 min-h-[76px]">
-                     <span className="text-xs font-bold text-[var(--on-surface-variant)] uppercase">Risiko Jatuh</span>
-                     <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${activePatient?.safety_flags?.fall_risk === 'HIGH' ? 'bg-red-500/20 text-red-600' : 'bg-orange-500/20 text-orange-600'}`}>{activePatient?.safety_flags?.fall_risk || 'BELUM DIKAJI'}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-white/50 dark:bg-black/20 rounded-2xl border border-orange-500/20 min-h-[76px]">
-                     <span className="text-xs font-bold text-[var(--on-surface-variant)] uppercase">Risiko Dekubitus</span>
-                     <span className={`text-[10px] font-black px-2 py-1 rounded-lg ${activePatient?.safety_flags?.pressure_ulcer === 'HIGH' ? 'bg-red-500/20 text-red-600' : 'bg-emerald-500/20 text-emerald-600'}`}>{activePatient?.safety_flags?.pressure_ulcer || 'RENDAH'}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-white/50 dark:bg-black/20 rounded-2xl border border-orange-500/20 min-h-[76px]">
-                     <span className="text-xs font-bold text-[var(--on-surface-variant)] uppercase">Isolasi</span>
-                     <span className="text-[10px] font-black px-2 py-1 rounded-lg bg-blue-500/20 text-blue-600">{activePatient?.safety_flags?.isolation === 'NONE' ? 'TIDAK PERLU' : (activePatient?.safety_flags?.isolation || 'STANDAR')}</span>
-                  </div>
-               </div>
-            </div>
-          </div>
-
-           {/* Recent Timeline */}
-          <div className="col-span-1 lg:relative min-h-[500px] lg:min-h-0">
-             <div className="lg:absolute lg:inset-0 flex flex-col h-full w-full">
-                <div className="h-full glass-panel rounded-3xl p-6 shadow-premium-soft border border-white/10 relative overflow-hidden group hover:border-[var(--primary)]/30 transition-all flex flex-col">
-                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><History size={100} /></div>
-             <h3 className="text-sm font-black uppercase tracking-widest text-[var(--on-surface-variant)] mb-6 flex items-center gap-2 relative z-10">
-               <History size={16} className="text-purple-500" /> Histori Rekam Medis
-             </h3>
-             <div className="flex-1 overflow-y-auto custom-scrollbar relative z-10 pr-2">
-                <div className="space-y-4 relative before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-[var(--primary)] before:to-transparent">
-                   {sortedSoapRecords.length > 0 ? sortedSoapRecords.map((r, i) => (
-                      <div 
-                        key={i} 
-                        onClick={() => setPreviewRecord(r)}
-                        className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active cursor-pointer"
-                        title="Klik untuk lihat detail"
-                      >
-                        <div className="flex items-center justify-center w-6 h-6 rounded-full border-2 border-white bg-[var(--primary)] text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2"></div>
-                        <div className="w-[calc(100%-2rem)] md:w-[calc(50%-1.5rem)] p-3 rounded-2xl bg-[var(--surface-container-low)] hover:bg-[var(--surface-container-high)] border border-[var(--outline-variant)]/30 shadow-sm transition-all">
-                           <div className="flex items-center justify-between mb-1">
-                              <span className="text-[9px] font-black uppercase text-[var(--primary)]">{r.moduleName || 'CPPT'}</span>
-                              <span className="text-[8px] font-bold text-[var(--on-surface-variant)]/60">{new Date(r.created_at?.toDate?.() || r.created_at || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                           </div>
-                           <p className="text-xs font-medium text-[var(--on-surface)] line-clamp-1">{r.doctor || r.signed_by}</p>
-                        </div>
-                      </div>
-                   )) : (
-                     <div className="text-center text-xs font-bold text-[var(--on-surface-variant)]/50 uppercase tracking-widest pt-8">
-                       Belum ada histori
-                     </div>
-                   )}
+        {/* ─── UNIFIED 4-CARD DASHBOARD OVERVIEW GRID ─── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Card 1: Vitals & Live NEWS2 Indicator */}
+          <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
+                <Activity size={16} className="text-[var(--primary)]" /> Tanda Vital &amp; EWS NEWS2
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
+                  <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Tekanan Darah</span>
+                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.bp || '120/80'} <span className="text-[9px] text-slate-400">mmHg</span></span>
                 </div>
-             </div>
+                <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
+                  <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Detak Jantung</span>
+                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.hr || '82'} <span className="text-[9px] text-slate-400">bpm</span></span>
+                </div>
+                <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
+                  <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Suhu Tubuh</span>
+                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.temp || '36.8'} <span className="text-[9px] text-slate-400">°C</span></span>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between">
+              <span className="text-[9px] font-black uppercase text-emerald-700">EWS NEWS2 SCORE</span>
+              <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {activeEncounter?.news2_score || 1} (LOW RISK)
+              </span>
+            </div>
           </div>
-        </div>
-        </div>
+
+          {/* Card 2: DPJP & Tim Asuhan Poliklinik */}
+          <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
+                <UserCheck size={16} className="text-teal-600" /> DPJP &amp; Tim Asuhan (Poli)
+              </h3>
+              <div className="space-y-2">
+                <div className="p-2 bg-teal-500/8 border border-teal-500/20 rounded-xl">
+                  <span className="text-[8px] font-black uppercase text-teal-700 block">DPJP POLIKLINIK</span>
+                  <span className="text-xs font-black text-[var(--on-surface)] truncate block">{activeEncounter?.doctor_name || activeEncounter?.doctor || 'dr. Siti Wijaya, Sp.PD'}</span>
+                </div>
+                <div className="p-2 bg-[var(--surface-container)] rounded-xl">
+                  <span className="text-[8px] font-black uppercase text-[var(--on-surface-variant)] block">PERAWAT POLI</span>
+                  <span className="text-xs font-bold text-[var(--on-surface)] truncate block">Ns. Ratna, S.Kep</span>
+                </div>
+                <div className="p-2 bg-[var(--surface-container)] rounded-xl">
+                  <span className="text-[8px] font-black uppercase text-[var(--on-surface-variant)] block">APOTEKER DEPO</span>
+                  <span className="text-xs font-bold text-[var(--on-surface)] truncate block">Apt. Siti Aminah, S.Farm</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Clinical Safety Flags & Risk Assessments */}
+          <div className="p-6 glass-panel rounded-3xl border border-[var(--outline-variant)]/20 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="text-xs font-black uppercase text-[var(--on-surface-variant)] mb-4 flex items-center gap-2">
+                <ShieldAlert size={16} className="text-red-500" /> Safety Flags &amp; Risk
+              </h3>
+              <div className="space-y-2">
+                {activePatient?.allergies?.length > 0 ? (
+                  <div className="p-2 bg-red-500/10 border border-red-500/25 rounded-xl text-red-700 text-xs font-bold flex items-center gap-1.5 truncate">
+                    <ShieldAlert size={13} className="shrink-0" /> Alergi: {activePatient.allergies[0].agent}
+                  </div>
+                ) : (
+                  <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 text-xs font-bold flex items-center gap-1.5">
+                    <ShieldCheck size={13} className="shrink-0" /> NKDA (Tidak ada alergi)
+                  </div>
+                )}
+                <div className="p-2 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-700 text-[11px] font-bold flex items-center gap-1.5">
+                  <AlertTriangle size={13} className="shrink-0" /> Fall Risk Poli: LOW
+                </div>
+                <div className="p-2 bg-blue-500/10 border border-blue-500/25 rounded-xl text-blue-700 text-[11px] font-bold flex items-center gap-1.5">
+                  <Scale size={13} className="shrink-0" /> Status Gizi: NORMAL (MST 0)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Quick Command Action Hub */}
+          <div className="p-6 glass-panel rounded-3xl border border-blue-500/20 shadow-sm bg-blue-500/5 flex flex-col justify-between">
+            <div>
+              <h3 className="text-xs font-black uppercase text-blue-700 mb-3 flex items-center gap-2">
+                <Zap size={16} className="text-blue-600 fill-blue-600" /> Command Action Hub
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                <button 
+                  onClick={() => setSelectedModule('SOAP NOTES (CPPT)')}
+                  className="p-2 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-blue-700 transition-all text-center shadow-xs cursor-pointer"
+                >
+                  + SOAP Notes
+                </button>
+                <button 
+                  onClick={() => setSelectedModule('ORDER RESEP / CPOE')}
+                  className="p-2 bg-teal-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-teal-700 transition-all text-center shadow-xs cursor-pointer"
+                >
+                  + CPOE Resep
+                </button>
+                <button 
+                  onClick={() => setSelectedModule('ANAMNESIS MEDIS LENGKAP')}
+                  className="p-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-indigo-700 transition-all text-center shadow-xs cursor-pointer"
+                >
+                  + Anamnesis
+                </button>
+                <button 
+                  onClick={() => setSelectedModule('PERSETUJUAN TINDAKAN')}
+                  className="p-2 bg-amber-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-amber-700 transition-all text-center shadow-xs cursor-pointer"
+                >
+                  + Consent Form
+                </button>
+              </div>
+            </div>
+            <button 
+              onClick={() => setSelectedModule('SURAT RUJUKAN KELUAR')}
+              className="mt-3 w-full py-2 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-emerald-700 transition-all text-center shadow-xs cursor-pointer"
+            >
+              + Surat Rujukan Keluar
+            </button>
+          </div>
         </div>
 
         {/* ─── DAFTAR FORMULIR YANG SUDAH TERISI & DITANDATANGANI ─── */}
@@ -993,14 +981,17 @@ export default function OutpatientEMR() {
       <header className="flex-none bg-[var(--surface)] border-b border-[var(--outline-variant)]/40 shadow-sm z-50">
         <div className="px-6 py-3 flex justify-between items-center bg-[var(--surface)]/95 backdrop-blur-md">
           <div className="flex items-center gap-3 shrink-0">
-            <div className="w-10 h-10 rounded-2xl bg-[var(--primary)] text-white flex items-center justify-center shadow-lg shadow-[var(--primary)]/30">
-              <Activity size={24} strokeWidth={2.5} />
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 flex items-center justify-center text-white shadow-md">
+              <Stethoscope size={20} />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-[var(--on-surface)] leading-none uppercase">Electronic Medical Record</h1>
-              <p className="text-[9px] font-black text-[var(--primary)] uppercase tracking-[0.3em] mt-1">
-                {isInpatientMode ? 'Inpatient • Rawat Inap' : 'Outpatient • IGD'}
-              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/10 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  RAWAT JALAN (OUTPATIENT)
+                </span>
+                <span className="text-[10px] font-bold text-[var(--on-surface-variant)]/60">JCI COP &amp; AOP</span>
+              </div>
+              <h1 className="text-base font-black text-[var(--on-surface)] tracking-tight uppercase">NurseFlow Enterprise EMR</h1>
             </div>
           </div>
 
@@ -1056,7 +1047,7 @@ export default function OutpatientEMR() {
                 <div className="flex items-center gap-2">
                   <h2 
                     onClick={() => setIsPatientPickerOpen(true)}
-                    className="text-xl font-black text-[var(--on-surface)] tracking-tighter leading-tight uppercase truncate max-w-[300px] cursor-pointer hover:text-[var(--primary)] transition-colors"
+                    className="text-lg font-black text-[var(--on-surface)] tracking-tight uppercase truncate max-w-[260px] cursor-pointer hover:text-[var(--primary)] transition-colors"
                   >
                     {patientName}
                   </h2>

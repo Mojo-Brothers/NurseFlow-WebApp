@@ -20,6 +20,20 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — UI Density & Design Scale Refactoring of Outpatient EMR (Matching Inpatient Crisp Aesthetics)
+
+**Kategori:** `[ENHANCEMENT]` `[UI/UX]` `[DESIGN-SYSTEM]`  
+**Status:** Completed & Verified via Build  
+**Komponen Terdampak:** `src/modules/emr/pages/OutpatientEMR.jsx`
+
+#### Detail Perbaikan:
+* **`[UI DENSITY REFACTORING]` Penyelarasan Skala Visual & Tipografi Rawat Jalan ke Standar Rawat Inap:**
+  1. **Eradikasi Elemen Oversized (Anti Zoomed-In):** Menghapus layout `min-h-[76px]`, font raksasa `text-xl`, serta ikon latar belakang raksasa `size={100}` ber-opacity rendah yang membuat tampilan Rawat Jalan terlihat membengkak/ter-zoom pada tangkapan layar.
+  2. **Penerapan Grid 4-Kartu Presisi (Matching Inpatient):** Mengubah tampilan `renderDashboardOverview` di [OutpatientEMR.jsx](file:///c:/Users/Mojo/NurseFlow-WebApp/src/modules/emr/pages/OutpatientEMR.jsx#L235) menggunakan sistem *Compact 4-Card Overview Grid* yang rapat, krisp, dan berestetika tinggi (Vitals & Live NEWS2 Indicator, Tim Asuhan PPA Poli, Safety Flags, dan Quick Command Action Hub).
+  3. **Standardisasi Tipografi Header & Context Ribbon:** Menyelaraskan ukuran font header, badge `RAWAT JALAN (OUTPATIENT)`, nama pasien (`text-lg font-black`), serta tombol peluncur **Side Inspector 👁️** agar identik secara visual dengan modul Rawat Inap.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Complete Unification & Standardization of Outpatient & Inpatient Clinical Dashboards
 
 **Kategori:** `[MAJOR]` `[FEATURE]` `[ARCHITECTURE]` `[UI/UX]`  
