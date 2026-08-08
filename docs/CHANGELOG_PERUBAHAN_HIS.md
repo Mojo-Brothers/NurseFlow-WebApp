@@ -20,6 +20,19 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Integration of Clinical Dashboard & Analytics Seeder to Dummy Data Management Hub
+
+**Kategori:** `[FEATURE]` `[ENHANCEMENT]`  
+**Status:** Completed & Integrated  
+**Komponen Terdampak:** `src/modules/admin/pages/DummyDataManagementPage.jsx`, `src/modules/dashboard/services/dashboard.service.js`, `src/core/services/analytics.service.js`
+
+#### Detail Pembaruan:
+* **`[FEATURE]` Otomatisasi Seeder Live Clinical Dashboard:** Mengintegrasikan pembuatan dokumen Firestore `system_metrics/main_facility`, `triage_logs`, `audit_logs`, `encounters` (status `ACTIVE`), dan `beds` langsung ke dalam fungsi eksekusi *Smart Multi-Inject Generator* di [DummyDataManagementPage.jsx](file:///c:/Users/Mojo/NurseFlow-WebApp/src/modules/admin/pages/DummyDataManagementPage.jsx).
+* **`[ADDED]` Dedicated Action Button di Admin Hub:** Menambahkan tombol terdedikasi `Inject Clinical Dashboard & Analytics` warna ungu di header Admin Master Data Hub untuk injeksi cepat metrik dashboard & antrean triase real-time tanpa perlu membuka `DashboardPage`.
+* **`[ENHANCEMENT]` Sinkronisasi Dual-Layer (Firestore + LocalStorage):** Menjamin bahwa Live Dashboard, Executive Analytics, dan fallback mode offline menerima pembaruan data metrik makro (BOR %, Ventilator, ESI Level 1-3) dan riwayat triase secara simultan.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Fix Patient Detail Side Inspector & Admin Generator Property Mapping
 
 **Kategori:** `[FIX]` `[ENHANCEMENT]`  

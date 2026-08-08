@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+import { db } from '../../../core/firebase.js';
+import { collection, doc, setDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { 
   Database, UserPlus, RefreshCw, Download, Upload, Trash2, Search, 
   CheckCircle2, AlertTriangle, ShieldCheck, Sparkles, FileText, Pill, 
@@ -1213,7 +1215,156 @@ export default function DummyDataManagementPage() {
     return created;
   };
 
-  const handleExecuteMultiInjection = () => {
+  const seedClinicalDashboardData = async (count = 10) => {
+    try {
+      console.log('[DummyDataManagement] Seeding Clinical Dashboard & Analytics Firestore Data...');
+      
+      // 1. Seed system_metrics/main_facility document
+      try {
+        const metricsRef = doc(db, 'system_metrics', 'main_facility');
+        await setDoc(metricsRef, {
+          triageLevels: { active: 14, l1: 3, l2: 5, l3: 6 },
+          ventilators: { total: 24, available: 4 },
+          bedOccupancy: { rate: 84 },
+          lastUpdated: serverTimestamp()
+        });
+      } catch (mErr) {
+        console.warn('[DummyDataManagement] system_metrics seed note:', mErr.message);
+      }
+
+      // 2. Batch seed triage_logs, audit_logs, encounters, beds
+      const batch = writeBatch(db);
+
+      const triageSamples = [
+        {
+          assessed_by: 'dr. Ahmad Hidayat, Sp.PD',
+          mrn: '8849201',
+          name: 'Tn. Budi Santoso',
+          dob: '1982-05-12',
+          level: 1,
+          statusLabel: 'Resusitasi Cito (Level 1)',
+          escalation_level: 'CRITICAL',
+          overdueMs: 45000,
+          timeline: ['Triage', 'ECG 12-Lead', 'Code Blue Team Dispatched'],
+          news2_score: 9,
+          riskPercent: 84,
+          vitals: { bp: '70/40', hr: 130, temp: 38.5, spo2: 88 },
+          cdsAction: 'Immediate Intubation & High-Flow Oxygen',
+          aclsRequired: true,
+          viewedBy: 'admin@nurseflow.id'
+        },
+        {
+          assessed_by: 'dr. Najwa Shihab, Sp.OG',
+          mrn: '4192083',
+          name: 'Ny. Siti Aminah',
+          dob: '1975-08-22',
+          level: 2,
+          statusLabel: 'Urgensi Tinggi (Level 2)',
+          escalation_level: 'URGENT',
+          overdueMs: 0,
+          timeline: ['Triage', 'CT Brain Imaging', 'Lab Hemostasis'],
+          news2_score: 6,
+          riskPercent: 45,
+          vitals: { bp: '160/95', hr: 105, temp: 37.2, spo2: 94 },
+          cdsAction: 'Stroke Protocol Activation & Neurologist Review',
+          aclsRequired: false,
+          viewedBy: 'admin@nurseflow.id'
+        },
+        {
+          assessed_by: 'dr. Hendra Kusuma, Sp.A',
+          mrn: '100010',
+          name: 'An. Retno Wulandari',
+          dob: '2018-11-04',
+          level: 3,
+          statusLabel: 'Non-Urgensi (Level 3)',
+          escalation_level: 'STABLE',
+          overdueMs: 0,
+          timeline: ['Triage', 'Vital Check'],
+          news2_score: 2,
+          riskPercent: 12,
+          vitals: { bp: '110/70', hr: 78, temp: 36.8, spo2: 99 },
+          cdsAction: 'Observasi Suhu & Terapi Dehidrasi Oral',
+          aclsRequired: false,
+          viewedBy: 'admin@nurseflow.id'
+        }
+      ];
+
+      triageSamples.forEach(sample => {
+        const tRef = doc(collection(db, 'triage_logs'));
+        batch.set(tRef, {
+          ...sample,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp()
+        });
+      });
+
+      // Seed Audit Logs for Dashboard
+      const log1 = doc(collection(db, 'audit_logs'));
+      batch.set(log1, {
+        severity: 'CRITICAL',
+        timestamp: serverTimestamp(),
+        user: 'dr. Ahmad Hidayat, Sp.PD',
+        action: 'Otorisasi Rujukan Darurat & Transfusi Darah Pasien MRN 8849201.'
+      });
+
+      const log2 = doc(collection(db, 'audit_logs'));
+      batch.set(log2, {
+        severity: 'URGENT',
+        timestamp: serverTimestamp(),
+        user: 'Ns. Ratna Mulyani, S.Kep',
+        action: 'Handover SBAR Shift Malam Pasien Bangsal Melati Kamar 302.'
+      });
+
+      // Seed Active Encounters & Beds for Analytics Dashboard
+      for (let k = 1; k <= Math.min(count, 8); k++) {
+        const encRef = doc(collection(db, 'encounters'));
+        batch.set(encRef, {
+          patient_id: `demo-patient-${k}`,
+          patient_name: k % 2 === 0 ? `Ny. Dian Mulyani ${k}` : `Tn. Budi Santoso ${k}`,
+          mrn: String(100000 + k),
+          status: 'ACTIVE',
+          department: k % 2 === 0 ? 'Bangsal Melati' : 'Poli Penyakit Dalam',
+          doctor_name: 'dr. Ahmad Hidayat, Sp.PD',
+          admitted_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+          news2_score: (k * 2) % 10,
+          vitals: {
+            bp: `${110 + k * 2}/${75 + k}`,
+            hr: 72 + k * 2,
+            temp: Number((36.5 + (k * 0.1)).toFixed(1)),
+            spo2: 98
+          }
+        });
+
+        const bedRef = doc(collection(db, 'beds'));
+        batch.set(bedRef, {
+          ward_name: `Bangsal ${String.fromCharCode(65 + (k % 4))}`,
+          bed_number: `BED-0${k}`,
+          is_occupied: k % 2 === 0,
+          patient_name: k % 2 === 0 ? `Pasien Active ${k}` : null,
+          last_updated: serverTimestamp()
+        });
+      }
+
+      await batch.commit();
+
+      // LocalStorage Backup Sync
+      try {
+        localStorage.setItem('nurseflow_metrics_master', JSON.stringify({
+          triageLevels: { active: 14, l1: 3, l2: 5, l3: 6 },
+          ventilators: { total: 24, available: 4 },
+          bedOccupancy: { rate: 84 }
+        }));
+        localStorage.setItem('nurseflow_triage_master', JSON.stringify(triageSamples));
+      } catch (lsErr) {}
+
+      console.log('[DummyDataManagement] Clinical Dashboard & Analytics Firestore Seeded Successfully!');
+    } catch (e) {
+      console.warn('[DummyDataManagement] Firestore seed note:', e.message);
+    }
+  };
+
+  const handleExecuteMultiInjection = async () => {
     setIsGenerating(true);
     let totalGeneratedRecords = 0;
 
@@ -1229,6 +1380,9 @@ export default function DummyDataManagementPage() {
       
       // Also generate associated EMR documents
       generateEMRBatch('COP', injectCount);
+
+      // Automatically seed Clinical Dashboard & Analytics Firestore metrics/triage/encounters!
+      await seedClinicalDashboardData(injectCount);
     } else {
       if (selectedProfessions.length === 0) {
         toast.error('Pilih setidaknya 1 profesi rumah sakit untuk di-inject!');
@@ -1245,7 +1399,7 @@ export default function DummyDataManagementPage() {
     toast.dismiss('copy-toast');
     toast.success(
       modalTab === 'patients'
-        ? `⚡ Berhasil meng-inject ${totalGeneratedRecords} data dummy Pasien (${selectedPatientCategories.length} kategori Master Pasien terpilih)!`
+        ? `⚡ Berhasil meng-inject ${totalGeneratedRecords} Pasien & Sinkronisasi Live Clinical Dashboard Metrics!`
         : `⚡ Berhasil meng-inject ${totalGeneratedRecords} data dummy Karyawan (${selectedProfessions.length} profesi terpilih)!`,
       { id: 'copy-toast', icon: '✨', duration: 4000 }
     );
@@ -1446,6 +1600,17 @@ export default function DummyDataManagementPage() {
               className="bg-[#007399] hover:bg-[#005e7e] text-white px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer border border-cyan-400/40"
             >
               <Zap size={16} className="text-amber-400 fill-amber-400" /> Smart Multi-Inject Generator
+            </button>
+            <button
+              onClick={async () => {
+                setIsGenerating(true);
+                await seedClinicalDashboardData(10);
+                setIsGenerating(false);
+                toast.success('⚡ Berhasil meng-inject & sinkronisasi data Clinical Dashboard, Triage Logs, METRICS & Encounters ke Firestore!', { duration: 4000 });
+              }}
+              className="bg-purple-600 hover:bg-purple-500 text-white px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all shadow-lg hover:scale-105 active:scale-95 flex items-center gap-2 cursor-pointer border border-purple-400/40"
+            >
+              <Activity size={16} className="text-purple-300" /> Inject Clinical Dashboard & Analytics
             </button>
             <button
               onClick={handleExportJSON}
