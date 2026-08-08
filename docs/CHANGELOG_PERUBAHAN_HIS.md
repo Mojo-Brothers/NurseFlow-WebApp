@@ -20,6 +20,21 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Central Enterprise Hospital Inventory Management Engine (NurseFlow HIS 2026)
+
+**Kategori:** `[MAJOR]` `[FEATURE]` `[ARCHITECTURE]` `[SUPPLY-CHAIN]` `[UI/UX]`  
+**Status:** Completed & Verified via Build  
+**Komponen Terdampak:** `src/modules/inventory/pages/EnterpriseInventoryPage.jsx`, `src/modules/inventory/components/CentralInventoryDashboard.jsx`, `src/modules/inventory/components/ItemMasterWorkspace.jsx`, `src/modules/inventory/components/WarehouseLocationWorkspace.jsx`
+
+#### Detail Perbaikan:
+* **`[CENTRAL INVENTORY ENGINE]` Arsitektur & Dashboard Pengelolaan Persediaan Medis & Logistik Terpusat:**
+  1. **Pengembangan Central Inventory Dashboard Operasional (`CentralInventoryDashboard.jsx`):** Menampilkan 12 KPI Card Interaktif (Total Item Master, Total Stok Fisik, Valuasi Aset HPP IDR, Low Stock Warning, Out of Stock, Near Expiry & FEFO Control, Expired, Stock Quarantine, Damaged Stock, Pending Material Requests, In Transit Mutations, dan Opname Adjustments).
+  2. **Pengembangan Enterprise Item Master Workspace (`ItemMasterWorkspace.jsx`):** Lembar katalog master persediaan medis, BMHP, alkes, implan, reagen lab, linen, dan logistik umum dilengkapi filter SKU/Barcode, parameter Min/Max/Reorder Point, konversi satuan (UOM), kontrol expiry/FEFO, dan modal penambahan item.
+  3. **Pengembangan Hirarki Gudang & Lokasi Fisik (`WarehouseLocationWorkspace.jsx`):** Pemetaan hirarki gudang fisik rumah sakit (`Hospital` ➔ `Warehouse` ➔ `Storage Area` ➔ `Rack` ➔ `Shelf` ➔ `Bin`) dengan pemantauan suhu/kelembaban area dan peta lokasi bin fisik.
+  4. **Penyelarasan Visual Identity Ocean Teal:** Mengadopsi bahasa desain **Ocean Teal NurseFlow** (Professional, Clinical, Clean, Premium Enterprise) pada 10 sub-modul navigasi terpusat di `/inventory`.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Comprehensive JCI Clinical Form Audit & 100% Form Handler Guarantee
 
 **Kategori:** `[AUDIT]` `[FEATURE]` `[COMPLIANCE]`  
