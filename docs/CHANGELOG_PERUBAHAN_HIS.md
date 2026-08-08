@@ -20,6 +20,18 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Fix WebApp Blank Screen Crash (ReferenceError Fix)
+
+**Kategori:** `[FIX]` `[HOTFIX]`  
+**Status:** Resolved & Verified via Production Build  
+**Komponen Terdampak:** `src/core/demoData.js`
+
+#### Detail Perbaikan:
+* **`[ROOT CAUSE FIX]` Deklarasi Array `records`:** Mendeklarasikan `const records = []` pada fungsi generator `generate100Patients()` di [demoData.js](file:///c:/Users/Mojo/NurseFlow-WebApp/src/core/demoData.js#L85). Sebelumnya, variabel yang belum terdefinisi memicu `ReferenceError: records is not defined` saat pengaktifan aplikasi yang menghentikan eksekusi bundle React dan menyebabkan layar putih (*blank page*).
+* **`[VERIFICATION]` Pengujian Build:** Verifikasi eksekusi via `npm run build` sukses 100% tanpa error kompilasi.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Pre-Populated JCI EMR Medical Records Generation & Service Query Optimization
 
 **Kategori:** `[FEATURE]` `[FIX]` `[ENHANCEMENT]`  

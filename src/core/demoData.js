@@ -82,6 +82,7 @@ const ALLERGIES_LIST = [
 function generate100Patients() {
   const patients = [];
   const encounters = [];
+  const records = [];
 
   for (let i = 1; i <= 100; i++) {
     const isFemale = i % 2 === 1;
