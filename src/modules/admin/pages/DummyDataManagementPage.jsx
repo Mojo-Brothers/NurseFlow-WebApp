@@ -1174,8 +1174,10 @@ export default function DummyDataManagementPage() {
     const newDocsList = [];
 
     for (let i = 0; i < count; i++) {
-      const pName = patientList.length > 0 ? patientList[i % patientList.length].name : 'NY. SITI NURHALIZA';
-      const pMRN = patientList.length > 0 ? patientList[i % patientList.length].mrn : '100001';
+      const targetPatient = patientList.length > 0 ? patientList[i % patientList.length] : { id: `demo-patient-${(i % 10) + 1}`, name: 'NY. SITI NURHALIZA', mrn: '100001' };
+      const pName = targetPatient.name || targetPatient.nama || 'NY. SITI NURHALIZA';
+      const pMRN = targetPatient.mrn || '100001';
+      const pId = targetPatient.id || `demo-patient-${(i % 10) + 1}`;
       const doctorMeta = DOCTORS[i % DOCTORS.length];
       const nurseMeta = NURSES[i % NURSES.length];
       const pharmacistMeta = PHARMACISTS[i % PHARMACISTS.length];
@@ -1183,6 +1185,8 @@ export default function DummyDataManagementPage() {
 
       const newDoc = {
         id: `emr-doc-gen-${Date.now()}-${i}`,
+        patientId: pId,
+        patient_id: pId,
         chapter: chapterType,
         moduleName: targetMeta.module,
         title: targetMeta.title,
@@ -1212,6 +1216,11 @@ export default function DummyDataManagementPage() {
     }
 
     setEmrDocuments(prev => [...newDocsList, ...prev]);
+    try {
+      const existingRaw = localStorage.getItem('nurseflow_medical_records_master');
+      const existing = existingRaw ? JSON.parse(existingRaw) : [];
+      localStorage.setItem('nurseflow_medical_records_master', JSON.stringify([...newDocsList, ...existing]));
+    } catch (e) {}
     return created;
   };
 
@@ -1343,6 +1352,28 @@ export default function DummyDataManagementPage() {
           is_occupied: k % 2 === 0,
           patient_name: k % 2 === 0 ? `Pasien Active ${k}` : null,
           last_updated: serverTimestamp()
+        });
+
+        // Seed Medical Records for Active Encounters
+        const recRef1 = doc(collection(db, 'medical_records'));
+        batch.set(recRef1, {
+          patientId: `demo-patient-${k}`,
+          patient_id: `demo-patient-${k}`,
+          mrn: String(100000 + k),
+          patientName: k % 2 === 0 ? `Ny. Dian Mulyani ${k}` : `Tn. Budi Santoso ${k}`,
+          doctor: 'dr. Ahmad Hidayat, Sp.PD',
+          doctor_name: 'dr. Ahmad Hidayat, Sp.PD',
+          moduleName: 'SOAP NOTES (CPPT)',
+          chapter: 'COP',
+          title: 'Catatan CPPT & SOAP Perkembangan Pasien',
+          status: 'SIGNED_VERIFIED',
+          subjective: `Pasien mengeluhkan kondisi terkontrol.`,
+          objective: `TD: ${115 + k}/75 mmHg, HR: 78 bpm, Temp: 36.6°C, SpO2: 99%`,
+          assessment: 'Perkembangan Klinis Terkontrol Baik',
+          plan: 'Lanjutkan pengobatan oral & observasi TTV berkala.',
+          digitalSignature: `JCI-VERIFIED-HASH-${100000 + k}-COP`,
+          created_at: serverTimestamp(),
+          date: new Date().toISOString().replace('T', ' ').substring(0, 16)
         });
       }
 

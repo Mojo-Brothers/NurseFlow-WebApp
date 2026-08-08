@@ -186,13 +186,77 @@ function generate100Patients() {
       },
       chief_complaint: complaint
     });
+
+    // Populate JCI-Certified Medical Records for each patient
+    records.push({
+      id: `rec-cppt-${patientId}`,
+      patientId: patientId,
+      patient_id: patientId,
+      mrn: mrn,
+      patientName: fullName,
+      doctor: deptObj.doctor,
+      doctor_name: deptObj.doctor,
+      moduleName: 'SOAP NOTES (CPPT)',
+      chapter: 'COP',
+      title: 'Catatan CPPT & SOAP Perkembangan Pasien',
+      status: 'SIGNED_VERIFIED',
+      subjective: `Pasien ${fullName} mengeluhkan: ${complaint}`,
+      objective: `TD: ${systolic}/${diastolic} mmHg, HR: ${hr} bpm, Temp: ${temp}°C, SpO2: 98%`,
+      assessment: `Keluhan Terkontrol - Diagnosis Utama: ${complaint.split(',')[0]}`,
+      plan: `Instruksi DPJP (${deptObj.doctor}): Terapi medikasi oral & evaluasi berkala 24 jam.`,
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-COP`,
+      created_at: new Date(Date.now() - 3600000 * i).toISOString(),
+      date: new Date(Date.now() - 3600000 * i).toISOString().replace('T', ' ').substring(0, 16)
+    });
+
+    records.push({
+      id: `rec-aop-${patientId}`,
+      patientId: patientId,
+      patient_id: patientId,
+      mrn: mrn,
+      patientName: fullName,
+      doctor: deptObj.doctor,
+      doctor_name: deptObj.doctor,
+      moduleName: 'PENGKAJIAN AWAL (AOP)',
+      chapter: 'AOP',
+      title: 'Pengkajian Awal Medis & Keperawatan JCI',
+      status: 'SIGNED_VERIFIED',
+      subjective: `Pengkajian awal admisi poliklinik / rawat jalan untuk ${fullName}.`,
+      objective: `Status Fisiologis: GCS 15 (E4V5M6), Compos Mentis. Risiko Jatuh: ${i % 4 === 0 ? 'HIGH' : 'LOW'}.`,
+      assessment: `Pasien Terbuka Untuk Perawatan Terpadu. Alergi Obat: ${allergy.length > 0 ? allergy[0].agent : 'Tidak Ada'}.`,
+      plan: `Penetapan DPJP Utama: ${deptObj.doctor}. Edukasi Pasien & Keluarga (JCI PFR).`,
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-AOP`,
+      created_at: new Date(Date.now() - 3600000 * (i + 1)).toISOString(),
+      date: new Date(Date.now() - 3600000 * (i + 1)).toISOString().replace('T', ' ').substring(0, 16)
+    });
+
+    records.push({
+      id: `rec-mmu-${patientId}`,
+      patientId: patientId,
+      patient_id: patientId,
+      mrn: mrn,
+      patientName: fullName,
+      doctor: deptObj.doctor,
+      doctor_name: deptObj.doctor,
+      moduleName: 'ORDER RESEP / CPOE (MMU)',
+      chapter: 'MMU',
+      title: 'Resep Elektronik & Rekonsiliasi Obat JCI',
+      status: 'SIGNED_VERIFIED',
+      subjective: 'E-Prescribing CPOE Order',
+      objective: 'Rx: Paracetamol 500mg 3x1 (No. X), Vitamin C 500mg 1x1 (No. X), Antasida Doen 3x1 (No. X)',
+      assessment: 'Rekonsiliasi Obat Terverifikasi Tanpa Interaksi Obat Berbahaya',
+      plan: 'Dispensing via Depo Farmasi & Edukasi Aturan Pakai Obat oleh Apoteker.',
+      digitalSignature: `JCI-VERIFIED-HASH-${mrn}-MMU`,
+      created_at: new Date(Date.now() - 3600000 * (i + 2)).toISOString(),
+      date: new Date(Date.now() - 3600000 * (i + 2)).toISOString().replace('T', ' ').substring(0, 16)
+    });
   }
 
-  return { patients, encounters };
+  return { patients, encounters, records };
 }
 
-const { patients: GENERATED_PATIENTS, encounters: GENERATED_ENCOUNTERS } = generate100Patients();
+const { patients: GENERATED_PATIENTS, encounters: GENERATED_ENCOUNTERS, records: GENERATED_RECORDS } = generate100Patients();
 
 export const DEMO_PATIENTS = GENERATED_PATIENTS;
 export const DEMO_ENCOUNTERS = GENERATED_ENCOUNTERS;
-export const DEMO_RECORDS = [];
+export const DEMO_RECORDS = GENERATED_RECORDS;

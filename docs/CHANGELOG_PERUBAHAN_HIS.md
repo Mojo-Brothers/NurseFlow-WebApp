@@ -20,6 +20,19 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [09 AGUSTUS 2026] — Pre-Populated JCI EMR Medical Records Generation & Service Query Optimization
+
+**Kategori:** `[FEATURE]` `[FIX]` `[ENHANCEMENT]`  
+**Status:** Completed  
+**Komponen Terdampak:** `src/core/demoData.js`, `src/modules/emr/services/emr.service.js`, `src/modules/admin/pages/DummyDataManagementPage.jsx`
+
+#### Detail Perbaikan:
+* **`[ROOT CAUSE FIX]` Generasi Rekam Medis Klinis Otomatis (`DEMO_RECORDS`):** Mengisi generator [demoData.js](file:///c:/Users/Mojo/NurseFlow-WebApp/src/core/demoData.js) dengan 300+ formulir rekam medis sah dan terverifikasi digital (Catatan CPPT/SOAP, Asesmen Awal AOP, Resep Obat MMU/CPOE) untuk 100 pasien demo sehingga daftar dokumen klinis di EMR Dashboard langsung terisi lengkap.
+* **`[ENHANCEMENT]` Multi-Source Query Layer (`getPatientRecords`):** Mengoptimalkan fungsi [emr.service.js](file:///c:/Users/Mojo/NurseFlow-WebApp/src/modules/emr/services/emr.service.js#L288) untuk mengombinasikan dokumen Firestore `medical_records`, `localStorage` master cache, dan `DEMO_RECORDS` berdasar ID Pasien maupun No. RM dengan deduplikasi kunci aman.
+* **`[FEATURE]` Seeder Rekam Medis Admin Generator:** Memperbarui [DummyDataManagementPage.jsx](file:///c:/Users/Mojo/NurseFlow-WebApp/src/modules/admin/pages/DummyDataManagementPage.jsx) agar proses injeksi data batch dan seeder dashboard secara otomatis menautkan `patientId` dan `mrn` ke koleksi Firestore `medical_records` dan `localStorage`.
+
+---
+
 ### 🟢 [09 AGUSTUS 2026] — Fix Patient Context Switcher & Search Modal Selection Override Bug
 
 **Kategori:** `[FIX]` `[ENHANCEMENT]`  

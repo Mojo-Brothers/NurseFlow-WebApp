@@ -302,6 +302,17 @@ export const saveClinicalRecord = async ({ patientId, encounterId, author, modul
 
 
 export const getPatientRecords = async (patientId) => {
+  if (!patientId) return [];
+
+  let localRecords = [];
+  try {
+    const raw = localStorage.getItem('nurseflow_medical_records_master');
+    if (raw) localRecords = JSON.parse(raw);
+  } catch (e) {}
+
+  const matchingLocal = localRecords.filter(r => r.patientId === patientId || r.patient_id === patientId || r.mrn === patientId);
+  const matchingDemo = DEMO_RECORDS.filter(r => r.patientId === patientId || r.patient_id === patientId || r.mrn === patientId);
+
   try {
     const q = query(
       collection(db, COLLECTIONS.MEDICAL_RECORDS),
@@ -309,16 +320,30 @@ export const getPatientRecords = async (patientId) => {
     );
     const snapshot = await getDocs(q);
     const firestoreRecords = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    const demoRecords = DEMO_RECORDS.filter(r => r.patientId === patientId);
     
-    // Merge so both new records and pre-populated demo records display
     const firestoreIds = new Set(firestoreRecords.map(r => r.id));
-    return [
+    const combined = [
       ...firestoreRecords,
-      ...demoRecords.filter(r => !firestoreIds.has(r.id))
+      ...matchingLocal.filter(r => !firestoreIds.has(r.id)),
+      ...matchingDemo.filter(r => !firestoreIds.has(r.id))
     ];
+
+    const seen = new Set();
+    return combined.filter(r => {
+      const k = r.id || `${r.moduleName}-${r.date}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
   } catch (error) {
     console.error('[EmrService] Failed to fetch records:', error);
-    return DEMO_RECORDS.filter(r => r.patientId === patientId);
+    const combined = [...matchingLocal, ...matchingDemo];
+    const seen = new Set();
+    return combined.filter(r => {
+      const k = r.id || `${r.moduleName}-${r.date}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
   }
 };
