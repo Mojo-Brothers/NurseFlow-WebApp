@@ -120,13 +120,25 @@ function generate100Patients() {
       name: fullName,
       mrn: mrn,
       nik: nik,
+      phone: `0812${String(10000000 + i * 9876).slice(0, 8)}`,
+      email: `${rawName.toLowerCase().replace(/\s+/g, '.')}${i}@gmail.com`,
+      address: `Jl. Soekarno Hatta No. ${i * 3}, Buah Batu, Bandung`,
+      city: 'Bandung',
+      province: 'Jawa Barat, INDONESIA',
+      gender: isFemale ? 'F' : 'M',
+      dob: dob,
+      blood_type: i % 4 === 0 ? 'O+' : i % 3 === 0 ? 'A+' : i % 2 === 0 ? 'B+' : 'O-',
+      marital_status: i % 3 === 0 ? 'Menikah' : i % 2 === 0 ? 'Belum Menikah' : 'Cerai Hidup',
+      religion: i % 5 === 0 ? 'Kristen Protestan' : i % 7 === 0 ? 'Katolik' : 'Islam',
       demographics: {
         gender: isFemale ? 'F' : 'M',
         dob: dob,
         pob: 'Bandung',
-        religion: 'Islam',
+        religion: i % 5 === 0 ? 'Kristen Protestan' : i % 7 === 0 ? 'Katolik' : 'Islam',
         occupation: isFemale ? 'Wiraswasta / Ibu Rumah Tangga' : 'Karyawan Swasta',
-        address: `Jl. Soekarno Hatta No. ${i * 3}, Buah Batu, Bandung`
+        address: `Jl. Soekarno Hatta No. ${i * 3}, Buah Batu, Bandung`,
+        city: 'Bandung',
+        province: 'Jawa Barat, INDONESIA'
       },
       baseline_profile: {
         value: weight,
@@ -179,6 +191,8 @@ function generate100Patients() {
   return { patients, encounters };
 }
 
-export const DEMO_PATIENTS = [];
-export const DEMO_ENCOUNTERS = [];
+const { patients: GENERATED_PATIENTS, encounters: GENERATED_ENCOUNTERS } = generate100Patients();
+
+export const DEMO_PATIENTS = GENERATED_PATIENTS;
+export const DEMO_ENCOUNTERS = GENERATED_ENCOUNTERS;
 export const DEMO_RECORDS = [];

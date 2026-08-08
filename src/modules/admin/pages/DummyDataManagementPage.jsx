@@ -540,13 +540,19 @@ export default function DummyDataManagementPage() {
         economic_status: 'Menengah (Middle Class)',
 
         primary_phone: `0812${Math.floor(10000000 + Math.random() * 90000000)}`,
+        phone: `0812${Math.floor(10000000 + Math.random() * 90000000)}`,
         secondary_phone: `0813${Math.floor(10000000 + Math.random() * 90000000)}`,
         home_phone: '(022) 2501234',
         email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`,
         whatsapp_no: `0812${Math.floor(10000000 + Math.random() * 90000000)}`,
+        address: `Jl. Merdeka No. ${Math.floor(1 + Math.random() * 150)}, RT 04 / RW 09, ${birthPlace}`,
+        city: birthPlace,
+        province: 'Jawa Barat',
         emergency_contact_name: emergencyContactName,
+        emergency_name: emergencyContactName,
         emergency_contact_relation: emergencyRelation,
         emergency_contact_phone: emergencyPhone,
+        emergency_phone: emergencyPhone,
         emergency_contact_email: `emergency.${firstName.toLowerCase()}@gmail.com`,
 
         ktp_address: {
@@ -556,7 +562,7 @@ export default function DummyDataManagementPage() {
         },
 
         domicile_address: {
-          full_address: `Jl. Merdeka No. ${Math.floor(1 + Math.random() * 150)}, RT 04 / RW 09`,
+          full_address: `Jl. Merdeka No. ${Math.floor(1 + Math.random() * 150)}, RT 04 / RW 09, ${birthPlace}`,
           rt: '004', rw: '009', subdistrict: 'Kelurahan Dago', district: 'Kecamatan Coblong',
           city: birthPlace, province: 'Jawa Barat', postal_code: '40135', country: 'Indonesia',
           same_as_ktp: true, kemendagri_region_code: '32.73.01.1002',

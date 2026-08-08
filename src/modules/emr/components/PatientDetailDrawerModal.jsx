@@ -16,20 +16,20 @@ export default function PatientDetailDrawerModal({ isOpen, onClose, patient }) {
   const genderRaw = patient?.gender || patient?.jenis_kelamin || patient?.demographics?.gender || '';
   const patientGender = genderRaw === 'F' || genderRaw === 'Perempuan' || genderRaw === 'P' ? 'Perempuan' : 'Laki-laki';
   
-  const patientPhone = patient?.phone || patient?.mobile_phone || patient?.phone_number || patient?.no_hp || patient?.demographics?.phone || patient?.contact?.phone || '-';
+  const patientPhone = patient?.primary_phone || patient?.phone || patient?.mobile_phone || patient?.phone_number || patient?.no_hp || patient?.whatsapp_no || patient?.demographics?.phone || patient?.contact?.phone || '-';
   const patientEmail = patient?.email || patient?.demographics?.email || patient?.contact?.email || '-';
   
-  const patientAddress = patient?.address || patient?.alamat_lengkap || patient?.alamat || patient?.street_address || patient?.demographics?.address || '-';
-  const patientCity = patient?.city || patient?.kota || patient?.kabupaten || patient?.demographics?.city || patient?.demographics?.pob || 'Bandung';
-  const patientProvince = patient?.province || patient?.provinsi || patient?.demographics?.province || 'Jawa Barat, INDONESIA';
+  const patientAddress = patient?.domicile_address?.full_address || patient?.ktp_address?.full_address || patient?.address || patient?.alamat_lengkap || patient?.alamat || patient?.street_address || patient?.demographics?.address || '-';
+  const patientCity = patient?.domicile_address?.city || patient?.ktp_address?.city || patient?.city || patient?.kota || patient?.kabupaten || patient?.demographics?.city || patient?.demographics?.pob || patient?.pob || '-';
+  const patientProvince = patient?.domicile_address?.province || patient?.ktp_address?.province || patient?.province || patient?.provinsi || patient?.demographics?.province || '-';
   
   const bloodType = patient?.blood_type || patient?.golongan_darah || patient?.demographics?.blood_type || '-';
   const maritalStatus = patient?.marital_status || patient?.status_perkawinan || patient?.demographics?.marital_status || '-';
   const religion = patient?.religion || patient?.agama || patient?.demographics?.religion || '-';
 
-  const emergencyName = patient?.emergency_name || patient?.emergency_contact?.name || patient?.penanggung_jawab?.nama || '-';
-  const emergencyPhone = patient?.emergency_phone || patient?.emergency_contact?.phone || patient?.penanggung_jawab?.phone || '-';
-  const emergencyRel = patient?.relationship || patient?.emergency_contact?.relation || patient?.penanggung_jawab?.hubungan || 'Wali / Keluarga';
+  const emergencyName = patient?.emergency_contact_name || patient?.emergency_name || patient?.emergency_contact?.name || patient?.penanggung_jawab?.nama || '-';
+  const emergencyPhone = patient?.emergency_contact_phone || patient?.emergency_phone || patient?.emergency_contact?.phone || patient?.penanggung_jawab?.phone || '-';
+  const emergencyRel = patient?.emergency_contact_relation || patient?.relationship || patient?.emergency_contact?.relation || patient?.penanggung_jawab?.hubungan || 'Wali / Keluarga';
 
   const handleCopy = (text, fieldName) => {
     if (!text || text === '-') return;
