@@ -457,5 +457,463 @@ export const PATIENT_MASTER_32_CATEGORIES = [
       'Dokumen Medis Terpusat (Resume Medis PDF, SOAP, CPPT, Hasil Lab, Hasil Radiologi, EKG, EEG, EMG, Spirometri, Audiometri, Endoskopi, Patologi Anatomi, Patologi Klinik, Mikrobiologi, Bank Darah, Laporan Operasi, Laporan Anestesi, Informed Consent, Surat Penolakan, Surat Pulang, Surat Kontrol, Surat Kematian, Surat Kelahiran, Sertifikat Vaksin, Rekam Medis RS Lain)',
       'Berkas Multimedia & Format Spesifik (Foto Luka, Foto Kulit, Foto Gigi, Foto Retina, Video Endoskopi, Video Operasi, Rekaman Audio Konsultasi, File DICOM CT/MRI/USG/X-Ray, File PDF, DOCX, XLSX, ZIP, XML, FHIR JSON)'
     ]
+  },
+
+  // ─── 35 KATEGORI BARU (Hasil Gap Analysis vs 100-Category Enterprise Standard) ───
+
+  {
+    id: '33_biometri_identifikasi',
+    number: 33,
+    title: '33. BIOMETRI & IDENTIFIKASI (Biometric & Patient Identification)',
+    desc: 'Foto Pasien, Sidik Jari, Face Recognition, Iris Scan, Tanda Tangan, Barcode, QR Code, RFID, Wristband, Biometric Verification Status',
+    category: 'Identifikasi Biometrik',
+    badgeColor: 'bg-violet-500/10 text-violet-600 border border-violet-500/20',
+    details: [
+      'Identifikasi Biometrik (Foto Pasien, Sidik Jari Fingerprint, Face Recognition AI, Iris Scan, Tanda Tangan Digital)',
+      'Identifikasi Fisik (Barcode Gelang Pasien, QR Code Rekam Medis, RFID Tag, Wristband ID)',
+      'Status Verifikasi Biometrik (Biometric ID, Biometric Verification Status, Last Verified)'
+    ]
+  },
+  {
+    id: '34_wali_representative',
+    number: 34,
+    title: '34. WALI & REPRESENTATIVE (Guardian & Legal Proxy Master)',
+    desc: 'Legal Guardian, Healthcare Proxy, Power of Attorney, Authority Scope, Start/End Date, Nomor Identitas, Hubungan Hukum',
+    category: 'Wali & Kuasa Hukum',
+    badgeColor: 'bg-amber-500/10 text-amber-600 border border-amber-500/20',
+    details: [
+      'Data Wali (Guardian ID, Nama Lengkap, Hubungan, Nomor Identitas, Nomor Telepon, Alamat)',
+      'Status Hukum (Legal Guardian, Healthcare Proxy, Power of Attorney)',
+      'Validitas Mandat (Start Date, End Date, Authority Scope, Legal Verification Status)'
+    ]
+  },
+  {
+    id: '35_medical_history',
+    number: 35,
+    title: '35. MEDICAL HISTORY (Riwayat Medis Lengkap)',
+    desc: 'Past Medical History, Current Medical History, Chronic Disease, Previous Diagnosis, Previous Hospitalization, Previous Surgery, Previous Trauma, Disease Onset & Status',
+    category: 'Riwayat Klinis',
+    badgeColor: 'bg-rose-500/10 text-rose-600 border border-rose-500/20',
+    details: [
+      'Riwayat Penyakit (Past Medical History, Current Medical History, Chronic Disease List, Previous Diagnosis ICD-10)',
+      'Riwayat Perawatan Sebelumnya (Previous Hospitalization, Previous Surgery, Previous Trauma, Previous Infection)',
+      'Status Penyakit (Disease Onset Date, Disease Status Active/Resolved, Resolved Date, Treating Facility)'
+    ]
+  },
+  {
+    id: '36_surgical_history',
+    number: 36,
+    title: '36. SURGICAL HISTORY (Riwayat Operasi Terdahulu)',
+    desc: 'Nama Operasi, Tanggal, Rumah Sakit, Dokter Operator, Indikasi, Komplikasi, Outcome Pasca Operasi',
+    category: 'Riwayat Bedah',
+    badgeColor: 'bg-red-500/10 text-red-600 border border-red-500/20',
+    details: [
+      'Detail Operasi (Nama Operasi, ICD-9-CM Code, Tanggal, Rumah Sakit Tempat Operasi)',
+      'Tim Bedah (Dokter Operator, Asisten, Dokter Anestesi)',
+      'Hasil & Komplikasi (Indikasi, Komplikasi Pasca Operasi, Outcome, Implant/Prosthesis yang Dipasang)'
+    ]
+  },
+  {
+    id: '37_family_history',
+    number: 37,
+    title: '37. FAMILY HISTORY (Riwayat Penyakit Keluarga)',
+    desc: 'Penyakit Genetik, Penyakit Herediter, Hubungan Keluarga, Usia Diagnosis, Usia Meninggal, Penyebab Kematian, Family Pedigree',
+    category: 'Riwayat Keluarga',
+    badgeColor: 'bg-pink-500/10 text-pink-600 border border-pink-500/20',
+    details: [
+      'Penyakit Keluarga (Nama Penyakit ICD-10, Hubungan Anggota Keluarga, Usia saat Didiagnosis)',
+      'Data Kematian Keluarga (Usia saat Meninggal, Penyebab Kematian)',
+      'Penyakit Genetik & Herediter (Genetic Disease Flag, Hereditary Condition, Family Pedigree Tree)'
+    ]
+  },
+  {
+    id: '38_social_history',
+    number: 38,
+    title: '38. SOCIAL HISTORY (Riwayat Sosial & Gaya Hidup)',
+    desc: 'Merokok, Alkohol, Narkoba, Pekerjaan, Paparan Kerja, Kondisi Tempat Tinggal, Dukungan Sosial, Riwayat Perjalanan, Riwayat Paparan',
+    category: 'Riwayat Sosial',
+    badgeColor: 'bg-orange-500/10 text-orange-600 border border-orange-500/20',
+    details: [
+      'Kebiasaan & Gaya Hidup (Status Merokok, Frekuensi Alkohol, Penggunaan Narkoba/NAPZA)',
+      'Sosial & Lingkungan (Kondisi Tempat Tinggal, Pekerjaan, Paparan Kerja/Hazard, Social Support, Caregiver)',
+      'Riwayat Perjalanan & Paparan (Travel History, Exposure History, Lifestyle Assessment)'
+    ]
+  },
+  {
+    id: '39_medication_history',
+    number: 39,
+    title: '39. MEDICATION HISTORY (Riwayat Penggunaan Obat)',
+    desc: 'Home Medication, Previous Medication, Current Medication, Discontinued Medication, Dosis, Rute, Frekuensi, Durasi, Indikasi, Prescriber',
+    category: 'Riwayat Medikasi',
+    badgeColor: 'bg-violet-500/10 text-violet-600 border border-violet-500/20',
+    details: [
+      'Obat Rumahan (Home Medication List, Nama Generik, Brand, Dosis, Rute, Frekuensi)',
+      'Riwayat Obat (Previous Medication, Discontinued Medication, Alasan Penghentian)',
+      'Data Prescriber (Dokter Penulis Resep, Start Date, End Date, Indikasi Penggunaan Obat)'
+    ]
+  },
+  {
+    id: '40_patient_registration',
+    number: 40,
+    title: '40. PATIENT REGISTRATION (Master Registrasi Kunjungan)',
+    desc: 'Registration ID, Jenis Pasien Baru/Lama, Kanal Registrasi (Walk-In/Online/Referral/Emergency/Call Center/App), Petugas, Loket, Nomor Antrean, Prioritas',
+    category: 'Registrasi Pasien',
+    badgeColor: 'bg-cyan-500/10 text-cyan-600 border border-cyan-500/20',
+    details: [
+      'Identitas Registrasi (Registration ID, Registration Number, Tanggal & Jam Registrasi)',
+      'Jenis & Kanal (Pasien Baru/Lama, Walk-In/Online/Referral/Emergency/Call Center/Mobile App)',
+      'Petugas & Antrean (Registration Officer, Nomor Counter/Loket, Nomor Antrean, Prioritas Pelayanan)'
+    ]
+  },
+  {
+    id: '41_dpjp',
+    number: 41,
+    title: '41. DPJP (Dokter Penanggung Jawab Pelayanan)',
+    desc: 'DPJP Assignment, DPJP Utama/Pengganti/Tambahan, Dokter Konsulen, Profesi, Spesialisasi, Subspesialisasi, Tanggal Penunjukan, Alasan Pergantian',
+    category: 'DPJP & Penanganan Medis',
+    badgeColor: 'bg-blue-500/10 text-blue-600 border border-blue-500/20',
+    details: [
+      'Data DPJP (DPJP Assignment ID, Practitioner ID, Employee ID, Nama Dokter, NIK, Profesi, Spesialisasi, Subspesialisasi)',
+      'Peran & Jenis (DPJP Utama, DPJP Pengganti, DPJP Tambahan, Dokter Konsulen, Departemen/Unit)',
+      'Waktu & Alasan (Tgl/Jam Mulai, Tgl/Jam Selesai, Alasan Penunjukan, Alasan Pergantian, Assigned By, Status)'
+    ]
+  },
+  {
+    id: '42_care_team',
+    number: 42,
+    title: '42. CARE TEAM (Tim Pelayanan Terpadu)',
+    desc: 'DPJP, Dokter Konsulen, Perawat PJ, Perawat Primer, Bidan, Apoteker, Ahli Gizi, Fisioterapis, Psikolog, Terapis, PPA Lain',
+    category: 'Tim Asuhan',
+    badgeColor: 'bg-teal-500/10 text-teal-600 border border-teal-500/20',
+    details: [
+      'Komposisi Tim (Care Team ID, Patient ID, Encounter ID, Episode ID)',
+      'Anggota Medis (DPJP, DPJP Pengganti, Dokter Konsulen, Dokter Pelaksana)',
+      'Anggota Profesional (Perawat PJ, Perawat Primer, Bidan, Apoteker, Ahli Gizi, Fisioterapis, Psikolog, Terapis, Tenaga Kesehatan Lain, Role, Start/End Date)'
+    ]
+  },
+  {
+    id: '43_ppa',
+    number: 43,
+    title: '43. PPA (Professionals Providing Care)',
+    desc: 'Dokter, Perawat, Bidan, Apoteker, Radiografer, ATLM, Fisioterapis, Ahli Gizi, Psikolog, Terapis, Tenaga Kesehatan Lain, Profesi, Lisensi, Peran',
+    category: 'Profesional Pemberi Asuhan',
+    badgeColor: 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20',
+    details: [
+      'Identitas PPA (PPA ID, Practitioner ID, Employee ID)',
+      'Profesi Lengkap (Dokter, Dokter Gigi, Perawat, Bidan, Apoteker, Radiografer, ATLM, Fisioterapis, Ahli Gizi, Psikolog, Terapis)',
+      'Kredensial PPA (Profesi, Spesialisasi, Subspesialisasi, Nomor Lisensi/STR, Peran dalam Asuhan)'
+    ]
+  },
+  {
+    id: '44_dokter_perujuk',
+    number: 44,
+    title: '44. DOKTER PERUJUK (Referring Physician & Facility)',
+    desc: 'Nama Dokter Perujuk, Fasilitas Perujuk, Tanggal Rujukan, Nomor Surat Rujukan, Alasan Rujukan, Diagnosis Rujukan, Dokumen Rujukan',
+    category: 'Rujukan Masuk',
+    badgeColor: 'bg-sky-500/10 text-sky-600 border border-sky-500/20',
+    details: [
+      'Data Perujuk (Nama Dokter Perujuk, Fasilitas Kesehatan Asal, Tanggal Rujukan)',
+      'Detail Surat Rujukan (Nomor Surat Rujukan, Alasan Rujukan, Diagnosis Awal dari Faskes Perujuk)',
+      'Dokumen (File Surat Rujukan, Status Verifikasi Rujukan BPJS)'
+    ]
+  },
+  {
+    id: '45_dokter_konsulen',
+    number: 45,
+    title: '45. DOKTER KONSULEN (Consultation Record)',
+    desc: 'Consultant ID, Spesialisasi, Dokter Peminta, Dokter Konsulen, Pertanyaan Klinis, Assessment, Rekomendasi, Tanggal Respons',
+    category: 'Konsultasi Antar Divisi',
+    badgeColor: 'bg-purple-500/10 text-purple-600 border border-purple-500/20',
+    details: [
+      'Permintaan Konsul (Consultant ID, Spesialisasi, Subspesialisasi, Dokter Peminta Konsul)',
+      'Isi Konsultasi (Clinical Question / Pertanyaan Klinis, Dokter Konsulen yang Menjawab)',
+      'Hasil Konsultasi (Assessment Konsulen, Rekomendasi Terapi, Tanggal & Jam Respons)'
+    ]
+  },
+  {
+    id: '46_dokter_pelaksana_tindakan',
+    number: 46,
+    title: '46. DOKTER PELAKSANA TINDAKAN (Operator & Procedure Physician)',
+    desc: 'Operator Utama, Asisten Operator, Dokter Anestesi, Dokter Sedasi, Ahli Radiologi, Ahli Patologi, Peran, Prosedur, Tanggal & Jam',
+    category: 'Tim Tindakan Medis',
+    badgeColor: 'bg-red-500/10 text-red-600 border border-red-500/20',
+    details: [
+      'Tim Tindakan (Operator/Primary Surgeon, Assistant Surgeon, Anesthesiologist, Sedation Physician)',
+      'Spesialis Penunjang (Procedure Physician, Pathologist, Radiologist, Peran dalam Tindakan)',
+      'Detail Tindakan (Nama Prosedur, Tanggal, Jam Mulai, Jam Selesai)'
+    ]
+  },
+  {
+    id: '47_anamnesis',
+    number: 47,
+    title: '47. ANAMNESIS (History of Present Illness)',
+    desc: 'Chief Complaint, HPI, Onset, Location, Quality, Severity, Duration, Timing, Aggravating Factors, Relieving Factors, Review of Systems',
+    category: 'Anamnesis Klinis',
+    badgeColor: 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20',
+    details: [
+      'Keluhan Utama (Chief Complaint, History of Present Illness, Onset, Lokasi, Kualitas, Tingkat Keparahan)',
+      'Karakteristik Gejala (Duration/Durasi, Timing/Kapan Terjadi, Faktor yang Memperberat, Faktor yang Meringankan)',
+      'Tinjauan Sistem (Review of Systems: Kardiovaskular, Respirasi, Gastrointestinal, Neurologi, Muskuloskeletal)'
+    ]
+  },
+  {
+    id: '48_physical_examination',
+    number: 48,
+    title: '48. PEMERIKSAAN FISIK (Physical Examination)',
+    desc: 'Keadaan Umum, Status Mental, Kepala, Mata, THT, Leher, Thorax, Jantung, Paru, Abdomen, Ekstremitas, Neurologi, Kulit, Muskuloskeletal, Urogenital',
+    category: 'Pemeriksaan Fisik',
+    badgeColor: 'bg-blue-500/10 text-blue-600 border border-blue-500/20',
+    details: [
+      'Status Umum (General Condition, Mental Status, GCS)',
+      'Pemeriksaan Regional (Kepala-Leher, Mata, ENT, Thorax-Jantung-Paru, Abdomen, Ekstremitas)',
+      'Pemeriksaan Khusus (Neurologi, Kulit/Integumen, Muskuloskeletal, Genitourinary, Normal/Abnormal Flag, Clinical Finding)'
+    ]
+  },
+  {
+    id: '49_care_plan',
+    number: 49,
+    title: '49. CARE PLAN (Rencana Asuhan Terintegrasi)',
+    desc: 'Problem, Goal, Intervention, Target, Frekuensi, PPA Penanggung Jawab, Evaluasi, Outcome, Status Pencapaian',
+    category: 'Rencana Asuhan',
+    badgeColor: 'bg-teal-500/10 text-teal-600 border border-teal-500/20',
+    details: [
+      'Komponen Rencana (Problem/Masalah, Goal/Target, Intervensi yang Direncanakan)',
+      'Pelaksanaan (Target Waktu, Frekuensi Intervensi, PPA Penanggung Jawab)',
+      'Evaluasi (Hasil/Outcome, Status Pencapaian, Revisi Rencana Asuhan)'
+    ]
+  },
+  {
+    id: '50_immunization',
+    number: 50,
+    title: '50. IMUNISASI & VAKSINASI (Immunization Record)',
+    desc: 'Vaksin, Dosis, Rute, Lokasi Suntik, Batch Number, Produsen, Tanggal Pemberian, Tanggal Kedaluwarsa, Pemberi, Reaksi',
+    category: 'Imunisasi',
+    badgeColor: 'bg-lime-500/10 text-lime-600 border border-lime-500/20',
+    details: [
+      'Detail Vaksin (Nama Vaksin, Dosis Ke-N, Rute Pemberian, Lokasi Suntikan)',
+      'Identitas Produk (Batch Number, Produsen/Manufacturer, Tanggal Kedaluwarsa)',
+      'Administrasi & Reaksi (Tanggal Pemberian, Pemberi/Administrator, Reaksi KIPI)'
+    ]
+  },
+  {
+    id: '51_infection_control',
+    number: 51,
+    title: '51. PENGENDALIAN INFEKSI (Infection Control & Isolation)',
+    desc: 'Tipe Infeksi, Status Isolasi, MRSA, MDR, TB, COVID, Kewaspadaan Kontak/Droplet/Airborne, Start/End Date',
+    category: 'PPI & Isolasi',
+    badgeColor: 'bg-orange-500/10 text-orange-600 border border-orange-500/20',
+    details: [
+      'Identifikasi Infeksi (Tipe Infeksi, Organisme, Status: MRSA, MDR, TB, COVID-19, Infeksi Lain)',
+      'Status Isolasi (Contact Precaution, Droplet Precaution, Airborne Precaution)',
+      'Manajemen Isolasi (Start Date Isolasi, End Date Isolasi, Review PPI, Verifikasi IPCN)'
+    ]
+  },
+  {
+    id: '52_wound_care',
+    number: 52,
+    title: '52. PERAWATAN LUKA (Wound Assessment & Management)',
+    desc: 'Lokasi Luka, Tipe, Panjang, Lebar, Kedalaman, Stadium, Eksudat, Odor, Jaringan, Foto Luka, Treatment, Dressing, Progress',
+    category: 'Manajemen Luka',
+    badgeColor: 'bg-red-500/10 text-red-600 border border-red-500/20',
+    details: [
+      'Asesmen Luka (Wound Location, Wound Type, Dimensi: Panjang × Lebar × Kedalaman cm, Stage/Stadium)',
+      'Karakteristik Luka (Eksudat/Wound Exudate, Odor, Tipe Jaringan: Granulasi/Slough/Nekrotik)',
+      'Manajemen (Foto Luka Serial, Jenis Treatment, Jenis Dressing, Progress Penyembuhan)'
+    ]
+  },
+  {
+    id: '53_advance_directive',
+    number: 53,
+    title: '53. ADVANCE DIRECTIVE (Instruksi Medis Lanjutan)',
+    desc: 'DNR, Advance Directive, Healthcare Proxy, Power of Attorney, Treatment Preference, Tanggal Berlaku, Kedaluwarsa, Saksi',
+    category: 'Hak & Preferensi Pasien',
+    badgeColor: 'bg-slate-500/10 text-slate-600 border border-slate-500/20',
+    details: [
+      'Instruksi Medis (DNR/Do Not Resuscitate Order, Advance Directive, Living Will)',
+      'Kuasa & Proxy (Healthcare Proxy, Power of Attorney, Nama & Hubungan Proxy)',
+      'Preferensi Perawatan (Treatment Preference, Effective Date, Expiration Date, Nama Saksi)'
+    ]
+  },
+  {
+    id: '54_case_management',
+    number: 54,
+    title: '54. CASE MANAGEMENT (Manajemen Kasus Kompleks)',
+    desc: 'Case ID, Case Manager, Risk Level, Complexity, Care Coordination, Barrier, Discharge Planning, Follow Up',
+    category: 'Manajemen Kasus',
+    badgeColor: 'bg-amber-500/10 text-amber-600 border border-amber-500/20',
+    details: [
+      'Identitas Kasus (Case ID, Case Manager yang Ditugaskan, Risk Level: Low/Medium/High/Complex)',
+      'Koordinasi Perawatan (Care Coordination Plan, Barrier/Hambatan yang Diidentifikasi)',
+      'Perencanaan (Discharge Planning, Follow Up Schedule, Outcome Case Management)'
+    ]
+  },
+  {
+    id: '55_social_work',
+    number: 55,
+    title: '55. PEKERJAAN SOSIAL (Social Work Assessment)',
+    desc: 'Social Assessment, Masalah Finansial, Masalah Keluarga, Kondisi Hunian, Caregiver, Social Support, Intervensi, Referral, Outcome',
+    category: 'Pekerja Sosial',
+    badgeColor: 'bg-green-500/10 text-green-600 border border-green-500/20',
+    details: [
+      'Asesmen Sosial (Social Assessment, Financial Problem, Family Problem, Kondisi Hunian)',
+      'Dukungan Sosial (Caregiver Tersedia, Social Support System, Jaminan Sosial)',
+      'Intervensi & Referral (Rencana Intervensi Sosial, Referral ke Lembaga Sosial, Outcome)'
+    ]
+  },
+  {
+    id: '56_home_care',
+    number: 56,
+    title: '56. HOME CARE (Pelayanan Kesehatan Rumah)',
+    desc: 'Kunjungan Rumah, Alamat, Perawat/Dokter Penunjung, Tanggal, Asesmen, Prosedur, Medikasi, Outcome',
+    category: 'Layanan Rumah',
+    badgeColor: 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20',
+    details: [
+      'Identitas Kunjungan (Home Visit ID, Tanggal & Jam Kunjungan, Alamat Pasien)',
+      'Tim Home Care (Perawat Home Care, Dokter Penanggung Jawab)',
+      'Pelayanan (Asesmen di Rumah, Prosedur yang Dilakukan, Pemberian Medikasi, Outcome & Follow Up)'
+    ]
+  },
+  {
+    id: '57_patient_safety',
+    number: 57,
+    title: '57. KESELAMATAN PASIEN (Patient Safety & Incident Reporting)',
+    desc: 'Incident ID, Tipe Insiden (Near Miss/Adverse Event/Sentinel/Jatuh/Medication Error/Wrong Patient/Wrong Procedure), Severity, Root Cause, Corrective Action',
+    category: 'Patient Safety',
+    badgeColor: 'bg-red-500/10 text-red-600 border border-red-500/20',
+    details: [
+      'Identifikasi Insiden (Incident ID, Tipe: Near Miss/Adverse Event/Sentinel Event/Jatuh/Medication Error/Wrong Patient/Wrong Procedure/Identification Error)',
+      'Data Insiden (Tanggal, Lokasi Kejadian, Tingkat Keparahan/Severity, Dampak pada Pasien)',
+      'Investigasi & Tindak Lanjut (Root Cause Analysis, Corrective Action, Preventive Measure)'
+    ]
+  },
+  {
+    id: '58_external_medical_record',
+    number: 58,
+    title: '58. REKAM MEDIS EKSTERNAL (External Medical Record)',
+    desc: 'Fasilitas Asal, External MRN, Diagnosis Terdahulu, Prosedur Terdahulu, Lab/Radiologi Terdahulu, Obat Sebelumnya, Summary, Tanggal Import, Status Verifikasi',
+    category: 'Rekam Medis dari Luar',
+    badgeColor: 'bg-sky-500/10 text-sky-600 border border-sky-500/20',
+    details: [
+      'Identitas Sumber (External Facility, External MRN, Source System)',
+      'Data Klinis Terdahulu (Previous Diagnosis, Previous Procedure, Previous Laboratory, Previous Radiology, Previous Medication)',
+      'Manajemen (External Medical Summary, Referral Document, Import Date, Verification Status)'
+    ]
+  },
+  {
+    id: '59_mpi',
+    number: 59,
+    title: '59. MPI (Master Patient Index)',
+    desc: 'MPI ID, MRN, NIK, Nama, DOB, Kelamin, Telepon, Alamat, Possible Duplicate, Merge History, Matching Score, Merged By, Approved By',
+    category: 'Indeks Pasien Master',
+    badgeColor: 'bg-cyan-500/10 text-cyan-600 border border-cyan-500/20',
+    details: [
+      'Data Identifikasi MPI (MPI ID, MRN, NIK, Nama, Tanggal Lahir, Jenis Kelamin, Telepon, Alamat)',
+      'Deteksi Duplikasi (Possible Duplicate Flag, Duplicate Patient List, Master Patient Flag, Matching Score)',
+      'Merge History (Riwayat Penggabungan RM, Merge Reason, Merged By, Approved By, Tanggal Merge)'
+    ]
+  },
+  {
+    id: '60_patient_portal',
+    number: 60,
+    title: '60. PATIENT PORTAL (Portal Pasien Digital)',
+    desc: 'Portal ID, Username, Status Akun, Email/Phone Verification, MFA, Last Login, Akses: Appointment/Lab/Radiologi/Resep/Resume/Tagihan/Consent',
+    category: 'Portal Pasien',
+    badgeColor: 'bg-blue-500/10 text-blue-600 border border-blue-500/20',
+    details: [
+      'Akun Portal (Patient Portal ID, Username, Account Status Active/Inactive, Email Verification, Phone Verification, MFA Status)',
+      'Aktivitas (Last Login, Last Login IP, Last Login Device)',
+      'Akses Fitur (Appointment, Hasil Lab, Hasil Radiologi, Resep, Medical Summary, Tagihan, Pembayaran, Consent, Surat Keterangan)'
+    ]
+  },
+  {
+    id: '61_patient_communication',
+    number: 61,
+    title: '61. KOMUNIKASI PASIEN (Patient Communication Master)',
+    desc: 'SMS, WhatsApp, Email, Telepon, Pengingat Appointment, Notifikasi Hasil, Reminder Pulang, Follow Up, Message Log, Delivery Status',
+    category: 'Komunikasi & Notifikasi',
+    badgeColor: 'bg-green-500/10 text-green-600 border border-green-500/20',
+    details: [
+      'Kanal Komunikasi (SMS, WhatsApp, Email, Phone Call)',
+      'Tipe Pesan (Appointment Reminder, Lab Result Notification, Discharge Reminder, Follow Up Reminder)',
+      'Log Pesan (Isi Pesan, Pengirim, Penerima, Tanggal & Jam, Delivery Status: Sent/Delivered/Failed/Read)'
+    ]
+  },
+  {
+    id: '62_patient_feedback',
+    number: 62,
+    title: '62. FEEDBACK PASIEN (Patient Feedback & Satisfaction)',
+    desc: 'Survey Kepuasan, Keluhan, Saran, Pujian, Rating, NPS, Insiden, Respons RS, Resolusi, Follow Up',
+    category: 'Kepuasan & Umpan Balik',
+    badgeColor: 'bg-yellow-500/10 text-yellow-600 border border-yellow-500/20',
+    details: [
+      'Jenis Feedback (Survey Kepuasan Pasien, Keluhan/Complaint, Saran, Pujian/Compliment)',
+      'Metrik (Rating Pelayanan, Net Promoter Score/NPS)',
+      'Tindak Lanjut (Insiden Terkait, Respons Manajemen RS, Resolusi, Follow Up)'
+    ]
+  },
+  {
+    id: '63_patient_journey',
+    number: 63,
+    title: '63. PATIENT JOURNEY (Alur Pelayanan Pasien End-to-End)',
+    desc: 'Registrasi → Arrival → Triage → Queue → Asesmen Dokter → DPJP → Konsultasi → Investigasi → Diagnosis → Terapi → Tindakan → Medikasi → Farmasi → Kasir → Pulang → Follow Up',
+    category: 'Perjalanan Pasien',
+    badgeColor: 'bg-indigo-500/10 text-indigo-600 border border-indigo-500/20',
+    details: [
+      'Tahapan Perjalanan (Registrasi, Arrival, Triage, Queue, Asesmen Dokter, Penunjukan DPJP, Konsultasi, Investigasi, Diagnosis, Treatment)',
+      'Tahapan Lanjutan (Prosedur/Tindakan, Pemberian Medikasi, Farmasi/Dispensing, Billing/Kasir, Discharge, Follow Up)',
+      'Analitik Waktu (Timestamp setiap tahap, Waiting Time per tahap, Service Time, Total Length of Stay/LOS)'
+    ]
+  },
+  {
+    id: '64_longitudinal_record',
+    number: 64,
+    title: '64. LONGITUDINAL RECORD (Rekam Medis Sepanjang Hayat)',
+    desc: 'Lifetime Diagnosis, Procedure, Medication, Allergy, Laboratory, Imaging, Admission, Surgery, Emergency Visit, Outpatient Visit, Vaccination, Pregnancy, Cancer, Transfusion, Infection',
+    category: 'Rekam Medis Seumur Hidup',
+    badgeColor: 'bg-purple-500/10 text-purple-600 border border-purple-500/20',
+    details: [
+      'Riwayat Klinis Lengkap (Lifetime Diagnosis List, Lifetime Procedure List, Lifetime Medication History, Lifetime Allergy & ADR)',
+      'Riwayat Penunjang (Lifetime Laboratory Results, Lifetime Imaging/Radiology, Lifetime Transfusion, Lifetime Infection)',
+      'Riwayat Episode (Lifetime Admission/Rawat Inap, Lifetime Surgery, Lifetime Emergency Visit, Lifetime Outpatient Visit, Lifetime Vaccination, Lifetime Pregnancy, Lifetime Cancer History)'
+    ]
+  },
+  {
+    id: '65_data_quality',
+    number: 65,
+    title: '65. DATA QUALITY (Kualitas & Integritas Data)',
+    desc: 'Completeness Score, Accuracy, Verification Status, Duplicate Status, Validation Status, Last Verified, Verified By, Data Quality Score',
+    category: 'Kualitas Data',
+    badgeColor: 'bg-lime-500/10 text-lime-600 border border-lime-500/20',
+    details: [
+      'Indikator Kualitas (Completeness Score %, Accuracy Flag, Data Validation Status)',
+      'Deteksi Masalah (Duplicate Status, Inconsistency Flag, Missing Critical Field Alert)',
+      'Verifikasi (Last Verified Date, Verified By, Overall Data Quality Score 0-100)'
+    ]
+  },
+  {
+    id: '66_system_metadata',
+    number: 66,
+    title: '66. SYSTEM METADATA (Metadata Sistem & Teknis)',
+    desc: 'Created By, Created At, Updated By, Updated At, Deleted By, Deleted At, Version, Record Status, Tenant ID, Organization ID, Facility ID, Source System, External ID, UUID',
+    category: 'Metadata Teknis',
+    badgeColor: 'bg-slate-500/10 text-slate-600 border border-slate-500/20',
+    details: [
+      'Audit Teknis (Created By, Created At, Updated By, Updated At, Deleted By, Deleted At)',
+      'Versi & Status (Version Number, Record Status Active/Inactive/Archived/Deleted)',
+      'Multi-Tenancy (Tenant ID, Organization ID, Facility ID, Source System, External ID, UUID)'
+    ]
+  },
+  {
+    id: '67_relationship_linking',
+    number: 67,
+    title: '67. RELATIONSHIP & LINKING (Relasi Antar Entitas)',
+    desc: 'Patient ↔ Family/Guardian/EmergencyContact/Doctor/DPJP/PPA/CareTeam/Encounter/Episode/Diagnosis/Procedure/Medication/Lab/Radiology/Document/Insurance/Claim/Billing/Referral/Consent/Device/Implant/Research/Incident/Mortality',
+    category: 'Relasi Data',
+    badgeColor: 'bg-violet-500/10 text-violet-600 border border-violet-500/20',
+    details: [
+      'Relasi Identitas (Patient ↔ Family, Patient ↔ Guardian, Patient ↔ Emergency Contact, Patient ↔ Doctor/DPJP/PPA/Care Team)',
+      'Relasi Klinis (Patient ↔ Encounter, Patient ↔ Episode, Patient ↔ Diagnosis, Patient ↔ Procedure, Patient ↔ Medication, Patient ↔ Laboratory, Patient ↔ Radiology)',
+      'Relasi Administratif & Khusus (Patient ↔ Document, Patient ↔ Insurance/Claim/Billing, Patient ↔ Referral, Patient ↔ Consent, Patient ↔ Device/Implant, Patient ↔ Research, Patient ↔ Incident, Patient ↔ Mortality)'
+    ]
   }
 ];

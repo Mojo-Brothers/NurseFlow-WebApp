@@ -7,11 +7,11 @@ import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import { 
   AlertTriangle, Activity, Pill, ShieldAlert, CheckCircle2, User, Building2, 
   Stethoscope, FileText, BadgeInfo, CalendarDays, Search, ChevronRight, 
-  Heart, Scale, ClipboardCheck, BookOpen, UserCheck, ShieldCheck, 
+  Heart, Scale, ClipboardCheck, BookOpen, UserCheck, ShieldCheck,
   HelpCircle, Thermometer, Info, Scissors, Microscope, Settings, 
   Workflow, PlusSquare, ScrollText, AlertCircle, UserPlus, ClipboardList,
   FileSignature, LogOut, Share2, Clipboard, Zap, History, Eye, Plus, Edit2, RefreshCw, Sparkles, Brain,
-  Droplets, PenTool, Clock, LayoutDashboard, ChevronDown, HeartPulse, Filter, Copy, Check
+  Droplets, PenTool, Clock, LayoutDashboard, ChevronDown, HeartPulse, Filter, Copy, Check, Hash
 } from 'lucide-react';
 import usePatientClipboardShortcuts from '../../../hooks/usePatientClipboardShortcuts.js';
 import { saveSoapNote, getPatientRecords, saveClinicalRecord } from '../services/emr.service.js';
@@ -43,19 +43,20 @@ import PatientCarePanel from '../components/PatientCarePanel.jsx';
 import PatientSearchModal from '../components/PatientSearchModal.jsx';
 import AdvancedPatientSearchBar from '../components/AdvancedPatientSearchBar.jsx';
 import PillSearchBar from '../../../components/ui/PillSearchBar.jsx';
+import DPJPAssignmentForm from '../components/DPJPAssignmentForm.jsx';
+import AnamnesisForm from '../components/AnamnesisForm.jsx';
+import PhysicalExaminationForm from '../components/PhysicalExaminationForm.jsx';
+import ConsultationRequestForm from '../components/ConsultationRequestForm.jsx';
+import ConsultationResponseForm from '../components/ConsultationResponseForm.jsx';
+import ReferralLetterForm from '../components/ReferralLetterForm.jsx';
 
 const JCI_MODULE_GROUPS = [
-  {
-    title: 'PELAYANAN PASIEN TERPADU (CARE)',
-    icon: <Activity size={16} />,
-    modules: [
-      { id: 'patient-care-workspace', name: 'WORKSPACES PELAYANAN PASIEN', icon: <HeartPulse size={16} />, standard: 'JCI COP & ACC', highlight: true },
-    ]
-  },
   {
     title: 'PENGKAJIAN AWAL (AOP)',
     icon: <Search size={16} />,
     modules: [
+      { id: 'anamnesis-medis', name: 'ANAMNESIS MEDIS LENGKAP', icon: <FileText size={16} />, standard: 'AOP.1.1', highlight: true },
+      { id: 'physical-exam', name: 'PEMERIKSAAN FISIK TERSTRUKTUR', icon: <Stethoscope size={16} />, standard: 'AOP.1.1', highlight: true },
       { id: 'initial-med', name: 'PENGKAJIAN AWAL MEDIS (RJ)', icon: <Stethoscope size={16} />, standard: 'AOP.1.1' },
       { id: 'initial-nurse', name: 'PENGKAJIAN AWAL KEPERAWATAN', icon: <ClipboardList size={16} />, standard: 'AOP.1.1' },
       { id: 'fall-risk', name: 'ASESMEN RISIKO JATUH', icon: <AlertTriangle size={16} />, standard: 'IPSG.6' },
@@ -117,6 +118,14 @@ const JCI_MODULE_GROUPS = [
       { id: 'discharge-readiness', name: 'KESIAPAN PASIEN PULANG', icon: <ClipboardCheck size={16} />, standard: 'ACC.4', highlight: true },
       { id: 'death-certificate', name: 'SERTIFIKAT KEMATIAN (SMPK)', icon: <FileText size={16} />, standard: 'ACC.4 / WHO ICD', highlight: true },
       { id: 'medical-resume', name: 'RESUME MEDIS', icon: <ScrollText size={16} />, standard: 'ACC.4.2' },
+    ]
+  },
+  {
+    title: 'DPJP & TIM ASUHAN (COP.2)',
+    icon: <UserCheck size={16} />,
+    modules: [
+      { id: 'dpjp-assignment', name: 'PENUNJUKAN DPJP', icon: <UserCheck size={16} />, standard: 'COP.2', highlight: true },
+      { id: 'care-team', name: 'TIM ASUHAN (PPA)', icon: <UserPlus size={16} />, standard: 'COP.2.1', highlight: true },
     ]
   }
 ];
@@ -483,15 +492,46 @@ export default function OutpatientEMR() {
 
     const moduleInfo = JCI_MODULE_GROUPS.flatMap(g => g.modules).find(m => m.name === selectedModule);
 
-    // CPPT specialized workspace
-    if (selectedModule === 'WORKSPACES PELAYANAN PASIEN' || selectedModule === 'patient-care-workspace') {
+
+
+    if (selectedModule === 'PENUNJUKAN DPJP') {
       return (
-        <PatientCarePanel 
+        <DPJPAssignmentForm
           patient={activePatient}
           encounter={activeEncounter}
-          onDischargeSuccess={() => {
-             getPatientRecords(selectedPatientId).then(setSoapRecords).catch(console.error);
-          }}
+          onClose={() => setSelectedModule(null)}
+        />
+      );
+    }
+
+    if (selectedModule === 'ANAMNESIS MEDIS LENGKAP') {
+      return (
+        <AnamnesisForm
+          patient={activePatient}
+          encounter={activeEncounter}
+          onClose={() => setSelectedModule(null)}
+        />
+      );
+    }
+
+    if (selectedModule === 'PERMINTAAN KONSULTASI SPESIALIS' || selectedModule === 'KONSULTASI SPESIALIS') {
+      return <ConsultationRequestForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+
+    if (selectedModule === 'JAWABAN KONSULTASI SPESIALIS') {
+      return <ConsultationResponseForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+
+    if (selectedModule === 'SURAT RUJUKAN KELUAR') {
+      return <ReferralLetterForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+
+    if (selectedModule === 'PEMERIKSAAN FISIK TERSTRUKTUR') {
+      return (
+        <PhysicalExaminationForm
+          patient={activePatient}
+          encounter={activeEncounter}
+          onClose={() => setSelectedModule(null)}
         />
       );
     }
@@ -1039,20 +1079,191 @@ export default function OutpatientEMR() {
               </div>
             </div>
 
-            <div className="col-span-12 md:col-span-8 flex justify-end gap-3">
-              {activePatient?.allergies?.length > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/30 rounded-xl text-red-600 shadow-inner">
-                  <ShieldAlert size={16} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Alergi: {activePatient.allergies[0].agent}</span>
-                </div>
-              )}
-              {activePatient?.safety_flags?.fall_risk === 'HIGH' && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/15 border border-amber-500/40 rounded-xl text-amber-700 shadow-inner animate-pulse">
-                  <AlertTriangle size={16} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Risiko Jatuh Tinggi</span>
+            {/* ─── CLINICAL CONTEXT BAR (Right Panel) ─── */}
+            <div className="col-span-12 md:col-span-8 flex flex-col gap-2 items-end justify-center">
+
+              {/* Row 1: Encounter Info Pills */}
+              <div className="flex flex-wrap items-center gap-2 justify-end">
+
+                {/* No. Kunjungan */}
+                {noReg && noReg !== '-' && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-container-high)] border border-[var(--outline-variant)]/40 rounded-xl">
+                    <Hash size={11} className="text-[var(--primary)]" />
+                    <span className="text-[10px] font-black text-[var(--on-surface-variant)] uppercase tracking-widest">NO. KUNJUNGAN</span>
+                    <span className="text-[10px] font-black text-[var(--on-surface)] font-mono">{noReg}</span>
+                  </div>
+                )}
+
+                {/* Encounter Type / Visit Type */}
+                {activeEncounter?.type && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--primary)]/8 border border-[var(--primary)]/20 rounded-xl">
+                    <Stethoscope size={11} className="text-[var(--primary)]" />
+                    <span className="text-[10px] font-black text-[var(--primary)] uppercase tracking-widest">
+                      {activeEncounter.type === 'OUTPATIENT' ? 'RAWAT JALAN' : activeEncounter.type === 'INPATIENT' ? 'RAWAT INAP' : activeEncounter.type === 'EMERGENCY' ? 'IGD' : activeEncounter.type}
+                    </span>
+                  </div>
+                )}
+
+                {/* Encounter Status */}
+                {activeEncounter?.status && (
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${
+                    activeEncounter.status === 'ACTIVE' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700' :
+                    activeEncounter.status === 'DISCHARGED' ? 'bg-slate-500/10 border-slate-500/30 text-slate-600' :
+                    activeEncounter.status === 'PENDING' ? 'bg-amber-500/10 border-amber-500/30 text-amber-700' :
+                    'bg-[var(--surface-container-high)] border-[var(--outline-variant)]/40 text-[var(--on-surface-variant)]'
+                  }`}>
+                    <div className={`w-1.5 h-1.5 rounded-full ${
+                      activeEncounter.status === 'ACTIVE' ? 'bg-emerald-500 animate-pulse' :
+                      activeEncounter.status === 'DISCHARGED' ? 'bg-slate-400' :
+                      activeEncounter.status === 'PENDING' ? 'bg-amber-500' : 'bg-gray-400'
+                    }`} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {activeEncounter.status === 'ACTIVE' ? 'AKTIF' : activeEncounter.status === 'DISCHARGED' ? 'SELESAI' : activeEncounter.status === 'PENDING' ? 'MENUNGGU' : activeEncounter.status}
+                    </span>
+                  </div>
+                )}
+
+                {/* Triage Level */}
+                {(activeEncounter?.triage_level || activeEncounter?.triageLevel) && (
+                  <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${
+                    (activeEncounter.triage_level || activeEncounter.triageLevel) === 'MERAH' || (activeEncounter.triage_level || activeEncounter.triageLevel) === 'I' ? 'bg-red-500/15 border-red-500/40 text-red-700' :
+                    (activeEncounter.triage_level || activeEncounter.triageLevel) === 'KUNING' || (activeEncounter.triage_level || activeEncounter.triageLevel) === 'II' ? 'bg-amber-500/15 border-amber-500/40 text-amber-700' :
+                    (activeEncounter.triage_level || activeEncounter.triageLevel) === 'HIJAU' || (activeEncounter.triage_level || activeEncounter.triageLevel) === 'III' ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-700' :
+                    'bg-slate-500/10 border-slate-500/30 text-slate-600'
+                  }`}>
+                    <Zap size={11} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      TRIAGE: {activeEncounter.triage_level || activeEncounter.triageLevel}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Row 2: Clinical Team + Penjamin */}
+              <div className="flex flex-wrap items-center gap-2 justify-end">
+
+                {/* Poli / Department */}
+                {(activeEncounter?.department || activeEncounter?.clinic) && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-container)] border border-[var(--outline-variant)]/30 rounded-xl">
+                    <Building2 size={11} className="text-teal-600" />
+                    <span className="text-[10px] font-black text-[var(--on-surface-variant)] uppercase tracking-wider">
+                      {activeEncounter.department || activeEncounter.clinic}
+                    </span>
+                  </div>
+                )}
+
+                {/* DPJP / Attending Doctor */}
+                {(activeEncounter?.doctor_name || activeEncounter?.doctor || activeEncounter?.attending_physician) && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/8 border border-blue-500/20 rounded-xl">
+                    <UserCheck size={11} className="text-blue-600" />
+                    <span className="text-[10px] font-black text-[var(--on-surface-variant)] uppercase tracking-widest">DPJP:</span>
+                    <span className="text-[10px] font-black text-blue-700 dark:text-blue-400">
+                      {activeEncounter.doctor_name || activeEncounter.doctor || activeEncounter.attending_physician}
+                    </span>
+                  </div>
+                )}
+
+                {/* Penjamin / Insurance */}
+                {(activeEncounter?.guarantor || activeEncounter?.insurance_type || activePatient?.insurance?.type) && (
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-500/8 border border-violet-500/20 rounded-xl">
+                    <BadgeInfo size={11} className="text-violet-600" />
+                    <span className="text-[10px] font-black text-[var(--on-surface-variant)] uppercase tracking-widest">PENJAMIN:</span>
+                    <span className="text-[10px] font-black text-violet-700 dark:text-violet-400">
+                      {activeEncounter.guarantor || activeEncounter.insurance_type || activePatient?.insurance?.type}
+                    </span>
+                  </div>
+                )}
+
+                {/* Blood Type */}
+                {activePatient?.clinical_baseline?.blood_type && (
+                  <div className="flex items-center gap-1 px-3 py-1.5 bg-rose-500/8 border border-rose-500/20 rounded-xl">
+                    <Droplets size={11} className="text-rose-600" />
+                    <span className="text-[10px] font-black text-rose-700 dark:text-rose-400">
+                      {activePatient.clinical_baseline.blood_type}{activePatient.clinical_baseline.rhesus || ''}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Row 3: Safety Flags — always visible when present */}
+              {(
+                (activePatient?.allergies?.length > 0) ||
+                (activePatient?.safety_flags?.fall_risk && activePatient.safety_flags.fall_risk !== 'LOW') ||
+                (activePatient?.safety_flags?.pressure_ulcer && activePatient.safety_flags.pressure_ulcer !== 'LOW') ||
+                (activePatient?.safety_flags?.isolation && activePatient.safety_flags.isolation !== 'NONE') ||
+                (activePatient?.safety_flags?.dnr)
+              ) && (
+                <div className="flex flex-wrap items-center gap-2 justify-end border-t border-[var(--outline-variant)]/20 pt-2 mt-0.5">
+
+                  {/* Allergy — show all */}
+                  {activePatient?.allergies?.length > 0 && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/12 border border-red-500/35 rounded-xl text-red-600 shadow-sm">
+                      <ShieldAlert size={13} className="shrink-0" />
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-red-700">ALERGI:</span>
+                        <span className="text-[10px] font-bold text-red-600">
+                          {activePatient.allergies.slice(0, 2).map(a => a.agent).join(' • ')}
+                          {activePatient.allergies.length > 2 && ` +${activePatient.allergies.length - 2}`}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* No Known Drug Allergy */}
+                  {activePatient?.id && (!activePatient?.allergies || activePatient.allergies.length === 0) && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/8 border border-emerald-500/20 rounded-xl text-emerald-600">
+                      <ShieldCheck size={13} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">NKDA</span>
+                    </div>
+                  )}
+
+                  {/* Fall Risk — all levels except LOW */}
+                  {activePatient?.safety_flags?.fall_risk === 'HIGH' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/15 border border-amber-500/40 rounded-xl text-amber-700 animate-pulse">
+                      <AlertTriangle size={13} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">RISIKO JATUH TINGGI</span>
+                    </div>
+                  )}
+                  {activePatient?.safety_flags?.fall_risk === 'MEDIUM' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-xl text-yellow-700">
+                      <AlertTriangle size={13} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">RISIKO JATUH SEDANG</span>
+                    </div>
+                  )}
+
+                  {/* Pressure Ulcer Risk */}
+                  {activePatient?.safety_flags?.pressure_ulcer === 'HIGH' && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500/12 border border-orange-500/35 rounded-xl text-orange-700">
+                      <AlertCircle size={13} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">RISIKO DEKUBITUS TINGGI</span>
+                    </div>
+                  )}
+
+                  {/* Isolation */}
+                  {activePatient?.safety_flags?.isolation && activePatient.safety_flags.isolation !== 'NONE' && (
+                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${
+                      activePatient.safety_flags.isolation === 'AIRBORNE' ? 'bg-purple-500/12 border-purple-500/35 text-purple-700' :
+                      activePatient.safety_flags.isolation === 'DROPLET' ? 'bg-blue-500/12 border-blue-500/35 text-blue-700' :
+                      'bg-teal-500/12 border-teal-500/35 text-teal-700'
+                    }`}>
+                      <ShieldAlert size={13} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">
+                        ISOLASI {activePatient.safety_flags.isolation}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* DNR */}
+                  {activePatient?.safety_flags?.dnr && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800/90 border border-slate-600 rounded-xl text-white">
+                      <AlertCircle size={13} />
+                      <span className="text-[10px] font-black uppercase tracking-widest">DNR AKTIF</span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+
           </div>
         )}
       </header>
@@ -1119,12 +1330,12 @@ export default function OutpatientEMR() {
         </aside>
 
         {/* MAIN CONTENT AREA */}
-        <main className="flex-1 bg-[var(--surface-container-lowest)] p-6 lg:p-8 overflow-y-auto custom-scrollbar relative flex flex-col justify-center items-center min-h-[calc(100vh-90px)]">
+        <main className={`flex-1 bg-[var(--surface-container-lowest)] relative min-h-0 ${selectedModule ? 'h-full overflow-hidden p-0 flex flex-col' : 'p-6 lg:p-8 overflow-y-auto custom-scrollbar'}`}>
           
           {/* Subtle Background Elements */}
           <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-[var(--primary)]/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
-          <div className="relative z-10 w-full flex-1 flex flex-col items-center justify-center max-w-[1400px] mx-auto my-auto py-6">
+          <div className={`relative z-10 w-full flex-1 max-w-[1400px] mx-auto min-h-0 ${selectedModule ? 'h-full flex flex-col' : 'py-6'}`}>
              {!selectedPatientId ? (
                 <div className="w-full flex flex-col items-center justify-center text-center max-w-md mx-auto my-auto py-12 animate-in zoom-in-95 duration-500">
                   <div className="w-24 h-24 bg-[var(--surface-container-high)] rounded-[2rem] flex items-center justify-center text-[var(--primary)] shadow-inner mb-6 border border-[var(--outline-variant)]/30">

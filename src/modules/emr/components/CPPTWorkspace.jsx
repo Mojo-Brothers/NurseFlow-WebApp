@@ -86,7 +86,7 @@ export default function CPPTWorkspace({ patient, encounter, onClose, onSaveSucce
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-right-4 duration-500 h-full flex flex-col p-6 bg-slate-50 dark:bg-slate-950">
+    <div className="animate-in fade-in slide-in-from-right-4 duration-500 h-full min-h-0 flex flex-col p-6 bg-slate-50 dark:bg-slate-950">
       
       {/* ─── MODERN CLINICAL HEADER BAR ─── */}
       <div className="bg-white/90 dark:bg-[var(--surface-container-low)]/90 backdrop-blur-xl rounded-[2rem] p-5 shadow-sm border border-slate-200/80 dark:border-white/10 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">

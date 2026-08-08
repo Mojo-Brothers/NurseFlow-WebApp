@@ -73,7 +73,7 @@ export default function BradenScaleForm({ patient, encounter, onClose, onSaveSuc
   };
 
   return (
-    <div className="animate-in fade-in slide-in-from-right-4 duration-500 h-full flex flex-col p-6 bg-slate-50 dark:bg-slate-950">
+    <div className="animate-in fade-in slide-in-from-right-4 duration-500 h-full min-h-0 flex flex-col p-6 bg-slate-50 dark:bg-slate-950">
       
       {/* Top Header */}
       <div className="flex items-center justify-between mb-6">

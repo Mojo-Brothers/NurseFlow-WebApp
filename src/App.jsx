@@ -20,6 +20,7 @@ import Patients    from './modules/patient/pages/PatientPage';
 import Triage      from './modules/triage/pages/TriagePage';
 import EMR         from './modules/emr/pages/EMRPage';
 import OutpatientEMR from './modules/emr/pages/OutpatientEMR';
+import InpatientEMR from './modules/emr/pages/InpatientEMR';
 import PatientCarePage from './modules/emr/pages/PatientCarePage';
 import Encounters  from './modules/encounter/pages/EncounterPage';
 import Pharmacy    from './modules/pharmacy/pages/PharmacyPage';
@@ -120,7 +121,7 @@ const router = createBrowserRouter([
           { path: "/inventory/*", element: <Wrap><EnterpriseInventoryPage /></Wrap> },
           { path: "/emr",        element: <Wrap><EMR /></Wrap> },
           { path: "/emr-rj",     element: <Wrap><OutpatientEMR /></Wrap> },
-          { path: "/emr-ri",     element: <Wrap><OutpatientEMR /></Wrap> },
+          { path: "/emr-ri",     element: <Wrap><InpatientEMR /></Wrap> },
           { path: "/credentials", element: <Wrap><SQECredentialsDashboard /></Wrap> },
           { path: "/surgery",    element: <Wrap><SurgeryDashboard /></Wrap> },
           { path: "/telemedicine", element: <Wrap><Teleconsultation /></Wrap> },
