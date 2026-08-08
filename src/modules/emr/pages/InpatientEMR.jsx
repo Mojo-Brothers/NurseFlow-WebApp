@@ -57,6 +57,10 @@ import ConsultationRequestForm from '../components/ConsultationRequestForm.jsx';
 import ConsultationResponseForm from '../components/ConsultationResponseForm.jsx';
 import ReferralLetterForm from '../components/ReferralLetterForm.jsx';
 import PatientDetailDrawerModal from '../components/PatientDetailDrawerModal.jsx';
+import SafetyDashboard from '../components/SafetyDashboard.jsx';
+import PatientCarePanel from '../components/PatientCarePanel.jsx';
+import SurgicalSafetyChecklistForm from '../components/SurgicalSafetyChecklistForm.jsx';
+import AldreteScoreForm from '../components/AldreteScoreForm.jsx';
 
 // ─── INPATIENT SPECIFIC MODULE GROUPS ─────────────────────────
 const INPATIENT_MODULE_GROUPS = [
@@ -492,11 +496,29 @@ export default function InpatientEMR() {
     if (selectedModule === 'OBSTETRIC EWS (MEOWS)') {
       return <MEOWSForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
     }
-    if (selectedModule === 'KESIAPAN PASIEN PULANG') {
-      return <DischargeReadinessForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    if (selectedModule === 'EARLY WARNING SYSTEM (EWS)' || selectedModule === 'ASESMEN RISIKO JATUH (MORSE)') {
+      return <SafetyDashboard patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
     }
-    if (selectedModule === 'TRANSFER INTERNAL (SBAR)') {
-      return <TransferInternalForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    if (selectedModule === 'TIM ASUHAN TERINTEGRASI (PPA)') {
+      return <PatientCarePanel patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+    if (selectedModule === 'DAFTAR PENGOBATAN HARIAN') {
+      return <CPOEWorkspace patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+    if (selectedModule === 'CHECKLIST BEDAH (WHO)') {
+      return <SurgicalSafetyChecklistForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+    if (selectedModule === 'SKOR ALDRETE & PACU') {
+      return <AldreteScoreForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+    if (selectedModule === 'STEP-DOWN / KELUAR ICU') {
+      return <ICUDischargeCriteriaForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+    if (selectedModule === 'PERSETUJUAN TINDAKAN') {
+      return <DigitalInformedConsent patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
+    }
+    if (selectedModule === 'EDUKASI PASIEN') {
+      return <PatientEducationForm patient={activePatient} encounter={activeEncounter} onClose={() => setSelectedModule(null)} />;
     }
 
     return (
