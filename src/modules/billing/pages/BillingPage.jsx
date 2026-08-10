@@ -249,7 +249,7 @@ export default function BillingPage() {
                 </div>
               </div>
 
-              {/* SATUSEHAT FHIR & BPJS INA-CBG WIDGET */}
+              {/* SATUSEHAT FHIR, BPJS INA-CBG, ADT BED & HIM MEDICAL CODING WIDGETS */}
               <div className="space-y-3 mb-6">
                 <div className="p-4 bg-slate-950 rounded-2xl border border-teal-500/30 flex items-center justify-between">
                   <div>
@@ -266,14 +266,29 @@ export default function BillingPage() {
                   </span>
                 </div>
 
+                <div className="p-4 bg-slate-950 rounded-2xl border border-indigo-500/30 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm">hotel</span>
+                      ADT Bed Occupancy & Room Charge
+                    </span>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Alokasi Bed: <span className="font-mono text-white font-bold">AZALEA 204-A (Kelas 1)</span> @ Rp 750.000 / Hari
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 px-2.5 py-1 rounded-full border border-indigo-500/30">
+                    VERIFIED
+                  </span>
+                </div>
+
                 <div className="p-4 bg-slate-950 rounded-2xl border border-blue-500/30 flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
                       <span className="material-symbols-outlined text-sm">payments</span>
-                      Estimasi BPJS INA-CBG Grouping
+                      Estimasi BPJS INA-CBG Grouping & HIM Coding
                     </span>
                     <p className="text-[11px] text-slate-400 mt-1">
-                      Kode CBG: <span className="font-mono font-bold text-white">I-4-10-I (Kardiovaskular Ringan)</span>
+                      Kode ICD-10 Coded: <span className="font-mono font-bold text-white">I21.9 (Acute Myocardial Infarction)</span> | CBG: <span className="font-mono text-blue-300">I-4-10-I</span>
                     </p>
                   </div>
                   <span className="text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/30">
