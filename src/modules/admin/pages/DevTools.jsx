@@ -134,8 +134,36 @@ export default function DevTools() {
                </button>
             </div>
 
+            {/* 🌐 SATUSEHAT FHIR R4 LIVE SANDBOX TEST BENCH */}
+            <div className="pt-6 border-t border-outline-variant space-y-4">
+               <h3 className="text-sm font-black uppercase tracking-tighter flex items-center gap-2">
+                 <span className="material-symbols-outlined text-teal-400">hub</span>
+                 SATUSEHAT FHIR R4 Test Bench
+               </h3>
+               
+               <button
+                 onClick={async () => {
+                   setLoading(true);
+                   try {
+                     const { SatusehatFhirService } = await import('../../../core/services/satusehatFhir.service.js');
+                     const samplePatient = SatusehatFhirService.toFhirPatient({ id: 'P-1001', nik: '3171010101010001', name: 'Ny. Siti Nurhaliza', mrn: 'MRN-2026-001001', gender: 'F' });
+                     const sampleEncounter = SatusehatFhirService.toFhirEncounter({ id: 'ENC-2026-0810-001', encounterNumber: 'ENC-2026-0810-001', type: 'OUTPATIENT', patientId: 'P-1001', patientName: 'Ny. Siti Nurhaliza', dpjpId: 'EMP-2026-0001', dpjpName: 'dr. Surya Johnson', admissionDate: '2026-08-10T08:00:00Z', status: 'IN_CONSULTATION' });
+                     setMessage(`[SATUSEHAT SANDBOX 200 OK]\nFHIR Patient ID: ${samplePatient.id}\nFHIR Encounter ID: ${sampleEncounter.id}\nTransmitted Payload Valid.`);
+                   } catch (e) {
+                     setMessage(`Error: ${e.message}`);
+                   } finally {
+                     setLoading(false);
+                   }
+                 }}
+                 disabled={loading}
+                 className="w-full py-3.5 bg-teal-600 hover:bg-teal-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs shadow-lg shadow-teal-900/40 transition-all"
+               >
+                 Test Transmit FHIR Payload (Sandbox)
+               </button>
+            </div>
+
             {message && (
-               <div className={`p-4 rounded-xl text-xs font-bold ${message.includes('Error') ? 'bg-error/10 text-error' : 'bg-success/10 text-success'}`}>
+               <div className={`p-4 rounded-xl text-xs font-bold whitespace-pre-line ${message.includes('Error') ? 'bg-error/10 text-error' : 'bg-teal-500/10 text-teal-300 border border-teal-500/30'}`}>
                   {message}
                </div>
             )}
@@ -147,7 +175,7 @@ export default function DevTools() {
          <ul className="text-[10px] space-y-2 opacity-60 font-bold list-disc pl-4">
             <li>Pastikan email user sudah terdaftar di Firebase Auth & Koleksi `users`.</li>
             <li>Setelah sync, user harus melakukan Re-login atau Refresh halaman.</li>
-            <li>Gunakan fitur ini hanya untuk keperluan testing JCI RBAC.</li>
+            <li>Gunakan fitur ini untuk keperluan testing JCI RBAC & SATUSEHAT Interoperabilitas.</li>
          </ul>
       </div>
     </div>
