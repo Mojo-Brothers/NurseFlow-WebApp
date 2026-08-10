@@ -4625,10 +4625,22 @@ export const DEMO_STOCK_ADJUSTMENTS = [
 
 // ─── SERVICES FUNCTIONS ───
 
+import CoreRegistryService from '../../../core/services/coreRegistry.service.js';
+
 export const getDepoItems = async () => {
   try {
     const snap = await getDocs(collection(db, COLLECTIONS.INVENTORY || 'inventory'));
-    if (snap.empty) return DEMO_DEPO_ITEMS;
+    if (snap.empty) {
+      // Enrich DEMO_DEPO_ITEMS with Master Medications metadata
+      return DEMO_DEPO_ITEMS.map(item => {
+        const masterMed = CoreRegistryService.searchMedications(item.name)[0];
+        return {
+          ...item,
+          isHighAlert: masterMed ? masterMed.isHighAlert : false,
+          isLasa: masterMed ? masterMed.isLasa : false,
+        };
+      });
+    }
     const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     return items;
   } catch (err) {

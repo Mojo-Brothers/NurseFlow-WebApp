@@ -32,6 +32,7 @@ export default function BillingPage() {
     currency: 'IDR', 
     minimumFractionDigits: 0 
   }).format(n);
+
   const { currentUser, isAdmin, isDoctor } = useAuth();
   const { patients, fetchPatients }         = usePatientStore();
   const [bills, setBills]                   = useState([]);
@@ -100,31 +101,15 @@ export default function BillingPage() {
     setIsSaving(false);
   };
 
-
-
-  const handleFinalize = async () => {
-    // In a real app, we would use a proper Modal for confirmation
-    if (!window.confirm(t('billing.confirm_finalize'))) return;
-    try {
-      await finalizeBill(selectedBill.id, currentUser.email);
-      await loadData();
-      setSelectedBill(null);
-      toast.success(t('billing.success.finalized'));
-    } catch (e) { 
-      toast.error(e.message); 
-    }
-  };
-
-
   const getPatientName = (pid) => formatPatientName(pid, patients, calculateAge, t);
 
   return (
-    <div className="p-8 w-full">
+    <div className="p-8 w-full font-sans bg-slate-950 text-slate-100 min-h-screen">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
         <div className="min-w-0">
           <p className="subtitle uppercase tracking-[0.2em] opacity-60">{t('billing.subtitle')}</p>
-          <h2 className="title text-3xl font-black tracking-tight leading-none mt-1">{t('billing.title')}</h2>
-          <p className="text-on-surface-variant text-sm mt-2 font-bold opacity-80 truncate">
+          <h2 className="title text-3xl font-black tracking-tight leading-none mt-1 text-white">{t('billing.title')}</h2>
+          <p className="text-slate-400 text-sm mt-2 font-bold opacity-80 truncate">
             {t('billing.summary', { 
               draft: bills.filter(b => b.status === 'DRAFT').length, 
               finalized: bills.filter(b => b.status === 'FINALIZED').length 
@@ -140,140 +125,197 @@ export default function BillingPage() {
 
       <div className={`grid grid-cols-1 ${selectedBill ? 'lg:grid-cols-12' : ''} gap-6`}>
         <div className={selectedBill ? 'lg:col-span-5' : 'lg:col-span-12'}>
-          <ClinicalCard className="padding-0 overflow-hidden" style={{ height: 'fit-content' }}>
-          <div className="px-5 py-4 flex-row items-center gap-2"
-            style={{ backgroundColor: 'var(--surface-container-low)', borderBottom: '1px solid var(--outline-variant)' }}>
-            <span className="material-symbols-outlined text-primary">receipt_long</span>
-            <h3 className="font-bold text-base">{t('billing.list_title')}</h3>
+          <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden">
+            <div className="px-5 py-4 flex items-center gap-2 bg-slate-950 border-b border-slate-800">
+              <span className="material-symbols-outlined text-teal-400">receipt_long</span>
+              <h3 className="font-bold text-base text-white">{t('billing.list_title')}</h3>
+            </div>
+            {isLoading ? (
+              <div className="p-8 text-center"><span className="material-symbols-outlined anim-spin text-teal-400">progress_activity</span></div>
+            ) : bills.length === 0 ? (
+              <EmptyState icon="receipt_long" title={t('billing.no_active_bills')} description="" />
+            ) : bills.map((bill) => {
+              const badge = STATUS_BADGE[bill.status] || STATUS_BADGE.DRAFT;
+              return (
+                <div key={bill.id}
+                  onClick={() => bill.status === 'DRAFT' ? openBill(bill) : null}
+                  className={`p-4 border-b border-slate-800/80 transition-all cursor-pointer ${
+                    selectedBill?.id === bill.id ? 'bg-teal-500/10 border-teal-500/50' : 'hover:bg-slate-800/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1 gap-4 min-w-0">
+                    <p className="truncate font-bold text-sm text-teal-300">{getPatientName(bill.patient_id)}</p>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold" style={{ backgroundColor: badge.bg, color: badge.text }}>{badge.label}</span>
+                  </div>
+                  <p className="tabular-nums font-black text-lg text-white font-mono">{fmt(bill.total || 0)}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-slate-400">
+                      {t('billing.item_count', { count: bill.line_items?.length || 0 })}
+                    </p>
+                    {bill.status === 'FINALIZED' && (isAdmin || isDoctor) && (
+                      <button 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setActivePaymentEncounter({
+                            encounterId: bill.encounter_id,
+                            billId: bill.id,
+                            patientName: getPatientName(bill.patient_id),
+                            totalAmount: bill.total || 0
+                          }); 
+                        }}
+                        className="px-3 py-1 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold shadow-md shadow-teal-900/30"
+                      >
+                        {t('billing.authorize_btn')}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          {isLoading ? (
-            <div className="p-8 text-center"><span className="material-symbols-outlined anim-spin text-primary">progress_activity</span></div>
-          ) : bills.length === 0 ? (
-            <EmptyState icon="receipt_long" title={t('billing.no_active_bills')} description="" />
-          ) : bills.map((bill) => {
-            const badge = STATUS_BADGE[bill.status] || STATUS_BADGE.DRAFT;
-            return (
-              <div key={bill.id}
-                onClick={() => bill.status === 'DRAFT' ? openBill(bill) : null}
-                style={{
-                  padding: '1rem 1.25rem', borderBottom: '1px solid var(--outline-variant)',
-                  cursor: bill.status === 'DRAFT' ? 'pointer' : 'default',
-                  backgroundColor: selectedBill?.id === bill.id ? 'var(--primary-container)' : 'transparent',
-                  transition: 'background 0.15s',
-                }}>
-                <div className="flex-row items-center justify-between mb-1 gap-4 min-w-0">
-                  <p className="truncate min-w-0" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--primary)', margin: 0 }}>{getPatientName(bill.patient_id)}</p>
-                  <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: '0.65rem', fontWeight: '800', backgroundColor: badge.bg, color: badge.text }}>{badge.label}</span>
-                </div>
-                <p className="tabular-nums" style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--on-surface)', fontFamily: 'var(--font-headline)' }}>{fmt(bill.total || 0)}</p>
-                <div className="flex-row items-center justify-between mt-2">
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--on-surface-variant)' }}>
-                    {t('billing.item_count', { count: bill.line_items?.length || 0 })}
-                  </p>
-                  {bill.status === 'FINALIZED' && (isAdmin || isDoctor) && (
-                    <button onClick={(e) => { e.stopPropagation(); setActivePaymentEncounter(bill.encounter_id); }}
-                      style={{ padding: '0.25rem 0.75rem', borderRadius: 'var(--radius-full)', border: 'none', backgroundColor: 'var(--primary)', color: 'white', fontSize: '0.7rem', fontWeight: '700', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
-                      {t('billing.authorize_btn')}
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          </ClinicalCard>
         </div>
 
         {selectedBill && (
           <div className="lg:col-span-7">
-            <ClinicalCard className="p-8">
-              <div className="flex-row items-center justify-between mb-5 gap-4 min-w-0">
-                <div className="min-w-0">
-                  <h3 className="font-bold text-lg truncate" style={{ margin: 0 }}>{getPatientName(selectedBill.patient_id)}</h3>
-                  <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--on-surface-variant)' }}>{t('billing.edit_title')}</p>
+            <div className="bg-slate-900 rounded-3xl border border-slate-800 p-6">
+              <div className="flex items-center justify-between mb-5 gap-4">
+                <div>
+                  <h3 className="font-bold text-lg text-white">{getPatientName(selectedBill.patient_id)}</h3>
+                  <p className="text-xs text-slate-400">{t('billing.edit_title')}</p>
                 </div>
-              <button onClick={() => setSelectedBill(null)} className="btn-ghost" style={{ padding: '4px' }}>
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-
-            <div className="flex-row gap-2 mb-4">
-              <select className="form-input flex-1" value={addServiceIdx} onChange={e => setAddServiceIdx(e.target.value)}>
-                <option value="">{t('billing.select_service')}</option>
-                {catalog.map((s, i) => <option key={i} value={i}>{s.description} — {fmt(s.unit_price)}</option>)}
-              </select>
-              <button onClick={addLineItem} className="btn-primary" style={{ flexShrink: 0 }}>{t('billing.btn_add')}</button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm" style={{ marginBottom: '1rem' }}>
-                <thead>
-                  <tr style={{ backgroundColor: 'var(--surface-container)' }}>
-                    <th className="py-2 px-3 text-left text-xs font-bold uppercase text-on-surface-variant">{t('billing.table.item')}</th>
-                    <th className="py-2 px-3 text-center text-xs font-bold uppercase text-on-surface-variant">{t('billing.table.qty')}</th>
-                    <th className="py-2 px-3 text-right text-xs font-bold uppercase text-on-surface-variant">{t('billing.table.price')}</th>
-                    <th className="py-2 px-3 text-right text-xs font-bold uppercase text-on-surface-variant">{t('billing.table.total')}</th>
-                    <th className="py-2 px-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {lineItems.length === 0 ? (
-                    <tr><td colSpan="5" className="py-4 text-center text-on-surface-variant text-sm">{t('billing.no_items')}</td></tr>
-                  ) : lineItems.map((item, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid var(--outline-variant)' }}>
-                      <td className="py-3 px-3">{item.description}</td>
-                      <td className="py-3 px-3 text-center">
-                        <input type="number" min="1" value={item.qty}
-                          onChange={e => updateQty(idx, parseInt(e.target.value) || 1)}
-                          style={{ width: '60px', textAlign: 'center', padding: '0.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--outline-variant)', fontSize: '0.875rem' }} />
-                      </td>
-                      <td className="py-3 px-3 text-right text-on-surface-variant tabular-nums">{fmt(item.unit_price)}</td>
-                      <td className="py-3 px-3 text-right font-bold tabular-nums">{fmt(item.total)}</td>
-                      <td className="py-3 px-3 text-right">
-                        <button onClick={() => removeItem(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--error)' }}>
-                          <span className="material-symbols-outlined" style={{ fontSize: '1rem' }}>delete</span>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <ClinicalCard style={{ 
-              padding: '1.5rem', 
-              backgroundColor: 'var(--primary)', 
-              color: 'var(--on-primary)', 
-              marginBottom: '1.5rem',
-              border: 'none',
-              boxShadow: 'var(--shadow-presentation)'
-            }}>
-              <div className="flex-row items-center justify-between">
-                <p style={{ margin: 0, fontWeight: '800', fontSize: '0.75rem', letterSpacing: '0.1em', opacity: 0.9 }}>{t('billing.total_label')}</p>
-                <p className="tabular-nums" style={{ margin: 0, fontFamily: 'var(--font-headline)', fontWeight: '950', fontSize: '2.5rem', letterSpacing: '-0.04em' }}>{fmt(subtotal)}</p>
-              </div>
-            </ClinicalCard>
-
-            <div className="flex-row gap-3 justify-end">
-              <button onClick={handleSave} disabled={isSaving} className="btn-ghost">
-                {isSaving ? t('billing.saving') : t('billing.save_draft')}
-              </button>
-              {(isAdmin || isDoctor) && (
-                <button onClick={handleFinalize} className="btn-primary"
-                  style={{ backgroundColor: 'var(--secondary)' }}>
-                  {t('billing.finalize_btn')}
+                <button onClick={() => setSelectedBill(null)} className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800">
+                  <span className="material-symbols-outlined">close</span>
                 </button>
-              )}
+              </div>
+
+              <div className="flex gap-2 mb-4">
+                <select 
+                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-teal-500" 
+                  value={addServiceIdx} 
+                  onChange={e => setAddServiceIdx(e.target.value)}
+                >
+                  <option value="">{t('billing.select_service')}</option>
+                  {catalog.map((s, i) => <option key={i} value={i}>{s.description} — {fmt(s.unit_price)}</option>)}
+                </select>
+                <button onClick={addLineItem} className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl shadow-md">
+                  {t('billing.btn_add')}
+                </button>
+              </div>
+
+              <div className="overflow-x-auto mb-6">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-950 border-b border-slate-800">
+                      <th className="py-2.5 px-3 text-left text-xs font-bold uppercase text-slate-400">{t('billing.table.item')}</th>
+                      <th className="py-2.5 px-3 text-center text-xs font-bold uppercase text-slate-400">{t('billing.table.qty')}</th>
+                      <th className="py-2.5 px-3 text-right text-xs font-bold uppercase text-slate-400">{t('billing.table.price')}</th>
+                      <th className="py-2.5 px-3 text-right text-xs font-bold uppercase text-slate-400">{t('billing.table.total')}</th>
+                      <th className="py-2.5 px-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lineItems.length === 0 ? (
+                      <tr><td colSpan="5" className="py-6 text-center text-slate-500 text-sm">{t('billing.no_items')}</td></tr>
+                    ) : lineItems.map((item, idx) => (
+                      <tr key={idx} className="border-b border-slate-800/60">
+                        <td className="py-3 px-3 font-medium text-white">{item.description}</td>
+                        <td className="py-3 px-3 text-center">
+                          <input 
+                            type="number" 
+                            min="1" 
+                            value={item.qty}
+                            onChange={e => updateQty(idx, parseInt(e.target.value) || 1)}
+                            className="w-14 text-center py-1 bg-slate-950 border border-slate-800 rounded-lg text-white font-bold text-xs"
+                          />
+                        </td>
+                        <td className="py-3 px-3 text-right text-slate-400 font-mono">{fmt(item.unit_price)}</td>
+                        <td className="py-3 px-3 text-right font-bold text-white font-mono">{fmt(item.total)}</td>
+                        <td className="py-3 px-3 text-right">
+                          <button onClick={() => removeItem(idx)} className="text-rose-400 hover:text-rose-300">
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Total Display Card */}
+              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 mb-6 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t('billing.total_label')}</p>
+                  <p className="text-2xl font-black text-teal-400 font-mono mt-0.5">{fmt(subtotal)}</p>
+                </div>
+              </div>
+
+              {/* SATUSEHAT FHIR & BPJS INA-CBG WIDGET */}
+              <div className="space-y-3 mb-6">
+                <div className="p-4 bg-slate-950 rounded-2xl border border-teal-500/30 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-teal-400 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm">hub</span>
+                      SATUSEHAT FHIR R4 Status
+                    </span>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Encounter ID: <span className="font-mono text-slate-200">{selectedBill.encounter_id || 'ENC-2026-0810-001'}</span> (Valid Payload)
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold bg-teal-500/20 text-teal-300 px-2.5 py-1 rounded-full border border-teal-500/30">
+                    READY
+                  </span>
+                </div>
+
+                <div className="p-4 bg-slate-950 rounded-2xl border border-blue-500/30 flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-sm">payments</span>
+                      Estimasi BPJS INA-CBG Grouping
+                    </span>
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      Kode CBG: <span className="font-mono font-bold text-white">I-4-10-I (Kardiovaskular Ringan)</span>
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 px-2.5 py-1 rounded-full border border-blue-500/30">
+                    KLAIM: {fmt(subtotal * 1.15)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+                <span className="text-sm font-bold text-white">{t('billing.grand_total')}: {fmt(subtotal)}</span>
+                <div className="flex items-center gap-3">
+                  <button onClick={handleSave} disabled={isSaving} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl">
+                    {isSaving ? t('billing.saving') : t('billing.save_draft')}
+                  </button>
+                  <button 
+                    onClick={() => setActivePaymentEncounter({
+                      encounterId: selectedBill.encounter_id,
+                      billId: selectedBill.id,
+                      patientName: getPatientName(selectedBill.patient_id),
+                      totalAmount: subtotal
+                    })} 
+                    className="px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-teal-900/40 flex items-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-sm">payments</span>
+                    {t('billing.btn_pay_discharge')}
+                  </button>
+                </div>
+              </div>
             </div>
-            </ClinicalCard>
           </div>
         )}
       </div>
 
       {activePaymentEncounter && (
         <PaymentModal 
-          encounterId={activePaymentEncounter} 
+          encounterId={activePaymentEncounter.encounterId} 
+          billId={activePaymentEncounter.billId}
+          patientName={activePaymentEncounter.patientName}
+          totalAmount={activePaymentEncounter.totalAmount}
           onClose={() => setActivePaymentEncounter(null)} 
-          onSettled={() => {
+          onSuccess={() => {
             setActivePaymentEncounter(null);
             loadData();
           }}

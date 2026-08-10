@@ -69,6 +69,22 @@ export const triggerPharmacyOrder = async ({ medications, patientId, encounterId
       status: 'PENDING',
       prescribed_at: timestamp
     });
+
+    // 📦 Synchronize to Core eMAR Service Pipeline
+    try {
+      const { emarService } = await import('../../../core/services/eMARService.js');
+      emarService.createEMARRecord({
+        encounterId,
+        medicationId: med.id || 'MED-AMX-500',
+        dosage: med.dosage || '1 Tablet',
+        route: med.route || 'Oral',
+        frequency: med.frequency || '3 x 1',
+        prescribedBy: doctorEmail,
+        notes: med.notes || ''
+      });
+    } catch (e) {
+      console.error(`eMAR record generation failed for ${med.medication_name}:`, e);
+    }
     
     // 📦 Logistical Loop: Deduct stock per prescription entry
     try {

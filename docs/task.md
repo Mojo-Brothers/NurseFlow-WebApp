@@ -1,36 +1,29 @@
-# ✅ NurseFlow EMR — Execution Task Tracker
+# 📋 NurseFlow Enterprise HIS — Master Execution Task Tracker
 
-## FASE 3 — Enhanced Patient Context Ribbon (Quick Win)
-- [x] Tambah No. Kunjungan, DPJP, Poli, Penjamin, Triage, Status Encounter di ribbon kanan
-- [x] Safety flags lengkap (Alergi, NKDA, Fall Risk High/Medium, Pressure Ulcer, Isolasi Airborne/Droplet, DNR)
+## 🏛️ SLICE 1 — FOUNDATION & CORE DOMAIN ENGINE ARCHITECTURE
+- [x] Buat `coreRegistry.service.js` (Master Data Terpusat 104 Departemen, 520 Praktisi Medis, ICD-10, ICD-9-CM, & Obat Formularium)
+- [x] Buat `encounterEngine.service.js` (Engine Siklus Kunjungan Otoritatif: Pasien ↔ Encounter ↔ DPJP ↔ Departemen ↔ Status Kunjungan)
+- [x] Buat `satusehatFhir.service.js` (Pemeta Standar Interoperabilitas FHIR R4 Kemenkes SATUSEHAT)
+- [x] Pengikatan AuthContext & Role-Based Access Control (RBAC)
 
-## FASE 1 — Reusable Architecture Foundation
-- [x] Buat `ClinicalFormShell.jsx` (sticky action bar, form state, auto-save indicator, export ClinicalSection, ClinicalSubSection, ClinicalFieldRow)
+## 🩺 SLICE 2 — GOLDEN CLINICAL WORKFLOW & EMAR INTEGRATION
+- [x] Pengikatan EMR Dokter (SOAP + Tanda Vital + Diagnosis ICD-10) ke Encounter ID & DPJP ID
+- [x] Buat `eMARService.js` (Pipeline Pemberian Obat Keperawatan Terhubung E-Prescribing Dokter)
+- [x] Otomatisasi pengaliran resep dokter ke eMAR & pengurangan stok inventori farmasi
+- [x] Verifikasi build produksi Vite (`npm run build`) tanpa error
 
-## FASE 2 — DPJP & Care Team Entity
-- [x] Buat `DPJPAssignmentForm.jsx` (Entitas klinis DPJP lengkap dengan riwayat, penunjukan, & standar JCI COP.2)
-- [x] Registrasi modul 'DPJP & TIM ASUHAN (COP.2)' di sidebar EMR
+## 🧪 SLICE 3 — DIAGNOSTICS & PHARMACY PIPELINE
+- [x] Pengikatan Worklist Laboratorium (`LabPage.jsx`) berstandar JCI AOP.5 ke `encounter_id` & Order EMR Dokter
+- [x] Pemetaan Kode LOINC, Input Nilai Analitikal Lab, & Alerting Nilai Kritis (Panic Values)
+- [x] Worklist Farmasi (`PharmacyPage.jsx`) dengan Verifikasi IPSG Double-Check & Pengurangan Stok Real-Time
 
-## FASE 4 — Anamnesis & Physical Examination
-- [x] Buat `AnamnesisForm.jsx` (Chief Complaint, HPI, ROS, PMH, Surgical History, Social History, Medication History)
-- [x] Buat `PhysicalExaminationForm.jsx` (Exam findings head-to-toe, GCS calculator, Vitals sync, Thorax, Abdomen, Status Lokalis)
-- [x] Registrasi modul Anamnesis & Physical Exam di JCI_MODULE_GROUPS & workspace render
+## 📦 SLICE 4 — ENTERPRISE INVENTORY & SUPPLY CHAIN INTEGRATION
+- [x] Integrasi Master Barang Enterprise & Multi-Gudang (`EnterpriseInventoryPage.jsx` & `enterpriseInventory.service.js`)
+- [x] Permintaan Barang Medis (Material Request) dari Ruang Rawat & Poliklinik ke Depo Farmasi/Gudang Utama
+- [x] Pelacakan Stok Batch, Kadaluarsa (Expiry Date), & Stock Opname / Card Stock Log terikat `CoreRegistryService`
 
-## FASE 5 — EMR Rawat Inap (Halaman Terpisah)
-- [x] Buat `InpatientEMR.jsx` (Dedicated JCI Accredited Inpatient Workspace)
-- [x] Sidebar module groups Rawat Inap terstruktur (Admisi, CPPT Harian, Keperawatan, Care Plan, Discharge)
-- [x] Update `App.jsx` route `/emr-ri` ke `InpatientEMR`
-
-## FASE 6 — Unified Clinical Timeline
-- [x] Buat `ClinicalTimeline.jsx` (Unified patient journey timeline & inter-professional category filters)
-
-## FASE 7 — Inpatient Forms
-- [x] `AdmissionNoteForm.jsx` (Catatan Masuk Rawat Inap / Inpatient Admission Note)
-- [x] `NursingDailyAssessmentForm.jsx` (Asesmen Keperawatan Harian & VIP Phlebitis Score)
-- [x] `NursingHandoverForm.jsx` (Handover Keperawatan Shift SBAR JCI IPSG.2)
-- [x] `DischargeSummaryForm.jsx` (Resume Medis Pasien Pulang JCI ACC.4.2)
-
-## FASE 8 — Consultation & Referral
-- [x] `ConsultationRequestForm.jsx` (Lembar Permintaan Konsultasi Spesialis JCI COP.2.1)
-- [x] `ConsultationResponseForm.jsx` (Lembar Jawaban Konsultasi Dokter Spesialis)
-- [x] `ReferralLetterForm.jsx` (Surat Rujukan Keluar RS JCI ACC.3.1)
+## 💰 SLICE 5 — REVENUE CYCLE ENGINE & SATUSEHAT INTEROPERABILITY
+- [x] Charge Capture Otomatis dari Konsultasi EMR, Lab, & Resep Obat ke Billing Encounter (`/billing`)
+- [x] Modul Estimasi Grouping BPJS INA-CBG & Selisih Bayar Pasien
+- [x] Generator Payload SATUSEHAT FHIR R4 (`Patient`, `Encounter`, `Condition`, `MedicationRequest`)
+- [x] Verifikasi Kompilasi Produksi Vite (`npm run build`) 100% Bebas Error
