@@ -1,7 +1,7 @@
 /**
- * NurseFlow Multi-Device Sync Engine
+ * NurseFlow Multi-Device Sync Engine (Enhanced Device Indicator)
  * Automatically tracks, tags commits, pulls, and pushes based on computer hostname.
- * Works seamlessly for switching between Office and Home computers.
+ * Identifies source device on pull so you know exactly which computer pushed the update.
  */
 
 import { execSync } from 'child_process';
@@ -12,7 +12,7 @@ import path from 'path';
 const mode = process.argv[2] || 'push'; // 'push', 'pull', or 'status'
 const userNote = process.argv.slice(3).join(' ') || 'Work session update';
 
-const hostname = os.hostname();
+const currentHostname = os.hostname();
 const now = new Date();
 const formattedTime = now.toISOString().replace('T', ' ').slice(0, 19);
 
@@ -24,9 +24,14 @@ const run = (cmd) => {
   }
 };
 
+const parseDeviceFromCommit = (commitSubject) => {
+  const match = commitSubject.match(/^sync\(([^)]+)\):/i);
+  return match ? match[1] : 'Unknown Device';
+};
+
 const updateDeviceLog = (commitMessage) => {
   const logPath = path.join(process.cwd(), 'docs', 'device_sync_log.md');
-  const logEntry = `| ${formattedTime} | \`${hostname}\` | ${commitMessage} |\n`;
+  const logEntry = `| ${formattedTime} | \`${currentHostname}\` | ${commitMessage} |\n`;
 
   if (!fs.existsSync(logPath)) {
     const header = `# 🖥️ NurseFlow Multi-Device Sync Audit Log\n\n| Timestamp (UTC) | Device Hostname | Commit Note |\n|---|---|---|\n`;
@@ -36,48 +41,76 @@ const updateDeviceLog = (commitMessage) => {
   }
 };
 
-console.log(`\n==================================================`);
+console.log(`\n================================================================`);
 console.log(`🖥️  NURSEFLOW DEVICE SYNC ENGINE`);
-console.log(`📍 Device Hostname : ${hostname}`);
-console.log(`⏰ Time (UTC)      : ${formattedTime}`);
-console.log(`🔄 Mode            : ${mode.toUpperCase()}`);
-console.log(`==================================================\n`);
+console.log(`📍 Device Anda Saat Ini : ${currentHostname}`);
+console.log(`⏰ Waktu Sesi (UTC)      : ${formattedTime}`);
+console.log(`🔄 Mode Akses            : ${mode.toUpperCase()}`);
+console.log(`================================================================\n`);
 
 if (mode === 'push') {
   const statusOutput = run('git status --porcelain');
   
   if (!statusOutput) {
-    console.log(`✨ Working tree is clean. No uncommitted changes on ${hostname}.`);
-    console.log(`🚀 Triggering push to remote...`);
+    console.log(`✨ Tidak ada perubahan baru yang perlu di-commit di ${currentHostname}.`);
+    console.log(`🚀 Mendorong commit ke remote GitHub...`);
     const pushRes = run('git push origin main');
-    console.log(pushRes || 'Remote up to date.');
+    console.log(pushRes || 'Remote sudah yang terbaru.');
   } else {
-    const commitMsg = `sync(${hostname}): ${userNote} [${formattedTime}]`;
-    console.log(`📦 Staging changes on ${hostname}...`);
+    const commitMsg = `sync(${currentHostname}): ${userNote} [${formattedTime}]`;
+    console.log(`📦 Mengumpulkan perubahan file di peranti: ${currentHostname}...`);
     
     // Update local device log file
     updateDeviceLog(commitMsg);
 
     run('git add -A');
-    console.log(`📝 Committing: "${commitMsg}"...`);
+    console.log(`📝 Membuat Commit: "${commitMsg}"...`);
     const commitRes = run(`git commit -m "${commitMsg}"`);
     console.log(commitRes);
 
-    console.log(`🌐 Pushing to GitHub (origin/main)...`);
+    console.log(`🌐 Mengunggah ke GitHub (origin/main)...`);
     const pushRes = run('git push origin main');
     console.log(pushRes);
 
-    console.log(`\n✅ BERHASIL SYNC & PUSH KE GITHUB DARI KELOMPOK DEVICE: ${hostname}!`);
+    console.log(`\n✅ BERHASIL DI-PUSH DARI DEVICE: [ ${currentHostname} ]`);
   }
 } else if (mode === 'pull') {
-  console.log(`📥 Fetching & Pulling latest updates from GitHub...`);
+  console.log(`🔎 Memeriksa update terbaru dari GitHub Remote (origin/main)...`);
+  run('git fetch origin');
+
+  const remoteLatestSubject = run('git log origin/main -n 1 --pretty=format:"%s"');
+  const remoteLatestAuthor = run('git log origin/main -n 1 --pretty=format:"%an"');
+  const remoteLatestDate = run('git log origin/main -n 1 --pretty=format:"%cd"');
+  const remoteLatestHash = run('git log origin/main -n 1 --pretty=format:"%h"');
+  
+  const sourceDevice = parseDeviceFromCommit(remoteLatestSubject);
+
+  console.log(`\n----------------------------------------------------------------`);
+  console.log(`📢 INDIKATOR UPDATE DEVICE ASAL:`);
+  console.log(`💻 Peranti Pengirim (Komputer Asal) : [ ${sourceDevice} ]`);
+  console.log(`🔑 Commit Hash                     : ${remoteLatestHash}`);
+  console.log(`📝 Pesan Commit                    : ${remoteLatestSubject}`);
+  console.log(`📅 Waktu Di-Push                   : ${remoteLatestDate}`);
+  
+  if (sourceDevice === currentHostname) {
+    console.log(`ℹ️  Catatan: Commit terakhir di remote dibuat oleh KOMPUTER INI JUGA (${currentHostname}).`);
+  } else {
+    console.log(`🚀 Menarik update yang dikerjakan dari KOMPUTER LAIN (${sourceDevice}) ke komputer ini (${currentHostname})...`);
+  }
+  console.log(`----------------------------------------------------------------\n`);
+
   const pullRes = run('git pull origin main');
   console.log(pullRes);
-  console.log(`\n✅ BERHASIL MENTARIK UPDATE TERBARU DI DEVICE: ${hostname}!`);
+  console.log(`\n✅ SUKSES MERESET & MENARIK UPDATE DARI DEVICE [ ${sourceDevice} ] KE [ ${currentHostname} ]!`);
+
 } else if (mode === 'status') {
   const branch = run('git branch --show-current');
+  const remoteLatestSubject = run('git log origin/main -n 1 --pretty=format:"%s"');
+  const sourceDevice = parseDeviceFromCommit(remoteLatestSubject);
+
+  console.log(`🌿 Active Branch         : ${branch}`);
+  console.log(`💻 Device Terakhir Sync  : [ ${sourceDevice} ]`);
+  console.log(`\n📜 Riwayat Commit Peranti Terakhir:`);
   const recentLogs = run('git log -n 5 --oneline');
-  console.log(`🌿 Active Branch: ${branch}`);
-  console.log(`\n📜 Recent Device Commits:`);
   console.log(recentLogs);
 }
