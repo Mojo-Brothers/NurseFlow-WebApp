@@ -5,9 +5,14 @@
  * Patient Merge / Unmerge, and Identity Verification.
  */
 
+import { persistenceAdapter } from './persistenceAdapter.service.js';
+import { domainEventEngine, DOMAIN_EVENTS } from './domainEventEngine.service.js';
+import { clinicalTimelineEngine } from './clinicalTimelineEngine.service.js';
+import { DEMO_PATIENTS } from '../demoData.js';
+
 class MPIEngine {
   constructor() {
-    this.patients = new Map();
+    this.COLLECTION_NAME = 'patients';
     this.mergeHistory = new Map();
     this.initializeSampleMPI();
   }
@@ -45,30 +50,40 @@ class MPIEngine {
         bpjsCardNumber: null,
         status: 'ACTIVE',
         created_at: '2026-08-02T11:30:00Z'
-      }
+      },
+      ...DEMO_PATIENTS.map(p => ({
+        ...p,
+        id: p.id || p.mrn,
+        status: p.status || 'ACTIVE'
+      }))
     ];
 
-    samplePatients.forEach(p => this.patients.set(p.id, p));
+    persistenceAdapter.seedMemoryData(this.COLLECTION_NAME, samplePatients);
+  }
+
+  async getAllPatients() {
+    return await persistenceAdapter.query(this.COLLECTION_NAME);
   }
 
   // Duplicate Identity Detection Algorithm (Matching NIK or Name + DOB)
-  findPotentialDuplicates({ nik, name, dob }) {
+  async findPotentialDuplicates({ nik, name, dob }) {
+    const allPatients = await this.getAllPatients();
     const matches = [];
     const normalizedName = name ? name.toLowerCase().trim() : '';
 
-    for (const patient of this.patients.values()) {
+    for (const patient of allPatients) {
       if (patient.status === 'MERGED') continue;
 
       // Exact NIK match -> 100% confidence
-      if (nik && patient.nik === nik) {
+      if (nik && patient.nik && String(patient.nik).trim() === String(nik).trim()) {
         matches.push({ patient, confidenceScore: 100, reason: 'EXACT_NIK_MATCH' });
       }
       // Exact Name + DOB match -> 90% confidence
-      else if (normalizedName && patient.name.toLowerCase().trim() === normalizedName && dob && patient.dob === dob) {
+      else if (normalizedName && patient.name && patient.name.toLowerCase().trim() === normalizedName && dob && patient.dob === dob) {
         matches.push({ patient, confidenceScore: 90, reason: 'EXACT_NAME_DOB_MATCH' });
       }
       // Partial Name + DOB match -> 70% confidence
-      else if (normalizedName && patient.name.toLowerCase().includes(normalizedName) && dob && patient.dob === dob) {
+      else if (normalizedName && patient.name && patient.name.toLowerCase().includes(normalizedName) && dob && patient.dob === dob) {
         matches.push({ patient, confidenceScore: 70, reason: 'PARTIAL_NAME_MATCH' });
       }
     }
@@ -77,9 +92,9 @@ class MPIEngine {
   }
 
   // Register New Patient through MPI Gateway
-  registerPatient(patientData) {
+  async registerPatient(patientData, actorName = 'Petugas Admisi') {
     // Check for potential duplicate first
-    const duplicates = this.findPotentialDuplicates(patientData);
+    const duplicates = await this.findPotentialDuplicates(patientData);
     const exactMatch = duplicates.find(d => d.confidenceScore >= 90);
     
     if (exactMatch) {
@@ -87,7 +102,7 @@ class MPIEngine {
     }
 
     const patientId = `P-${Date.now()}`;
-    const mrn = `MRN-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    const mrn = patientData.mrn || `MRN-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const newPatient = {
       id: patientId,
@@ -103,29 +118,53 @@ class MPIEngine {
       payer: patientData.payer || 'Umum',
       bpjsCardNumber: patientData.bpjsCardNumber || null,
       status: 'ACTIVE',
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      registered_by: actorName
     };
 
-    this.patients.set(newPatient.id, newPatient);
-    return newPatient;
+    const saved = await persistenceAdapter.save(this.COLLECTION_NAME, newPatient.id, newPatient);
+
+    // Domain Event Publication
+    domainEventEngine.publish(DOMAIN_EVENTS.PATIENT_REGISTERED, {
+      patientId: saved.id,
+      mrn: saved.mrn,
+      nik: saved.nik,
+      name: saved.name
+    }, actorName);
+
+    // Clinical Timeline Record
+    clinicalTimelineEngine.recordEvent({
+      patientId: saved.id,
+      encounterId: null,
+      type: 'REGISTRATION',
+      sourceEntityType: 'Patient',
+      sourceEntityId: saved.id,
+      title: `Pendaftaran Pasien Baru (${saved.mrn} - ${saved.name})`,
+      actor: actorName,
+      icon: 'how_to_reg'
+    });
+
+    return saved;
   }
 
-  getPatientById(id) {
-    return this.patients.get(id) || null;
+  async getPatientById(id) {
+    return await persistenceAdapter.findById(this.COLLECTION_NAME, id);
   }
 
-  getPatientByMRN(mrn) {
-    return Array.from(this.patients.values()).find(p => p.mrn === mrn) || null;
+  async getPatientByMRN(mrn) {
+    const all = await this.getAllPatients();
+    return all.find(p => p.mrn === mrn) || null;
   }
 
-  getPatientByNIK(nik) {
-    return Array.from(this.patients.values()).find(p => p.nik === nik) || null;
+  async getPatientByNIK(nik) {
+    const all = await this.getAllPatients();
+    return all.find(p => p.nik && String(p.nik).trim() === String(nik).trim()) || null;
   }
 
   // Merge Patient Records (JCI HIM Standard)
-  mergePatients(primaryPatientId, duplicatePatientId, operator = 'HIM Admin') {
-    const primary = this.patients.get(primaryPatientId);
-    const duplicate = this.patients.get(duplicatePatientId);
+  async mergePatients(primaryPatientId, duplicatePatientId, operator = 'HIM Admin') {
+    const primary = await this.getPatientById(primaryPatientId);
+    const duplicate = await this.getPatientById(duplicatePatientId);
 
     if (!primary) throw new Error(`Primary Patient ${primaryPatientId} not found`);
     if (!duplicate) throw new Error(`Duplicate Patient ${duplicatePatientId} not found`);
@@ -135,7 +174,7 @@ class MPIEngine {
     duplicate.mergedAt = new Date().toISOString();
     duplicate.mergedBy = operator;
 
-    this.patients.set(duplicate.id, duplicate);
+    await persistenceAdapter.save(this.COLLECTION_NAME, duplicate.id, duplicate);
 
     this.mergeHistory.set(duplicate.id, {
       primaryId: primary.id,
@@ -144,9 +183,15 @@ class MPIEngine {
       operator
     });
 
+    domainEventEngine.publish(DOMAIN_EVENTS.PATIENT_MERGED, {
+      primaryPatientId: primary.id,
+      duplicatePatientId: duplicate.id
+    }, operator);
+
     return { primary, duplicate };
   }
 }
 
 export const mpiEngine = new MPIEngine();
 export default mpiEngine;
+

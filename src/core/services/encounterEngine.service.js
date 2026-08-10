@@ -5,6 +5,9 @@
  */
 
 import CoreRegistryService from './coreRegistry.service.js';
+import { persistenceAdapter } from './persistenceAdapter.service.js';
+import { domainEventEngine, DOMAIN_EVENTS } from './domainEventEngine.service.js';
+import { clinicalTimelineEngine } from './clinicalTimelineEngine.service.js';
 
 export const ENCOUNTER_TYPES = {
   OUTPATIENT: 'OUTPATIENT',   // Rawat Jalan (RJ)
@@ -26,12 +29,11 @@ export const ENCOUNTER_STATUS = {
 
 class EncounterEngine {
   constructor() {
-    this.encounters = new Map();
+    this.COLLECTION_NAME = 'encounters';
     this.initializeDefaultEncounters();
   }
 
   initializeDefaultEncounters() {
-    // Initial mock state binding 10 Core Entities
     const sampleEncounters = [
       {
         id: 'ENC-2026-0810-001',
@@ -72,71 +74,137 @@ class EncounterEngine {
       }
     ];
 
-    sampleEncounters.forEach(e => this.encounters.set(e.id, e));
+    persistenceAdapter.seedMemoryData(this.COLLECTION_NAME, sampleEncounters);
   }
 
-  // Create new Encounter with validation against Master Data
-  createEncounter({ patientId, patientName, mrn, type, departmentId, dpjpId, chiefComplaint, payer }) {
+  async getAllEncounters() {
+    return await persistenceAdapter.query(this.COLLECTION_NAME);
+  }
+
+  // Create new Encounter with validation against Master Data & Persistence
+  async createEncounter({ patientId, patientName, mrn, type, departmentId, dpjpId, chiefComplaint, payer, vitals = null }, actorName = 'Petugas Admisi') {
     const dept = CoreRegistryService.getDepartmentById(departmentId);
     const doctor = CoreRegistryService.getStaffById(dpjpId);
 
+    const encounterId = `ENC-${Date.now()}`;
+    const encounterNumber = `ENC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(1000 + Math.random() * 9000)}`;
+
     const newEncounter = {
-      id: `ENC-${Date.now()}`,
-      encounterNumber: `ENC-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: encounterId,
+      encounterNumber,
       patientId,
-      patientName,
-      mrn,
+      patientName: patientName || 'Pasien',
+      mrn: mrn || 'MRN-000000',
       type: type || ENCOUNTER_TYPES.OUTPATIENT,
       status: ENCOUNTER_STATUS.REGISTERED,
-      departmentId: dept ? dept.id : departmentId,
-      departmentName: dept ? dept.name : 'Poliklinik Umum',
-      dpjpId: doctor ? doctor.id : dpjpId,
-      dpjpName: doctor ? doctor.name : 'dr. DPJP On Duty',
+      departmentId: dept ? dept.id : (departmentId || 'POLI-UMUM'),
+      departmentName: dept ? dept.name : (departmentId || 'Poliklinik Umum'),
+      dpjpId: doctor ? doctor.id : (dpjpId || 'EMP-2026-0001'),
+      dpjpName: doctor ? doctor.name : (dpjpId || 'dr. DPJP On Duty'),
       payer: payer || 'BPJS Kesehatan',
       admissionDate: new Date().toISOString(),
       chiefComplaint: chiefComplaint || '',
-      vitals: null,
-      created_at: new Date().toISOString()
+      vitals: vitals || null,
+      created_at: new Date().toISOString(),
+      created_by: actorName
     };
 
-    this.encounters.set(newEncounter.id, newEncounter);
-    return newEncounter;
+    const saved = await persistenceAdapter.save(this.COLLECTION_NAME, newEncounter.id, newEncounter);
+
+    // Domain Event
+    domainEventEngine.publish(DOMAIN_EVENTS.ENCOUNTER_CREATED, {
+      encounterId: saved.id,
+      patientId: saved.patientId,
+      encounterNumber: saved.encounterNumber,
+      type: saved.type,
+      departmentId: saved.departmentId,
+      dpjpId: saved.dpjpId
+    }, actorName);
+
+    // Clinical Timeline Record
+    clinicalTimelineEngine.recordEvent({
+      patientId: saved.patientId,
+      encounterId: saved.id,
+      type: 'ENCOUNTER_CREATED',
+      sourceEntityType: 'Encounter',
+      sourceEntityId: saved.id,
+      title: `Kunjungan / Encounter Baru (${saved.type} - ${saved.departmentName})`,
+      actor: actorName,
+      icon: 'meeting_room'
+    });
+
+    return saved;
   }
 
-  getEncounterById(id) {
-    return this.encounters.get(id) || null;
+  async getEncounterById(id) {
+    return await persistenceAdapter.findById(this.COLLECTION_NAME, id);
   }
 
-  getEncountersByPatient(patientId) {
-    return Array.from(this.encounters.values()).filter(e => e.patientId === patientId);
+  async getEncountersByPatient(patientId) {
+    const all = await this.getAllEncounters();
+    return all.filter(e => e.patientId === patientId);
   }
 
-  getActiveEncounters() {
-    return Array.from(this.encounters.values()).filter(e => e.status !== ENCOUNTER_STATUS.DISCHARGED && e.status !== ENCOUNTER_STATUS.CANCELLED);
+  async getActiveEncounters() {
+    const all = await this.getAllEncounters();
+    return all.filter(e => e.status !== ENCOUNTER_STATUS.DISCHARGED && e.status !== ENCOUNTER_STATUS.CANCELLED);
   }
 
-  updateEncounterStatus(encounterId, newStatus) {
-    const enc = this.encounters.get(encounterId);
+  async updateEncounterStatus(encounterId, newStatus, actorName = 'Petugas Medis') {
+    const enc = await this.getEncounterById(encounterId);
     if (!enc) throw new Error(`Encounter with ID ${encounterId} not found`);
+
+    const oldStatus = enc.status;
     enc.status = newStatus;
     if (newStatus === ENCOUNTER_STATUS.DISCHARGED) {
       enc.dischargeDate = new Date().toISOString();
     }
-    this.encounters.set(encounterId, enc);
-    return enc;
+    enc.updatedAt = new Date().toISOString();
+
+    const saved = await persistenceAdapter.save(this.COLLECTION_NAME, enc.id, enc);
+
+    domainEventEngine.publish(DOMAIN_EVENTS.ENCOUNTER_STATUS_CHANGED, {
+      encounterId: saved.id,
+      patientId: saved.patientId,
+      oldStatus,
+      newStatus
+    }, actorName);
+
+    clinicalTimelineEngine.recordEvent({
+      patientId: saved.patientId,
+      encounterId: saved.id,
+      type: 'ENCOUNTER_STATUS_CHANGED',
+      sourceEntityType: 'Encounter',
+      sourceEntityId: saved.id,
+      title: `Status Kunjungan Diubah: ${oldStatus} ➔ ${newStatus}`,
+      actor: actorName,
+      icon: 'sync'
+    });
+
+    return saved;
   }
 
-  assignDPJP(encounterId, practitionerId) {
-    const enc = this.encounters.get(encounterId);
+  async assignDPJP(encounterId, practitionerId, actorName = 'Admin / Supervisor') {
+    const enc = await this.getEncounterById(encounterId);
     const doctor = CoreRegistryService.getStaffById(practitionerId);
     if (!enc) throw new Error(`Encounter ${encounterId} not found`);
     if (!doctor) throw new Error(`Doctor ${practitionerId} not found in Staff Registry`);
     enc.dpjpId = doctor.id;
     enc.dpjpName = doctor.name;
-    this.encounters.set(encounterId, enc);
-    return enc;
+
+    const saved = await persistenceAdapter.save(this.COLLECTION_NAME, enc.id, enc);
+
+    domainEventEngine.publish(DOMAIN_EVENTS.CARE_TEAM_ASSIGNED, {
+      encounterId: saved.id,
+      patientId: saved.patientId,
+      dpjpId: doctor.id,
+      dpjpName: doctor.name
+    }, actorName);
+
+    return saved;
   }
 }
 
 export const encounterEngine = new EncounterEngine();
 export default encounterEngine;
+

@@ -1,22 +1,17 @@
 /**
  * Encounter Domain — Service Layer V5 (Enterprise Masterpiece)
- * ✅ State-Driven Lifecycle (WAITING -> TRIAGE -> IN_TREATMENT -> etc)
- * ✅ Transition Guards (Atomic Transactions)
- * ✅ Escalation Hierarchy Support
+ * Connects directly to encounterEngine, persistenceAdapter, domainEventEngine, and clinicalTimelineEngine.
  */
-import { 
-  collection, doc, getDocs, query, where, orderBy, limit, 
-  serverTimestamp, runTransaction 
-} from 'firebase/firestore';
-import { db } from '../../../core/firebase.js';
-import { COLLECTIONS, AUDIT_ACTIONS, ENCOUNTER_STATUSES, ESCALATION_LEVELS, SYNC_PRIORITIES, ESCALATION_SOURCES } from '../../../core/constants.js';
-import { DEMO_ENCOUNTERS } from '../../../core/demoData.js';
+import { encounterEngine, ENCOUNTER_STATUS, ENCOUNTER_TYPES } from '../../../core/services/encounterEngine.service.js';
+import { persistenceAdapter } from '../../../core/services/persistenceAdapter.service.js';
 
 /**
- * Membuka encounter baru dalam status WAITING.
+ * Membuka encounter baru dalam status REGISTERED / WAITING.
  */
 export const createEncounter = async ({
   patientId,
+  patientName,
+  mrn,
   encounterType,
   chiefComplaint,
   admittingDoctor,
@@ -24,67 +19,19 @@ export const createEncounter = async ({
   ward,
   createdBy,
 }) => {
-  const encounterRef = doc(collection(db, COLLECTIONS.ENCOUNTERS));
-  
   try {
-    await runTransaction(db, async (transaction) => {
-      const timestamp = serverTimestamp();
+    const enc = await encounterEngine.createEncounter({
+      patientId,
+      patientName,
+      mrn,
+      type: encounterType || ENCOUNTER_TYPES.OUTPATIENT,
+      departmentId: ward || 'POLI-UMUM',
+      dpjpId: admittingDoctor || 'EMP-2026-0001',
+      chiefComplaint,
+      payer: 'BPJS Kesehatan'
+    }, createdBy || 'Petugas Admisi');
 
-      const payload = {
-        patient_id:         patientId,
-        encounter_type:     encounterType,
-        chief_complaint:    chiefComplaint,
-        admitting_doctor:   admittingDoctor || null,
-        nurse_in_charge:    nurseInCharge || null,
-        ward:               ward || 'IGD',
-        status:             ENCOUNTER_STATUSES.WAITING, 
-        escalation_level:   ESCALATION_LEVELS.NONE,
-        escalation_source:  ESCALATION_SOURCES.SYSTEM,
-        admitted_at:        timestamp,
-        updated_at:         timestamp,
-        updated_by:         createdBy || 'system',
-      };
-
-      transaction.set(encounterRef, payload);
-
-      // 2. Automated Financial Account (The Highway)
-      // JCI Requirement: Every encounter must have a matching billing account
-      const billRef = doc(collection(db, COLLECTIONS.BILLING));
-      transaction.set(billRef, {
-        encounter_id:  encounterRef.id,
-        patient_id:    patientId,
-        line_items:    [
-          {
-            description: 'Emergency Admission Fee',
-            qty: 1,
-            unit_price: 50000,
-            total: 50000
-          }
-        ],
-        subtotal:      50000,
-        discount:      0,
-        total:         50000,
-        status:        'DRAFT',
-        created_at:    timestamp,
-        created_by:    createdBy,
-      });
-
-      // 3. Audit V5
-      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
-      transaction.set(auditRef, {
-        timestamp,
-        user:          createdBy,
-        action:        AUDIT_ACTIONS.CREATE,
-        resource_type: COLLECTIONS.ENCOUNTERS,
-        resource_id:   encounterRef.id,
-        reason:        'INITIAL_ADMISSION_WITH_BILLING',
-        source:        'WEB_APP',
-        sync_priority: SYNC_PRIORITIES.HIGH,
-        delta: { status: ENCOUNTER_STATUSES.WAITING, bill_id: billRef.id }
-      });
-    });
-
-    return encounterRef.id;
+    return enc.id;
   } catch (err) {
     console.error('[EncounterService] Create failed:', err);
     throw err;
@@ -92,7 +39,7 @@ export const createEncounter = async ({
 };
 
 /**
- * Transisi status encounter dengan Guard Logic (JCI Standard).
+ * Transisi status encounter.
  */
 export const transitionEncounter = async ({ 
   encounterId, 
@@ -101,52 +48,9 @@ export const transitionEncounter = async ({
   userEmail,
   escalationLevel = null 
 }) => {
-  const ref = doc(db, COLLECTIONS.ENCOUNTERS, encounterId);
-
   try {
-    await runTransaction(db, async (transaction) => {
-      const snap = await transaction.get(ref);
-      if (!snap.exists()) throw new Error('Encounter tidak ditemukan.');
-      
-      const current = snap.data();
-      
-      // 1. Guard: Terminal State check
-      if (current.status === ENCOUNTER_STATUSES.DISCHARGED || current.status === ENCOUNTER_STATUSES.CANCELLED) {
-        throw new Error('Tidak bisa mengubah status dari terminal state (Discharged/Cancelled).');
-      }
-
-      // 2. Logic: Status Transition
-      const updatePayload = {
-        status:     targetStatus,
-        updated_at: serverTimestamp(),
-        updated_by: userEmail,
-      };
-
-      if (escalationLevel) {
-        updatePayload.escalation_level = escalationLevel;
-        updatePayload.escalation_source = ESCALATION_SOURCES.NURSE; // Default for manual transitions
-      }
-
-      transaction.update(ref, updatePayload);
-
-      // 3. Audit V5
-      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
-      transaction.set(auditRef, {
-        timestamp:     serverTimestamp(),
-        user:          userEmail,
-        action:        AUDIT_ACTIONS.UPDATE,
-        resource_type: COLLECTIONS.ENCOUNTERS,
-        resource_id:   encounterId,
-        reason:        reason,
-        source:        'WEB_APP',
-        sync_priority: SYNC_PRIORITIES.HIGH,
-        delta: { 
-          status: { before: current.status, after: targetStatus },
-          escalation: escalationLevel,
-          source: ESCALATION_SOURCES.NURSE
-        }
-      });
-    });
+    const updated = await encounterEngine.updateEncounterStatus(encounterId, targetStatus, userEmail || 'Petugas Medis');
+    return updated;
   } catch (err) {
     console.error('[EncounterService] Transition failed:', err);
     throw err;
@@ -154,52 +58,12 @@ export const transitionEncounter = async ({
 };
 
 export const getActiveEncounters = async (maxResults = 100) => {
-  let localEncounters = [];
   try {
-    const raw = localStorage.getItem('nurseflow_encounters_master');
-    if (raw) localEncounters = JSON.parse(raw);
-  } catch (e) {}
-
-  try {
-    const q = query(
-      collection(db, COLLECTIONS.ENCOUNTERS),
-        where('status', 'in', [
-          ENCOUNTER_STATUSES.WAITING, 
-          ENCOUNTER_STATUSES.TRIAGE, 
-          ENCOUNTER_STATUSES.IN_TREATMENT,
-          ENCOUNTER_STATUSES.TRANSFER_INTERNAL
-        ])
-    );
-    const snap = await getDocs(q);
-    
-    let firestoreEncounters = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const combined = [...firestoreEncounters, ...localEncounters, ...DEMO_ENCOUNTERS];
-    
-    const seen = new Set();
-    const unique = combined.filter(e => {
-      const key = e.id || e.encounter_id;
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    unique.sort((a, b) => {
-      const timeA = a.admitted_at?.toDate ? a.admitted_at.toDate().getTime() : 0;
-      const timeB = b.admitted_at?.toDate ? b.admitted_at.toDate().getTime() : 0;
-      return timeB - timeA;
-    });
-
-    return unique.slice(0, maxResults);
+    const encounters = await encounterEngine.getActiveEncounters();
+    return encounters.slice(0, maxResults);
   } catch (error) {
     console.error('[EncounterService] Failed to fetch encounters:', error);
-    const combined = [...localEncounters, ...DEMO_ENCOUNTERS];
-    const seen = new Set();
-    return combined.filter(e => {
-      const key = e.id || e.encounter_id;
-      if (!key || seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
+    return [];
   }
 };
 
@@ -208,14 +72,7 @@ export const getActiveEncounters = async (maxResults = 100) => {
  */
 export const getPatientEncounters = async (patientId) => {
   try {
-    const q = query(
-      collection(db, COLLECTIONS.ENCOUNTERS),
-      where('patient_id', '==', patientId),
-      orderBy('admitted_at', 'desc')
-    );
-    const snap = await getDocs(q);
-    
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    return await encounterEngine.getEncountersByPatient(patientId);
   } catch (error) {
     console.error('[EncounterService] Failed to fetch patient encounters:', error);
     return [];
@@ -227,99 +84,20 @@ export const getPatientEncounters = async (patientId) => {
  */
 export const getPatientActiveEncounter = async (patientId) => {
   try {
-    const demoEnc = DEMO_ENCOUNTERS.find(e => e.patient_id === patientId);
-    if (demoEnc) {
-      return demoEnc;
-    }
-
-    const q = query(
-      collection(db, COLLECTIONS.ENCOUNTERS),
-      where('patient_id', '==', patientId),
-      where('status', 'in', [
-        ENCOUNTER_STATUSES.WAITING, 
-        ENCOUNTER_STATUSES.TRIAGE, 
-        ENCOUNTER_STATUSES.IN_TREATMENT,
-        ENCOUNTER_STATUSES.TRANSFER_INTERNAL
-      ]),
-      limit(1)
-    );
-    const snap = await getDocs(q);
-    
-    if (snap.empty) {
-      return null;
-    }
-    return { id: snap.docs[0].id, ...snap.docs[0].data() };
+    const list = await encounterEngine.getEncountersByPatient(patientId);
+    return list.find(e => e.status !== ENCOUNTER_STATUS.DISCHARGED && e.status !== ENCOUNTER_STATUS.CANCELLED) || null;
   } catch (error) {
     console.error('[EncounterService] Failed to fetch patient active encounter:', error);
-    return DEMO_ENCOUNTERS.find(e => e.patient_id === patientId) || null;
+    return null;
   }
 };
 
 /**
- * Discharge Encounter — Enhanced V6 (Clinical & Logistical Sync)
+ * Discharge Encounter
  */
 export const dischargeEncounter = async (encounterId, userEmail) => {
-  const ref = doc(db, COLLECTIONS.ENCOUNTERS, encounterId);
-
   try {
-    await runTransaction(db, async (transaction) => {
-      const snap = await transaction.get(ref);
-      if (!snap.exists()) throw new Error('Encounter tidak ditemukan.');
-      const current = snap.data();
-
-      // 1. Guard: Check status
-      if (current.status === ENCOUNTER_STATUSES.DISCHARGED) {
-        throw new Error('Pasien sudah di-discharge sebelumnya.');
-      }
-
-      const timestamp = serverTimestamp();
-
-      // 2. Update Encounter Status
-      transaction.update(ref, {
-        status:     ENCOUNTER_STATUSES.DISCHARGED,
-        updated_at: timestamp,
-        updated_by: userEmail,
-      });
-
-      // 3. 🛡️ ADT: Auto-Release Bed
-      if (current.bed_id) {
-        const bedRef = doc(db, COLLECTIONS.BEDS, current.bed_id);
-        transaction.update(bedRef, {
-          is_occupied:  false,
-          encounter_id: null,
-          patient_id:   null,
-          released_at:  timestamp
-        });
-      }
-
-      // 4. 🛡️ FINANCIAL: Finalize Billing
-      const billingQuery = query(
-        collection(db, COLLECTIONS.BILLING),
-        where('encounter_id', '==', encounterId),
-        limit(1)
-      );
-      const billingSnap = await getDocs(billingQuery);
-      if (!billingSnap.empty) {
-        const billRef = doc(db, COLLECTIONS.BILLING, billingSnap.docs[0].id);
-        transaction.update(billRef, {
-          status: 'WAITING_PAYMENT',
-          finalized_at: timestamp
-        });
-      }
-
-      // 5. Audit V5
-      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
-      transaction.set(auditRef, {
-        timestamp,
-        user:          userEmail,
-        action:        AUDIT_ACTIONS.UPDATE,
-        resource_type: COLLECTIONS.ENCOUNTERS,
-        resource_id:   encounterId,
-        reason:        'FINAL_CLINICAL_DISCHARGE',
-        source:        'WEB_APP',
-        delta: { status: ENCOUNTER_STATUSES.DISCHARGED, bed_released: !!current.bed_id }
-      });
-    });
+    return await encounterEngine.updateEncounterStatus(encounterId, ENCOUNTER_STATUS.DISCHARGED, userEmail || 'Petugas Medis');
   } catch (err) {
     console.error('[EncounterService] Discharge failed:', err);
     throw err;
@@ -328,3 +106,4 @@ export const dischargeEncounter = async (encounterId, userEmail) => {
 
 // Alias for V5 consistency
 export const getActiveQueue = getActiveEncounters;
+
