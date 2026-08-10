@@ -1,6 +1,6 @@
 /**
  * NurseFlow Enterprise HIS — Domain Event Engine Service
- * Event-Driven Enterprise Architecture Bus
+ * Event-Driven Enterprise Architecture Bus with Idempotency Protection
  * Decouples domain interactions across EMR, Lab, Pharmacy, Inventory, Billing, and Interoperability.
  */
 
@@ -27,6 +27,7 @@ class DomainEventEngine {
   constructor() {
     this.listeners = new Map();
     this.eventLog = [];
+    this.processedEvents = new Set(); // Idempotency Protection Set
   }
 
   // Subscribe listener callback to eventType
@@ -43,10 +44,18 @@ class DomainEventEngine {
     };
   }
 
-  // Publish Domain Event
-  publish(eventType, payload, actorName = 'System') {
+  // Publish Domain Event (Post-Persist Pattern)
+  publish(eventType, payload, actorName = 'System', eventId = null) {
+    const finalEventId = eventId || `EVT-BUS-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
+    // Idempotency Check: Ignore duplicate event processing
+    if (this.processedEvents.has(finalEventId)) {
+      console.warn(`[DomainEventEngine] IDEMPOTENCY_GUARD: Event ${finalEventId} already processed. Skipping duplicate publication.`);
+      return null;
+    }
+
     const event = {
-      eventId: `EVT-BUS-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      eventId: finalEventId,
       eventType,
       patientId: payload.patientId || null,
       encounterId: payload.encounterId || null,
@@ -55,6 +64,7 @@ class DomainEventEngine {
       payload
     };
 
+    this.processedEvents.add(finalEventId);
     this.eventLog.push(event);
 
     const callbacks = this.listeners.get(eventType) || [];
