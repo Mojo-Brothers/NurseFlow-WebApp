@@ -20,7 +20,23 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT ADT & BED MANAGEMENT: ADT Engine (HL7 A01/A02/A03), Ward & Bed Hierarchy, Transactional Outbox Pattern, Crypto HMAC & Blockchain Audit Sourcing
+### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT MASTER DATA, eMAR (BCMA 5-RIGHT), HOSPITAL METRICS (BOR/ALOS) & CI/CD PIPELINE
+
+**Kategori:** `[MAJOR]` `[MASTER_DATA]` `[EMAR_BCMA]` `[HOSPITAL_METRICS]` `[CI_CD_WORKFLOW]` `[JCI_PATIENT_SAFETY]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 16 Suites / 43 Tests) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `server/services/masterDataGovernance.service.js` (NEW), `server/services/eMarEngine.service.js` (NEW), `server/services/hospitalMetrics.service.js` (NEW), `.github/workflows/ci.yml` (NEW), `tests/masterDataGovernance.test.js` (NEW), `tests/eMarEngine.test.js` (NEW), `tests/hospitalMetrics.test.js` (NEW)
+
+#### Detail Peningkatan Master Data Governance & eMAR:
+1. **🏛️ MASTER DATA GOVERNANCE (`masterDataGovernance.service.js`):**
+   - Katalog terpusat untuk Master Departemen/Instalasi, Poliklinik, Staf Medis (SIP/STR/IHS/BPJS), ICD-10, ICD-9-CM, LOINC, dan Formularium Obat Nasional dengan penanda LASA & High-Alert.
+2. **💊 eMAR & 5-RIGHT BARCODE MEDICATION ADMINISTRATION (`eMarEngine.service.js`):**
+   - Penegakan keselamatan pasien berstandar JCI IPSG 3 dengan verifikasi barcode 5-Benar (Benar Pasien, Obat, Dosis, Rute, Waktu) dan aturan wajib *Dual Sign-Off* oleh perawat saksi untuk obat kategori *High-Alert* (Insulin, Heparin, Kemoterapi).
+3. **📈 HOSPITAL OPERATIONAL QUALITY INDICATORS (`hospitalMetrics.service.js`):**
+   - Mesin kalkulasi indikator mutu pelayanan rawat inap Barber-Johnson (BOR, ALOS, TOI, BTO) serta kepatuhan respon *Door-to-Doctor SLA* Instalasi Gawat Darurat berdasarkan level keparahan ATS (P1-P5).
+4. **⚙️ AUTOMATED CI/CD GITHUB ACTIONS PIPELINE (`.github/workflows/ci.yml`):**
+   - Workflow otomasi validasi pull-request dan push: Checkout, Setup Node 20, Install Dependency (`npm ci`), Automated Vitest (43 Tests), Production Bundle Build (`npm run build`), dan Docker Container Build Verification.
+
+---
 
 **Kategori:** `[MAJOR]` `[ADT_ENGINE]` `[BED_MANAGEMENT]` `[OUTBOX_PATTERN]` `[CRYPTO_SECURITY]` `[BLOCKCHAIN_AUDIT]` `[HL7_FHIR]`  
 **Status:** Completed & Verified via Vitest (`npm test` PASS 13 Suites / 35 Tests) & Build (`npm run build` PASS)  
