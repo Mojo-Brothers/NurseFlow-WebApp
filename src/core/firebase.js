@@ -63,6 +63,7 @@ export const functions = getFunctions(app, "asia-southeast2");
 // Runs AFTER the module resolves. If version mismatches, clears IndexedDB and
 // reloads the app so the fresh db instance picks up a clean state.
 (async () => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
   const storedVsn = localStorage.getItem("NF_CACHE_VSN");
 
   if (storedVsn !== SENTINEL_VSN) {

@@ -117,7 +117,8 @@ class MPIEngine {
       emergencyContact: patientData.emergencyContact || null,
       payer: patientData.payer || 'Umum',
       bpjsCardNumber: patientData.bpjsCardNumber || null,
-      status: 'ACTIVE',
+      allergies: patientData.allergies || [],
+      status: patientData.status || 'ACTIVE',
       created_at: new Date().toISOString(),
       registered_by: actorName
     };

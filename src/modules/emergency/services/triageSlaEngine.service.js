@@ -8,34 +8,41 @@ import { outboxPublisherService } from '../../front_office/services/outboxPublis
 
 const SLA_TIMERS_STORAGE_KEY = 'nurseflow_emergency_sla_timers';
 
+let inMemoryTimers = [
+  {
+    id: 'SLA-2026-001',
+    encounter_id: 'ENC-2026-001',
+    patient_name: 'Ny. Siti Nurhaliza, S.Pd',
+    triage_level: 'P2_EMERGENT',
+    target_response_minutes: 10,
+    started_at: '2026-08-17T08:20:00Z',
+    first_physician_contact_at: '2026-08-17T08:24:30Z',
+    completed_at: '2026-08-17T08:24:30Z',
+    elapsed_seconds: 270,
+    remaining_seconds: 330,
+    is_overdue: false,
+    status: 'COMPLETED'
+  }
+];
+
 const getStoredTimers = () => {
   try {
-    const raw = localStorage.getItem(SLA_TIMERS_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (typeof localStorage !== 'undefined') {
+      const raw = localStorage.getItem(SLA_TIMERS_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    }
   } catch (e) {
     console.warn('[TriageSlaEngine] Failed to load SLA timers:', e);
   }
-  return [
-    {
-      id: 'SLA-2026-001',
-      encounter_id: 'ENC-2026-001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      triage_level: 'P2_EMERGENT',
-      target_response_minutes: 10,
-      started_at: '2026-08-17T08:20:00Z',
-      first_physician_contact_at: '2026-08-17T08:24:30Z',
-      completed_at: '2026-08-17T08:24:30Z',
-      elapsed_seconds: 270,
-      remaining_seconds: 330,
-      is_overdue: false,
-      status: 'COMPLETED'
-    }
-  ];
+  return inMemoryTimers;
 };
 
 const saveStoredTimers = (timers) => {
+  inMemoryTimers = timers;
   try {
-    localStorage.setItem(SLA_TIMERS_STORAGE_KEY, JSON.stringify(timers));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(SLA_TIMERS_STORAGE_KEY, JSON.stringify(timers));
+    }
   } catch (e) {
     console.warn('[TriageSlaEngine] Failed to save SLA timers:', e);
   }

@@ -105,6 +105,7 @@ export const universalOrderEngineService = {
     orderCategory = 'PHARMACY', // 'PHARMACY' | 'LABORATORY' | 'RADIOLOGY' | 'PROCEDURE' | 'DIET'
     priority = 'ROUTINE',       // 'ROUTINE' | 'URGENT' | 'CITO'
     clinicalIndication,
+    items = [],
     itemsCount = 1,
     estimatedAmount = 0,
     actorEmail = 'admin@nurseflow.id'
@@ -112,6 +113,11 @@ export const universalOrderEngineService = {
     const randomSeq = Math.floor(100 + Math.random() * 900);
     const orderNumber = `ORD-2026-${new Date().toISOString().slice(5, 10).replace('-', '')}-${randomSeq}`;
     const now = new Date().toISOString();
+
+    const calculatedCount = items.length > 0 ? items.length : itemsCount;
+    const calculatedAmount = items.length > 0
+      ? items.reduce((sum, it) => sum + (it.totalPrice || it.price || 0), 0)
+      : estimatedAmount;
 
     const newOrder = {
       id: `ORD-${Date.now()}`,
@@ -127,8 +133,9 @@ export const universalOrderEngineService = {
       clinical_indication: clinicalIndication,
       status: 'ORDERED',
       is_cito: priority === 'CITO',
-      order_items_count: itemsCount,
-      total_estimated_amount: estimatedAmount,
+      order_items_count: calculatedCount,
+      total_estimated_amount: calculatedAmount,
+      items,
       history: [
         { status: 'DRAFT', timestamp: now, actor: orderedBy },
         { status: 'ORDERED', timestamp: now, actor: orderedBy }

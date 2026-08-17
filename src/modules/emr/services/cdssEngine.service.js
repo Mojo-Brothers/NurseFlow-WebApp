@@ -9,21 +9,24 @@ import { outboxPublisherService } from '../../front_office/services/outboxPublis
 
 const CDSS_ALERTS_KEY = 'nurseflow_cdss_alerts';
 
+let inMemoryAlerts = [];
+
 const getStoredAlerts = () => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof localStorage !== 'undefined') {
       const raw = localStorage.getItem(CDSS_ALERTS_KEY);
       if (raw) return JSON.parse(raw);
     }
   } catch (e) {
     console.warn('[CdssEngine] Failed to load CDSS alerts:', e);
   }
-  return [];
+  return inMemoryAlerts;
 };
 
 const saveStoredAlerts = (alerts) => {
+  inMemoryAlerts = alerts;
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof localStorage !== 'undefined') {
       localStorage.setItem(CDSS_ALERTS_KEY, JSON.stringify(alerts));
     }
   } catch (e) {

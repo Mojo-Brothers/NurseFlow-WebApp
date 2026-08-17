@@ -11,7 +11,14 @@ export const migrationRunner = {
     '005_emr_soap_cppt_and_cdss.sql',
     '006_universal_orders_pharmacy_lis_pacs.sql',
     '007_billing_revenue_and_claims.sql',
-    '008_audit_trail_and_security.sql'
+    '008_audit_trail_and_security.sql',
+    '009_tenant_identity_foundation.sql',
+    '010_bed_ward_hierarchy.sql',
+    '011_appointment_and_queue_persistence.sql',
+    '012_pharmacy_inventory_fefo.sql',
+    '013_blood_bank_bdrs_persistence.sql',
+    '014_operating_theatre_and_icu_acuity.sql',
+    '015_staff_roster_credentialing_privileging.sql'
   ],
 
   verifyMigrationStatus: () => {

@@ -1,7 +1,7 @@
 // ==============================================================================
-// NurseFlow Enterprise HIS 2026 — Comprehensive Prisma ORM Schema
-// Standar: Permenkes No. 24/2022, JCI 7th Edition, HL7 FHIR R4 & BPJS VClaim 2.0
-// Features: ADT Engine, Ward/Bed Hierarchy, Event Sourcing Audit & Outbox Pattern
+// NurseFlow Enterprise HIS 2026 — Comprehensive Prisma ORM Schema (Gate 1D.4)
+// Standar: Permenkes No. 24/2022, Permenkes No. 91/2015, WHO Blood Safety, JCI IPSG
+// Features: Tenant Isolation, Bed Hierarchy, Appointments, Pharmacy FEFO, Blood Bank BDRS
 // ==============================================================================
 
 generator client {
@@ -10,7 +10,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 enum Gender {
@@ -65,6 +64,7 @@ enum BedStatus {
   RESERVED
   CLEANING
   MAINTENANCE
+  BLOCKED
   ISOLATION
 }
 
@@ -74,6 +74,7 @@ enum OrderCategory {
   RADIOLOGY
   PROCEDURE
   DIET
+  BLOOD_BANK
 }
 
 enum PriorityLevel {
@@ -113,409 +114,1797 @@ enum EnterpriseRole {
   ROLE_IT_ADMIN
 }
 
+// ─── 0. CANONICAL TENANT DOMAIN ───
+model TenantOrganization {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantCode         String   @unique @map("tenant_code") @db.VarChar(50)
+  organizationName   String   @map("organization_name") @db.VarChar(255)
+  hospitalType       String   @default("GENERAL_HOSPITAL") @map("hospital_type") @db.VarChar(50)
+  kemenkesFaskesCode String?  @map("kemenkes_faskes_code") @db.VarChar(50)
+  status             String   @default("ACTIVE") @db.VarChar(30)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  subscriptions             TenantSubscription[]
+  patients                  Patient[]
+  users                     EnterpriseUser[]
+  buildings                 Building[]
+  floors                    Floor[]
+  wards                     Ward[]
+  rooms                     Room[]
+  beds                      Bed[]
+  bedOccupancies            BedOccupancy[]
+  bedTransfers              BedTransfer[]
+  appointments              Appointment[]
+  appointmentAuditLogs      AppointmentAuditLog[]
+  queueSequences            QueueSequence[]
+  warehouses                PharmacyWarehouse[]
+  medications               MedicationCatalog[]
+  inventoryBatches          InventoryBatch[]
+  stockMovements            InventoryStockMovement[]
+  dispenseRecords           PrescriptionDispenseRecord[]
+  bloodUnits                BloodDonorUnit[]
+  bloodStorageLogs          BloodStorageTemperatureLog[]
+  crossmatchTests           BloodCrossmatchTest[]
+  bloodIssues               BloodIssueRecord[]
+  transfusionRecords        BloodTransfusionRecord[]
+  bedsideVerifications      BloodBedsideVerification[]
+  transfusionReactions      TransfusionReactionLog[]
+  operatingTheatres         OperatingTheatre[]
+  operatingRooms            OperatingRoom[]
+  surgerySchedules          SurgerySchedule[]
+  surgeryCases              SurgeryCase[]
+  surgicalChecklists        SurgicalSafetyChecklist[]
+  anesthesiaRecords         AnesthesiaRecord[]
+  postOpHandoffs            PostOpHandoff[]
+  icuAssessments            IcuAcuityAssessment[]
+  clinicalStaffProfiles     ClinicalStaffProfile[]
+  staffCredentials          StaffCredential[]
+  clinicalPrivileges        ClinicalPrivilege[]
+  staffRosters              StaffRoster[]
+  shiftAssignments          ShiftAssignment[]
+  onCallSchedules           OnCallSchedule[]
+  clinicalAuthorizationLogs ClinicalAuthorizationLog[]
+  episodes                  EpisodeOfCare[]
+  encounters                Encounter[]
+  registrations             PatientRegistration[]
+  queueTickets              QueueTicket[]
+  bpjsSepRecords            BpjsSepRecord[]
+  triageRecords             TriageAssessment[]
+  triageSlaTimers           TriageSlaTimer[]
+  resuscitationEvents       ResuscitationEvent[]
+  soapNotes                 SoapNote[]
+  cpptNotes                 CpptNote[]
+  allergies                 PatientAllergy[]
+  observations              ClinicalObservation[]
+  cdssAlerts                CdssAlert[]
+  orders                    ClinicalOrder[]
+  medicationOrders          MedicationOrder[]
+  laboratoryOrders          LaboratoryOrder[]
+  radiologyOrders           RadiologyOrder[]
+  billingLedgers            BillingLedger[]
+  invoices                  HospitalInvoice[]
+  inaCbgClaims              InaCbgClaim[]
+  auditLogs                 UniversalAuditLog[]
+
+  @@index([status])
+  @@map("tenant_organizations")
+}
+
+model TenantSubscription {
+  id              String    @id @default(uuid()) @db.Uuid
+  tenantId        String    @map("tenant_id") @db.Uuid
+  planCode        String    @default("PROFESSIONAL_HOSPITAL") @map("plan_code") @db.VarChar(50)
+  status          String    @default("ACTIVE_TRIAL") @db.VarChar(30)
+  maxBeds         Int       @default(150) @map("max_beds")
+  maxUsers        Int       @default(100) @map("max_users")
+  featuresEnabled Json      @default("[]") @map("features_enabled")
+  startedAt       DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  expiresAt       DateTime? @map("expires_at") @db.Timestamptz()
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant TenantOrganization @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([expiresAt])
+  @@map("tenant_subscriptions")
+}
+
 // ─── 1. MASTER PATIENT DOMAIN ───
 model Patient {
-  id              String         @id @default(uuid()) @db.Uuid
-  mrn             String         @unique @db.VarChar(30)
-  nik             String         @unique @db.VarChar(16)
-  ihsNumber       String?        @unique @map("ihs_number") @db.VarChar(30)
-  fullName        String         @map("full_name") @db.VarChar(255)
-  birthPlace      String?        @map("birth_place") @db.VarChar(100)
-  birthDate       DateTime       @map("birth_date") @db.Date
-  gender          Gender
-  bloodType       String?        @map("blood_type") @db.VarChar(5)
-  maritalStatus   String?        @map("marital_status") @db.VarChar(20)
-  phoneNumber     String         @map("phone_number") @db.VarChar(30)
-  email           String?        @db.VarChar(100)
-  addressLine     String         @map("address_line") @db.Text
-  guarantorType   String         @default("UMUM") @map("guarantor_type") @db.VarChar(50)
-  bpjsCardNumber  String?        @map("bpjs_card_number") @db.VarChar(30)
-  isActive        Boolean        @default(true) @map("is_active")
-  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  mrn            String   @db.VarChar(30)
+  nik            String   @unique @db.VarChar(16)
+  ihsNumber      String?  @unique @map("ihs_number") @db.VarChar(30)
+  fullName       String   @map("full_name") @db.VarChar(255)
+  birthPlace     String?  @map("birth_place") @db.VarChar(100)
+  birthDate      DateTime @map("birth_date") @db.Date
+  gender         Gender
+  bloodType      String?  @map("blood_type") @db.VarChar(5)
+  maritalStatus  String?  @map("marital_status") @db.VarChar(20)
+  phoneNumber    String   @map("phone_number") @db.VarChar(30)
+  email          String?  @db.VarChar(100)
+  addressLine    String   @map("address_line") @db.Text
+  guarantorType  String   @default("UMUM") @map("guarantor_type") @db.VarChar(50)
+  bpjsCardNumber String?  @map("bpjs_card_number") @db.VarChar(30)
+  isActive       Boolean  @default(true) @map("is_active")
+  isMerged       Boolean  @default(false) @map("is_merged")
+  mergedIntoId   String?  @map("merged_into_id") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  episodes        EpisodeOfCare[]
-  encounters      Encounter[]
-  allergies       PatientAllergy[]
-  orders          ClinicalOrder[]
-  billingLedgers  BillingLedger[]
-  bedOccupancies  BedOccupancy[]
+  tenant         TenantOrganization @relation(fields: [tenantId], references: [id])
+  mergedInto     Patient?           @relation("PatientMergeHistory", fields: [mergedIntoId], references: [id])
+  mergedPatients Patient[]          @relation("PatientMergeHistory")
 
+  appointments         Appointment[]
+  episodes             EpisodeOfCare[]
+  encounters           Encounter[]
+  registrations        PatientRegistration[]
+  queueTickets         QueueTicket[]
+  bpjsSepRecords       BpjsSepRecord[]
+  triageRecords        TriageAssessment[]
+  cdssAlerts           CdssAlert[]
+  allergies            PatientAllergy[]
+  orders               ClinicalOrder[]
+  billingLedgers       BillingLedger[]
+  invoices             HospitalInvoice[]
+  bedOccupancies       BedOccupancy[]
+  dispenseRecords      PrescriptionDispenseRecord[]
+  stockMovements       InventoryStockMovement[]
+  reservedBloodUnits   BloodDonorUnit[]             @relation("BloodUnitReservedPatient")
+  crossmatchTests      BloodCrossmatchTest[]
+  bloodIssues          BloodIssueRecord[]
+  transfusionRecords   BloodTransfusionRecord[]
+  transfusionReactions TransfusionReactionLog[]
+  surgerySchedules     SurgerySchedule[]
+  surgeryCases         SurgeryCase[]
+  anesthesiaRecords    AnesthesiaRecord[]
+  postOpHandoffs       PostOpHandoff[]
+  icuAssessments       IcuAcuityAssessment[]
+  auditLogs            UniversalAuditLog[]
+
+  @@unique([tenantId, mrn], name: "uq_patients_tenant_mrn")
+  @@index([tenantId, createdAt])
   @@map("master_patients")
 }
 
 // ─── 2. BED MANAGEMENT & WARD HIERARCHY ───
 model Building {
-  id              String         @id @default(uuid()) @db.Uuid
-  buildingCode    String         @unique @map("building_code") @db.VarChar(30)
-  buildingName    String         @map("building_name") @db.VarChar(100)
-  floors          Floor[]
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  buildingCode String   @map("building_code") @db.VarChar(30)
+  buildingName String   @map("building_name") @db.VarChar(100)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
+  tenant TenantOrganization @relation(fields: [tenantId], references: [id])
+  floors Floor[]
+
+  @@unique([tenantId, buildingCode], name: "uq_building_tenant_code")
+  @@index([tenantId])
   @@map("master_buildings")
 }
 
 model Floor {
-  id              String         @id @default(uuid()) @db.Uuid
-  buildingId      String         @map("building_id") @db.Uuid
-  floorNumber     Int            @map("floor_number")
-  floorName       String         @map("floor_name") @db.VarChar(100)
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  buildingId  String   @map("building_id") @db.Uuid
+  floorNumber Int      @map("floor_number")
+  floorName   String   @map("floor_name") @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  building        Building       @relation(fields: [buildingId], references: [id])
-  wards           Ward[]
+  tenant   TenantOrganization @relation(fields: [tenantId], references: [id])
+  building Building           @relation(fields: [buildingId], references: [id])
+  wards    Ward[]
+  theatres OperatingTheatre[]
 
+  @@unique([buildingId, floorNumber], name: "uq_floor_building_number")
+  @@index([tenantId])
+  @@index([buildingId])
   @@map("master_floors")
 }
 
 model Ward {
-  id              String         @id @default(uuid()) @db.Uuid
-  floorId         String         @map("floor_id") @db.Uuid
-  wardCode        String         @unique @map("ward_code") @db.VarChar(30)
-  wardName        String         @map("ward_name") @db.VarChar(100)
-  wardClass       String         @map("ward_class") @db.VarChar(30) // VVIP, VIP, KELAS_1, KELAS_2, KELAS_3, ICU, NICU, PICU
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  floorId   String   @map("floor_id") @db.Uuid
+  wardCode  String   @map("ward_code") @db.VarChar(30)
+  wardName  String   @map("ward_name") @db.VarChar(100)
+  wardClass String   @map("ward_class") @db.VarChar(30)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  floor           Floor          @relation(fields: [floorId], references: [id])
-  rooms           Room[]
+  tenant TenantOrganization @relation(fields: [tenantId], references: [id])
+  floor  Floor              @relation(fields: [floorId], references: [id])
+  rooms  Room[]
 
+  @@unique([tenantId, wardCode], name: "uq_ward_tenant_code")
+  @@index([tenantId])
+  @@index([floorId])
   @@map("master_wards")
 }
 
 model Room {
-  id              String         @id @default(uuid()) @db.Uuid
-  wardId          String         @map("ward_id") @db.Uuid
-  roomNumber      String         @map("room_number") @db.VarChar(30)
-  genderType      String         @default("ALL") @map("gender_type") @db.VarChar(10) // MALE, FEMALE, ISOLATION, ALL
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  wardId     String   @map("ward_id") @db.Uuid
+  roomNumber String   @map("room_number") @db.VarChar(30)
+  genderType String   @default("ALL") @map("gender_type") @db.VarChar(10)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  ward            Ward           @relation(fields: [wardId], references: [id])
-  beds            Bed[]
+  tenant TenantOrganization @relation(fields: [tenantId], references: [id])
+  ward   Ward               @relation(fields: [wardId], references: [id])
+  beds   Bed[]
 
+  @@unique([wardId, roomNumber], name: "uq_room_ward_number")
+  @@index([tenantId])
+  @@index([wardId])
   @@map("master_rooms")
 }
 
 model Bed {
-  id              String         @id @default(uuid()) @db.Uuid
-  roomId          String         @map("room_id") @db.Uuid
-  bedNumber       String         @map("bed_number") @db.VarChar(30)
-  bedStatus       BedStatus      @default(AVAILABLE) @map("bed_status")
-  dailyTariff     Decimal        @default(0.00) @map("daily_tariff") @db.Decimal(15, 2)
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  roomId      String    @map("room_id") @db.Uuid
+  bedNumber   String    @map("bed_number") @db.VarChar(30)
+  bedStatus   BedStatus @default(AVAILABLE) @map("bed_status")
+  dailyTariff Decimal   @default(0.00) @map("daily_tariff") @db.Decimal(15, 2)
+  version     Int       @default(1)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  room            Room           @relation(fields: [roomId], references: [id])
-  occupancies     BedOccupancy[]
-  transfersFrom   BedTransfer[]  @relation("BedTransferFrom")
-  transfersTo     BedTransfer[]  @relation("BedTransferTo")
+  tenant        TenantOrganization @relation(fields: [tenantId], references: [id])
+  room          Room               @relation(fields: [roomId], references: [id])
+  occupancies   BedOccupancy[]
+  transfersFrom BedTransfer[]      @relation("BedTransferFrom")
+  transfersTo   BedTransfer[]      @relation("BedTransferTo")
 
+  @@unique([roomId, bedNumber], name: "uq_bed_room_number")
+  @@index([tenantId])
+  @@index([roomId])
+  @@index([tenantId, bedStatus])
   @@map("master_beds")
 }
 
 model BedOccupancy {
-  id              String         @id @default(uuid()) @db.Uuid
-  bedId           String         @map("bed_id") @db.Uuid
-  patientId       String         @map("patient_id") @db.Uuid
-  encounterId     String         @map("encounter_id") @db.Uuid
-  checkInTime     DateTime       @default(now()) @map("check_in_time") @db.Timestamptz()
-  checkOutTime    DateTime?      @map("check_out_time") @db.Timestamptz()
-  occupancyStatus String         @default("ACTIVE") @map("occupancy_status") @db.VarChar(30)
+  id                  String    @id @default(uuid()) @db.Uuid
+  tenantId            String    @map("tenant_id") @db.Uuid
+  bedId               String    @map("bed_id") @db.Uuid
+  patientId           String    @map("patient_id") @db.Uuid
+  encounterId         String    @map("encounter_id") @db.Uuid
+  checkInTime         DateTime  @default(now()) @map("check_in_time") @db.Timestamptz()
+  checkOutTime        DateTime? @map("check_out_time") @db.Timestamptz()
+  occupancyStatus     String    @default("ACTIVE") @map("occupancy_status") @db.VarChar(30)
+  dischargeType       String?   @map("discharge_type") @db.VarChar(50)
+  admittingDoctorName String?   @map("admitting_doctor_name") @db.VarChar(100)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
 
-  bed             Bed            @relation(fields: [bedId], references: [id])
-  patient         Patient        @relation(fields: [patientId], references: [id])
-  encounter       Encounter      @relation(fields: [encounterId], references: [id])
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  bed       Bed                @relation(fields: [bedId], references: [id])
+  patient   Patient            @relation(fields: [patientId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
 
+  @@index([tenantId])
+  @@index([patientId])
+  @@index([encounterId])
+  @@index([bedId])
   @@map("bed_occupancies")
 }
 
 model BedTransfer {
-  id              String         @id @default(uuid()) @db.Uuid
-  encounterId     String         @map("encounter_id") @db.Uuid
-  fromBedId       String         @map("from_bed_id") @db.Uuid
-  toBedId         String         @map("to_bed_id") @db.Uuid
-  transferReason  String         @map("transfer_reason") @db.Text
-  transferredBy   String         @map("transferred_by") @db.VarChar(100)
-  transferredAt   DateTime       @default(now()) @map("transferred_at") @db.Timestamptz()
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  encounterId    String   @map("encounter_id") @db.Uuid
+  fromBedId      String   @map("from_bed_id") @db.Uuid
+  toBedId        String   @map("to_bed_id") @db.Uuid
+  transferReason String   @map("transfer_reason") @db.Text
+  transferredBy  String   @map("transferred_by") @db.VarChar(100)
+  transferredAt  DateTime @default(now()) @map("transferred_at") @db.Timestamptz()
 
-  encounter       Encounter      @relation(fields: [encounterId], references: [id])
-  fromBed         Bed            @relation("BedTransferFrom", fields: [fromBedId], references: [id])
-  toBed           Bed            @relation("BedTransferTo", fields: [toBedId], references: [id])
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
+  fromBed   Bed                @relation("BedTransferFrom", fields: [fromBedId], references: [id])
+  toBed     Bed                @relation("BedTransferTo", fields: [toBedId], references: [id])
 
+  @@index([tenantId])
+  @@index([encounterId])
+  @@index([fromBedId])
+  @@index([toBedId])
   @@map("bed_transfers")
 }
 
-// ─── 3. CLINICAL CORE: EPISODES & ENCOUNTERS ───
+// ─── 3. APPOINTMENTS & OUTPATIENT QUEUES DOMAIN ───
+model Appointment {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  appointmentNumber  String    @unique @map("appointment_number") @db.VarChar(30)
+  patientId          String    @map("patient_id") @db.Uuid
+  doctorId           String    @map("doctor_id") @db.VarChar(50)
+  doctorName         String    @map("doctor_name") @db.VarChar(100)
+  departmentId       String    @map("department_id") @db.VarChar(50)
+  departmentName     String    @map("department_name") @db.VarChar(100)
+  appointmentDate    DateTime  @map("appointment_date") @db.Date
+  slotTime           String    @map("slot_time") @db.VarChar(20)
+  bookingSource      String    @default("ON_SITE") @map("booking_source") @db.VarChar(30)
+  guarantorType      String    @default("UMUM") @map("guarantor_type") @db.VarChar(50)
+  status             String    @default("BOOKED") @db.VarChar(30)
+  cancellationReason String?   @map("cancellation_reason") @db.Text
+  rescheduledFromId  String?   @map("rescheduled_from_id") @db.Uuid
+  bpjsBookingCode    String?   @map("bpjs_booking_code") @db.VarChar(50)
+  ticketNumber       String?   @map("ticket_number") @db.VarChar(20)
+  version            Int       @default(1)
+  bookedAt           DateTime  @default(now()) @map("booked_at") @db.Timestamptz()
+  checkedInAt        DateTime? @map("checked_in_at") @db.Timestamptz()
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant          TenantOrganization    @relation(fields: [tenantId], references: [id])
+  patient         Patient               @relation(fields: [patientId], references: [id])
+  rescheduledFrom Appointment?          @relation("AppointmentReschedule", fields: [rescheduledFromId], references: [id])
+  rescheduledTo   Appointment[]         @relation("AppointmentReschedule")
+  auditLogs       AppointmentAuditLog[]
+  registrations   PatientRegistration[]
+  queueTickets    QueueTicket[]
+
+  @@index([tenantId])
+  @@index([patientId])
+  @@index([doctorId, appointmentDate])
+  @@index([tenantId, status])
+  @@map("appointments")
+}
+
+model AppointmentAuditLog {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  appointmentId String    @map("appointment_id") @db.Uuid
+  actionType    String    @map("action_type") @db.VarChar(50)
+  oldSlotDate   DateTime? @map("old_slot_date") @db.Date
+  oldSlotTime   String?   @map("old_slot_time") @db.VarChar(20)
+  newSlotDate   DateTime? @map("new_slot_date") @db.Date
+  newSlotTime   String?   @map("new_slot_time") @db.VarChar(20)
+  reason        String?   @db.Text
+  actorId       String    @map("actor_id") @db.VarChar(50)
+  actorName     String    @map("actor_name") @db.VarChar(100)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant      TenantOrganization @relation(fields: [tenantId], references: [id])
+  appointment Appointment        @relation(fields: [appointmentId], references: [id])
+
+  @@index([tenantId])
+  @@index([appointmentId])
+  @@map("appointment_audit_logs")
+}
+
+model QueueSequence {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  poolCode            String   @map("pool_code") @db.VarChar(30)
+  queueDate           DateTime @map("queue_date") @db.Date
+  lastNumber          Int      @default(0) @map("last_number")
+  currentCalledNumber Int      @default(0) @map("current_called_number")
+  version             Int      @default(1)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant TenantOrganization @relation(fields: [tenantId], references: [id])
+
+  @@unique([tenantId, poolCode, queueDate], name: "uq_queue_sequence")
+  @@index([tenantId])
+  @@map("queue_sequences")
+}
+
+// ─── 4. PHARMACY MULTI-WAREHOUSE & FEFO INVENTORY ───
+model PharmacyWarehouse {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  warehouseCode       String   @map("warehouse_code") @db.VarChar(30)
+  warehouseName       String   @map("warehouse_name") @db.VarChar(100)
+  warehouseType       String   @default("DEPO") @map("warehouse_type") @db.VarChar(30)
+  locationDescription String?  @map("location_description") @db.Text
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant          TenantOrganization           @relation(fields: [tenantId], references: [id])
+  batches         InventoryBatch[]
+  stockMovements  InventoryStockMovement[]
+  dispenseRecords PrescriptionDispenseRecord[]
+
+  @@unique([tenantId, warehouseCode], name: "uq_warehouse_tenant_code")
+  @@index([tenantId])
+  @@map("pharmacy_warehouses")
+}
+
+model MedicationCatalog {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  itemCode         String   @map("item_code") @db.VarChar(50)
+  itemName         String   @map("item_name") @db.VarChar(255)
+  genericName      String?  @map("generic_name") @db.VarChar(255)
+  dosageForm       String   @map("dosage_form") @db.VarChar(50)
+  strength         String?  @db.VarChar(50)
+  packageUnit      String   @map("package_unit") @db.VarChar(30)
+  dispenseUnit     String   @map("dispense_unit") @db.VarChar(30)
+  conversionFactor Int      @default(1) @map("conversion_factor")
+  kfaCode          String?  @map("kfa_code") @db.VarChar(50)
+  isHighAlert      Boolean  @default(false) @map("is_high_alert")
+  isLasa           Boolean  @default(false) @map("is_lasa")
+  isNarcotic       Boolean  @default(false) @map("is_narcotic")
+  isPsychotropic   Boolean  @default(false) @map("is_psychotropic")
+  isAntibiotic     Boolean  @default(false) @map("is_antibiotic")
+  minStockAlert    Int      @default(10) @map("min_stock_alert")
+  maxStockLevel    Int      @default(1000) @map("max_stock_level")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant         TenantOrganization       @relation(fields: [tenantId], references: [id])
+  batches        InventoryBatch[]
+  stockMovements InventoryStockMovement[]
+
+  @@unique([tenantId, itemCode], name: "uq_medication_tenant_code")
+  @@index([tenantId])
+  @@map("medication_catalog")
+}
+
+model InventoryBatch {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  warehouseId       String   @map("warehouse_id") @db.Uuid
+  medicationId      String   @map("medication_id") @db.Uuid
+  batchNumber       String   @map("batch_number") @db.VarChar(100)
+  expiryDate        DateTime @map("expiry_date") @db.Date
+  initialQuantity   Int      @map("initial_quantity")
+  availableQuantity Int      @map("available_quantity")
+  reservedQuantity  Int      @default(0) @map("reserved_quantity")
+  unitCost          Decimal  @default(0.00) @map("unit_cost") @db.Decimal(15, 2)
+  unitPrice         Decimal  @default(0.00) @map("unit_price") @db.Decimal(15, 2)
+  version           Int      @default(1)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant          TenantOrganization           @relation(fields: [tenantId], references: [id])
+  warehouse       PharmacyWarehouse            @relation(fields: [warehouseId], references: [id])
+  medication      MedicationCatalog            @relation(fields: [medicationId], references: [id])
+  stockMovements  InventoryStockMovement[]
+  dispenseRecords PrescriptionDispenseRecord[]
+
+  @@unique([warehouseId, medicationId, batchNumber], name: "uq_batch_warehouse_med")
+  @@index([tenantId])
+  @@index([warehouseId, medicationId, expiryDate])
+  @@map("inventory_batches")
+}
+
+model InventoryStockMovement {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  movementNumber   String   @unique @map("movement_number") @db.VarChar(30)
+  warehouseId      String   @map("warehouse_id") @db.Uuid
+  medicationId     String   @map("medication_id") @db.Uuid
+  batchId          String   @map("batch_id") @db.Uuid
+  movementType     String   @map("movement_type") @db.VarChar(30)
+  quantityDelta    Int      @map("quantity_delta")
+  balanceBefore    Int      @map("balance_before")
+  balanceAfter     Int      @map("balance_after")
+  unitCost         Decimal  @default(0.00) @map("unit_cost") @db.Decimal(15, 2)
+  referenceDocType String?  @map("reference_doc_type") @db.VarChar(50)
+  referenceDocId   String?  @map("reference_doc_id") @db.VarChar(100)
+  encounterId      String?  @map("encounter_id") @db.Uuid
+  patientId        String?  @map("patient_id") @db.Uuid
+  performedById    String   @map("performed_by_id") @db.VarChar(50)
+  performedByName  String   @map("performed_by_name") @db.VarChar(100)
+  notes            String?  @db.Text
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant     TenantOrganization @relation(fields: [tenantId], references: [id])
+  warehouse  PharmacyWarehouse  @relation(fields: [warehouseId], references: [id])
+  medication MedicationCatalog  @relation(fields: [medicationId], references: [id])
+  batch      InventoryBatch     @relation(fields: [batchId], references: [id])
+  encounter  Encounter?         @relation(fields: [encounterId], references: [id])
+  patient    Patient?           @relation(fields: [patientId], references: [id])
+
+  @@index([tenantId])
+  @@index([batchId])
+  @@index([medicationId])
+  @@map("inventory_stock_movements")
+}
+
+model PrescriptionDispenseRecord {
+  id                String   @id @default(uuid()) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  dispenseNumber    String   @unique @map("dispense_number") @db.VarChar(30)
+  orderId           String   @map("order_id") @db.Uuid
+  medicationOrderId String   @map("medication_order_id") @db.Uuid
+  encounterId       String   @map("encounter_id") @db.Uuid
+  patientId         String   @map("patient_id") @db.Uuid
+  warehouseId       String   @map("warehouse_id") @db.Uuid
+  batchId           String   @map("batch_id") @db.Uuid
+  quantityDispensed Int      @map("quantity_dispensed")
+  unitPrice         Decimal  @default(0.00) @map("unit_price") @db.Decimal(15, 2)
+  totalPrice        Decimal  @default(0.00) @map("total_price") @db.Decimal(15, 2)
+  pharmacistId      String   @map("pharmacist_id") @db.VarChar(50)
+  pharmacistName    String   @map("pharmacist_name") @db.VarChar(100)
+  verifiedByName    String?  @map("verified_by_name") @db.VarChar(100)
+  idempotencyKey    String?  @map("idempotency_key") @db.VarChar(100)
+  dispensedAt       DateTime @default(now()) @map("dispensed_at") @db.Timestamptz()
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant          TenantOrganization @relation(fields: [tenantId], references: [id])
+  order           ClinicalOrder      @relation(fields: [orderId], references: [id])
+  medicationOrder MedicationOrder    @relation(fields: [medicationOrderId], references: [id])
+  encounter       Encounter          @relation(fields: [encounterId], references: [id])
+  patient         Patient            @relation(fields: [patientId], references: [id])
+  warehouse       PharmacyWarehouse  @relation(fields: [warehouseId], references: [id])
+  batch           InventoryBatch     @relation(fields: [batchId], references: [id])
+
+  @@index([tenantId])
+  @@index([orderId])
+  @@index([medicationOrderId])
+  @@index([batchId])
+  @@map("prescription_dispense_records")
+}
+
+// ─── 5. BLOOD BANK (BDRS) UNITS & TRANSFUSION ───
+model BloodDonorUnit {
+  id                        String   @id @default(uuid()) @db.Uuid
+  tenantId                  String   @map("tenant_id") @db.Uuid
+  unitNumber                String   @map("unit_number") @db.VarChar(50)
+  productType               String   @map("product_type") @db.VarChar(30)
+  aboType                   String   @map("abo_type") @db.VarChar(5)
+  rhesusType                String   @map("rhesus_type") @db.VarChar(10)
+  volumeMl                  Int      @map("volume_ml")
+  donationDate              DateTime @map("donation_date") @db.Date
+  expiryDate                DateTime @map("expiry_date") @db.Timestamptz()
+  storageTemperatureCelsius Decimal? @map("storage_temperature_celsius") @db.Decimal(4, 1)
+  storageLocation           String   @map("storage_location") @db.VarChar(100)
+  screeningStatus           String   @default("NON_REACTIVE") @map("screening_status") @db.VarChar(30)
+  status                    String   @default("AVAILABLE") @db.VarChar(30)
+  reservedForPatientId      String?  @map("reserved_for_patient_id") @db.Uuid
+  reservedForEncounterId    String?  @map("reserved_for_encounter_id") @db.Uuid
+  version                   Int      @default(1)
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                 DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant               TenantOrganization           @relation(fields: [tenantId], references: [id])
+  reservedForPatient   Patient?                     @relation("BloodUnitReservedPatient", fields: [reservedForPatientId], references: [id])
+  reservedForEncounter Encounter?                   @relation("BloodUnitReservedEncounter", fields: [reservedForEncounterId], references: [id])
+  crossmatchTests      BloodCrossmatchTest[]
+  issues               BloodIssueRecord[]
+  transfusionRecords   BloodTransfusionRecord[]
+  temperatureLogs      BloodStorageTemperatureLog[]
+
+  @@unique([tenantId, unitNumber], name: "uq_blood_unit_tenant_number")
+  @@index([tenantId])
+  @@index([tenantId, status, expiryDate])
+  @@map("blood_donor_units")
+}
+
+model BloodStorageTemperatureLog {
+  id                       String   @id @default(uuid()) @db.Uuid
+  tenantId                 String   @map("tenant_id") @db.Uuid
+  unitId                   String?  @map("unit_id") @db.Uuid
+  storageDeviceId          String   @map("storage_device_id") @db.VarChar(50)
+  productType              String   @default("PACKED_RED_CELLS") @map("product_type") @db.VarChar(30)
+  temperatureCelsius       Decimal  @map("temperature_celsius") @db.Decimal(4, 1)
+  minAllowedCelsius        Decimal  @default(2.0) @map("min_allowed_celsius") @db.Decimal(4, 1)
+  maxAllowedCelsius        Decimal  @default(6.0) @map("max_allowed_celsius") @db.Decimal(4, 1)
+  recordedAt               DateTime @default(now()) @map("recorded_at") @db.Timestamptz()
+  recordedBy               String   @map("recorded_by") @db.VarChar(100)
+  alarmStatus              String   @default("NORMAL") @map("alarm_status") @db.VarChar(30)
+  excursionDurationMinutes Int      @default(0) @map("excursion_duration_minutes")
+  actionTaken              String?  @map("action_taken") @db.Text
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  bloodUnit BloodDonorUnit?    @relation(fields: [unitId], references: [id])
+
+  @@index([tenantId])
+  @@index([unitId])
+  @@index([storageDeviceId, recordedAt])
+  @@map("blood_storage_temperature_logs")
+}
+
+model BloodCrossmatchTest {
+  id                   String    @id @default(uuid()) @db.Uuid
+  tenantId             String    @map("tenant_id") @db.Uuid
+  testNumber           String    @unique @map("test_number") @db.VarChar(30)
+  patientId            String    @map("patient_id") @db.Uuid
+  encounterId          String    @map("encounter_id") @db.Uuid
+  bloodUnitId          String    @map("blood_unit_id") @db.Uuid
+  orderId              String?   @map("order_id") @db.Uuid
+  patientAbo           String    @map("patient_abo") @db.VarChar(5)
+  patientRhesus        String    @map("patient_rhesus") @db.VarChar(10)
+  donorAbo             String    @default("A") @map("donor_abo") @db.VarChar(5)
+  donorRhesus          String    @default("POSITIVE") @map("donor_rhesus") @db.VarChar(10)
+  antibodyScreen       String    @default("NEGATIVE") @map("antibody_screen") @db.VarChar(30)
+  majorCrossmatch      String    @map("major_crossmatch") @db.VarChar(30)
+  minorCrossmatch      String    @default("COMPATIBLE") @map("minor_crossmatch") @db.VarChar(30)
+  autoControl          String    @default("NEGATIVE") @map("auto_control") @db.VarChar(30)
+  overallCompatibility String    @map("overall_compatibility") @db.VarChar(30)
+  technicianId         String    @map("technician_id") @db.VarChar(50)
+  technicianName       String    @map("technician_name") @db.VarChar(100)
+  verifiedByDoctorId   String?   @map("verified_by_doctor_id") @db.VarChar(50)
+  verifiedByDoctorName String?   @map("verified_by_doctor_name") @db.VarChar(100)
+  isFinalized          Boolean   @default(false) @map("is_finalized")
+  finalizedAt          DateTime? @map("finalized_at") @db.Timestamptz()
+  testedAt             DateTime  @default(now()) @map("tested_at") @db.Timestamptz()
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant             TenantOrganization       @relation(fields: [tenantId], references: [id])
+  patient            Patient                  @relation(fields: [patientId], references: [id])
+  encounter          Encounter                @relation(fields: [encounterId], references: [id])
+  bloodUnit          BloodDonorUnit           @relation(fields: [bloodUnitId], references: [id])
+  order              ClinicalOrder?           @relation(fields: [orderId], references: [id])
+  issues             BloodIssueRecord[]
+  transfusionRecords BloodTransfusionRecord[]
+
+  @@index([tenantId])
+  @@index([patientId])
+  @@index([bloodUnitId])
+  @@map("blood_crossmatch_tests")
+}
+
+model BloodIssueRecord {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  issueNumber        String   @unique @map("issue_number") @db.VarChar(30)
+  bloodUnitId        String   @map("blood_unit_id") @db.Uuid
+  patientId          String   @map("patient_id") @db.Uuid
+  encounterId        String   @map("encounter_id") @db.Uuid
+  crossmatchId       String   @map("crossmatch_id") @db.Uuid
+  issuedById         String   @map("issued_by_id") @db.VarChar(50)
+  issuedByName       String   @map("issued_by_name") @db.VarChar(100)
+  issuedAt           DateTime @default(now()) @map("issued_at") @db.Timestamptz()
+  receivedById       String   @map("received_by_id") @db.VarChar(50)
+  receivedByName     String   @map("received_by_name") @db.VarChar(100)
+  receivedAt         DateTime @default(now()) @map("received_at") @db.Timestamptz()
+  temperatureAtIssue Decimal  @map("temperature_at_issue") @db.Decimal(4, 1)
+  issueStatus        String   @default("ISSUED") @map("issue_status") @db.VarChar(30)
+  notes              String?  @db.Text
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant       TenantOrganization       @relation(fields: [tenantId], references: [id])
+  bloodUnit    BloodDonorUnit           @relation(fields: [bloodUnitId], references: [id])
+  patient      Patient                  @relation(fields: [patientId], references: [id])
+  encounter    Encounter                @relation(fields: [encounterId], references: [id])
+  crossmatch   BloodCrossmatchTest      @relation(fields: [crossmatchId], references: [id])
+  transfusions BloodTransfusionRecord[]
+
+  @@index([tenantId])
+  @@index([bloodUnitId])
+  @@index([patientId])
+  @@map("blood_issue_records")
+}
+
+model BloodTransfusionRecord {
+  id                    String    @id @default(uuid()) @db.Uuid
+  tenantId              String    @map("tenant_id") @db.Uuid
+  transfusionNumber     String    @unique @map("transfusion_number") @db.VarChar(30)
+  encounterId           String    @map("encounter_id") @db.Uuid
+  patientId             String    @map("patient_id") @db.Uuid
+  bloodUnitId           String    @map("blood_unit_id") @db.Uuid
+  crossmatchId          String    @map("crossmatch_id") @db.Uuid
+  issueId               String?   @map("issue_id") @db.Uuid
+  startedAt             DateTime  @default(now()) @map("started_at") @db.Timestamptz()
+  completedAt           DateTime? @map("completed_at") @db.Timestamptz()
+  initialVitals         Json      @map("initial_vitals")
+  monitoring15minVitals Json?     @map("monitoring_15min_vitals")
+  postVitals            Json?     @map("post_vitals")
+  administeredByNurse   String    @map("administered_by_nurse") @db.VarChar(100)
+  witnessedByNurse      String    @map("witnessed_by_nurse") @db.VarChar(100)
+  transfusionStatus     String    @default("IN_PROGRESS") @map("transfusion_status") @db.VarChar(30)
+  cancellationReason    String?   @map("cancellation_reason") @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant              TenantOrganization        @relation(fields: [tenantId], references: [id])
+  encounter           Encounter                 @relation(fields: [encounterId], references: [id])
+  patient             Patient                   @relation(fields: [patientId], references: [id])
+  bloodUnit           BloodDonorUnit            @relation(fields: [bloodUnitId], references: [id])
+  crossmatch          BloodCrossmatchTest       @relation(fields: [crossmatchId], references: [id])
+  issue               BloodIssueRecord?         @relation(fields: [issueId], references: [id])
+  bedsideVerification BloodBedsideVerification?
+  reactions           TransfusionReactionLog[]
+
+  @@index([tenantId])
+  @@index([encounterId])
+  @@index([patientId])
+  @@map("blood_transfusion_records")
+}
+
+model BloodBedsideVerification {
+  id                      String   @id @default(uuid()) @db.Uuid
+  tenantId                String   @map("tenant_id") @db.Uuid
+  transfusionId           String   @unique @map("transfusion_id") @db.Uuid
+  patientIdentityVerified Boolean  @default(false) @map("patient_identity_verified")
+  bloodUnitVerified       Boolean  @default(false) @map("blood_unit_verified")
+  aboVerified             Boolean  @default(false) @map("abo_verified")
+  rhesusVerified          Boolean  @default(false) @map("rhesus_verified")
+  expiryVerified          Boolean  @default(false) @map("expiry_verified")
+  crossmatchVerified      Boolean  @default(false) @map("crossmatch_verified")
+  informedConsentVerified Boolean  @default(false) @map("informed_consent_verified")
+  administeredByNurseId   String   @map("administered_by_nurse_id") @db.VarChar(50)
+  administeredByNurseName String   @map("administered_by_nurse_name") @db.VarChar(100)
+  witnessedByNurseId      String   @map("witnessed_by_nurse_id") @db.VarChar(50)
+  witnessedByNurseName    String   @map("witnessed_by_nurse_name") @db.VarChar(100)
+  verifiedAt              DateTime @default(now()) @map("verified_at") @db.Timestamptz()
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant      TenantOrganization     @relation(fields: [tenantId], references: [id])
+  transfusion BloodTransfusionRecord @relation(fields: [transfusionId], references: [id])
+
+  @@index([tenantId])
+  @@index([transfusionId])
+  @@map("blood_bedside_verifications")
+}
+
+model TransfusionReactionLog {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  transfusionId       String   @map("transfusion_id") @db.Uuid
+  patientId           String   @map("patient_id") @db.Uuid
+  reactionType        String   @map("reaction_type") @db.VarChar(50)
+  severity            String   @db.VarChar(30)
+  symptomsDescription String   @map("symptoms_description") @db.Text
+  interventionsTaken  String   @map("interventions_taken") @db.Text
+  reportedToBdrsAt    DateTime @default(now()) @map("reported_to_bdrs_at") @db.Timestamptz()
+  doctorInCharge      String   @map("doctor_in_charge") @db.VarChar(100)
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant      TenantOrganization     @relation(fields: [tenantId], references: [id])
+  transfusion BloodTransfusionRecord @relation(fields: [transfusionId], references: [id])
+  patient     Patient                @relation(fields: [patientId], references: [id])
+
+  @@index([tenantId])
+  @@index([transfusionId])
+  @@index([patientId])
+  @@map("transfusion_reaction_logs")
+}
+
+// ─── 6. FRONT OFFICE, QUEUES & BPJS SEP ───
+model PatientRegistration {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  registrationNumber String   @unique @map("registration_number") @db.VarChar(30)
+  patientId          String   @map("patient_id") @db.Uuid
+  episodeId          String   @map("episode_id") @db.Uuid
+  encounterId        String   @map("encounter_id") @db.Uuid
+  appointmentId      String?  @map("appointment_id") @db.Uuid
+  ticketNumber       String   @map("ticket_number") @db.VarChar(20)
+  registrationType   String   @map("registration_type") @db.VarChar(30)
+  guarantorId        String   @map("guarantor_id") @db.VarChar(30)
+  guarantorName      String   @map("guarantor_name") @db.VarChar(100)
+  sepNumber          String?  @map("sep_number") @db.VarChar(30)
+  departmentId       String   @map("department_id") @db.VarChar(50)
+  departmentName     String   @map("department_name") @db.VarChar(100)
+  doctorId           String   @map("doctor_id") @db.VarChar(50)
+  doctorName         String   @map("doctor_name") @db.VarChar(100)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant      TenantOrganization @relation(fields: [tenantId], references: [id])
+  patient     Patient            @relation(fields: [patientId], references: [id])
+  episode     EpisodeOfCare      @relation(fields: [episodeId], references: [id])
+  encounter   Encounter          @relation(fields: [encounterId], references: [id])
+  appointment Appointment?       @relation(fields: [appointmentId], references: [id])
+  sepRecords  BpjsSepRecord[]
+
+  @@map("patient_registrations")
+}
+
+model QueueTicket {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  ticketNumber   String    @map("ticket_number") @db.VarChar(20)
+  poolCode       String    @map("pool_code") @db.VarChar(30)
+  poolName       String    @map("pool_name") @db.VarChar(100)
+  patientId      String    @map("patient_id") @db.Uuid
+  encounterId    String?   @map("encounter_id") @db.Uuid
+  appointmentId  String?   @map("appointment_id") @db.Uuid
+  counterName    String?   @map("counter_name") @db.VarChar(50)
+  isPriority     Boolean   @default(false) @map("is_priority")
+  priorityReason String    @default("NONE") @map("priority_reason") @db.VarChar(30)
+  queueStatus    String    @default("WAITING") @map("queue_status") @db.VarChar(30)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  calledAt       DateTime? @map("called_at") @db.Timestamptz()
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz()
+
+  tenant      TenantOrganization @relation(fields: [tenantId], references: [id])
+  patient     Patient            @relation(fields: [patientId], references: [id])
+  encounter   Encounter?         @relation(fields: [encounterId], references: [id])
+  appointment Appointment?       @relation(fields: [appointmentId], references: [id])
+
+  @@index([poolCode, queueStatus])
+  @@map("queue_tickets")
+}
+
+model BpjsSepRecord {
+  id                   String   @id @default(uuid()) @db.Uuid
+  tenantId             String   @map("tenant_id") @db.Uuid
+  sepNumber            String   @unique @map("sep_number") @db.VarChar(30)
+  registrationId       String   @map("registration_id") @db.Uuid
+  patientId            String   @map("patient_id") @db.Uuid
+  bpjsCardNumber       String   @map("bpjs_card_number") @db.VarChar(30)
+  nik                  String   @db.VarChar(16)
+  referralNumber       String?  @map("referral_number") @db.VarChar(30)
+  referralOriginFaskes String?  @map("referral_origin_faskes") @db.Text
+  treatmentType        String   @default("2") @map("treatment_type") @db.VarChar(5)
+  destinationPoliCode  String   @map("destination_poli_code") @db.VarChar(20)
+  destinationPoliName  String   @map("destination_poli_name") @db.VarChar(100)
+  dpjpBpjsCode         String   @map("dpjp_bpjs_code") @db.VarChar(30)
+  dpjpName             String   @map("dpjp_name") @db.VarChar(100)
+  primaryDiagnoseIcd10 String   @map("primary_diagnose_icd10") @db.VarChar(20)
+  primaryDiagnoseName  String   @map("primary_diagnose_name") @db.Text
+  status               String   @default("ACTIVE") @db.VarChar(30)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant       TenantOrganization  @relation(fields: [tenantId], references: [id])
+  registration PatientRegistration @relation(fields: [registrationId], references: [id])
+  patient      Patient             @relation(fields: [patientId], references: [id])
+
+  @@map("bpjs_sep_records")
+}
+
+// ─── 7. CLINICAL CORE: EPISODES & ENCOUNTERS ───
 model EpisodeOfCare {
-  id                    String        @id @default(uuid()) @db.Uuid
-  episodeNumber         String        @unique @map("episode_number") @db.VarChar(30)
-  patientId             String        @map("patient_id") @db.Uuid
-  episodeType           EpisodeType   @map("episode_type")
-  status                EpisodeStatus @default(PLANNED)
-  primaryConditionIcd10 String?       @map("primary_condition_icd10") @db.VarChar(20)
-  primaryConditionName  String?       @map("primary_condition_name") @db.Text
-  managingDepartmentId  String        @map("managing_department_id") @db.VarChar(50)
-  managingDepartmentName String       @map("managing_department_name") @db.VarChar(100)
-  leadDpjpId            String        @map("lead_dpjp_id") @db.VarChar(50)
-  leadDpjpName          String        @map("lead_dpjp_name") @db.VarChar(100)
-  startTime             DateTime      @default(now()) @map("start_time") @db.Timestamptz()
-  endTime               DateTime?     @map("end_time") @db.Timestamptz()
-  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  id                     String        @id @default(uuid()) @db.Uuid
+  tenantId               String        @map("tenant_id") @db.Uuid
+  episodeNumber          String        @unique @map("episode_number") @db.VarChar(30)
+  patientId              String        @map("patient_id") @db.Uuid
+  episodeType            EpisodeType   @map("episode_type")
+  status                 EpisodeStatus @default(PLANNED)
+  primaryConditionIcd10  String?       @map("primary_condition_icd10") @db.VarChar(20)
+  primaryConditionName   String?       @map("primary_condition_name") @db.Text
+  managingDepartmentId   String        @map("managing_department_id") @db.VarChar(50)
+  managingDepartmentName String        @map("managing_department_name") @db.VarChar(100)
+  leadDpjpId             String        @map("lead_dpjp_id") @db.VarChar(50)
+  leadDpjpName           String        @map("lead_dpjp_name") @db.VarChar(100)
+  startTime              DateTime      @default(now()) @map("start_time") @db.Timestamptz()
+  endTime                DateTime?     @map("end_time") @db.Timestamptz()
+  generalConsentSigned   Boolean       @default(false) @map("general_consent_signed")
+  financialConsentSigned Boolean       @default(false) @map("financial_consent_signed")
+  branchId               String        @default("BRN-JKT-PST") @map("branch_id") @db.VarChar(30)
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  patient               Patient       @relation(fields: [patientId], references: [id])
-  encounters            Encounter[]
-  orders                ClinicalOrder[]
-  billingLedgers        BillingLedger[]
+  tenant           TenantOrganization    @relation(fields: [tenantId], references: [id])
+  patient          Patient               @relation(fields: [patientId], references: [id])
+  encounters       Encounter[]
+  registrations    PatientRegistration[]
+  orders           ClinicalOrder[]
+  billingLedgers   BillingLedger[]
+  invoices         HospitalInvoice[]
+  inaCbgClaims     InaCbgClaim[]
+  triageRecords    TriageAssessment[]
+  surgerySchedules SurgerySchedule[]
+  surgeryCases     SurgeryCase[]
+  icuAssessments   IcuAcuityAssessment[]
 
+  @@index([tenantId, status])
   @@map("episodes_of_care")
 }
 
 model Encounter {
-  id                    String          @id @default(uuid()) @db.Uuid
-  encounterNumber       String          @unique @map("encounter_number") @db.VarChar(30)
-  episodeId             String          @map("episode_id") @db.Uuid
-  patientId             String          @map("patient_id") @db.Uuid
-  encounterClass        EncounterClass  @map("encounter_class")
-  status                EncounterStatus @default(PLANNED)
-  primaryDoctorId       String          @map("primary_doctor_id") @db.VarChar(50)
-  primaryDoctorName     String          @map("primary_doctor_name") @db.VarChar(100)
-  serviceRoomId         String          @map("service_room_id") @db.VarChar(50)
-  serviceRoomName       String          @map("service_room_name") @db.VarChar(100)
-  startTime             DateTime        @default(now()) @map("start_time") @db.Timestamptz()
-  endTime               DateTime?       @map("end_time") @db.Timestamptz()
-  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  id                   String          @id @default(uuid()) @db.Uuid
+  tenantId             String          @map("tenant_id") @db.Uuid
+  encounterNumber      String          @unique @map("encounter_number") @db.VarChar(30)
+  episodeId            String          @map("episode_id") @db.Uuid
+  patientId            String          @map("patient_id") @db.Uuid
+  encounterClass       EncounterClass  @map("encounter_class")
+  status               EncounterStatus @default(PLANNED)
+  primaryDoctorId      String          @map("primary_doctor_id") @db.VarChar(50)
+  primaryDoctorName    String          @map("primary_doctor_name") @db.VarChar(100)
+  serviceRoomId        String          @map("service_room_id") @db.VarChar(50)
+  serviceRoomName      String          @map("service_room_name") @db.VarChar(100)
+  bedId                String?         @map("bed_id") @db.VarChar(50)
+  bedNumber            String?         @map("bed_number") @db.VarChar(20)
+  startTime            DateTime        @default(now()) @map("start_time") @db.Timestamptz()
+  endTime              DateTime?       @map("end_time") @db.Timestamptz()
+  dischargeDisposition String?         @map("discharge_disposition") @db.VarChar(50)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt            DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
 
-  episode               EpisodeOfCare   @relation(fields: [episodeId], references: [id])
-  patient               Patient         @relation(fields: [patientId], references: [id])
-  soapNotes             SoapNote[]
-  cpptNotes             CpptNote[]
-  observations          ClinicalObservation[]
-  orders                ClinicalOrder[]
-  bedOccupancies        BedOccupancy[]
-  bedTransfers          BedTransfer[]
+  tenant              TenantOrganization           @relation(fields: [tenantId], references: [id])
+  episode             EpisodeOfCare                @relation(fields: [episodeId], references: [id])
+  patient             Patient                      @relation(fields: [patientId], references: [id])
+  registrations       PatientRegistration[]
+  queueTickets        QueueTicket[]
+  triageRecords       TriageAssessment[]
+  triageSlaTimers     TriageSlaTimer[]
+  resuscitationEvents ResuscitationEvent[]
+  soapNotes           SoapNote[]
+  cpptNotes           CpptNote[]
+  observations        ClinicalObservation[]
+  cdssAlerts          CdssAlert[]
+  orders              ClinicalOrder[]
+  bedOccupancies      BedOccupancy[]
+  bedTransfers        BedTransfer[]
+  dispenseRecords     PrescriptionDispenseRecord[]
+  stockMovements      InventoryStockMovement[]
+  reservedBloodUnits  BloodDonorUnit[]             @relation("BloodUnitReservedEncounter")
+  crossmatchTests     BloodCrossmatchTest[]
+  bloodIssues         BloodIssueRecord[]
+  transfusionRecords  BloodTransfusionRecord[]
+  surgerySchedules    SurgerySchedule[]
+  surgeryCases        SurgeryCase[]
+  anesthesiaRecords   AnesthesiaRecord[]
+  icuAssessments      IcuAcuityAssessment[]
 
+  @@index([tenantId, status])
   @@map("encounters")
 }
 
-// ─── 4. EMR: SOAP, CPPT, OBSERVATIONS, ALLERGIES ───
-model SoapNote {
-  id                  String     @id @default(uuid()) @db.Uuid
-  encounterId         String     @map("encounter_id") @db.Uuid
-  patientId           String     @map("patient_id") @db.Uuid
-  subjective          String     @db.Text
-  objective           String     @db.Text
-  assessment          String     @db.Text
-  plan                String     @db.Text
-  primaryIcd10        String     @map("primary_icd10") @db.VarChar(20)
-  primaryIcd10Name    String     @map("primary_icd10_name") @db.Text
-  physicianId         String     @map("physician_id") @db.VarChar(50)
-  physicianName       String     @map("physician_name") @db.VarChar(100)
-  isSigned            Boolean    @default(true) @map("is_signed")
-  signedAt            DateTime   @default(now()) @map("signed_at") @db.Timestamptz()
+// ─── 8. EMERGENCY, TRIAGE & CDSS ───
+model TriageAssessment {
+  id                    String   @id @default(uuid()) @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  episodeId             String   @map("episode_id") @db.Uuid
+  encounterId           String   @map("encounter_id") @db.Uuid
+  patientId             String   @map("patient_id") @db.Uuid
+  triageMethod          String   @default("ATS") @map("triage_method") @db.VarChar(20)
+  triageLevel           String   @map("triage_level") @db.VarChar(30)
+  atsLevel              Int?     @map("ats_level")
+  esiLevel              Int?     @map("esi_level")
+  chiefComplaint        String   @map("chief_complaint") @db.Text
+  airwayStatus          String   @map("airway_status") @db.VarChar(30)
+  breathingStatus       String   @map("breathing_status") @db.VarChar(30)
+  circulationStatus     String   @map("circulation_status") @db.VarChar(30)
+  disabilityStatus      String   @map("disability_status") @db.VarChar(30)
+  exposureNotes         String?  @map("exposure_notes") @db.Text
+  vitalsPayload         Json     @map("vitals_payload")
+  isTrauma              Boolean  @default(false) @map("is_trauma")
+  isCito                Boolean  @default(false) @map("is_cito")
+  targetResponseMinutes Int      @map("target_response_minutes")
+  assessedAt            DateTime @default(now()) @map("assessed_at") @db.Timestamptz()
+  assessedBy            String   @map("assessed_by") @db.VarChar(100)
 
-  encounter           Encounter  @relation(fields: [encounterId], references: [id])
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  episode   EpisodeOfCare      @relation(fields: [episodeId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
+  patient   Patient            @relation(fields: [patientId], references: [id])
+
+  @@index([encounterId])
+  @@map("triage_assessments")
+}
+
+model TriageSlaTimer {
+  id                      String    @id @default(uuid()) @db.Uuid
+  tenantId                String    @map("tenant_id") @db.Uuid
+  encounterId             String    @map("encounter_id") @db.Uuid
+  triageLevel             String    @map("triage_level") @db.VarChar(30)
+  targetResponseMinutes   Int       @map("target_response_minutes")
+  startedAt               DateTime  @map("started_at") @db.Timestamptz()
+  firstPhysicianContactAt DateTime? @map("first_physician_contact_at") @db.Timestamptz()
+  completedAt             DateTime? @map("completed_at") @db.Timestamptz()
+  elapsedSeconds          Int       @default(0) @map("elapsed_seconds")
+  isOverdue               Boolean   @default(false) @map("is_overdue")
+  status                  String    @default("RUNNING") @db.VarChar(20)
+
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
+
+  @@index([encounterId])
+  @@map("triage_sla_timers")
+}
+
+model ResuscitationEvent {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  encounterId    String   @map("encounter_id") @db.Uuid
+  eventType      String   @map("event_type") @db.VarChar(50)
+  doseOrJoules   String?  @map("dose_or_joules") @db.VarChar(100)
+  performerName  String   @map("performer_name") @db.VarChar(100)
+  notes          String?  @db.Text
+  eventTimestamp DateTime @default(now()) @map("event_timestamp") @db.Timestamptz()
+
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
+
+  @@map("resuscitation_events")
+}
+
+model CdssAlert {
+  id             String   @id @default(uuid()) @db.Uuid
+  tenantId       String   @map("tenant_id") @db.Uuid
+  encounterId    String   @map("encounter_id") @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  alertType      String   @map("alert_type") @db.VarChar(50)
+  severity       String   @db.VarChar(30)
+  title          String   @db.VarChar(255)
+  message        String   @db.Text
+  recommendation String?  @db.Text
+  isAcknowledged Boolean  @default(false) @map("is_acknowledged")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
+  patient   Patient            @relation(fields: [patientId], references: [id])
+
+  @@map("cdss_alerts")
+}
+
+// ─── 9. EMR: SOAP, CPPT, OBSERVATIONS, ALLERGIES ───
+model SoapNote {
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  encounterId      String   @map("encounter_id") @db.Uuid
+  patientId        String   @map("patient_id") @db.Uuid
+  subjective       String   @db.Text
+  objective        String   @db.Text
+  assessment       String   @db.Text
+  plan             String   @db.Text
+  primaryIcd10     String   @map("primary_icd10") @db.VarChar(20)
+  primaryIcd10Name String   @map("primary_icd10_name") @db.Text
+  physicianId      String   @map("physician_id") @db.VarChar(50)
+  physicianName    String   @map("physician_name") @db.VarChar(100)
+  isSigned         Boolean  @default(true) @map("is_signed")
+  signedAt         DateTime @default(now()) @map("signed_at") @db.Timestamptz()
+
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
 
   @@map("soap_notes")
 }
 
 model CpptNote {
-  id                  String     @id @default(uuid()) @db.Uuid
-  encounterId         String     @map("encounter_id") @db.Uuid
-  patientId           String     @map("patient_id") @db.Uuid
-  professionalType    String     @map("professional_type") @db.VarChar(50)
-  authorName          String     @map("author_name") @db.VarChar(100)
-  sbarSituation       String?    @map("sbar_situation") @db.Text
-  sbarBackground      String?    @map("sbar_background") @db.Text
-  sbarAssessment      String?    @map("sbar_assessment") @db.Text
-  sbarRecommendation  String?    @map("sbar_recommendation") @db.Text
-  dpjpVerified        Boolean    @default(false) @map("dpjp_verified")
-  dpjpVerifierName    String?    @map("dpjp_verifier_name") @db.VarChar(100)
-  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  encounterId        String   @map("encounter_id") @db.Uuid
+  patientId          String   @map("patient_id") @db.Uuid
+  professionalType   String   @map("professional_type") @db.VarChar(50)
+  authorName         String   @map("author_name") @db.VarChar(100)
+  sbarSituation      String?  @map("sbar_situation") @db.Text
+  sbarBackground     String?  @map("sbar_background") @db.Text
+  sbarAssessment     String?  @map("sbar_assessment") @db.Text
+  sbarRecommendation String?  @map("sbar_recommendation") @db.Text
+  dpjpVerified       Boolean  @default(false) @map("dpjp_verified")
+  dpjpVerifierName   String?  @map("dpjp_verifier_name") @db.VarChar(100)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  encounter           Encounter  @relation(fields: [encounterId], references: [id])
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
 
   @@map("cppt_notes")
 }
 
 model PatientAllergy {
-  id                  String     @id @default(uuid()) @db.Uuid
-  patientId           String     @map("patient_id") @db.Uuid
-  allergyType         String     @map("allergy_type") @db.VarChar(50)
-  allergen            String     @db.VarChar(255)
-  reaction            String?    @db.Text
-  severity            String     @db.VarChar(50)
-  recordedBy          String     @map("recorded_by") @db.VarChar(100)
-  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  patientId   String   @map("patient_id") @db.Uuid
+  allergyType String   @map("allergy_type") @db.VarChar(50)
+  allergen    String   @db.VarChar(255)
+  reaction    String?  @db.Text
+  severity    String   @db.VarChar(50)
+  recordedBy  String   @map("recorded_by") @db.VarChar(100)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  patient             Patient    @relation(fields: [patientId], references: [id])
+  tenant  TenantOrganization @relation(fields: [tenantId], references: [id])
+  patient Patient            @relation(fields: [patientId], references: [id])
 
   @@map("patient_allergies")
 }
 
 model ClinicalObservation {
-  id                  String     @id @default(uuid()) @db.Uuid
-  encounterId         String     @map("encounter_id") @db.Uuid
-  loincCode           String     @map("loinc_code") @db.VarChar(50)
-  loincDisplay        String     @map("loinc_display") @db.VarChar(255)
-  observationValue    String     @map("observation_value") @db.VarChar(255)
-  unit                String?    @db.VarChar(50)
-  interpretation      String     @default("NORMAL") @db.VarChar(30)
-  observedAt          DateTime   @default(now()) @map("observed_at") @db.Timestamptz()
-  observerName        String     @map("observer_name") @db.VarChar(100)
+  id               String   @id @default(uuid()) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  encounterId      String   @map("encounter_id") @db.Uuid
+  loincCode        String   @map("loinc_code") @db.VarChar(50)
+  loincDisplay     String   @map("loinc_display") @db.VarChar(255)
+  observationValue String   @map("observation_value") @db.VarChar(255)
+  unit             String?  @db.VarChar(50)
+  interpretation   String   @default("NORMAL") @db.VarChar(30)
+  observedAt       DateTime @default(now()) @map("observed_at") @db.Timestamptz()
+  observerName     String   @map("observer_name") @db.VarChar(100)
 
-  encounter           Encounter  @relation(fields: [encounterId], references: [id])
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
 
   @@map("clinical_observations")
 }
 
-// ─── 5. UNIVERSAL ORDERS DOMAIN ───
+// ─── 10. UNIVERSAL ORDERS DOMAIN ───
 model ClinicalOrder {
-  id                  String         @id @default(uuid()) @db.Uuid
-  orderNumber         String         @unique @map("order_number") @db.VarChar(30)
-  patientId           String         @map("patient_id") @db.Uuid
-  episodeId           String         @map("episode_id") @db.Uuid
-  encounterId         String         @map("encounter_id") @db.Uuid
-  orderedBy           String         @map("ordered_by") @db.VarChar(100)
-  orderCategory       OrderCategory  @map("order_category")
-  priority            PriorityLevel  @default(ROUTINE)
-  clinicalIndication  String         @map("clinical_indication") @db.Text
-  status              OrderStatus    @default(ORDERED)
-  isCito              Boolean        @default(false) @map("is_cito")
+  id                   String        @id @default(uuid()) @db.Uuid
+  tenantId             String        @map("tenant_id") @db.Uuid
+  orderNumber          String        @unique @map("order_number") @db.VarChar(30)
+  patientId            String        @map("patient_id") @db.Uuid
+  episodeId            String        @map("episode_id") @db.Uuid
+  encounterId          String        @map("encounter_id") @db.Uuid
+  orderedBy            String        @map("ordered_by") @db.VarChar(100)
+  orderCategory        OrderCategory @map("order_category")
+  priority             PriorityLevel @default(ROUTINE)
+  clinicalIndication   String        @map("clinical_indication") @db.Text
+  status               OrderStatus   @default(ORDERED)
+  isCito               Boolean       @default(false) @map("is_cito")
   totalEstimatedAmount Decimal       @default(0.00) @map("total_estimated_amount") @db.Decimal(15, 2)
-  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  createdAt            DateTime      @default(now()) @map("created_at") @db.Timestamptz()
 
-  patient             Patient        @relation(fields: [patientId], references: [id])
-  episode             EpisodeOfCare  @relation(fields: [episodeId], references: [id])
-  encounter           Encounter      @relation(fields: [encounterId], references: [id])
-  medicationOrders    MedicationOrder[]
-  laboratoryOrders    LaboratoryOrder[]
-  radiologyOrders     RadiologyOrder[]
+  tenant           TenantOrganization           @relation(fields: [tenantId], references: [id])
+  patient          Patient                      @relation(fields: [patientId], references: [id])
+  episode          EpisodeOfCare                @relation(fields: [episodeId], references: [id])
+  encounter        Encounter                    @relation(fields: [encounterId], references: [id])
+  medicationOrders MedicationOrder[]
+  laboratoryOrders LaboratoryOrder[]
+  radiologyOrders  RadiologyOrder[]
+  dispenseRecords  PrescriptionDispenseRecord[]
+  crossmatchTests  BloodCrossmatchTest[]
 
+  @@index([tenantId, status])
   @@map("clinical_orders")
 }
 
 model MedicationOrder {
-  id                  String         @id @default(uuid()) @db.Uuid
-  orderId             String         @map("order_id") @db.Uuid
-  medicationCode      String         @map("medication_code") @db.VarChar(50)
-  medicationName      String         @map("medication_name") @db.VarChar(255)
-  dosage              String         @db.VarChar(100)
-  route               String         @db.VarChar(50)
-  frequency           String         @db.VarChar(100)
-  quantity            Int
-  unitPrice           Decimal        @map("unit_price") @db.Decimal(15, 2)
-  totalPrice          Decimal        @map("total_price") @db.Decimal(15, 2)
-  highAlert           Boolean        @default(false) @map("high_alert")
-  lasaFlag            Boolean        @default(false) @map("lasa_flag")
-  status              String         @default("PRESCRIBED") @db.VarChar(30)
+  id             String  @id @default(uuid()) @db.Uuid
+  tenantId       String  @map("tenant_id") @db.Uuid
+  orderId        String  @map("order_id") @db.Uuid
+  medicationCode String  @map("medication_code") @db.VarChar(50)
+  medicationName String  @map("medication_name") @db.VarChar(255)
+  dosage         String  @db.VarChar(100)
+  route          String  @db.VarChar(50)
+  frequency      String  @db.VarChar(100)
+  quantity       Int
+  unitPrice      Decimal @map("unit_price") @db.Decimal(15, 2)
+  totalPrice     Decimal @map("total_price") @db.Decimal(15, 2)
+  highAlert      Boolean @default(false) @map("high_alert")
+  lasaFlag       Boolean @default(false) @map("lasa_flag")
+  status         String  @default("PRESCRIBED") @db.VarChar(30)
 
-  order               ClinicalOrder  @relation(fields: [orderId], references: [id])
+  tenant          TenantOrganization           @relation(fields: [tenantId], references: [id])
+  order           ClinicalOrder                @relation(fields: [orderId], references: [id])
+  dispenseRecords PrescriptionDispenseRecord[]
 
   @@map("medication_orders")
 }
 
 model LaboratoryOrder {
-  id                  String         @id @default(uuid()) @db.Uuid
-  orderId             String         @map("order_id") @db.Uuid
-  loincCode           String         @map("loinc_code") @db.VarChar(50)
-  testName            String         @map("test_name") @db.VarChar(255)
-  specimenType        String         @map("specimen_type") @db.VarChar(50)
-  resultValue         String?        @map("result_value") @db.Text
-  unit                String?        @db.VarChar(50)
-  isCriticalPanic     Boolean        @default(false) @map("is_critical_panic")
-  unitPrice           Decimal        @map("unit_price") @db.Decimal(15, 2)
-  resultStatus        String         @default("ORDERED") @map("result_status") @db.VarChar(30)
+  id              String  @id @default(uuid()) @db.Uuid
+  tenantId        String  @map("tenant_id") @db.Uuid
+  orderId         String  @map("order_id") @db.Uuid
+  loincCode       String  @map("loinc_code") @db.VarChar(50)
+  testName        String  @map("test_name") @db.VarChar(255)
+  specimenType    String  @map("specimen_type") @db.VarChar(50)
+  resultValue     String? @map("result_value") @db.Text
+  unit            String? @db.VarChar(50)
+  isCriticalPanic Boolean @default(false) @map("is_critical_panic")
+  unitPrice       Decimal @map("unit_price") @db.Decimal(15, 2)
+  resultStatus    String  @default("ORDERED") @map("result_status") @db.VarChar(30)
 
-  order               ClinicalOrder  @relation(fields: [orderId], references: [id])
+  tenant TenantOrganization @relation(fields: [tenantId], references: [id])
+  order  ClinicalOrder      @relation(fields: [orderId], references: [id])
 
   @@map("laboratory_orders")
 }
 
 model RadiologyOrder {
-  id                  String         @id @default(uuid()) @db.Uuid
-  orderId             String         @map("order_id") @db.Uuid
-  modality            String         @db.VarChar(20)
-  examinationName     String         @map("examination_name") @db.VarChar(255)
-  dicomStudyUid       String         @map("dicom_study_uid") @db.VarChar(255)
-  radiologistReport   String?        @map("radiologist_report") @db.Text
-  unitPrice           Decimal        @map("unit_price") @db.Decimal(15, 2)
-  resultStatus        String         @default("ORDERED") @map("result_status") @db.VarChar(30)
+  id                String  @id @default(uuid()) @db.Uuid
+  tenantId          String  @map("tenant_id") @db.Uuid
+  orderId           String  @map("order_id") @db.Uuid
+  modality          String  @db.VarChar(20)
+  examinationName   String  @map("examination_name") @db.VarChar(255)
+  dicomStudyUid     String  @map("dicom_study_uid") @db.VarChar(255)
+  radiologistReport String? @map("radiologist_report") @db.Text
+  unitPrice         Decimal @map("unit_price") @db.Decimal(15, 2)
+  resultStatus      String  @default("ORDERED") @map("result_status") @db.VarChar(30)
 
-  order               ClinicalOrder  @relation(fields: [orderId], references: [id])
+  tenant TenantOrganization @relation(fields: [tenantId], references: [id])
+  order  ClinicalOrder      @relation(fields: [orderId], references: [id])
 
   @@map("radiology_orders")
 }
 
-// ─── 6. BILLING & REVENUE CYCLE ───
+// ─── 11. BILLING, INVOICING & INA-CBG CLAIMS ───
 model BillingLedger {
-  id                  String         @id @default(uuid()) @db.Uuid
-  chargeId            String         @unique @map("charge_id") @db.VarChar(50)
-  episodeId           String         @map("episode_id") @db.Uuid
-  patientId           String         @map("patient_id") @db.Uuid
-  serviceCategory     String         @map("service_category") @db.VarChar(50)
-  serviceName         String         @map("service_name") @db.VarChar(255)
-  unitPrice           Decimal        @map("unit_price") @db.Decimal(15, 2)
-  quantity            Int            @default(1)
-  totalAmount         Decimal        @map("total_amount") @db.Decimal(15, 2)
-  paymentStatus       String         @default("UNPAID") @map("payment_status") @db.VarChar(30)
-  chargedAt           DateTime       @default(now()) @map("charged_at") @db.Timestamptz()
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  chargeId        String   @unique @map("charge_id") @db.VarChar(50)
+  episodeId       String   @map("episode_id") @db.Uuid
+  encounterId     String?  @map("encounter_id") @db.Uuid
+  patientId       String   @map("patient_id") @db.Uuid
+  serviceCategory String   @map("service_category") @db.VarChar(50)
+  serviceName     String   @map("service_name") @db.VarChar(255)
+  unitPrice       Decimal  @map("unit_price") @db.Decimal(15, 2)
+  quantity        Int      @default(1)
+  totalAmount     Decimal  @map("total_amount") @db.Decimal(15, 2)
+  paymentStatus   String   @default("UNPAID") @map("payment_status") @db.VarChar(30)
+  chargedAt       DateTime @default(now()) @map("charged_at") @db.Timestamptz()
 
-  episode             EpisodeOfCare  @relation(fields: [episodeId], references: [id])
-  patient             Patient        @relation(fields: [patientId], references: [id])
+  tenant  TenantOrganization @relation(fields: [tenantId], references: [id])
+  episode EpisodeOfCare      @relation(fields: [episodeId], references: [id])
+  patient Patient            @relation(fields: [patientId], references: [id])
 
+  @@index([tenantId, paymentStatus])
   @@map("billing_ledgers")
 }
 
-// ─── 7. TRANSACTIONAL OUTBOX PATTERN ───
+model HospitalInvoice {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  invoiceNumber    String    @unique @map("invoice_number") @db.VarChar(30)
+  episodeId        String    @map("episode_id") @db.Uuid
+  patientId        String    @map("patient_id") @db.Uuid
+  totalGross       Decimal   @map("total_gross") @db.Decimal(15, 2)
+  discountAmount   Decimal   @default(0.00) @map("discount_amount") @db.Decimal(15, 2)
+  depositApplied   Decimal   @default(0.00) @map("deposit_applied") @db.Decimal(15, 2)
+  insuranceCovered Decimal   @default(0.00) @map("insurance_covered") @db.Decimal(15, 2)
+  patientPayable   Decimal   @map("patient_payable") @db.Decimal(15, 2)
+  paidAmount       Decimal   @default(0.00) @map("paid_amount") @db.Decimal(15, 2)
+  paymentMethod    String?   @map("payment_method") @db.VarChar(50)
+  status           String    @default("ISSUED") @db.VarChar(30)
+  cashierName      String    @map("cashier_name") @db.VarChar(100)
+  settledAt        DateTime? @map("settled_at") @db.Timestamptz()
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant  TenantOrganization @relation(fields: [tenantId], references: [id])
+  episode EpisodeOfCare      @relation(fields: [episodeId], references: [id])
+  patient Patient            @relation(fields: [patientId], references: [id])
+
+  @@index([invoiceNumber])
+  @@map("hospital_invoices")
+}
+
+model InaCbgClaim {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  claimNumber    String    @unique @map("claim_number") @db.VarChar(30)
+  sepNumber      String    @map("sep_number") @db.VarChar(30)
+  episodeId      String    @map("episode_id") @db.Uuid
+  cbgCode        String    @map("cbg_code") @db.VarChar(20)
+  cbgTariff      Decimal   @map("cbg_tariff") @db.Decimal(15, 2)
+  hospitalTariff Decimal   @map("hospital_tariff") @db.Decimal(15, 2)
+  variance       Decimal   @db.Decimal(15, 2)
+  grouperStatus  String    @default("FINALIZED") @map("grouper_status") @db.VarChar(30)
+  submittedAt    DateTime? @map("submitted_at") @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant  TenantOrganization @relation(fields: [tenantId], references: [id])
+  episode EpisodeOfCare      @relation(fields: [episodeId], references: [id])
+
+  @@map("inacbg_claims")
+}
+
+// ─── 12. TRANSACTIONAL OUTBOX & EVENT SOURCING ───
 model OutboxEvent {
-  id                  String         @id @default(uuid()) @db.Uuid
-  eventType           String         @map("event_type") @db.VarChar(100)
-  aggregateType       String         @map("aggregate_type") @db.VarChar(50)
-  aggregateId         String         @map("aggregate_id") @db.VarChar(100)
-  payload             Json
-  status              OutboxStatus   @default(PENDING)
-  retryCount          Int            @default(0) @map("retry_count")
-  maxRetries          Int            @default(5) @map("max_retries")
-  errorLog            String?        @map("error_log") @db.Text
-  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
-  processedAt         DateTime?      @map("processed_at") @db.Timestamptz()
+  id            String       @id @default(uuid()) @db.Uuid
+  eventType     String       @map("event_type") @db.VarChar(100)
+  aggregateType String       @map("aggregate_type") @db.VarChar(50)
+  aggregateId   String       @map("aggregate_id") @db.VarChar(100)
+  payload       Json
+  status        OutboxStatus @default(PENDING)
+  retryCount    Int          @default(0) @map("retry_count")
+  maxRetries    Int          @default(5) @map("max_retries")
+  errorLog      String?      @map("error_log") @db.Text
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  processedAt   DateTime?    @map("processed_at") @db.Timestamptz()
 
   @@index([status, createdAt])
   @@map("outbox_events")
 }
 
-// ─── 8. SECURITY & IMMUTABLE BLOCKCHAIN AUDIT TRAIL ───
-model EnterpriseUser {
-  id                  String         @id @default(uuid()) @db.Uuid
-  employeeId          String         @unique @map("employee_id") @db.VarChar(30)
-  username            String         @unique @db.VarChar(100)
-  passwordHash        String         @map("password_hash") @db.VarChar(255)
-  fullName            String         @map("full_name") @db.VarChar(255)
-  email               String         @unique @db.VarChar(100)
-  role                EnterpriseRole
-  departmentId        String         @map("department_id") @db.VarChar(50)
-  isActive            Boolean        @default(true) @map("is_active")
-  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+model ProcessedEvent {
+  eventId        String   @id @map("event_id") @db.VarChar(100)
+  subscriberName String   @map("subscriber_name") @db.VarChar(100)
+  processedAt    DateTime @default(now()) @map("processed_at") @db.Timestamptz()
 
+  @@map("processed_events")
+}
+
+// ─── 13. SECURITY & IMMUTABLE BLOCKCHAIN AUDIT TRAIL ───
+model EnterpriseUser {
+  id           String         @id @default(uuid()) @db.Uuid
+  tenantId     String         @map("tenant_id") @db.Uuid
+  employeeId   String         @map("employee_id") @db.VarChar(30)
+  username     String         @db.VarChar(100)
+  passwordHash String         @map("password_hash") @db.VarChar(255)
+  fullName     String         @map("full_name") @db.VarChar(255)
+  email        String         @db.VarChar(100)
+  role         EnterpriseRole
+  departmentId String         @map("department_id") @db.VarChar(50)
+  sipNumber    String?        @map("sip_number") @db.VarChar(100)
+  strNumber    String?        @map("str_number") @db.VarChar(100)
+  isActive     Boolean        @default(true) @map("is_active")
+  version      Int            @default(1)
+  lastLoginAt  DateTime?      @map("last_login_at") @db.Timestamptz()
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant          TenantOrganization    @relation(fields: [tenantId], references: [id])
+  clinicalProfile ClinicalStaffProfile?
+
+  @@unique([tenantId, username], name: "uq_users_tenant_username")
+  @@unique([tenantId, employeeId], name: "uq_users_tenant_employee_id")
   @@map("enterprise_users")
 }
 
 model UniversalAuditLog {
-  id                  String         @id @default(uuid()) @db.Uuid
-  eventVersion        Int            @default(1) @map("event_version")
-  actorId             String         @map("actor_id") @db.VarChar(100)
-  actorName           String         @map("actor_name") @db.VarChar(255)
-  actorRole           String         @map("actor_role") @db.VarChar(50)
-  clientIp            String         @map("client_ip") @db.VarChar(50)
-  deviceId            String?        @map("device_id") @db.VarChar(100)
-  sessionId           String?        @map("session_id") @db.VarChar(100)
-  correlationId       String?        @map("correlation_id") @db.VarChar(100)
-  actionType          String         @map("action_type") @db.VarChar(50)
-  resourceType        String         @map("resource_type") @db.VarChar(50)
-  resourceId          String         @map("resource_id") @db.VarChar(100)
-  patientId           String?        @map("patient_id") @db.Uuid
-  beforeState         Json?          @map("before_state")
-  afterState          Json?          @map("after_state")
-  eventPayload        Json?          @map("event_payload")
-  previousHash        String         @default("GENESIS_BLOCK_HASH_000000000000") @map("previous_hash") @db.VarChar(255)
-  eventHash           String         @map("event_hash") @db.VarChar(255)
-  signatureHash       String         @map("signature_hash") @db.VarChar(255)
-  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  id            String   @id @default(uuid()) @db.Uuid
+  tenantId      String?  @map("tenant_id") @db.Uuid
+  eventVersion  Int      @default(1) @map("event_version")
+  actorId       String   @map("actor_id") @db.VarChar(100)
+  actorName     String   @map("actor_name") @db.VarChar(255)
+  actorRole     String   @map("actor_role") @db.VarChar(50)
+  clientIp      String   @map("client_ip") @db.VarChar(50)
+  deviceId      String?  @map("device_id") @db.VarChar(100)
+  sessionId     String?  @map("session_id") @db.VarChar(100)
+  correlationId String?  @map("correlation_id") @db.VarChar(100)
+  actionType    String   @map("action_type") @db.VarChar(50)
+  resourceType  String   @map("resource_type") @db.VarChar(50)
+  resourceId    String   @map("resource_id") @db.VarChar(100)
+  patientId     String?  @map("patient_id") @db.Uuid
+  beforeState   Json?    @map("before_state")
+  afterState    Json?    @map("after_state")
+  eventPayload  Json?    @map("event_payload")
+  previousHash  String   @default("GENESIS_BLOCK_HASH_000000000000") @map("previous_hash") @db.VarChar(255)
+  eventHash     String?  @map("event_hash") @db.VarChar(255)
+  signatureHash String   @map("signature_hash") @db.VarChar(255)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
+  tenant  TenantOrganization? @relation(fields: [tenantId], references: [id])
+  patient Patient?            @relation(fields: [patientId], references: [id])
+
+  @@index([tenantId, createdAt])
   @@index([resourceType, resourceId])
   @@index([patientId])
   @@map("universal_audit_logs")
+}
+
+// ─── 14. OPERATING THEATRE & ICU ACUITY DOMAIN ───
+model OperatingTheatre {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  theatreCode String   @map("theatre_code") @db.VarChar(30)
+  theatreName String   @map("theatre_name") @db.VarChar(100)
+  floorId     String?  @map("floor_id") @db.Uuid
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant TenantOrganization @relation(fields: [tenantId], references: [id])
+  floor  Floor?             @relation(fields: [floorId], references: [id])
+  rooms  OperatingRoom[]
+
+  @@unique([tenantId, theatreCode], name: "uq_theatre_tenant_code")
+  @@index([tenantId])
+  @@map("operating_theatres")
+}
+
+model OperatingRoom {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenantId   String   @map("tenant_id") @db.Uuid
+  theatreId  String   @map("theatre_id") @db.Uuid
+  roomNumber String   @map("room_number") @db.VarChar(30)
+  roomName   String   @map("room_name") @db.VarChar(100)
+  roomType   String   @default("MAJOR") @map("room_type") @db.VarChar(50)
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant           TenantOrganization @relation(fields: [tenantId], references: [id])
+  theatre          OperatingTheatre   @relation(fields: [theatreId], references: [id])
+  surgerySchedules SurgerySchedule[]
+  surgeryCases     SurgeryCase[]
+
+  @@unique([theatreId, roomNumber], name: "uq_op_room_number")
+  @@index([tenantId])
+  @@index([theatreId])
+  @@map("operating_rooms")
+}
+
+model SurgerySchedule {
+  id                       String   @id @default(uuid()) @db.Uuid
+  tenantId                 String   @map("tenant_id") @db.Uuid
+  bookingNumber            String   @unique @map("booking_number") @db.VarChar(30)
+  patientId                String   @map("patient_id") @db.Uuid
+  episodeId                String   @map("episode_id") @db.Uuid
+  encounterId              String   @map("encounter_id") @db.Uuid
+  operatingRoomId          String   @map("operating_room_id") @db.Uuid
+  leadSurgeonId            String   @map("lead_surgeon_id") @db.VarChar(50)
+  leadSurgeonName          String   @map("lead_surgeon_name") @db.VarChar(100)
+  anesthesiologistId       String?  @map("anesthesiologist_id") @db.VarChar(50)
+  anesthesiologistName     String?  @map("anesthesiologist_name") @db.VarChar(100)
+  scheduledDate            DateTime @map("scheduled_date") @db.Date
+  slotTime                 String   @map("slot_time") @db.VarChar(20)
+  estimatedDurationMinutes Int      @default(120) @map("estimated_duration_minutes")
+  procedureName            String   @map("procedure_name") @db.VarChar(255)
+  icd9CmCode               String?  @map("icd9_cm_code") @db.VarChar(30)
+  surgeryType              String   @default("ELECTIVE") @map("surgery_type") @db.VarChar(30)
+  bookingStatus            String   @default("BOOKED") @map("booking_status") @db.VarChar(30)
+  cancellationReason       String?  @map("cancellation_reason") @db.Text
+  rescheduledFromId        String?  @map("rescheduled_from_id") @db.Uuid
+  version                  Int      @default(1)
+  createdAt                DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant          TenantOrganization @relation(fields: [tenantId], references: [id])
+  patient         Patient            @relation(fields: [patientId], references: [id])
+  episode         EpisodeOfCare      @relation(fields: [episodeId], references: [id])
+  encounter       Encounter          @relation(fields: [encounterId], references: [id])
+  operatingRoom   OperatingRoom      @relation(fields: [operatingRoomId], references: [id])
+  rescheduledFrom SurgerySchedule?   @relation("SurgeryScheduleReschedule", fields: [rescheduledFromId], references: [id])
+  rescheduledTo   SurgerySchedule[]  @relation("SurgeryScheduleReschedule")
+  cases           SurgeryCase[]
+
+  @@index([tenantId])
+  @@index([patientId])
+  @@index([operatingRoomId])
+  @@index([scheduledDate])
+  @@map("surgery_schedules")
+}
+
+model SurgeryCase {
+  id                     String    @id @default(uuid()) @db.Uuid
+  tenantId               String    @map("tenant_id") @db.Uuid
+  caseNumber             String    @unique @map("case_number") @db.VarChar(30)
+  scheduleId             String?   @map("schedule_id") @db.Uuid
+  patientId              String    @map("patient_id") @db.Uuid
+  episodeId              String    @map("episode_id") @db.Uuid
+  encounterId            String    @map("encounter_id") @db.Uuid
+  operatingRoomId        String    @map("operating_room_id") @db.Uuid
+  leadSurgeonId          String    @map("lead_surgeon_id") @db.VarChar(50)
+  leadSurgeonName        String    @map("lead_surgeon_name") @db.VarChar(100)
+  anesthesiologistId     String?   @map("anesthesiologist_id") @db.VarChar(50)
+  anesthesiologistName   String?   @map("anesthesiologist_name") @db.VarChar(100)
+  surgicalNurseId        String?   @map("surgical_nurse_id") @db.VarChar(50)
+  surgicalNurseName      String?   @map("surgical_nurse_name") @db.VarChar(100)
+  circulatingNurseId     String?   @map("circulating_nurse_id") @db.VarChar(50)
+  circulatingNurseName   String?   @map("circulating_nurse_name") @db.VarChar(100)
+  procedureName          String    @map("procedure_name") @db.VarChar(255)
+  surgicalStatus         String    @default("SCHEDULED") @map("surgical_status") @db.VarChar(30)
+  procedureStartedAt     DateTime? @map("procedure_started_at") @db.Timestamptz()
+  procedureCompletedAt   DateTime? @map("procedure_completed_at") @db.Timestamptz()
+  preOpDiagnosis         String?   @map("pre_op_diagnosis") @db.Text
+  postOpDiagnosis        String?   @map("post_op_diagnosis") @db.Text
+  surgicalTechniqueNotes String?   @map("surgical_technique_notes") @db.Text
+  implantUsedNotes       String?   @map("implant_used_notes") @db.Text
+  specimenSentToPa       Boolean   @default(false) @map("specimen_sent_to_pa")
+  bloodLossMl            Int       @default(0) @map("blood_loss_ml")
+  version                Int       @default(1)
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt              DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant           TenantOrganization       @relation(fields: [tenantId], references: [id])
+  schedule         SurgerySchedule?         @relation(fields: [scheduleId], references: [id])
+  patient          Patient                  @relation(fields: [patientId], references: [id])
+  episode          EpisodeOfCare            @relation(fields: [episodeId], references: [id])
+  encounter        Encounter                @relation(fields: [encounterId], references: [id])
+  operatingRoom    OperatingRoom            @relation(fields: [operatingRoomId], references: [id])
+  checklist        SurgicalSafetyChecklist?
+  anesthesiaRecord AnesthesiaRecord?
+  postOpHandoff    PostOpHandoff?
+
+  @@index([tenantId])
+  @@index([patientId])
+  @@index([encounterId])
+  @@index([operatingRoomId])
+  @@index([tenantId, surgicalStatus])
+  @@map("surgery_cases")
+}
+
+model SurgicalSafetyChecklist {
+  id            String @id @default(uuid()) @db.Uuid
+  tenantId      String @map("tenant_id") @db.Uuid
+  surgeryCaseId String @unique @map("surgery_case_id") @db.Uuid
+
+  // Phase 1: Sign In (Before Induction)
+  signInConfirmed                      Boolean   @default(false) @map("sign_in_confirmed")
+  signInPatientIdentitySiteVerified    Boolean   @default(false) @map("sign_in_patient_identity_site_verified")
+  signInSiteMarked                     Boolean   @default(false) @map("sign_in_site_marked")
+  signInAnesthesiaSafetyCheckCompleted Boolean   @default(false) @map("sign_in_anesthesia_safety_check_completed")
+  signInPulseOximeterFunctioning       Boolean   @default(false) @map("sign_in_pulse_oximeter_functioning")
+  signInKnownAllergyConfirmed          Boolean   @default(false) @map("sign_in_known_allergy_confirmed")
+  signInDifficultAirwayAspirationRisk  Boolean   @default(false) @map("sign_in_difficult_airway_aspiration_risk")
+  signInBloodLossRiskPrepared          Boolean   @default(false) @map("sign_in_blood_loss_risk_prepared")
+  signInCompletedAt                    DateTime? @map("sign_in_completed_at") @db.Timestamptz()
+  signInVerifiedByNurse                String?   @map("sign_in_verified_by_nurse") @db.VarChar(100)
+  signInAnesthesiologistName           String?   @map("sign_in_anesthesiologist_name") @db.VarChar(100)
+
+  // Phase 2: Time Out (Before Skin Incision)
+  timeOutConfirmed                             Boolean   @default(false) @map("time_out_confirmed")
+  timeOutAllTeamMembersIntroduced              Boolean   @default(false) @map("time_out_all_team_members_introduced")
+  timeOutPatientNameProcedureSiteConfirmed     Boolean   @default(false) @map("time_out_patient_name_procedure_site_confirmed")
+  timeOutAntibioticProphylaxisGivenWithin60min Boolean   @default(false) @map("time_out_antibiotic_prophylaxis_given_within_60min")
+  timeOutAnticipatedCriticalEventsReviewed     Boolean   @default(false) @map("time_out_anticipated_critical_events_reviewed")
+  timeOutSterilityIndicatorConfirmed           Boolean   @default(false) @map("time_out_sterility_indicator_confirmed")
+  timeOutImagingDisplayedIfEssential           Boolean   @default(false) @map("time_out_imaging_displayed_if_essential")
+  timeOutCompletedAt                           DateTime? @map("time_out_completed_at") @db.Timestamptz()
+  timeOutVerifiedByNurse                       String?   @map("time_out_verified_by_nurse") @db.VarChar(100)
+  timeOutSurgeonName                           String?   @map("time_out_surgeon_name") @db.VarChar(100)
+
+  // Phase 3: Sign Out (Before Leaving OR)
+  signOutConfirmed                           Boolean   @default(false) @map("sign_out_confirmed")
+  signOutNurseVerballyConfirmsProcedure      Boolean   @default(false) @map("sign_out_nurse_verbally_confirms_procedure")
+  signOutInstrumentSpongeNeedleCountsCorrect Boolean   @default(false) @map("sign_out_instrument_sponge_needle_counts_correct")
+  signOutSpecimenLabelledCorrectly           Boolean   @default(false) @map("sign_out_specimen_labelled_correctly")
+  signOutEquipmentProblemsAddressed          Boolean   @default(false) @map("sign_out_equipment_problems_addressed")
+  signOutPostopConcernsReviewed              Boolean   @default(false) @map("sign_out_postop_concerns_reviewed")
+  signOutCompletedAt                         DateTime? @map("sign_out_completed_at") @db.Timestamptz()
+  signOutVerifiedByNurse                     String?   @map("sign_out_verified_by_nurse") @db.VarChar(100)
+
+  isFinalized Boolean   @default(false) @map("is_finalized")
+  finalizedAt DateTime? @map("finalized_at") @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant      TenantOrganization @relation(fields: [tenantId], references: [id])
+  surgeryCase SurgeryCase        @relation(fields: [surgeryCaseId], references: [id])
+
+  @@index([tenantId])
+  @@index([surgeryCaseId])
+  @@map("surgical_safety_checklists")
+}
+
+model AnesthesiaRecord {
+  id                   String    @id @default(uuid()) @db.Uuid
+  tenantId             String    @map("tenant_id") @db.Uuid
+  surgeryCaseId        String    @unique @map("surgery_case_id") @db.Uuid
+  patientId            String    @map("patient_id") @db.Uuid
+  encounterId          String    @map("encounter_id") @db.Uuid
+  anesthesiaType       String    @map("anesthesia_type") @db.VarChar(50)
+  asaClassification    String    @map("asa_classification") @db.VarChar(10)
+  mallampatiScore      String?   @map("mallampati_score") @db.VarChar(10)
+  airwayDevice         String?   @map("airway_device") @db.VarChar(50)
+  anesthesiaStartedAt  DateTime  @map("anesthesia_started_at") @db.Timestamptz()
+  anesthesiaEndedAt    DateTime? @map("anesthesia_ended_at") @db.Timestamptz()
+  anesthesiologistId   String    @map("anesthesiologist_id") @db.VarChar(50)
+  anesthesiologistName String    @map("anesthesiologist_name") @db.VarChar(100)
+  anesthesiaNurseName  String?   @map("anesthesia_nurse_name") @db.VarChar(100)
+  preMedications       Json?     @map("pre_medications")
+  maintenanceAgents    Json?     @map("maintenance_agents")
+  intraopVitalsSummary Json?     @map("intraop_vitals_summary")
+  extubationTime       DateTime? @map("extubation_time") @db.Timestamptz()
+  isFinalized          Boolean   @default(false) @map("is_finalized")
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant      TenantOrganization @relation(fields: [tenantId], references: [id])
+  surgeryCase SurgeryCase        @relation(fields: [surgeryCaseId], references: [id])
+  patient     Patient            @relation(fields: [patientId], references: [id])
+  encounter   Encounter          @relation(fields: [encounterId], references: [id])
+
+  @@index([tenantId])
+  @@index([surgeryCaseId])
+  @@index([patientId])
+  @@map("anesthesia_records")
+}
+
+model PostOpHandoff {
+  id                        String    @id @default(uuid()) @db.Uuid
+  tenantId                  String    @map("tenant_id") @db.Uuid
+  surgeryCaseId             String    @unique @map("surgery_case_id") @db.Uuid
+  patientId                 String    @map("patient_id") @db.Uuid
+  pacuArrivalTime           DateTime  @default(now()) @map("pacu_arrival_time") @db.Timestamptz()
+  pacuDischargeTime         DateTime? @map("pacu_discharge_time") @db.Timestamptz()
+  aldreteActivityScore      Int       @map("aldrete_activity_score")
+  aldreteRespirationScore   Int       @map("aldrete_respiration_score")
+  aldreteCirculationScore   Int       @map("aldrete_circulation_score")
+  aldreteConsciousnessScore Int       @map("aldrete_consciousness_score")
+  aldreteO2SaturationScore  Int       @map("aldrete_o2_saturation_score")
+  totalAldreteScore         Int       @map("total_aldrete_score")
+  transferDestination       String    @map("transfer_destination") @db.VarChar(50)
+  handedOverByPacuNurse     String    @map("handed_over_by_pacu_nurse") @db.VarChar(100)
+  receivedByWardNurse       String?   @map("received_by_ward_nurse") @db.VarChar(100)
+  isReadyForDischarge       Boolean   @default(false) @map("is_ready_for_discharge")
+  createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant      TenantOrganization @relation(fields: [tenantId], references: [id])
+  surgeryCase SurgeryCase        @relation(fields: [surgeryCaseId], references: [id])
+  patient     Patient            @relation(fields: [patientId], references: [id])
+
+  @@index([tenantId])
+  @@index([surgeryCaseId])
+  @@map("post_op_handoffs")
+}
+
+model IcuAcuityAssessment {
+  id                    String   @id @default(uuid()) @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  assessmentNumber      String   @unique @map("assessment_number") @db.VarChar(30)
+  patientId             String   @map("patient_id") @db.Uuid
+  episodeId             String   @map("episode_id") @db.Uuid
+  encounterId           String   @map("encounter_id") @db.Uuid
+  scoringSystem         String   @map("scoring_system") @db.VarChar(30)
+  algorithmVersion      String   @default("v1.0") @map("algorithm_version") @db.VarChar(20)
+  rawScoringInputs      Json     @map("raw_scoring_inputs")
+  calculatedScore       Int      @map("calculated_score")
+  calculatedSubscores   Json?    @map("calculated_subscores")
+  riskStratification    String   @map("risk_stratification") @db.VarChar(50)
+  escalationTriggered   Boolean  @default(false) @map("escalation_triggered")
+  escalationActionNotes String?  @map("escalation_action_notes") @db.Text
+  assessedAt            DateTime @default(now()) @map("assessed_at") @db.Timestamptz()
+  assessedById          String   @map("assessed_by_id") @db.VarChar(50)
+  assessedByName        String   @map("assessed_by_name") @db.VarChar(100)
+  isFinalized           Boolean  @default(true) @map("is_finalized")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant    TenantOrganization @relation(fields: [tenantId], references: [id])
+  patient   Patient            @relation(fields: [patientId], references: [id])
+  episode   EpisodeOfCare      @relation(fields: [episodeId], references: [id])
+  encounter Encounter          @relation(fields: [encounterId], references: [id])
+
+  @@index([tenantId])
+  @@index([patientId])
+  @@index([encounterId])
+  @@index([tenantId, scoringSystem, assessedAt])
+  @@map("icu_acuity_assessments")
+}
+
+// ─── 15. STAFF SCHEDULING, CREDENTIALING & CLINICAL PRIVILEGING ───
+model ClinicalStaffProfile {
+  id                  String   @id @default(uuid()) @db.Uuid
+  tenantId            String   @map("tenant_id") @db.Uuid
+  userId              String?  @unique @map("user_id") @db.Uuid
+  staffNumber         String   @map("staff_number") @db.VarChar(30)
+  fullName            String   @map("full_name") @db.VarChar(150)
+  titlePrefix         String?  @map("title_prefix") @db.VarChar(30)
+  titleSuffix         String?  @map("title_suffix") @db.VarChar(50)
+  staffCategory       String   @map("staff_category") @db.VarChar(50)
+  primarySpecialty    String   @map("primary_specialty") @db.VarChar(100)
+  subSpecialty        String?  @map("sub_specialty") @db.VarChar(100)
+  primaryDepartmentId String   @map("primary_department_id") @db.VarChar(50)
+  employmentStatus    String   @default("PERMANENT") @map("employment_status") @db.VarChar(30)
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant            TenantOrganization         @relation(fields: [tenantId], references: [id])
+  user              EnterpriseUser?            @relation(fields: [userId], references: [id])
+  credentials       StaffCredential[]
+  privileges        ClinicalPrivilege[]
+  shiftAssignments  ShiftAssignment[]
+  onCallSchedules   OnCallSchedule[]
+  authorizationLogs ClinicalAuthorizationLog[]
+
+  @@unique([tenantId, staffNumber], name: "uq_staff_tenant_number")
+  @@index([tenantId])
+  @@index([tenantId, staffCategory])
+  @@index([tenantId, primaryDepartmentId])
+  @@map("clinical_staff_profiles")
+}
+
+model StaffCredential {
+  id                 String    @id @default(uuid()) @db.Uuid
+  tenantId           String    @map("tenant_id") @db.Uuid
+  staffId            String    @map("staff_id") @db.Uuid
+  credentialType     String    @map("credential_type") @db.VarChar(50)
+  credentialNumber   String    @map("credential_number") @db.VarChar(100)
+  issuingAuthority   String    @map("issuing_authority") @db.VarChar(150)
+  issuedAt           DateTime  @map("issued_at") @db.Date
+  validFrom          DateTime  @map("valid_from") @db.Date
+  validUntil         DateTime  @map("valid_until") @db.Date
+  verificationStatus String    @default("ACTIVE_VERIFIED") @map("verification_status") @db.VarChar(30)
+  verifiedAt         DateTime? @map("verified_at") @db.Timestamptz()
+  verifiedBy         String?   @map("verified_by") @db.VarChar(100)
+  revokedAt          DateTime? @map("revoked_at") @db.Timestamptz()
+  revocationReason   String?   @map("revocation_reason") @db.Text
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant TenantOrganization   @relation(fields: [tenantId], references: [id])
+  staff  ClinicalStaffProfile @relation(fields: [staffId], references: [id])
+
+  @@unique([tenantId, staffId, credentialType, credentialNumber], name: "uq_staff_credential_type_number")
+  @@index([tenantId])
+  @@index([staffId])
+  @@index([tenantId, staffId, validFrom, validUntil])
+  @@map("staff_credentials")
+}
+
+model ClinicalPrivilege {
+  id                        String   @id @default(uuid()) @db.Uuid
+  tenantId                  String   @map("tenant_id") @db.Uuid
+  staffId                   String   @map("staff_id") @db.Uuid
+  departmentId              String   @map("department_id") @db.VarChar(50)
+  procedureCode             String   @map("procedure_code") @db.VarChar(50)
+  procedureName             String   @map("procedure_name") @db.VarChar(255)
+  privilegeLevel            String   @default("INDEPENDENT") @map("privilege_level") @db.VarChar(30)
+  effectiveFrom             DateTime @map("effective_from") @db.Date
+  effectiveUntil            DateTime @map("effective_until") @db.Date
+  privilegeStatus           String   @default("ACTIVE") @map("privilege_status") @db.VarChar(30)
+  approvedByKomiteMedikId   String   @map("approved_by_komite_medik_id") @db.VarChar(50)
+  approvedByKomiteMedikName String   @map("approved_by_komite_medik_name") @db.VarChar(100)
+  spkDocumentNumber         String   @map("spk_document_number") @db.VarChar(100)
+  grantedAt                 DateTime @default(now()) @map("granted_at") @db.Timestamptz()
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt                 DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant TenantOrganization   @relation(fields: [tenantId], references: [id])
+  staff  ClinicalStaffProfile @relation(fields: [staffId], references: [id])
+
+  @@unique([tenantId, staffId, departmentId, procedureCode], name: "uq_staff_proc_privilege")
+  @@index([tenantId])
+  @@index([staffId])
+  @@index([tenantId, procedureCode, departmentId])
+  @@map("clinical_privileges")
+}
+
+model StaffRoster {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  rosterCode   String    @map("roster_code") @db.VarChar(30)
+  rosterName   String    @map("roster_name") @db.VarChar(100)
+  departmentId String    @map("department_id") @db.VarChar(50)
+  periodMonth  Int       @map("period_month")
+  periodYear   Int       @map("period_year")
+  rosterStatus String    @default("DRAFT") @map("roster_status") @db.VarChar(30)
+  approvedBy   String?   @map("approved_by") @db.VarChar(100)
+  approvedAt   DateTime? @map("approved_at") @db.Timestamptz()
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt    DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant           TenantOrganization @relation(fields: [tenantId], references: [id])
+  shiftAssignments ShiftAssignment[]
+
+  @@unique([tenantId, departmentId, periodMonth, periodYear], name: "uq_roster_period")
+  @@index([tenantId])
+  @@index([tenantId, departmentId])
+  @@map("staff_rosters")
+}
+
+model ShiftAssignment {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  rosterId         String?   @map("roster_id") @db.Uuid
+  staffId          String    @map("staff_id") @db.Uuid
+  shiftDate        DateTime  @map("shift_date") @db.Date
+  shiftCode        String    @map("shift_code") @db.VarChar(20)
+  startTime        String    @map("start_time") @db.VarChar(20)
+  endTime          String    @map("end_time") @db.VarChar(20)
+  unitId           String    @map("unit_id") @db.VarChar(50)
+  unitName         String    @map("unit_name") @db.VarChar(100)
+  assignmentStatus String    @default("SCHEDULED") @map("assignment_status") @db.VarChar(30)
+  checkInAt        DateTime? @map("check_in_at") @db.Timestamptz()
+  checkOutAt       DateTime? @map("check_out_at") @db.Timestamptz()
+  notes            String?   @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  tenant TenantOrganization   @relation(fields: [tenantId], references: [id])
+  roster StaffRoster?         @relation(fields: [rosterId], references: [id])
+  staff  ClinicalStaffProfile @relation(fields: [staffId], references: [id])
+
+  @@index([tenantId])
+  @@index([staffId])
+  @@index([tenantId, shiftDate, unitId])
+  @@map("shift_assignments")
+}
+
+model OnCallSchedule {
+  id                     String   @id @default(uuid()) @db.Uuid
+  tenantId               String   @map("tenant_id") @db.Uuid
+  staffId                String   @map("staff_id") @db.Uuid
+  onCallDate             DateTime @map("on_call_date") @db.Date
+  specialtyGroup         String   @map("specialty_group") @db.VarChar(50)
+  responseTimeSlaMinutes Int      @default(30) @map("response_time_sla_minutes")
+  isActiveCoverage       Boolean  @default(true) @map("is_active_coverage")
+  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant TenantOrganization   @relation(fields: [tenantId], references: [id])
+  staff  ClinicalStaffProfile @relation(fields: [staffId], references: [id])
+
+  @@unique([tenantId, staffId, onCallDate, specialtyGroup], name: "uq_staff_oncall_date")
+  @@index([tenantId])
+  @@index([tenantId, onCallDate, specialtyGroup])
+  @@map("on_call_schedules")
+}
+
+model ClinicalAuthorizationLog {
+  id                    String   @id @default(uuid()) @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  staffId               String   @map("staff_id") @db.Uuid
+  procedureCode         String   @map("procedure_code") @db.VarChar(50)
+  targetUnitId          String   @map("target_unit_id") @db.VarChar(50)
+  evaluatedAt           DateTime @default(now()) @map("evaluated_at") @db.Timestamptz()
+  isAuthorized          Boolean  @map("is_authorized")
+  authorizationDecision String   @map("authorization_decision") @db.VarChar(30)
+  denialReason          String?  @map("denial_reason") @db.Text
+  evaluationMetadata    Json     @map("evaluation_metadata")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  tenant TenantOrganization   @relation(fields: [tenantId], references: [id])
+  staff  ClinicalStaffProfile @relation(fields: [staffId], references: [id])
+
+  @@index([tenantId])
+  @@index([staffId, evaluatedAt])
+  @@map("clinical_authorization_logs")
 }

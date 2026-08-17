@@ -8,44 +8,49 @@ import { outboxPublisherService } from '../../front_office/services/outboxPublis
 
 const ALLERGY_STORAGE_KEY = 'nurseflow_patient_allergies';
 
+let inMemoryAllergies = [
+  {
+    id: 'ALG-1001',
+    patient_id: 'P-1001',
+    allergy_type: 'DRUG',
+    allergen: 'Amoxicillin / Penicillin Group',
+    reaction: 'Urtikaria menyeluruh, Angioedema, Bronkospasme',
+    severity: 'SEVERE',
+    verification_status: 'CONFIRMED',
+    recorded_by: 'dr. Siti Wijaya, Sp.PD-KGEH',
+    created_at: '2026-08-15T08:00:00Z'
+  },
+  {
+    id: 'ALG-1002',
+    patient_id: 'P-1001',
+    allergy_type: 'FOOD',
+    allergen: 'Seafood (Udang & Kepiting)',
+    reaction: 'Gatal-gatal pada kulit & kemerahan',
+    severity: 'MODERATE',
+    verification_status: 'CONFIRMED',
+    recorded_by: 'Ns. Ratna Sari, S.Kep',
+    created_at: '2026-08-15T08:00:00Z'
+  }
+];
+
 const getStoredAllergies = () => {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof localStorage !== 'undefined') {
       const raw = localStorage.getItem(ALLERGY_STORAGE_KEY);
       if (raw) return JSON.parse(raw);
     }
   } catch (e) {
     console.warn('[AllergyEngine] Failed to load allergies:', e);
   }
-  return [
-    {
-      id: 'ALG-1001',
-      patient_id: 'P-1001',
-      allergy_type: 'DRUG',
-      allergen: 'Amoxicillin / Penicillin Group',
-      reaction: 'Urtikaria menyeluruh, Angioedema, Bronkospasme',
-      severity: 'SEVERE',
-      verification_status: 'CONFIRMED',
-      recorded_by: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      created_at: '2026-08-15T08:00:00Z'
-    },
-    {
-      id: 'ALG-1002',
-      patient_id: 'P-1001',
-      allergy_type: 'FOOD',
-      allergen: 'Seafood (Udang & Kepiting)',
-      reaction: 'Gatal-gatal pada kulit & kemerahan',
-      severity: 'MODERATE',
-      verification_status: 'CONFIRMED',
-      recorded_by: 'Ns. Ratna Sari, S.Kep',
-      created_at: '2026-08-15T08:00:00Z'
-    }
-  ];
+  return inMemoryAllergies;
 };
 
 const saveStoredAllergies = (list) => {
+  inMemoryAllergies = list;
   try {
-    localStorage.setItem(ALLERGY_STORAGE_KEY, JSON.stringify(list));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(ALLERGY_STORAGE_KEY, JSON.stringify(list));
+    }
   } catch (e) {
     console.warn('[AllergyEngine] Failed to save allergies:', e);
   }
@@ -109,7 +114,7 @@ export const allergyEngineService = {
       // Penicillin vs Cephalosporin Cross-Reactivity
       if (
         (allergenLower.includes('penicillin') || allergenLower.includes('amoxicillin') || allergenLower.includes('ampicillin')) &&
-        (q.includes('cef') || q.includes('ceph') || q.includes('penicillin') || q.includes('amoxicillin'))
+        (q.includes('cef') || q.includes('ceph') || q.includes('penicillin') || q.includes('amoxicillin') || q.includes('ampicillin'))
       ) {
         return {
           hasConflict: true,

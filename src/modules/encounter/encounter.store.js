@@ -16,6 +16,8 @@ export const useEncounterStore = create((set, get) => ({
   activeEncounters:  [],
   patientEncounters: [],
   selectedEncounterId: null,
+  activePatientId: null,
+  activeEncounterId: null,
   liveContext:       null, // { patientId, encounterId }
   isLoading:         false,
   error:             null,
@@ -23,10 +25,17 @@ export const useEncounterStore = create((set, get) => ({
   // ─── Actions ─────────────────────────────
   setLiveContext: (patientId, encounterId) => set({ 
     liveContext: { patientId, encounterId },
+    activePatientId: patientId,
+    activeEncounterId: encounterId,
     selectedEncounterId: encounterId 
   }),
 
-  clearLiveContext: () => set({ liveContext: null, selectedEncounterId: null }),
+  clearLiveContext: () => set({ 
+    liveContext: null, 
+    activePatientId: null, 
+    activeEncounterId: null, 
+    selectedEncounterId: null 
+  }),
   fetchActiveEncounters: async () => {
     set({ isLoading: true, error: null });
     try {

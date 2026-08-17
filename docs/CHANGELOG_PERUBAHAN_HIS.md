@@ -20,6 +20,372 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [17 AGUSTUS 2026] — UI ACTIVATION GATE 1E.4: DOCTOR CONSULTATION & CLINICAL CORE WORKSPACE
+
+**Kategori:** `[MAJOR]` `[UI_ACTIVATION]` `[CLINICAL_VERTICAL_SLICE]` `[DOCTOR_WORKSPACE]` `[CPPT_SOAP]` `[CDSS_SEPSIS_STEMI]` `[UNIVERSAL_ORDER_PANEL]` `[JCI_IPSG3]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 44 Suites / 185 Tests), Vite Build (`npm run build` PASS — 5.47s)  
+**Komponen Terdampak:** `src/modules/clinical_core/pages/DoctorWorkspacePage.jsx` (NEW), `src/modules/clinical_core/components/DoctorCommandCenter.jsx` (NEW), `src/modules/clinical_core/components/DoctorSoapWorkspace.jsx` (NEW), `src/modules/clinical_core/components/ClinicalDecisionSupportCard.jsx` (NEW), `src/modules/clinical_core/components/UniversalOrderModal.jsx` (NEW), `src/modules/orders/services/universalOrderEngine.service.js` (MODIFIED), `src/modules/emr/services/cdssEngine.service.js` (MODIFIED), `src/modules/emr/services/soapEngine.service.js` (MODIFIED), `src/modules/emr/services/allergyEngine.service.js` (MODIFIED), `src/routes/clinical.routes.jsx` (MODIFIED), `tests/doctorWorkspaceVerticalSlice.test.js` (NEW)
+
+#### Detail Aktivasi Doctor Consultation & Clinical Core Workspace (Gate 1E.4):
+1. **👨‍⚕️ DOCTOR COMMAND CENTER (`DoctorCommandCenter.jsx`):**
+   - Dashboard antrean kerja DPJP real-time dengan 4 metrik live: Menunggu Konsultasi (3 Pasien), Sedang Diperiksa (1 Pasien), Hasil Kritis / Panic Value Alert (Laktat 5.2 mmol/L), dan Order Menunggu Hasil (7 Order).
+   - Tabel antrean pasien terintegrasi dengan penanda level triase (ESI 1-4), keluhan utama, waktu tunggu, dan tombol aksi langsung `Buka Konsultasi (SOAP)`.
+2. **📝 CPPT / SOAP WORKSPACE TERINTEGRASI (`DoctorSoapWorkspace.jsx`):**
+   - Formulir terstruktur sesuai Permenkes No. 24/2022 & JCI:
+     - **S (Subjective):** Keluhan utama, Riwayat Penyakit Sekarang (RPS), Riwayat Penyakit Dahulu (RPD).
+     - **O (Objective):** Auto-import tanda vital real-time dari Triase/eMAR (TD, HR, RR, Suhu, SpO2, GCS) dan catatan pemeriksaan fisik sistematis (Kepala/Leher, Thoraks Cor/Pulmo, Abdomen, Ekstremitas).
+     - **A (Assessment):** Integrasi pencarian kode ICD-10 (misal `A90 Dengue`, `A41.9 Sepsis`, `I21.9 STEMI`, `K35.8 Apendisitis`) dan komorbiditas sekunder.
+     - **P (Plan):** Instruksi non-farmakologis, rencana terapi, edukasi pasien, dan penentuan disposisi (Rawat Inap, Rawat Jalan, Transfer ICU, Operasi Cito, Rujuk).
+   - Rail kanan terintegrasi visualisasi kronologis `PatientJourneyTimeline`.
+3. **💡 CLINICAL DECISION SUPPORT SYSTEM (CDSS) PROTOCOL BUNDLE (`ClinicalDecisionSupportCard.jsx`):**
+   - **Hour-1 Sepsis Bundle (Surviving Sepsis Campaign 2026):** Memicu rekomendasi otomatis (Kultur Darah sebelum antibiotik, Laktat serial, Antibiotik spektrum luas IV, Resusitasi kristaloid 30 mL/kgBB).
+   - **ACS / STEMI Rapid Pathway (AHA / PERKI):** Rekomendasi EKG &le; 10 menit, DAPT Loading (Aspilet + Clopidogrel), Troponin I Cito, dan aktivasi Primary PCI.
+   - **DHF Critical Phase Protocol (WHO):** Monitoring serial DL per 12 jam, hidrasi rumatan terukur, dan peringatan keras kontraindikasi NSAID/Aspirin.
+4. **📦 UNIVERSAL ORDER PANEL & SAFETY BARRIERS (`UniversalOrderModal.jsx`):**
+   - Penerbitan order klinis 6 kategori dalam 1 panel terpadu: Laboratorium, Radiologi, Farmasi / Resep Obat, Bank Darah (Transfusi), Kamar Operasi (IBS), dan Admisi Rawat Inap / ICU.
+   - **Safety Barrier Alergi Obat (JCI IPSG 3):** Sistem memblokir resep obat kontraindikasi (misal Penisilin/Amoksisilin pada pasien alergi penisilin) dengan peringatan bahaya anafilaksis berat (*Hard Blocker*).
+   - **Safety Barrier Bank Darah:** Verifikasi status uji kecocokan (*Crossmatch*) sebelum unit darah dikeluarkan.
+5. **🛡️ 4-TIER ARCHITECTURE & NEGATIVE-PATH TESTS (`tests/doctorWorkspaceVerticalSlice.test.js`):**
+   - 5 pengujian otomatis memverifikasi perekaman SOAP, deteksi alergi obat silang, evaluasi CDSS, pembuatan order lintas kategori, dan penolakan transisi status order ilegal.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — UI ACTIVATION GATE 1E.3: IGD TRIAGE & EMERGENCY CLINICAL VERTICAL SLICE
+
+**Kategori:** `[MAJOR]` `[UI_ACTIVATION]` `[CLINICAL_VERTICAL_SLICE]` `[IGD_COMMAND_CENTER]` `[RAPID_ESI_TRIAGE]` `[RESUSCITATION_BOARD]` `[SLA_STOPWATCH]` `[WHO_ATS_ESI]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 43 Suites / 180 Tests), Vite Build (`npm run build` PASS — 5.58s)  
+**Komponen Terdampak:** `src/modules/triage/components/IgdCommandCenter.jsx` (NEW), `src/modules/triage/components/RapidTriageStudio.jsx` (NEW), `src/modules/triage/components/ResuscitationBoardModal.jsx` (NEW), `src/modules/triage/pages/TriagePage.jsx` (MODIFIED), `src/modules/emergency/services/triageEngine.service.js` (MODIFIED), `src/modules/emergency/services/triageSlaEngine.service.js` (MODIFIED), `tests/triageVerticalSlice.test.js` (NEW)
+
+#### Detail Aktivasi IGD Triage & Emergency Vertical Slice (Gate 1E.3):
+1. **🏥 IGD COMMAND CENTER & LIVE BED MAP (`IgdCommandCenter.jsx`):**
+   - Panel kendali gawat darurat terpadu dengan 4 metrik live: Pasien Kritis (ESI 1-2), Pasien Menunggu Dokter (ESI 3-5), Kapasitas Bed Terpakai, dan Rata-rata Waktu Tanggap.
+   - Peta visual alokasi bed (Bed Resusitasi 1-2, Bed Akut A01-A04, Bed Observasi, Bed Isolasi) dengan indikator status (*VACANT*, *OCCUPIED*, *CLEANING*), MRN, nama pasien, dan durasi keterisian bed.
+2. **⏱️ REAL-TIME SLA STOPWATCH & OVERDUE ESCALATION (`triageSlaEngine.service.js`):**
+   - Stopwatch waktu tunggu respons dokter berbasis target ESI/ATS:
+     - 🟢 *NORMAL* (Waktu respons &le; 70% batas).
+     - 🟡 *APPROACHING SLA* (Sisa waktu &le; 30%).
+     - 🔴 *SLA BREACH (OVERDUE)* (Waktu tanggap terlampaui &rarr; auto-escalate alert).
+3. **⚡ RAPID ESI v4 INTAKE & ABCDE PRIMARY SURVEY (`RapidTriageStudio.jsx`):**
+   - Survei Primer ABCDE (Airway, Breathing, Circulation, GCS Disability Eye/Verbal/Motor, Exposure).
+   - Klasifikasi otomatis tingkat keparahan ESI 1 hingga 5 dengan ambang batas bahaya (*Danger Zone Auto-Escalation*): SpO2 &lt; 90%, HR &gt; 130, SBP &le; 80, GCS &le; 8 memicu kenaikan prioritas ke ESI 1/2 seketika.
+4. **🚨 RESUSCITATION BOARD & CODE BLUE MANAGEMENT (`ResuscitationBoardModal.jsx`):**
+   - Panel khusus pasien kritis ESI 1 (Henti Jantung / Nafas):
+     - Timer Siklus CPR 2 Menit & Alarm pergantian kompresor dada.
+     - Defibrillator Logger (200J Biphasic Shock counter) & Evaluasi Irama Jantung (VF/pVT vs Asystole/PEA).
+     - Pencatatan dosis berkala Epinefrin 1mg IV per siklus.
+     - Panggilan tim resusitasi (*Team Leader*, *Airway Operator*, *Compressor Nurse*) dan deklarasi capaian ROSC (*Return of Spontaneous Circulation*).
+5. **🛡️ 4-TIER ARCHITECTURE & NEGATIVE-PATH TESTS (`tests/triageVerticalSlice.test.js`):**
+   - 6 pengujian komprehensif memvalidasi akurasi ESI, invariant batas GCS (3-15), inisiasi stopwatch SLA, pencatatan kontak dokter pertama, serta transisi state encounter ke `TRIAGED`.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — UI ACTIVATION GATE 1E.2: PATIENT IDENTITY, EMPI & ENCOUNTER JOURNEY FOUNDATION
+
+**Kategori:** `[MAJOR]` `[UI_ACTIVATION]` `[PATIENT_COMMAND_CENTER]` `[EMPI_DUPLICATE_PREVENTION]` `[PATIENT_JOURNEY_TIMELINE]` `[ENCOUNTER_WORKSPACE]` `[JCI_IPSG1]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 42 Suites / 174 Tests), Vite Build (`npm run build` PASS — 5.75s)  
+**Komponen Terdampak:** `src/modules/patient/pages/PatientCommandCenterPage.jsx` (NEW), `src/modules/patient/components/GlobalPatientSearch.jsx` (NEW), `src/modules/patient/components/PatientIdentityCard.jsx` (NEW), `src/modules/patient/components/PatientJourneyTimeline.jsx` (NEW), `src/modules/patient/components/PatientRegistrationWithEmpiModal.jsx` (NEW), `src/modules/patient/components/EmergencyUnknownPatientModal.jsx` (NEW), `src/modules/encounter/components/EncounterWorkspaceModal.jsx` (NEW), `src/modules/encounter/encounter.store.js` (MODIFIED), `src/core/services/mpiEngine.service.js` (MODIFIED), `src/components/ui/ClinicalContextRibbon.jsx` (MODIFIED), `src/routes/clinical.routes.jsx` (MODIFIED), `tests/patientJourneyEmpi.test.js` (NEW)
+
+#### Detail Aktivasi Patient Identity & Journey Center (Gate 1E.2):
+1. **🔍 GLOBAL PATIENT SEARCH & PHI PROTECTION (`GlobalPatientSearch.jsx`):**
+   - Pencarian multi-atribut real-time (No. RM, NIK, Nama, Tanggal Lahir, No. Kartu BPJS, Nomor Telepon).
+   - Penyamaran data sensitif / PHI (*NIK Masking*: `************1234`) untuk kepatuhan perlindungan data pribadi pasien (Permenkes No. 24/2022).
+2. **🛡️ ONE PATIENT → ONE MASTER IDENTITY EMPI GATEWAY (`PatientRegistrationWithEmpiModal.jsx`):**
+   - Algoritma pencocokan kembar identitas (*Duplicate Identity Detection*) saat pendaftaran dengan skor kepercayaan (*Confidence Score*).
+   - Dialog peringatan duplikasi EMPI interaktif yang memberikan pilihan tegas: `[Gunakan Pasien Eksisting]` atau `[Tetap Buat Pasien Baru dengan Justifikasi Audit Supervisor]`.
+3. **🚨 EMERGENCY UNKNOWN PATIENT & LEGAL RECONCILIATION (`EmergencyUnknownPatientModal.jsx`):**
+   - Pembuatan instan pasien darurat anonim (`Mr. / Mrs. X`) dengan pembukaan encounter triase IGD otomatis.
+   - Fitur rekonsiliasi identitas post-hoc (*Merge Patient*) yang menggabungkan rekam medis anonim ke master pasien saat identitas asli ditemukan tanpa menghapus jejak encounter dan timeline klinis darurat (*100% Clinical Traceability*).
+4. **📜 PATIENT JOURNEY TIMELINE (`PatientJourneyTimeline.jsx`):**
+   - Visualisasi kronologis alur peristiwa klinis pasien: Registrasi &rarr; Triase IGD (ESI 2) &rarr; Asesmen Klinis DPJP &rarr; Order Cito Laboratorium & Radiologi &rarr; Crossmatch Bank Darah &rarr; Persiapan Kamar Operasi (IBS) &rarr; Admisi Bangsal / ICU.
+5. **🏥 ENCOUNTER WORKSPACE & LIVE CONTEXT SYNC (`EncounterWorkspaceModal.jsx` & `ClinicalContextRibbon.jsx`):**
+   - Pembukaan kunjungan / encounter baru (IGD, Rawat Jalan Poli, Rawat Inap, Kamar Operasi) dengan DPJP dan penjamin biaya.
+   - Sinkronisasi instan konteks klinis aktif ke seluruh aplikasi melalui `ClinicalContextRibbon` (Nama, MRN, Triage Level, Status Alergi).
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — UI ACTIVATION GATE 1E.1: CLINICAL APPLICATION SHELL & ROLE-BASED WORKSPACE FOUNDATION
+
+**Kategori:** `[MAJOR]` `[UI_ACTIVATION]` `[APPLICATION_SHELL]` `[CLINICAL_CONTEXT_RIBBON]` `[ROLE_WORKSPACES]` `[VERTICAL_SLICE_UI]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 41 Suites / 169 Tests), Vite Build (`npm run build` PASS — 5.29s)  
+**Komponen Terdampak:** `src/components/ui/ClinicalContextRibbon.jsx` (NEW), `src/modules/blood_bank/pages/BloodBankWorkspacePage.jsx` (NEW), `src/modules/critical_care/pages/IcuAcuityWorkspacePage.jsx` (NEW), `src/modules/staff/pages/StaffPrivilegingWorkspacePage.jsx` (NEW), `src/layouts/MainLayout.jsx` (MODIFIED), `src/routes/clinical.routes.jsx` (MODIFIED)
+
+#### Detail Aktivasi UI Klinis Terpadu (Gate 1E.1):
+1. **🏥 ENTERPRISE CLINICAL CONTEXT RIBBON (`ClinicalContextRibbon.jsx`):**
+   - Menghadirkan pita konteks klinis real-time di bagian atas aplikasi yang menampilkan identitas faskes/tenant aktif, identitas klinisi dengan status verifikasi STR/SIP, indikator shift dinas aktif, live patient context banner (Nama, MRN, Triage Level, Alergi Warning), serta tombol trigger darurat *Code Blue* & *Code Red*.
+2. **🧭 MODERN ROLE-BASED NAVIGATION SHELL (`MainLayout.jsx`):**
+   - Merestrukturisasi navigasi sidebar menjadi 3 pilar operasional rumah sakit:
+     - *Clinical Workspaces:* Doctor Workspace, Patient Master & EMPI, Appointments, Encounters, Triage & Emergency, Patient Care & Nursing, EMR Rawat Jalan / Inap.
+     - *Unit Khusus & Persisted Domains:* Kamar Operasi (IBS), ICU & Acuity Scoring, Bank Darah (BDRS), Farmasi & Manajemen Inventori FEFO, Billing Kasir.
+     - *Workforce & Governance:* Staff & Privileging Hub, Master Data Terpadu (18 Modul), Executive & Performance Suite.
+3. **🩸 BLOOD BANK WORKSPACE UI (`BloodBankWorkspacePage.jsx`):**
+   - Antarmuka operasional BDRS untuk pencatatan kantong darah, monitoring suhu chiller, uji silang serasi (Crossmatch Mayor/Minor) dengan feedback inkompatibilitas otomatis, serah terima ruangan, dan checklist bedside 7-poin.
+4. **💜 ICU CLINICAL ACUITY WORKSPACE UI (`IcuAcuityWorkspacePage.jsx`):**
+   - Kalkulator serial skor SOFA (Sepsis-3) berbasis 6 sistem organ dengan penyimpanan snapshot matematis 100% reproducible, kalkulator NEWS2 dengan peringatan eskalasi klinis otomatis, dan riwayat audit serial ICU.
+5. **👨‍⚕️ STAFF CREDENTIALING & PRIVILEGING WORKSPACE UI (`StaffPrivilegingWorkspacePage.jsx`):**
+   - Direktori tenaga medis, manajemen lisensi STR/SIP dengan *effective dating*, serta simulator evaluator 5-faktor otorisasi klinis real-time (validasi klinisi aktif, STR valid, cakupan RKK/SPK, dan status dinas/on-call).
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.6: CLINICAL STAFF SCHEDULING, CREDENTIALING & PRIVILEGING PERSISTENCE
+
+**Kategori:** `[MAJOR]` `[STAFF_SCHEDULING]` `[CREDENTIALING]` `[CLINICAL_PRIVILEGING]` `[SPK_RKK]` `[AUTHORIZATION_ENGINE]` `[JCI_GLD]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 41 Suites / 169 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/015_staff_roster_credentialing_privileging.sql` (NEW), `database/migration_runner.js` (MODIFIED), `prisma/schema.prisma` (MODIFIED), `server/services/staffScheduling.service.js` (MODIFIED), `tests/staffPrivilegingPersistence.test.js` (NEW)
+
+#### Detail Arsitektur Otorisasi Klinis & Penjadwalan Staf (1D.6):
+1. **👨‍⚕️ CLINICAL STAFF PROFILES (`clinical_staff_profiles`):**
+   - Membuat model master klinisi berstandar JCI/KARS dengan klasifikasi spesialisasi, sub-spesialisasi, departemen induk, dan status kepegawaian.
+2. **📜 CREDENTIALING & STR/SIP EFFECTIVE DATING (`staff_credentials`):**
+   - Menghilangkan flag boolean primitif. Menggunakan model temporal *effective dating* (`valid_from`, `valid_until`, `verification_status`, `revoked_at`, `revocation_reason`) dengan constraint `CHECK (valid_until >= valid_from)` untuk menjamin audit historis lisensi pada titik waktu manapun (*point-in-time license validity*).
+3. **🏛️ CLINICAL PRIVILEGES / SPK & RKK (`clinical_privileges`):**
+   - Mengimplementasikan Surat Penugasan Klinis (SPK) & Rincian Kewenangan Klinis (RKK) berbasis Permenkes No. 755/2011 dan Komite Medik.
+   - Menerapkan trigger PostgreSQL `trg_validate_privilege_prerequisites` yang memblokir pemberian kewenangan klinis jika klinisi tidak memiliki STR/SIP aktif dan terverifikasi pada tanggal mulai berlaku.
+4. **📅 STAFF ROSTER & SHIFT ASSIGNMENT MUTEX (`shift_assignments` & `on_call_schedules`):**
+   - Menegakkan Partial Unique Index `uq_staff_date_shift` (`WHERE assignment_status IN ('SCHEDULED', 'CHECKED_IN')`) pada level database untuk memblokir jadwal dinas ganda pada hari yang sama.
+   - Menyimpan jadwal *on-call* dokter spesialis dengan SLA waktu respon darurat.
+5. **🛡️ 5-FACTOR CLINICAL AUTHORIZATION ENGINE (`clinical_authorization_logs`):**
+   - Membangun *Workforce Authorization Engine* yang memverifikasi 5 pilar keselamatan:
+     1. Status keaktifan profil klinisi.
+     2. Validitas STR/SIP pada waktu tindakan (tidak expired & tidak dicabut).
+     3. Cakupan kewenangan klinis (SPK/RKK) terhadap kode prosedur dan unit/departemen terkait.
+     4. Status kehadiran jaga (Shift aktif atau On-Call coverage pada tanggal/waktu tindakan).
+     5. Isolasi data multi-tenant.
+   - Merekam setiap evaluasi ke tabel audit `clinical_authorization_logs`.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — CLINICAL SAFETY VERIFICATION GATE 1D.5-V: 12 FATAL CLINICAL NEGATIVE-PATH BARRIERS VERIFIED
+
+**Kategori:** `[MAJOR]` `[CLINICAL_SAFETY_VERIFICATION]` `[NEGATIVE_PATH_TESTING]` `[DATABASE_BARRIERS]` `[JCI_SAFETY]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 40 Suites / 158 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `tests/clinicalSafetyVerification.test.js` (NEW), `server/services/operatingTheatre.service.js` (MODIFIED), `server/services/bloodBank.service.js` (MODIFIED), `server/services/criticalCare.service.js` (MODIFIED)
+
+#### Detail Verifikasi 12 Skenario Fatal (Negative-Path Database Barrier):
+1. **🚫 Operasi Tanpa Sign-In:** Ditolak database/service dengan error `SAFETY_VIOLATION: Procedure cannot start without verified WHO Sign-In and Time-Out`.
+2. **🚫 Operasi Tanpa Time-Out:** Ditolak database/service sebelum insisi kulit diizinkan.
+3. **🚫 Completion Tanpa Sign-Out:** Ditolak database/service sebelum penghitungan kassa/instrumen diverifikasi.
+4. **🚫 Perubahan Identity Field Pasca Operasi Dimulai:** Trigger PostgreSQL `trg_enforce_surgery_case_safety` menolak mutasi `patient_id` / `operating_room_id`.
+5. **🚫 Bentrok Dua Booking Kamar Operasi:** Partial Unique Index `uq_active_room_slot` menolak tabrakan waktu kamar operasi (`ROOM_COLLISION`).
+6. **🚫 Modifikasi Skor ICU Terfinalisasi:** Trigger PostgreSQL `trg_protect_finalized_icu_acuity` menolak `UPDATE` pada asesmen SOFA/NEWS2 yang telah difinalisasi.
+7. **🚫 Transfusi Crossmatch Inkompatibel:** Ditolak fatal oleh barrier kecocokan serologis.
+8. **🚫 Transfusi Kantong Expired:** Ditolak mutlak oleh evaluasi waktu kedaluwarsa darah.
+9. **🚫 Transfusi Kantong Milik Pasien Lain:** Ditolak oleh constraint kepemilikan reservasi (`reserved_for_patient_id <> patient_id`).
+10. **🚫 Double Transfusi Kantong Sama:** Partial Unique Index `uq_active_blood_unit_transfusion` menolak duplikasi transfusi aktif.
+11. **🚫 Penggunaan Kembali Kantong STOPPED_REACTION:** Ditolak dan dikarantina permanen karena insiden hemovigilans.
+12. **🚫 Karantina Otomatis Temperature Excursion:** Penyimpangan suhu rantai dingin seketika memicu status unit menjadi `QUARANTINED`.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.5: OPERATING THEATRE (IBS) & ICU ACUITY SCORING PERSISTENCE
+
+**Kategori:** `[MAJOR]` `[OPERATING_THEATRE]` `[ICU_ACUITY]` `[WHO_SURGICAL_CHECKLIST]` `[PERSISTENCE_HARDENING]` `[SAFETY_TRIGGER]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 39 Suites / 146 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/014_operating_theatre_and_icu_acuity.sql` (NEW), `database/migration_runner.js` (MODIFIED), `prisma/schema.prisma` (MODIFIED), `server/services/operatingTheatre.service.js` (MODIFIED), `server/services/criticalCare.service.js` (MODIFIED), `tests/operatingTheatrePersistence.test.js` (NEW)
+
+#### Detail Arsitektur Kamar Operasi (IBS) & ICU Acuity Scoring (1D.5):
+1. **🏥 PEMISAHAN SURGERY SCHEDULE (BOOKING) VS SURGERY CASE (TINDAKAN RIIL):**
+   - Membuat model fisik `operating_theatres`, `operating_rooms`, `surgery_schedules`, dan `surgery_cases`.
+   - Menegakkan Partial Unique Index `uq_active_room_slot` (`WHERE booking_status IN ('BOOKED', 'CONFIRMED', 'IN_PROGRESS')`) pada level PostgreSQL untuk mencegah tabrakan pemesanan slot kamar operasi (*room slot mutex*).
+2. **🛡️ STATE MACHINE & WHO SURGICAL SAFETY CHECKLIST (3 PHASES):**
+   - Menegakkan alur state machine: `SCHEDULED -> PRE_OP_READY -> SIGN_IN_COMPLETED -> TIME_OUT_COMPLETED -> PROCEDURE_IN_PROGRESS -> SIGN_OUT_COMPLETED -> PROCEDURE_COMPLETED -> POST_OP_HANDOFF`.
+   - Menerapkan trigger tingkat database `trg_enforce_surgery_case_safety`:
+     - Prosedur operasi DITOLAK masuk ke status `PROCEDURE_IN_PROGRESS` jika WHO Sign-In dan Time-Out belum terkonfirmasi lengkap (`sign_in_confirmed = TRUE` & `time_out_confirmed = TRUE`).
+     - Prosedur operasi DITOLAK masuk ke status `PROCEDURE_COMPLETED` jika WHO Sign-Out belum terverifikasi lengkap (`sign_out_confirmed = TRUE`).
+     - Kolom identitas kunci (`patient_id`, `operating_room_id`, `lead_surgeon_id`) dikunci menjadi *immutable* segera setelah prosedur dimulai.
+3. **💉 ANESTHESIA RECORDS & PACU ALDRETE RECOVERY HANDOFF:**
+   - Menyimpan catatan anestesi terstruktur (`anesthesia_records`) dengan klasifikasi ASA, penilaian jalan napas (Mallampati & airway device), dan pemantauan intra-operatif.
+   - Menyimpan serah-terima pasca-bedah (`post_op_handoffs`) berbasis skor pemulihan Aldrete (aktivitas, respirasi, sirkulasi, kesadaran, saturasi O2) dengan ambang batas pelepasan (*discharge readiness*).
+4. **📊 ICU ACUITY RAW OBSERVATION SNAPSHOT & REPRODUCIBILITY (SOFA & NEWS2):**
+   - **Kritis:** Tidak hanya menyimpan skor akhir! Tabel `icu_acuity_assessments` menyimpan snapshot parameter observasi mentah lengkap (`raw_scoring_inputs` JSONB) beserta versi algoritma (`algorithm_version: 'v1.0'`).
+   - Algoritma scoring diverifikasi 100% *reproducible* dari snapshot data mentah untuk audit klinis dan riset informatika medis.
+   - Menerapkan trigger `trg_protect_finalized_icu_acuity` yang melarang operasi `UPDATE` pada asesmen terfinalisasi (*Append-Only Immutable Scoring Stream*).
+5. **🔐 TENANT ISOLATION & ROW LEVEL SECURITY (RLS):**
+   - Mengaktifkan Row Level Security (RLS) pada seluruh 8 tabel baru (`operating_theatres`, `operating_rooms`, `surgery_schedules`, `surgery_cases`, `surgical_safety_checklists`, `anesthesia_records`, `post_op_handoffs`, `icu_acuity_assessments`).
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.4-H.1: BLOOD BANK SAFETY CLOSURE & COMPLETE TRANSFUSION TRACEABILITY CHAIN
+
+**Kategori:** `[MAJOR]` `[CLINICAL_SAFETY_CLOSURE]` `[BLOOD_BANK]` `[IMMUTABLE_TRIGGER]` `[BLOOD_ISSUE]` `[BEDSIDE_VERIFICATION]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 38 Suites / 136 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/013_blood_bank_bdrs_persistence.sql` (MODIFIED), `prisma/schema.prisma` (MODIFIED), `server/services/bloodBank.service.js` (MODIFIED), `tests/bloodBankPersistence.test.js` (MODIFIED)
+
+#### Detail Penutupan Benteng Keselamatan & Rantai Lacak Balik Transfusi (1D.4-H.1):
+1. **🔒 DATABASE IMMUTABILITY & UPDATE SAFETY TRIGGER (`BEFORE INSERT OR UPDATE`):**
+   - Mengubah trigger `trg_enforce_transfusion_safety` menjadi `BEFORE INSERT OR UPDATE` dan melarang modifikasi hubungan inti (`patient_id`, `blood_unit_id`, `crossmatch_id`, `encounter_id`) pada record transfusi.
+   - Menambahkan trigger `trg_protect_finalized_crossmatch` untuk mengunci keabadian hasil uji silang serasi setelah status `is_finalized = TRUE`.
+2. **🎯 PARTIAL UNIQUE INDEX PADA TRANSFUSI AKTIF:**
+   - Mengganti constraint kaku dengan Partial Unique Index `uq_active_blood_unit_transfusion` (`WHERE transfusion_status IN ('IN_PROGRESS', 'COMPLETED', 'STOPPED_REACTION')`), memungkinkan record transfusi yang dibatalkan sebelum darah dialirkan (`CANCELLED`) tidak mengunci kantong darah secara permanen.
+3. **🌡️ PRODUCT-SPECIFIC COLD-CHAIN PROFILES:**
+   - Menegakkan batas suhu penyimpanan spesifik per komponen: PRC & Whole Blood (2°C - 6°C), FFP & Cryo (-30°C - -18°C), Trombosit (20°C - 24°C dengan agitasi) dan karantina otomatis jika terjadi *temperature excursion*.
+4. **📦 CUSTODY HANDOFF & ISSUE TRACKING (`blood_issue_records`):**
+   - Membuat tabel persistensi serah-terima kantong darah dari petugas BDRS ke perawat ruangan lengkap dengan suhu saat pengeluaran (*temperature at issue*).
+5. **📋 MANDATORY 7-POINT BEDSIDE VERIFICATION (`blood_bedside_verifications`):**
+   - Membuat tabel verifikasi keselamatan di sisi tempat tidur dengan constraint database `CHECK` yang mewajibkan seluruh 7 poin (identitas, kantong, ABO, Rhesus, expired, crossmatch, consent) bernilai TRUE dan dilakukan oleh 2 perawat yang berbeda (`administered_by_nurse_id <> witnessed_by_nurse_id`).
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.4-H: BLOOD BANK (BDRS) CLINICAL SAFETY INVARIANTS & COLD-CHAIN HARDENING
+
+**Kategori:** `[MAJOR]` `[CLINICAL_SAFETY_HARDENING]` `[BLOOD_BANK]` `[SAFETY_TRIGGER]` `[COLD_CHAIN_AUDIT]` `[CROSSMATCH_BARRIER]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 38 Suites / 136 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/013_blood_bank_bdrs_persistence.sql` (MODIFIED), `prisma/schema.prisma` (MODIFIED), `server/services/bloodBank.service.js` (MODIFIED), `tests/bloodBankPersistence.test.js` (MODIFIED)
+
+#### Detail Pengerasan Benteng Keselamatan Klinis Bank Darah (1D.4-H):
+1. **🛡️ DATABASE CONSTRAINT TRIGGER (`fn_enforce_transfusion_safety`):**
+   - Menambahkan trigger tingkat database pada tabel `blood_transfusion_records` yang mengevaluasi 5 kondisi fatal secara independen:
+     - **Crossmatch Compatibility:** Memblokir transfusi jika `overall_compatibility <> 'COMPATIBLE'`.
+     - **Expiry Barrier:** Memblokir transfusi jika `expiry_date <= CURRENT_TIMESTAMP`.
+     - **Screening Status:** Memblokir transfusi jika `screening_status <> 'NON_REACTIVE'`.
+     - **Reservation Ownership:** Memblokir transfusi jika unit darah direservasi untuk pasien lain (`reserved_for_patient_id <> NEW.patient_id`).
+     - **Matching Integrity:** Memvalidasi kesesuaian unit darah dan pasien antara record crossmatch dan record transfusi.
+2. **🌡️ COLD-CHAIN STORAGE TEMPERATURE AUDIT LOGS:**
+   - Membuat tabel `blood_storage_temperature_logs` untuk mencatat riwayat pemantauan suhu kulkas BDRS secara berkala lengkap dengan durasi *temperature excursion* dan alarm trigger otomatis mengkarantina kantong darah jika suhu keluar dari rentang aman (2.0°C - 6.0°C).
+3. **⚡ ATOMIC BLOOD UNIT RESERVATION WITH CONCURRENCY LOCK:**
+   - Mengimplementasikan reservasi unit atomik dengan verifikasi versi (`version`) dan validasi status unit (`AVAILABLE` & `NON_REACTIVE` & `expiry_date > CURRENT_TIMESTAMP`).
+4. **🔬 ANTIBODY SCREENING & PROTOKOL TRANSFUSI DUA PERAWAT:**
+   - Memperluas skema crossmatch dengan parameter `antibody_screen` dan menegakkan verifikasi ganda perawat (*Administering Nurse* & *Witnessing Nurse*) di sisi tempat tidur sebelum transfusi dimulai.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.4: BLOOD BANK (BDRS) UNITS & CROSSMATCH PERSISTENCE
+
+**Kategori:** `[MAJOR]` `[DATABASE_HARDENING]` `[BLOOD_BANK]` `[CROSSMATCH]` `[HEMOVIGILANCE]` `[PATIENT_SAFETY]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 38 Suites / 136 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/013_blood_bank_bdrs_persistence.sql` (NEW), `database/migration_runner.js` (MODIFIED), `prisma/schema.prisma` (MODIFIED), `tests/bloodBankPersistence.test.js` (NEW)
+
+#### Detail Migrasi DDL & Pengerasan Keselamatan Transfusi Darah (BDRS):
+1. **🩸 MASTER KANTONG DARAH & COLD CHAIN TRACKING (MIGRATION 013):**
+   - Membuat tabel `blood_donor_units` (`WHOLE_BLOOD`, `PACKED_RED_CELLS`, `FRESH_FROZEN_PLASMA`, `THROMBOCYTE_CONCENTRATE`, `CRYOPRECIPITATE`) dengan data golongan darah ABO, Rhesus, volume, tanggal donasi/kadaluwarsa, suhu penyimpanan (°C), lokasi rak, dan status skrining.
+2. **🔬 UJI SILANG SERASI (CROSSMATCH MAJOR & MINOR):**
+   - Membuat tabel `blood_crossmatch_tests` yang mencatat hasil uji kompatibilitas serologi mayor, minor, auto-kontrol, dan status kecocokan global (`COMPATIBLE` / `INCOMPATIBLE`).
+3. **🛡️ DATABASE TRANSFUSION SAFETY INVARIANTS:**
+   - Menolak penerbitan dan transfusi darah jika hasil crossmatch `INCOMPATIBLE` atau kantong darah telah berstatus `EXPIRED`.
+   - Mengunci unit darah yang telah direservasi untuk Pasien A agar tidak dapat digunakan oleh Pasien B.
+   - Menjamin 1 kantong darah HANYA DAPAT ditransfusikan 1 KALI seumur hidup melalui constraint unik `UNIQUE(tenant_id, blood_unit_id)` pada tabel `blood_transfusion_records`.
+4. **👩‍⚕️ DUAL NURSE VERIFICATION & HEMOVIGILANCE:**
+   - Tabel `blood_transfusion_records` mewajibkan verifikasi dua perawat di sisi tempat tidur (*Administered by* & *Witnessed by*) serta pencatatan tanda vital awal, observasi kritis 15 menit, dan pasca-transfusi.
+   - Membuat tabel `transfusion_reaction_logs` untuk pelaporan reaksi efek samping transfusi (alergi, febris, hemolitik, TRALI/TACO) ke BDRS/KPRS.
+5. **🔒 PHYSICAL ROW-LEVEL SECURITY (RLS):**
+   - Mengaktifkan RLS dan policy isolasi tenant pada seluruh 4 tabel bank darah BDRS.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.3-H: PHARMACY CONCURRENCY, STRICT FEFO & IMMUTABLE LEDGER HARDENING
+
+**Kategori:** `[MAJOR]` `[CONCURRENCY_HARDENING]` `[PHARMACY]` `[ATOMIC_DECREMENT]` `[IDEMPOTENCY]` `[AUDIT_RECONCILIATION]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 37 Suites / 126 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `server/services/inventoryManagement.service.js` (MODIFIED), `tests/pharmacyInventoryPersistence.test.js` (MODIFIED)
+
+#### Detail Pengerasan Concurrency & Audit Mutasi Persediaan Farmasi (1D.3-H):
+1. **⚡ ATOMIC STOCK DECREMENT & OPTIMISTIC VERSION LOCKING:**
+   - Mengimplementasikan pola pembaruan stok atomik dengan verifikasi versi (`UPDATE inventory_batches SET available_quantity = available_quantity - :qty, version = version + 1 WHERE id = :id AND available_quantity >= :qty AND version = :expected_version;`).
+   - Menyediakan jaminan bahwa tabrakan konkurensi antar-apoteker ditangani secara aman dengan `affectedRows = 0` (Zero Ghost Stock).
+2. **🛡️ STRICT FEFO QUERY-LEVEL EXPIRY FILTERING:**
+   - Memastikan filter masa kadaluwarsa (`expiryDate > currentDate`) ditegakkan di level query/transaksi sebelum alokasi batch, sehingga obat kadaluwarsa otomatis terisolasi (*quarantine*).
+3. **🔁 IDEMPOTENCY KEY SAFEGUARD:**
+   - Menambahkan mekanisme idempotensi pada endpoint/service dispensing (`idempotencyKey`) untuk mencegah pemotongan stok ganda saat terjadi *network timeout* atau *client retry*.
+4. **📊 LEDGER-TO-BALANCE MATHEMATICAL RECONCILIATION:**
+   - Menyediakan metode audit rekonsiliasi otomatis (`reconcileBatchLedger`) yang membuktikan saldo `available_quantity` selalu sama persis dengan total delta mutasi pada `inventory_stock_movements`.
+5. **🔄 TRANSACTIONAL ROLLBACK INTEGRITY:**
+   - Menjamin bahwa jika penulisan jejak jurnal/ledger gagal, saldo dan versi batch otomatis di-rollback ke snapshot awal (*All-or-Nothing ACID semantics*).
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.3: PHARMACY MULTI-WAREHOUSE, INVENTORY LEDGER & FEFO BATCH PERSISTENCE
+
+**Kategori:** `[MAJOR]` `[DATABASE_HARDENING]` `[PHARMACY]` `[INVENTORY_LEDGER]` `[FEFO_ALLOCATION]` `[ANTI_NEGATIVE_STOCK]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 37 Suites / 126 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/012_pharmacy_inventory_fefo.sql` (NEW), `database/migration_runner.js` (MODIFIED), `prisma/schema.prisma` (MODIFIED), `tests/pharmacyInventoryPersistence.test.js` (NEW)
+
+#### Detail Migrasi DDL & Pengerasan Farmasi, Inventori & Logistik Obat:
+1. **🏥 MULTI-WAREHOUSE & DEPO FARMASI (MIGRATION 012):**
+   - Membuat tabel `pharmacy_warehouses` (`MAIN_WAREHOUSE`, `CENTRAL_PHARMACY`, `INPATIENT_DEPO`, `OUTPATIENT_DEPO`, `EMERGENCY_DEPO`, `ICU_DEPO`, `OK_DEPO`) dengan isolasi `tenant_id NOT NULL`.
+2. **💊 MASTER KATALOG FORMULARIUM & METADATA KLINIS:**
+   - Membuat tabel `medication_catalog` dengan kode KFA Kemenkes, unit konversi (box ke tablet/vial), dan flag keselamatan pasien: `is_high_alert`, `is_lasa`, `is_narcotic`, `is_psychotropic`, `is_antibiotic`.
+3. **🛡️ DATABASE-ENFORCED ANTI-NEGATIVE STOCK & FEFO BATCHING:**
+   - Membuat tabel `inventory_batches` dengan constraint anti-minus mutlak: `CHECK (available_quantity >= 0)` dan kolom versioning optimistik (`version INT NOT NULL DEFAULT 1`).
+   - Membuat index khusus FEFO: `(warehouse_id, medication_id, expiry_date ASC, available_quantity)` untuk pemanggilan batch obat dengan tanggal kadaluwarsa terdekat secara instan.
+4. **📜 IMMUTABLE DOUBLE-ENTRY STOCK MOVEMENT LEDGER:**
+   - Membuat tabel `inventory_stock_movements` untuk mencatat seluruh mutasi stok masuk, keluar, transfer depo, dispensing resep, retur, pemusnahan obat expired, dan penyesuaian stok opname secara append-only.
+5. **💊 PRESCRIPTION DISPENSE RECORDS:**
+   - Membuat tabel `prescription_dispense_records` yang mengalokasikan batch spesifik per item resep dokter ke encounter pasien.
+6. **🔒 PHYSICAL ROW-LEVEL SECURITY (RLS):**
+   - Mengaktifkan RLS dan policy isolasi tenant pada seluruh 5 tabel farmasi dan persediaan.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.2: APPOINTMENT & OUTPATIENT QUEUE PERSISTENCE HARDENING
+
+**Kategori:** `[MAJOR]` `[DATABASE_HARDENING]` `[APPOINTMENTS]` `[OUTPATIENT_QUEUES]` `[CONCURRENCY_GUARD]` `[BPJS_ANTREAN_V2]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 36 Suites / 116 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/011_appointment_and_queue_persistence.sql` (NEW), `database/migration_runner.js` (MODIFIED), `prisma/schema.prisma` (MODIFIED), `tests/appointmentQueuePersistence.test.js` (NEW)
+
+#### Detail Migrasi DDL & Pengerasan Persistence Janji Temu & Antrean Rawat Jalan:
+1. **📅 APPOINTMENT PHYSICAL PERSISTENCE & ACTIVE SLOT MUTEX (MIGRATION 011):**
+   - Membuat tabel relasional `appointments` dengan status komprehensif: `('BOOKED', 'CONFIRMED', 'CHECKED_IN', 'IN_CONSULTATION', 'COMPLETED', 'CANCELLED', 'RESCHEDULED', 'NO_SHOW')`.
+   - Mengimplementasikan Partial Unique Index `uq_active_doctor_slot`: `UNIQUE(tenant_id, doctor_id, appointment_date, slot_time) WHERE status IN ('BOOKED', 'CONFIRMED', 'CHECKED_IN', 'IN_CONSULTATION')`.
+   - Menjamin bahwa slot yang dibatalkan (`CANCELLED` / `NO_SHOW`) dapat dipesan kembali secara instan oleh pasien lain tanpa melanggar constraint database.
+2. **📋 IMMUTABLE RESCHEDULE & CANCELLATION AUDIT LOGS:**
+   - Membuat tabel append-only `appointment_audit_logs` untuk melacak riwayat pemindahan jadwal (*reschedule*) dan pembatalan lengkap dengan actor, alasan, dan perbandingan tanggal/slot lama vs baru.
+3. **🔢 ATOMIC DAILY QUEUE SEQUENCE COUNTERS:**
+   - Membuat tabel `queue_sequences` dengan unique constraint `UNIQUE(tenant_id, pool_code, queue_date)` dan kolom versioning untuk menjamin nomor antrean harian poliklinik ter-generate secara sekuensial tanpa race condition.
+4. **🔗 SINGLE SOURCE OF TRUTH (PATIENT JOURNEY CONTINUITY):**
+   - Menghubungkan secara eksplisit `Appointment` &rarr; `PatientRegistration` &rarr; `Encounter` &rarr; `QueueTicket` via foreign key `appointment_id` di tabel antrean dan registrasi.
+5. **🛡️ PHYSICAL ROW-LEVEL SECURITY (RLS):**
+   - Mengaktifkan RLS dan policy isolasi tenant pada seluruh tabel appointment dan antrean.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1D.1: BED & WARD HIERARCHY PHYSICAL PERSISTENCE & ADT CONCURRENCY
+
+**Kategori:** `[MAJOR]` `[DATABASE_HARDENING]` `[BED_MANAGEMENT]` `[ADT_ENGINE]` `[POSTGRESQL_RLS]` `[CONCURRENCY_MUTEX]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 35 Suites / 108 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/010_bed_ward_hierarchy.sql` (NEW), `database/migration_runner.js` (MODIFIED), `prisma/schema.prisma` (MODIFIED), `tests/bedWardPersistence.test.js` (NEW)
+
+#### Detail Migrasi DDL & Pengerasan Integritas Tempat Tidur (Bed / ADT):
+1. **🏥 PHYSICAL DDL HIRARKI RUANG & TEMPAT TIDUR (MIGRATION 010):**
+   - Membuat tabel relasional fisik berjenjang: `master_buildings` &rarr; `master_floors` &rarr; `master_wards` &rarr; `master_rooms` &rarr; `master_beds`.
+   - Setiap tabel memiliki foreign key ketat `ON DELETE RESTRICT` dan terikat langsung ke `tenant_id UUID NOT NULL REFERENCES tenant_organizations(id)`.
+2. **🔒 BED MUTEX INTEGRITY & PARTIAL UNIQUE INDEXES:**
+   - Mencegah *double-booking* tempat tidur dengan partial unique index: `UNIQUE(tenant_id, bed_id) WHERE check_out_time IS NULL`.
+   - Mencegah satu encounter pasien menempati 2 ranjang bersamaan: `UNIQUE(tenant_id, encounter_id) WHERE check_out_time IS NULL`.
+3. **⚡ OPTIMISTIC CONCURRENCY CONTROL & STATE MACHINE:**
+   - Menambahkan kolom `version INT NOT NULL DEFAULT 1` pada `master_beds` untuk deteksi konflik konkuren saat dua petugas admisi memilih ranjang yang sama bersamaan.
+   - Enforce status ranjang baku melalui database CHECK constraint: `('AVAILABLE', 'OCCUPIED', 'RESERVED', 'CLEANING', 'MAINTENANCE', 'BLOCKED', 'ISOLATION')`.
+4. **📋 IMMUTABLE TRANSFER AUDIT TRAIL:**
+   - Tabel `bed_transfers` mencatat jejak audit perpindahan ranjang pasien secara append-only, dengan constraint `CHECK (from_bed_id <> to_bed_id)`.
+5. **🛡️ PHYSICAL ROW-LEVEL SECURITY (RLS):**
+   - Mengaktifkan RLS dan policy isolasi tenant pada seluruh 7 tabel hirarki tempat tidur.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — DATABASE HARDENING GATE 1B & 1C: PRISMA RECONCILIATION & MULTI-TENANT IDENTITY FOUNDATION
+
+**Kategori:** `[MAJOR]` `[DATABASE_HARDENING]` `[MULTI_TENANCY]` `[PRISMA_RECONCILIATION]` `[POSTGRESQL_RLS]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 34 Suites / 89 Tests), `npx prisma validate` (PASS), `npx prisma format` (PASS) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/009_tenant_identity_foundation.sql` (NEW), `database/migration_runner.js` (MODIFIED), `prisma/schema.prisma` (MODIFIED & RECONCILED), `tests/tenantFoundation.test.js` (NEW)
+
+#### Detail Rekonsiliasi & Pengerasan Fondasi Multi-Tenant:
+1. **🏛️ REKONSILIASI SEMANTIK PRISMA ↔ POSTGRESQL (GATE 1B):**
+   - Menambahkan 10 model Prisma yang sebelumnya hanya ada di SQL DDL: `PatientRegistration`, `QueueTicket`, `BpjsSepRecord`, `TriageAssessment`, `TriageSlaTimer`, `ResuscitationEvent`, `CdssAlert`, `HospitalInvoice`, `InaCbgClaim`, `ProcessedEvent`.
+   - Mengonfigurasi relasi dua arah (*inverse relations*) pada `Patient`, `EpisodeOfCare`, dan `Encounter`.
+2. **🏢 CANONICAL TENANT & SUBSCRIPTION DOMAIN (GATE 1C):**
+   - Membuat model DDL `tenant_organizations` (kode unik, jenis RS, kode faskes Kemenkes, status aktif/trial/suspended).
+   - Membuat model DDL `tenant_subscriptions` (plan tier, batas `max_beds`, batas `max_users`, `features_enabled` JSONB, masa aktif).
+   - Menginjeksi Root Tenant default (`TENANT-HOSPITAL-01`) untuk mencegah data *orphan*.
+3. **🔑 TENANT-ID PROPAGATION & COMPOSITE MRN SCOPING:**
+   - Menambahkan `tenant_id UUID REFERENCES tenant_organizations(id)` pada seluruh tabel tenant-owned.
+   - Mengubah constraint MRN menjadi `UNIQUE(tenant_id, mrn)` sehingga satu nomor RM dapat digunakan pada faskes berbeda tanpa bentrok data.
+   - Mengubah username & employeeId user menjadi unik per-tenant: `UNIQUE(tenant_id, username)`.
+   - Menjaga NIK dan IHS Number tetap unik nasional (Global Canonical EMPI).
+4. **🛡️ POSTGRESQL ROW-LEVEL SECURITY (RLS) SESSION HELPER:**
+   - Menyiapkan fungsi helper `current_app_tenant_id()` berbasis session context `SET LOCAL app.tenant_id = '...'` di dalam transaksi database.
+5. **🧪 TEST SUITE MULTI-TENANT ISOLATION:**
+   - Menambahkan `tests/tenantFoundation.test.js` untuk menguji registrasi tenant, feature gating subscription, isolasi MRN per-tenant, penolakan akses lintas tenant (*Cross-Tenant Read/Write Denied*), dan penanganan tenant nonaktif/suspended.
+
+---
+
 ### 🟢 [17 AGUSTUS 2026] — Implementasi MULTI-DEVICE DEVELOPMENT, SECRET MANAGEMENT & ENVIRONMENT HARDENING
 
 **Kategori:** `[MAJOR]` `[DEVSECOPS]` `[SECRET_MANAGEMENT]` `[ENV_HARDENING]` `[DOCKER_SECURITY]` `[MULTI_DEVICE_BOOTSTRAP]`  

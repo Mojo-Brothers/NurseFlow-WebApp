@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/useAuth.js';
 import LanguageSwitcher from '../components/ui/LanguageSwitcher';
 import ThemeToggle from '../components/ui/ThemeToggle';
 import OfflineStatusIndicator from '../components/ui/OfflineStatusIndicator';
+import ClinicalContextRibbon from '../components/ui/ClinicalContextRibbon';
 import { useStressMonitor } from '../core/hooks/useStressMonitor.js';
 import { usePatientStore } from '../modules/patient/patient.store.js';
 import { useEncounterStore } from '../modules/encounter/encounter.store.js';
@@ -14,19 +15,19 @@ import { usePatientClipboardShortcuts } from '../hooks/usePatientClipboardShortc
 const NAV_SCHEMA = [
   { label: 'nav.clinical', items: [
     { name: 'nav.dashboard',   path: '/dashboard',  icon: 'dashboard',           roles: null },
+    { name: 'Doctor Workspace', path: '/doctor-workspace', icon: 'stethoscope', roles: ['DOCTOR', 'ADMIN'] },
     { name: 'nav.patients',    path: '/patients',   icon: 'groups',              roles: null },
     { name: 'nav.appointments',path: '/appointments', icon: 'calendar_month',    roles: ['DOCTOR','NURSE','ADMIN'] },
-    { name: 'Review Design UI Modul!', path: '/review-design-ui-modul', icon: 'palette', roles: ['DOCTOR','NURSE','ADMIN'] },
-    { name: 'Galeri Komponen Modular', path: '/modular-design-review', icon: 'widgets', roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.encounters',  path: '/encounters', icon: 'local_hospital',      roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.triage',      path: '/triage',     icon: 'emergency',           roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.patient_care', path: '/patient-care', icon: 'medical_services',    roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.emr_rj',      path: '/emr-rj',     icon: 'personal_injury',     roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.emr_ri',      path: '/emr-ri',     icon: 'bed',                 roles: ['DOCTOR','NURSE','ADMIN'] },
-    { name: 'nav.surgery',     path: '/surgery',    icon: 'theater_comedy',      roles: ['DOCTOR','NURSE','ADMIN'] },
   ]},
-  { label: 'nav.operational', items: [
-    { name: 'nav.worklist',    path: '/worklist',   icon: 'task_alt',            roles: ['NURSE','ADMIN'] },
+  { label: 'Unit Khusus & Persisted Domains', items: [
+    { name: 'Kamar Operasi (IBS)', path: '/surgery',    icon: 'theater_comedy',      roles: ['DOCTOR','NURSE','ADMIN'] },
+    { name: 'ICU & Acuity Scoring', path: '/icu-acuity', icon: 'monitor_heart',      roles: ['DOCTOR','NURSE','ADMIN'] },
+    { name: 'Bank Darah (BDRS)', path: '/blood-bank',  icon: 'bloodtype',           roles: ['DOCTOR','NURSE','ADMIN'] },
     { name: 'nav.pharmacy',    path: '/pharmacy',   icon: 'local_pharmacy',      roles: ['PHARMACIST','DOCTOR','ADMIN'] },
     { 
       name: 'nav.inventory',   
@@ -44,13 +45,11 @@ const NAV_SCHEMA = [
       ]
     },
     { name: 'nav.billing',     path: '/billing',    icon: 'receipt_long',        roles: ['DOCTOR','ADMIN'] },
-    { name: 'nav.master_services', path: '/admin/services', icon: 'medical_information', roles: ['DOCTOR','ADMIN'] },
   ]},
   { label: 'nav.administration', items: [
+    { name: 'Staff & Privileging Hub', path: '/staff-privileges', icon: 'badge', roles: ['ADMIN', 'DOCTOR', 'SUPERVISOR'] },
     { name: 'Master Data Terpadu (18 Modul)', path: '/master-data', icon: 'dataset', roles: ['ADMIN', 'DOCTOR', 'SUPERVISOR', 'NURSE'] },
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
-    { name: 'Manajemen Data Dummy HIS', path: '/admin/dummy-data', icon: 'tune', roles: null },
-    { name: 'SDM & Hak Akses (RBAC)', path: '/admin/staff-access', icon: 'badge', roles: ['ADMIN', 'SUPERVISOR'] },
     { name: 'nav.executive',    path: '/executive',    icon: 'monitoring',        roles: ['ADMIN', 'SUPERVISOR'] },
     { name: 'System Performance Suite', path: '/performance-diagnostics', icon: 'speed', roles: null },
   ]},
@@ -266,6 +265,9 @@ const MainLayout = () => {
       {/* ─── Main Content Area ─── */}
       <main className="flex-1 lg:ml-[260px] bg-background min-w-0 h-screen overflow-hidden flex flex-col relative z-0">
         
+        {/* Enterprise Clinical Context Ribbon */}
+        <ClinicalContextRibbon />
+
         {/* Global Command Bar (Mac Spotlight Style) */}
         {isSearchOpen && (
           <div className="absolute top-4 left-1/2 -translate-x-1/2 w-full max-w-xl z-50 animate-in slide-in-from-top-4 fade-in duration-200">
