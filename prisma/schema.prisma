@@ -1,0 +1,381 @@
+// ==============================================================================
+// NurseFlow Enterprise HIS 2026 — Comprehensive Prisma ORM Schema
+// Standar: Permenkes No. 24/2022, JCI 7th Edition, HL7 FHIR R4 & BPJS VClaim 2.0
+// ==============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum EpisodeType {
+  RAWAT_JALAN
+  RAWAT_INAP
+  GAWAT_DARURAT
+  HOME_CARE
+  TELEMEDIS
+}
+
+enum EpisodeStatus {
+  PLANNED
+  WAITLIST
+  ACTIVE
+  ONHOLD
+  FINISHED
+  CANCELLED
+}
+
+enum EncounterClass {
+  AMB
+  EMER
+  IMP
+  VR
+  SS
+  HH
+}
+
+enum EncounterStatus {
+  PLANNED
+  ARRIVED
+  TRIAGED
+  WAITING
+  IN_PROGRESS
+  ON_HOLD
+  DISCHARGED
+  COMPLETED
+  CLOSED
+  CANCELLED
+  NO_SHOW
+}
+
+enum OrderCategory {
+  PHARMACY
+  LABORATORY
+  RADIOLOGY
+  PROCEDURE
+  DIET
+}
+
+enum PriorityLevel {
+  ROUTINE
+  URGENT
+  CITO
+}
+
+enum OrderStatus {
+  DRAFT
+  ORDERED
+  VERIFIED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum EnterpriseRole {
+  ROLE_SUPER_ADMIN
+  ROLE_DOCTOR_DPJP
+  ROLE_DOCTOR_EMERGENCY
+  ROLE_NURSE
+  ROLE_PHARMACIST
+  ROLE_LAB_ANALYST
+  ROLE_RADIOGRAPHER
+  ROLE_CASHIER
+  ROLE_REGISTRATION_CLERK
+  ROLE_MEDICAL_RECORD_OFFICER
+  ROLE_IT_ADMIN
+}
+
+// ─── 1. MASTER PATIENT DOMAIN ───
+model Patient {
+  id              String         @id @default(uuid()) @db.Uuid
+  mrn             String         @unique @db.VarChar(30)
+  nik             String         @unique @db.VarChar(16)
+  ihsNumber       String?        @unique @map("ihs_number") @db.VarChar(30)
+  fullName        String         @map("full_name") @db.VarChar(255)
+  birthPlace      String?        @map("birth_place") @db.VarChar(100)
+  birthDate       DateTime       @map("birth_date") @db.Date
+  gender          Gender
+  bloodType       String?        @map("blood_type") @db.VarChar(5)
+  maritalStatus   String?        @map("marital_status") @db.VarChar(20)
+  phoneNumber     String         @map("phone_number") @db.VarChar(30)
+  email           String?        @db.VarChar(100)
+  addressLine     String         @map("address_line") @db.Text
+  guarantorType   String         @default("UMUM") @map("guarantor_type") @db.VarChar(50)
+  bpjsCardNumber  String?        @map("bpjs_card_number") @db.VarChar(30)
+  isActive        Boolean        @default(true) @map("is_active")
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz()
+
+  episodes        EpisodeOfCare[]
+  encounters      Encounter[]
+  allergies       PatientAllergy[]
+  orders          ClinicalOrder[]
+  billingLedgers  BillingLedger[]
+
+  @@map("master_patients")
+}
+
+// ─── 2. CLINICAL CORE: EPISODES & ENCOUNTERS ───
+model EpisodeOfCare {
+  id                    String        @id @default(uuid()) @db.Uuid
+  episodeNumber         String        @unique @map("episode_number") @db.VarChar(30)
+  patientId             String        @map("patient_id") @db.Uuid
+  episodeType           EpisodeType   @map("episode_type")
+  status                EpisodeStatus @default(PLANNED)
+  primaryConditionIcd10 String?       @map("primary_condition_icd10") @db.VarChar(20)
+  primaryConditionName  String?       @map("primary_condition_name") @db.Text
+  managingDepartmentId  String        @map("managing_department_id") @db.VarChar(50)
+  managingDepartmentName String       @map("managing_department_name") @db.VarChar(100)
+  leadDpjpId            String        @map("lead_dpjp_id") @db.VarChar(50)
+  leadDpjpName          String        @map("lead_dpjp_name") @db.VarChar(100)
+  startTime             DateTime      @default(now()) @map("start_time") @db.Timestamptz()
+  endTime               DateTime?     @map("end_time") @db.Timestamptz()
+  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz()
+
+  patient               Patient       @relation(fields: [patientId], references: [id])
+  encounters            Encounter[]
+  orders                ClinicalOrder[]
+  billingLedgers        BillingLedger[]
+
+  @@map("episodes_of_care")
+}
+
+model Encounter {
+  id                    String          @id @default(uuid()) @db.Uuid
+  encounterNumber       String          @unique @map("encounter_number") @db.VarChar(30)
+  episodeId             String          @map("episode_id") @db.Uuid
+  patientId             String          @map("patient_id") @db.Uuid
+  encounterClass        EncounterClass  @map("encounter_class")
+  status                EncounterStatus @default(PLANNED)
+  primaryDoctorId       String          @map("primary_doctor_id") @db.VarChar(50)
+  primaryDoctorName     String          @map("primary_doctor_name") @db.VarChar(100)
+  serviceRoomId         String          @map("service_room_id") @db.VarChar(50)
+  serviceRoomName       String          @map("service_room_name") @db.VarChar(100)
+  startTime             DateTime        @default(now()) @map("start_time") @db.Timestamptz()
+  endTime               DateTime?       @map("end_time") @db.Timestamptz()
+  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz()
+
+  episode               EpisodeOfCare   @relation(fields: [episodeId], references: [id])
+  patient               Patient         @relation(fields: [patientId], references: [id])
+  soapNotes             SoapNote[]
+  cpptNotes             CpptNote[]
+  observations          ClinicalObservation[]
+  orders                ClinicalOrder[]
+
+  @@map("encounters")
+}
+
+// ─── 3. EMR: SOAP, CPPT, OBSERVATIONS, ALLERGIES ───
+model SoapNote {
+  id                  String     @id @default(uuid()) @db.Uuid
+  encounterId         String     @map("encounter_id") @db.Uuid
+  patientId           String     @map("patient_id") @db.Uuid
+  subjective          String     @db.Text
+  objective           String     @db.Text
+  assessment          String     @db.Text
+  plan                String     @db.Text
+  primaryIcd10        String     @map("primary_icd10") @db.VarChar(20)
+  primaryIcd10Name    String     @map("primary_icd10_name") @db.Text
+  physicianId         String     @map("physician_id") @db.VarChar(50)
+  physicianName       String     @map("physician_name") @db.VarChar(100)
+  isSigned            Boolean    @default(true) @map("is_signed")
+  signedAt            DateTime   @default(now()) @map("signed_at") @db.Timestamptz()
+
+  encounter           Encounter  @relation(fields: [encounterId], references: [id])
+
+  @@map("soap_notes")
+}
+
+model CpptNote {
+  id                  String     @id @default(uuid()) @db.Uuid
+  encounterId         String     @map("encounter_id") @db.Uuid
+  patientId           String     @map("patient_id") @db.Uuid
+  professionalType    String     @map("professional_type") @db.VarChar(50)
+  authorName          String     @map("author_name") @db.VarChar(100)
+  sbarSituation       String?    @map("sbar_situation") @db.Text
+  sbarBackground      String?    @map("sbar_background") @db.Text
+  sbarAssessment      String?    @map("sbar_assessment") @db.Text
+  sbarRecommendation  String?    @map("sbar_recommendation") @db.Text
+  dpjpVerified        Boolean    @default(false) @map("dpjp_verified")
+  dpjpVerifierName    String?    @map("dpjp_verifier_name") @db.VarChar(100)
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+
+  encounter           Encounter  @relation(fields: [encounterId], references: [id])
+
+  @@map("cppt_notes")
+}
+
+model PatientAllergy {
+  id                  String     @id @default(uuid()) @db.Uuid
+  patientId           String     @map("patient_id") @db.Uuid
+  allergyType         String     @map("allergy_type") @db.VarChar(50)
+  allergen            String     @db.VarChar(255)
+  reaction            String?    @db.Text
+  severity            String     @db.VarChar(50)
+  recordedBy          String     @map("recorded_by") @db.VarChar(100)
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz()
+
+  patient             Patient    @relation(fields: [patientId], references: [id])
+
+  @@map("patient_allergies")
+}
+
+model ClinicalObservation {
+  id                  String     @id @default(uuid()) @db.Uuid
+  encounterId         String     @map("encounter_id") @db.Uuid
+  loincCode           String     @map("loinc_code") @db.VarChar(50)
+  loincDisplay        String     @map("loinc_display") @db.VarChar(255)
+  observationValue    String     @map("observation_value") @db.VarChar(255)
+  unit                String?    @db.VarChar(50)
+  interpretation      String     @default("NORMAL") @db.VarChar(30)
+  observedAt          DateTime   @default(now()) @map("observed_at") @db.Timestamptz()
+  observerName        String     @map("observer_name") @db.VarChar(100)
+
+  encounter           Encounter  @relation(fields: [encounterId], references: [id])
+
+  @@map("clinical_observations")
+}
+
+// ─── 4. UNIVERSAL ORDERS DOMAIN ───
+model ClinicalOrder {
+  id                  String         @id @default(uuid()) @db.Uuid
+  orderNumber         String         @unique @map("order_number") @db.VarChar(30)
+  patientId           String         @map("patient_id") @db.Uuid
+  episodeId           String         @map("episode_id") @db.Uuid
+  encounterId         String         @map("encounter_id") @db.Uuid
+  orderedBy           String         @map("ordered_by") @db.VarChar(100)
+  orderCategory       OrderCategory  @map("order_category")
+  priority            PriorityLevel  @default(ROUTINE)
+  clinicalIndication  String         @map("clinical_indication") @db.Text
+  status              OrderStatus    @default(ORDERED)
+  isCito              Boolean        @default(false) @map("is_cito")
+  totalEstimatedAmount Decimal       @default(0.00) @map("total_estimated_amount") @db.Decimal(15, 2)
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+
+  patient             Patient        @relation(fields: [patientId], references: [id])
+  episode             EpisodeOfCare  @relation(fields: [episodeId], references: [id])
+  encounter           Encounter      @relation(fields: [encounterId], references: [id])
+  medicationOrders    MedicationOrder[]
+  laboratoryOrders    LaboratoryOrder[]
+  radiologyOrders     RadiologyOrder[]
+
+  @@map("clinical_orders")
+}
+
+model MedicationOrder {
+  id                  String         @id @default(uuid()) @db.Uuid
+  orderId             String         @map("order_id") @db.Uuid
+  medicationCode      String         @map("medication_code") @db.VarChar(50)
+  medicationName      String         @map("medication_name") @db.VarChar(255)
+  dosage              String         @db.VarChar(100)
+  route               String         @db.VarChar(50)
+  frequency           String         @db.VarChar(100)
+  quantity            Int
+  unitPrice           Decimal        @map("unit_price") @db.Decimal(15, 2)
+  totalPrice          Decimal        @map("total_price") @db.Decimal(15, 2)
+  highAlert           Boolean        @default(false) @map("high_alert")
+  lasaFlag            Boolean        @default(false) @map("lasa_flag")
+  status              String         @default("PRESCRIBED") @db.VarChar(30)
+
+  order               ClinicalOrder  @relation(fields: [orderId], references: [id])
+
+  @@map("medication_orders")
+}
+
+model LaboratoryOrder {
+  id                  String         @id @default(uuid()) @db.Uuid
+  orderId             String         @map("order_id") @db.Uuid
+  loincCode           String         @map("loinc_code") @db.VarChar(50)
+  testName            String         @map("test_name") @db.VarChar(255)
+  specimenType        String         @map("specimen_type") @db.VarChar(50)
+  resultValue         String?        @map("result_value") @db.Text
+  unit                String?        @db.VarChar(50)
+  isCriticalPanic     Boolean        @default(false) @map("is_critical_panic")
+  unitPrice           Decimal        @map("unit_price") @db.Decimal(15, 2)
+  resultStatus        String         @default("ORDERED") @map("result_status") @db.VarChar(30)
+
+  order               ClinicalOrder  @relation(fields: [orderId], references: [id])
+
+  @@map("laboratory_orders")
+}
+
+model RadiologyOrder {
+  id                  String         @id @default(uuid()) @db.Uuid
+  orderId             String         @map("order_id") @db.Uuid
+  modality            String         @db.VarChar(20)
+  examinationName     String         @map("examination_name") @db.VarChar(255)
+  dicomStudyUid       String         @map("dicom_study_uid") @db.VarChar(255)
+  radiologistReport   String?        @map("radiologist_report") @db.Text
+  unitPrice           Decimal        @map("unit_price") @db.Decimal(15, 2)
+  resultStatus        String         @default("ORDERED") @map("result_status") @db.VarChar(30)
+
+  order               ClinicalOrder  @relation(fields: [orderId], references: [id])
+
+  @@map("radiology_orders")
+}
+
+// ─── 5. BILLING & REVENUE CYCLE ───
+model BillingLedger {
+  id                  String         @id @default(uuid()) @db.Uuid
+  chargeId            String         @unique @map("charge_id") @db.VarChar(50)
+  episodeId           String         @map("episode_id") @db.Uuid
+  patientId           String         @map("patient_id") @db.Uuid
+  serviceCategory     String         @map("service_category") @db.VarChar(50)
+  serviceName         String         @map("service_name") @db.VarChar(255)
+  unitPrice           Decimal        @map("unit_price") @db.Decimal(15, 2)
+  quantity            Int            @default(1)
+  totalAmount         Decimal        @map("total_amount") @db.Decimal(15, 2)
+  paymentStatus       String         @default("UNPAID") @map("payment_status") @db.VarChar(30)
+  chargedAt           DateTime       @default(now()) @map("charged_at") @db.Timestamptz()
+
+  episode             EpisodeOfCare  @relation(fields: [episodeId], references: [id])
+  patient             Patient        @relation(fields: [patientId], references: [id])
+
+  @@map("billing_ledgers")
+}
+
+// ─── 6. SECURITY & IMMUTABLE AUDIT TRAIL ───
+model EnterpriseUser {
+  id                  String         @id @default(uuid()) @db.Uuid
+  employeeId          String         @unique @map("employee_id") @db.VarChar(30)
+  username            String         @unique @db.VarChar(100)
+  passwordHash        String         @map("password_hash") @db.VarChar(255)
+  fullName            String         @map("full_name") @db.VarChar(255)
+  email               String         @unique @db.VarChar(100)
+  role                EnterpriseRole
+  departmentId        String         @map("department_id") @db.VarChar(50)
+  isActive            Boolean        @default(true) @map("is_active")
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("enterprise_users")
+}
+
+model UniversalAuditLog {
+  id                  String         @id @default(uuid()) @db.Uuid
+  actorId             String         @map("actor_id") @db.VarChar(100)
+  actorName           String         @map("actor_name") @db.VarChar(255)
+  actorRole           String         @map("actor_role") @db.VarChar(50)
+  clientIp            String         @map("client_ip") @db.VarChar(50)
+  deviceId            String?        @map("device_id") @db.VarChar(100)
+  sessionId           String?        @map("session_id") @db.VarChar(100)
+  correlationId       String?        @map("correlation_id") @db.VarChar(100)
+  actionType          String         @map("action_type") @db.VarChar(50)
+  resourceType        String         @map("resource_type") @db.VarChar(50)
+  resourceId          String         @map("resource_id") @db.VarChar(100)
+  patientId           String?        @map("patient_id") @db.Uuid
+  beforeState         Json?          @map("before_state")
+  afterState          Json?          @map("after_state")
+  signatureHash       String         @map("signature_hash") @db.VarChar(255)
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("universal_audit_logs")
+}

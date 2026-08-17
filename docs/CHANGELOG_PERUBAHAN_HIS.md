@@ -20,7 +20,24 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT 5.5: Enterprise Foundation, Technical Debt Hardening, Database Migrations, Repository Pattern, RBAC & CI/CD Docker
+### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT FOUNDATION & HARDENING: Dedicated Backend REST API, Prisma ORM, SATUSEHAT FHIR R4, BPJS VClaim 2.0 & Observability
+
+**Kategori:** `[MAJOR]` `[BACKEND_API]` `[PRISMA_ORM]` `[SATUSEHAT_FHIR]` `[BPJS_VCLAIM]` `[API_SECURITY]` `[OBSERVABILITY]` `[INTEGRATION_TESTS]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 10 Suites / 25 Tests) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `prisma/schema.prisma` (NEW), `server/server.js` (NEW), `server/middlewares/authMiddleware.js` (NEW), `server/middlewares/rbacMiddleware.js` (NEW), `server/routes/auth.routes.js` (NEW), `server/routes/patients.routes.js` (NEW), `server/routes/orders.routes.js` (NEW), `server/routes/billing.routes.js` (NEW), `server/integrations/satusehatClient.js` (NEW), `server/integrations/bpjsVclaimClient.js` (NEW), `tests/satusehatIntegration.test.js` (NEW), `tests/bpjsVclaimIntegration.test.js` (NEW), `tests/authentication.test.js` (NEW), `tests/rbac.test.js` (NEW), `tests/billingEngine.test.js` (NEW), `tests/cdssEngine.test.js` (NEW), `tests/encounterFsm.test.js` (NEW), `src/routes/*` (MODULARIZED), `src/App.jsx` (REFACTORED <60L)
+
+#### Detail Peningkatan Backend & Foundation Hardening:
+1. **🖥️ DEDICATED REST API GATEWAY SERVER (`server/`):**
+   - REST API Engine dengan CORS, Rate Limiter, Correlation ID Interceptor, dan route group `/api/v1/auth`, `/api/v1/patients`, `/api/v1/orders`, `/api/v1/billing`.
+2. **📐 POSTGRESQL PRISMA ORM SCHEMA (`prisma/schema.prisma`):**
+   - Skema ORM terpadu untuk Master Patient, EpisodeOfCare, Encounter, SOAP, CPPT, Observations, Universal Orders, Pharmacy, LIS, PACS, Billing Ledger, hingga Audit Trail.
+3. **🇮🇩 BRIDGING RESMI SATUSEHAT & BPJS VCLAIM 2.0:**
+   - `server/integrations/satusehatClient.js`: FHIR R4 Encounter & Observation bundle builder.
+   - `server/integrations/bpjsVclaimClient.js`: Header autentikasi HMAC-SHA256 timestamp & SEP creation payload builder.
+4. **📊 OBSERVABILITY & HEALTHCHECKS (`/health/live`, `/health/ready`, `/metrics`):**
+   - Endpoint status kesiapan layanan dan Prometheus metrics standard.
+
+---
 
 **Kategori:** `[MAJOR]` `[TECHNICAL_DEBT]` `[DATABASE_MIGRATION]` `[REPOSITORY_PATTERN]` `[RBAC_SECURITY]` `[BILLING_ENGINE]` `[UNIT_TESTS]` `[CI_CD_DOCKER]`  
 **Status:** Completed & Verified via Build (`npm run build` PASS)  
