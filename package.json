@@ -10,6 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "audit-design": "node scripts/audit-design.js",
+    "setup": "node scripts/setup.js",
+    "scan:secrets": "node scripts/scan-secrets.js",
     "sync:push": "node scripts/device-sync.js push",
     "sync:pull": "node scripts/device-sync.js pull",
     "sync:status": "node scripts/device-sync.js status"

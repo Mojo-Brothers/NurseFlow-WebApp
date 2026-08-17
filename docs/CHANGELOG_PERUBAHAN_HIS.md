@@ -20,7 +20,25 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT APPOINTMENT & QUEUE, INA-CBG CLAIM ENGINE, PHARMACY FEFO INVENTORY, MULTI-CHANNEL NOTIFICATION & MULTI-TENANT SAAS SUBSCRIPTION
+### 🟢 [17 AGUSTUS 2026] — Implementasi MULTI-DEVICE DEVELOPMENT, SECRET MANAGEMENT & ENVIRONMENT HARDENING
+
+**Kategori:** `[MAJOR]` `[DEVSECOPS]` `[SECRET_MANAGEMENT]` `[ENV_HARDENING]` `[DOCKER_SECURITY]` `[MULTI_DEVICE_BOOTSTRAP]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 32 Suites / 79 Tests), Secret Scanner (`npm run scan:secrets` PASS 674 files) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `.gitignore` (HARDENED), `.env.example` (STANDARDIZED), `.env` (UNTRACKED & PURGED), `docker-compose.yml` (HARDENED), `server/config/envValidator.js` (NEW), `server/utils/logSanitizer.js` (NEW), `scripts/setup.js` (NEW), `scripts/scan-secrets.js` (NEW), `docs/DEVELOPMENT.md` (NEW), `docs/SECURITY_SECRET_MANAGEMENT.md` (NEW), `tests/environmentValidation.test.js` (NEW), `tests/loggingRedaction.test.js` (NEW)
+
+#### Detail Pengerasan Keamanan & Multi-Device:
+1. **🛡️ UNTRACK & PURGE FILE `.env` DARI GIT:**
+   - Menghapus tracking `.env` dari Git index dan memperketat `.gitignore` agar mengecualikan seluruh varian `.env*` (kecuali `.env.example`), private keys (`*.pem`, `*.key`), certificate (`*.crt`), dan service account credentials.
+2. **⚙️ ENVIRONMENT VALIDATION & PRODUCTION GUARD (`envValidator.js`):**
+   - Validasi ketat variabel environment pada waktu boot/runtime yang menolak fallback kredensial default (*Zero-Secret-Fallback*) dan mendeteksi kunci lemah pada mode produksi.
+3. **🔍 AUTOMATED SECRET SCANNER (`scan-secrets.js`):**
+   - Skrip pemindaian otomatis untuk mendeteksi kunci privat RSA/EC, AWS Access Keys, GitHub PAT, dan hardcoded connection string.
+4. **🧙 DEVELOPER BOOTSTRAP WIZARD (`setup.js`):**
+   - Memfasilitasi onboarding pengembang pada device baru (`npm run setup`) untuk membuat `.env.local` lokal tanpa menyalin file secret antar developer.
+5. **🧹 SECURE LOG SANITIZER & PHI REDACTOR (`logSanitizer.js`):**
+   - Masking otomatis untuk field sensitif (`password`, `token`, `authorization`, `apiKey`, `creditCard`) pada log aplikasi.
+
+---
 
 **Kategori:** `[MAJOR]` `[APPOINTMENT_QUEUE]` `[INACBG_CLAIMS]` `[FEFO_INVENTORY]` `[NOTIFICATION_ENGINE]` `[SAAS_SUBSCRIPTION]`  
 **Status:** Completed & Verified via Vitest (`npm test` PASS 30 Suites / 74 Tests) & Build (`npm run build` PASS)  
