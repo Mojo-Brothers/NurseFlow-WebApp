@@ -20,7 +20,25 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT FHIR MAPPERS, EMPI DEDUPLICATION, ABAC ROW-LEVEL SECURITY, LIS & RIS/PACS ENGINE & MULTI-TENANT ISOLATION
+### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT COT (KAMAR OPERASI), ICU CRITICAL CARE (SOFA), BLOOD BANK (BDRS), STAFF ROSTER & CLINICAL WORKFLOW ORCHESTRATOR
+
+**Kategori:** `[MAJOR]` `[OPERATING_THEATRE]` `[CRITICAL_CARE_SOFA]` `[BLOOD_BANK_BDRS]` `[STAFF_SCHEDULING]` `[WORKFLOW_ORCHESTRATOR]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 25 Suites / 66 Tests) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `server/services/operatingTheatre.service.js` (NEW), `server/services/criticalCare.service.js` (NEW), `server/services/bloodBank.service.js` (NEW), `server/services/staffScheduling.service.js` (NEW), `server/services/clinicalWorkflowOrchestrator.service.js` (NEW), `tests/operatingTheatre.test.js` (NEW), `tests/criticalCare.test.js` (NEW), `tests/bloodBank.test.js` (NEW), `tests/staffScheduling.test.js` (NEW), `tests/workflowOrchestrator.test.js` (NEW)
+
+#### Detail Peningkatan Bedah Sentral, ICU & Workflow:
+1. **🏥 CENTRAL OPERATING THEATRE & WHO CHECKLIST (`operatingTheatre.service.js`):**
+   - Penjadwalan operasi bedah sentral, verifikasi *WHO Surgical Safety Checklist (Sign In, Time Out, Sign Out)*, serta evaluasi pemulihan pasca-anestesi (*Aldrete Score* $\ge 9$).
+2. **🫁 ICU & CRITICAL CARE SCORING (`criticalCare.service.js`):**
+   - Mesin kalkulasi *Sequential Organ Failure Assessment (SOFA Score)* untuk stratifikasi risiko disfungsi multi-organ/sepsis serta pemantauan keseimbangan cairan 24 jam (*Fluid Balance*).
+3. **🩸 BLOOD BANK (BDRS) & HEMOVIGILANCE (`bloodBank.service.js`):**
+   - Matriks validasi kompatibilitas golongan darah ABO/Rh, penerbitan kantong darah hasil *Cross-Matching*, serta protokol keselamatan hemovigilans.
+4. **📅 ENTERPRISE STAFF SCHEDULING & ROSTER (`staffScheduling.service.js`):**
+   - Pengaturan shift jaga perawat dan dokter spesialis on-call dengan validasi pencegahan konflik jadwal otomatis.
+5. **⚡ UNIVERSAL CLINICAL WORKFLOW ORCHESTRATOR (`clinicalWorkflowOrchestrator.service.js`):**
+   - Orkestrasi transisi alur klinis berbasis *State Machine Formal* yang menggantikan percabangan logika hardcoded.
+
+---
 
 **Kategori:** `[MAJOR]` `[FHIR_R4_MAPPERS]` `[EMPI_DEDUPLICATION]` `[ABAC_SECURITY]` `[LIS_PACS_ENGINE]` `[MULTI_TENANT_SAAS]`  
 **Status:** Completed & Verified via Vitest (`npm test` PASS 20 Suites / 55 Tests) & Build (`npm run build` PASS)  
