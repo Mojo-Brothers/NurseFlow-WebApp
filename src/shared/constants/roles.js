@@ -1,0 +1,92 @@
+/**
+ * NurseFlow Enterprise HIS 2026 — Single Source of Truth (SSOT) Enterprise Roles
+ * Strict alignment across PostgreSQL Schema, Backend RBAC Middleware, and Frontend UI Guards.
+ */
+
+export const ENTERPRISE_ROLES = {
+  ROLE_SUPER_ADMIN: 'ROLE_SUPER_ADMIN',
+  ROLE_DOCTOR_DPJP: 'ROLE_DOCTOR_DPJP',
+  ROLE_DOCTOR_EMERGENCY: 'ROLE_DOCTOR_EMERGENCY',
+  ROLE_NURSE: 'ROLE_NURSE',
+  ROLE_PHARMACIST: 'ROLE_PHARMACIST',
+  ROLE_LAB_ANALYST: 'ROLE_LAB_ANALYST',
+  ROLE_RADIOGRAPHER: 'ROLE_RADIOGRAPHER',
+  ROLE_CASHIER: 'ROLE_CASHIER',
+  ROLE_REGISTRATION_CLERK: 'ROLE_REGISTRATION_CLERK',
+  ROLE_MEDICAL_RECORD_OFFICER: 'ROLE_MEDICAL_RECORD_OFFICER',
+  ROLE_IT_ADMIN: 'ROLE_IT_ADMIN'
+};
+
+export const ROLE_PERMISSIONS_MATRIX = {
+  [ENTERPRISE_ROLES.ROLE_SUPER_ADMIN]: {
+    name: 'Super Administrator / Chief Information Officer',
+    permissions: ['*']
+  },
+  [ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP]: {
+    name: 'Dokter Penanggung Jawab Pelayanan (DPJP)',
+    permissions: [
+      'EMR_READ', 'EMR_WRITE_SOAP', 'CPPT_WRITE', 'CPPT_VERIFY',
+      'ORDER_CREATE_PHARMACY', 'ORDER_CREATE_LAB', 'ORDER_CREATE_RAD',
+      'DISCHARGE_AUTHORIZE'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_DOCTOR_EMERGENCY]: {
+    name: 'Dokter Jaga IGD (Emergency Physician)',
+    permissions: [
+      'EMR_READ', 'EMR_WRITE_SOAP', 'CPPT_WRITE',
+      'ORDER_CREATE_PHARMACY', 'ORDER_CREATE_LAB', 'ORDER_CREATE_RAD',
+      'TRIAGE_READ', 'TRIAGE_WRITE', 'RESUSCITATION_WRITE', 'FAST_TRACK_ACTIVATE'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_NURSE]: {
+    name: 'Perawat Klinis (Nurse)',
+    permissions: [
+      'EMR_READ', 'CPPT_WRITE', 'OBSERVATION_WRITE',
+      'TRIAGE_READ', 'TRIAGE_WRITE', 'RESUSCITATION_WRITE',
+      'MEDICATION_ADMINISTER', 'BED_TRANSFER_REQUEST'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_PHARMACIST]: {
+    name: 'Apoteker Klinis (Clinical Pharmacist)',
+    permissions: [
+      'EMR_READ', 'CPPT_WRITE', 'PHARMACY_REVIEW', 'PHARMACY_DISPENSE',
+      'MEDICATION_MASTER_WRITE', 'ANTIBIOTIC_STEWARDSHIP_MANAGE', 'CONTROLLED_DRUG_WITNESS'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_LAB_ANALYST]: {
+    name: 'Pranata Laboratorium Kesehatan (LIS Analyst)',
+    permissions: [
+      'EMR_READ_ORDERS', 'LAB_SPECIMEN_RECEIVE', 'LAB_ANALYZER_RUN', 'LAB_RESULT_VALIDATE'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_RADIOGRAPHER]: {
+    name: 'Radiografer & Radiolog (PACS)',
+    permissions: [
+      'EMR_READ_ORDERS', 'RAD_IMAGE_ACQUIRE', 'RAD_REPORT_WRITE', 'RAD_REPORT_VERIFY'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_CASHIER]: {
+    name: 'Kasir & Keuangan Rumah Sakit',
+    permissions: [
+      'BILLING_READ', 'INVOICE_CREATE', 'PAYMENT_PROCESS', 'INACBG_CLAIM_MANAGE'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_REGISTRATION_CLERK]: {
+    name: 'Petugas Pendaftaran & Admisi (Front Office)',
+    permissions: [
+      'PATIENT_REGISTER', 'QUEUE_MANAGE', 'BPJS_SEP_GENERATE', 'CONSENT_RECORD'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_MEDICAL_RECORD_OFFICER]: {
+    name: 'Perekam Medis (Medical Records / RMIK)',
+    permissions: [
+      'EMR_READ', 'ICD_CODE_ASSIGN', 'CLAIM_FILE_ASSEMBLE', 'AUDIT_EXPORT'
+    ]
+  },
+  [ENTERPRISE_ROLES.ROLE_IT_ADMIN]: {
+    name: 'IT Systems & Integration Administrator',
+    permissions: [
+      'SYSTEM_CONFIG', 'AUDIT_READ', 'INTEGRATION_MANAGE', 'USER_PROVISION'
+    ]
+  }
+};

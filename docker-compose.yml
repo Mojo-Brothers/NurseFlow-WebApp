@@ -9,9 +9,9 @@ services:
     container_name: nurseflow_his_webapp
     restart: always
     ports:
-      - "80:80"
-    environment:
-      - NODE_ENV=production
+      - "${PORT:-80}:80"
+    env_file:
+      - .env
     depends_on:
       - postgres-db
       - redis-cache
@@ -23,15 +23,17 @@ services:
     image: postgres:16-alpine
     container_name: nurseflow_postgres_db
     restart: always
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: nurseflow_enterprise_his
-      POSTGRES_USER: his_admin
-      POSTGRES_PASSWORD: HisSecurePassword2026!
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./database/migrations:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     networks:
       - nurseflow-network
 
@@ -40,11 +42,13 @@ services:
     image: redis:7-alpine
     container_name: nurseflow_redis_cache
     restart: always
-    command: redis-server --appendonly yes --requirepass RedisSecurePassword2026!
+    env_file:
+      - .env
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - redisdata:/data
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - nurseflow-network
 

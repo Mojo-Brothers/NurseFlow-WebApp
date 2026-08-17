@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "vitest run",
     "lint": "eslint .",
     "preview": "vite preview",
     "audit-design": "node scripts/audit-design.js",
@@ -60,6 +61,7 @@
     "globals": "^17.4.0",
     "postcss": "^8.5.10",
     "tailwindcss": "^3.4.19",
-    "vite": "^8.0.4"
+    "vite": "^8.0.4",
+    "vitest": "^4.1.10"
   }
 }

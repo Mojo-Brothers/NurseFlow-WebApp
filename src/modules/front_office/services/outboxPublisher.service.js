@@ -12,8 +12,10 @@ const PROCESSED_EVENTS_KEY = 'nurseflow_processed_events';
 
 const getStoredOutbox = () => {
   try {
-    const raw = localStorage.getItem(OUTBOX_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(OUTBOX_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    }
   } catch (e) {
     console.warn('[OutboxPublisher] Failed to load outbox:', e);
   }
@@ -22,7 +24,9 @@ const getStoredOutbox = () => {
 
 const saveStoredOutbox = (outbox) => {
   try {
-    localStorage.setItem(OUTBOX_STORAGE_KEY, JSON.stringify(outbox));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(OUTBOX_STORAGE_KEY, JSON.stringify(outbox));
+    }
   } catch (e) {
     console.warn('[OutboxPublisher] Failed to save outbox:', e);
   }

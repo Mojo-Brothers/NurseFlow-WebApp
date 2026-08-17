@@ -10,8 +10,10 @@ const ALLERGY_STORAGE_KEY = 'nurseflow_patient_allergies';
 
 const getStoredAllergies = () => {
   try {
-    const raw = localStorage.getItem(ALLERGY_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(ALLERGY_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    }
   } catch (e) {
     console.warn('[AllergyEngine] Failed to load allergies:', e);
   }

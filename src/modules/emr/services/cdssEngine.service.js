@@ -11,8 +11,10 @@ const CDSS_ALERTS_KEY = 'nurseflow_cdss_alerts';
 
 const getStoredAlerts = () => {
   try {
-    const raw = localStorage.getItem(CDSS_ALERTS_KEY);
-    if (raw) return JSON.parse(raw);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(CDSS_ALERTS_KEY);
+      if (raw) return JSON.parse(raw);
+    }
   } catch (e) {
     console.warn('[CdssEngine] Failed to load CDSS alerts:', e);
   }
@@ -21,7 +23,9 @@ const getStoredAlerts = () => {
 
 const saveStoredAlerts = (alerts) => {
   try {
-    localStorage.setItem(CDSS_ALERTS_KEY, JSON.stringify(alerts));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(CDSS_ALERTS_KEY, JSON.stringify(alerts));
+    }
   } catch (e) {
     console.warn('[CdssEngine] Failed to save CDSS alerts:', e);
   }
