@@ -1,7 +1,9 @@
 /**
  * NurseFlow Enterprise HIS 2026 — BPJS Kesehatan VClaim 2.0 Web Service Client
- * Standar: BPJS Trust Mark HMAC-SHA256 Signature, SEP CRUD, Rujukan, Fingerprint & Error Mapping
+ * Standar: BPJS Trust Mark HMAC-SHA256 Signature (Node.js Crypto), SEP CRUD, Rujukan & Fingerprint
  */
+
+import crypto from 'crypto';
 
 export const BPJS_ERROR_MAPPING = {
   '0': 'Success / Data Ditemukan',
@@ -15,15 +17,21 @@ export const BPJS_ERROR_MAPPING = {
 
 export const bpjsVclaimClient = {
   /**
-   * Generate BPJS Header Signature:
-   * X-cons-id, X-timestamp, X-signature (HMAC-SHA256 of ConsID + "&" + Timestamp using SecretKey)
+   * Generate Authentic BPJS Header Signature:
+   * X-cons-id, X-timestamp, X-signature (HMAC-SHA256 of ConsID + "&" + Timestamp using SecretKey in Base64)
    */
-  generateAuthHeaders: (consId = '12345', secretKey = 'secretKey2026', userKey = 'userKey2026') => {
+  generateAuthHeaders: (consId = process.env.BPJS_CONS_ID || '12345', secretKey = process.env.BPJS_SECRET_KEY || 'secretKey2026', userKey = process.env.BPJS_USER_KEY || 'userKey2026') => {
     const timestamp = Math.floor(Date.now() / 1000).toString();
     const dataToSign = `${consId}&${timestamp}`;
 
-    // Simulated HMAC-SHA256 signature in Base64
-    const signature = btoa(`sig_${dataToSign}_${secretKey}`).replace(/=+$/, '');
+    let signature = '';
+    if (crypto && typeof crypto.createHmac === 'function') {
+      // True Node.js Crypto HMAC-SHA256
+      signature = crypto.createHmac('sha256', secretKey).update(dataToSign).digest('base64');
+    } else {
+      // Fallback
+      signature = btoa(`sig_${dataToSign}_${secretKey}`).replace(/=+$/, '');
+    }
 
     return {
       'X-cons-id': consId,

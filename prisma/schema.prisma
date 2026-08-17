@@ -1,6 +1,7 @@
 // ==============================================================================
 // NurseFlow Enterprise HIS 2026 — Comprehensive Prisma ORM Schema
 // Standar: Permenkes No. 24/2022, JCI 7th Edition, HL7 FHIR R4 & BPJS VClaim 2.0
+// Features: ADT Engine, Ward/Bed Hierarchy, Event Sourcing Audit & Outbox Pattern
 // ==============================================================================
 
 generator client {
@@ -48,13 +49,23 @@ enum EncounterStatus {
   ARRIVED
   TRIAGED
   WAITING
+  ADMITTED
   IN_PROGRESS
-  ON_HOLD
+  TRANSFERRED
   DISCHARGED
   COMPLETED
   CLOSED
   CANCELLED
   NO_SHOW
+}
+
+enum BedStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  CLEANING
+  MAINTENANCE
+  ISOLATION
 }
 
 enum OrderCategory {
@@ -78,6 +89,14 @@ enum OrderStatus {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+}
+
+enum OutboxStatus {
+  PENDING
+  PROCESSING
+  PUBLISHED
+  FAILED
+  DEAD_LETTER
 }
 
 enum EnterpriseRole {
@@ -120,11 +139,106 @@ model Patient {
   allergies       PatientAllergy[]
   orders          ClinicalOrder[]
   billingLedgers  BillingLedger[]
+  bedOccupancies  BedOccupancy[]
 
   @@map("master_patients")
 }
 
-// ─── 2. CLINICAL CORE: EPISODES & ENCOUNTERS ───
+// ─── 2. BED MANAGEMENT & WARD HIERARCHY ───
+model Building {
+  id              String         @id @default(uuid()) @db.Uuid
+  buildingCode    String         @unique @map("building_code") @db.VarChar(30)
+  buildingName    String         @map("building_name") @db.VarChar(100)
+  floors          Floor[]
+
+  @@map("master_buildings")
+}
+
+model Floor {
+  id              String         @id @default(uuid()) @db.Uuid
+  buildingId      String         @map("building_id") @db.Uuid
+  floorNumber     Int            @map("floor_number")
+  floorName       String         @map("floor_name") @db.VarChar(100)
+
+  building        Building       @relation(fields: [buildingId], references: [id])
+  wards           Ward[]
+
+  @@map("master_floors")
+}
+
+model Ward {
+  id              String         @id @default(uuid()) @db.Uuid
+  floorId         String         @map("floor_id") @db.Uuid
+  wardCode        String         @unique @map("ward_code") @db.VarChar(30)
+  wardName        String         @map("ward_name") @db.VarChar(100)
+  wardClass       String         @map("ward_class") @db.VarChar(30) // VVIP, VIP, KELAS_1, KELAS_2, KELAS_3, ICU, NICU, PICU
+
+  floor           Floor          @relation(fields: [floorId], references: [id])
+  rooms           Room[]
+
+  @@map("master_wards")
+}
+
+model Room {
+  id              String         @id @default(uuid()) @db.Uuid
+  wardId          String         @map("ward_id") @db.Uuid
+  roomNumber      String         @map("room_number") @db.VarChar(30)
+  genderType      String         @default("ALL") @map("gender_type") @db.VarChar(10) // MALE, FEMALE, ISOLATION, ALL
+
+  ward            Ward           @relation(fields: [wardId], references: [id])
+  beds            Bed[]
+
+  @@map("master_rooms")
+}
+
+model Bed {
+  id              String         @id @default(uuid()) @db.Uuid
+  roomId          String         @map("room_id") @db.Uuid
+  bedNumber       String         @map("bed_number") @db.VarChar(30)
+  bedStatus       BedStatus      @default(AVAILABLE) @map("bed_status")
+  dailyTariff     Decimal        @default(0.00) @map("daily_tariff") @db.Decimal(15, 2)
+
+  room            Room           @relation(fields: [roomId], references: [id])
+  occupancies     BedOccupancy[]
+  transfersFrom   BedTransfer[]  @relation("BedTransferFrom")
+  transfersTo     BedTransfer[]  @relation("BedTransferTo")
+
+  @@map("master_beds")
+}
+
+model BedOccupancy {
+  id              String         @id @default(uuid()) @db.Uuid
+  bedId           String         @map("bed_id") @db.Uuid
+  patientId       String         @map("patient_id") @db.Uuid
+  encounterId     String         @map("encounter_id") @db.Uuid
+  checkInTime     DateTime       @default(now()) @map("check_in_time") @db.Timestamptz()
+  checkOutTime    DateTime?      @map("check_out_time") @db.Timestamptz()
+  occupancyStatus String         @default("ACTIVE") @map("occupancy_status") @db.VarChar(30)
+
+  bed             Bed            @relation(fields: [bedId], references: [id])
+  patient         Patient        @relation(fields: [patientId], references: [id])
+  encounter       Encounter      @relation(fields: [encounterId], references: [id])
+
+  @@map("bed_occupancies")
+}
+
+model BedTransfer {
+  id              String         @id @default(uuid()) @db.Uuid
+  encounterId     String         @map("encounter_id") @db.Uuid
+  fromBedId       String         @map("from_bed_id") @db.Uuid
+  toBedId         String         @map("to_bed_id") @db.Uuid
+  transferReason  String         @map("transfer_reason") @db.Text
+  transferredBy   String         @map("transferred_by") @db.VarChar(100)
+  transferredAt   DateTime       @default(now()) @map("transferred_at") @db.Timestamptz()
+
+  encounter       Encounter      @relation(fields: [encounterId], references: [id])
+  fromBed         Bed            @relation("BedTransferFrom", fields: [fromBedId], references: [id])
+  toBed           Bed            @relation("BedTransferTo", fields: [toBedId], references: [id])
+
+  @@map("bed_transfers")
+}
+
+// ─── 3. CLINICAL CORE: EPISODES & ENCOUNTERS ───
 model EpisodeOfCare {
   id                    String        @id @default(uuid()) @db.Uuid
   episodeNumber         String        @unique @map("episode_number") @db.VarChar(30)
@@ -170,11 +284,13 @@ model Encounter {
   cpptNotes             CpptNote[]
   observations          ClinicalObservation[]
   orders                ClinicalOrder[]
+  bedOccupancies        BedOccupancy[]
+  bedTransfers          BedTransfer[]
 
   @@map("encounters")
 }
 
-// ─── 3. EMR: SOAP, CPPT, OBSERVATIONS, ALLERGIES ───
+// ─── 4. EMR: SOAP, CPPT, OBSERVATIONS, ALLERGIES ───
 model SoapNote {
   id                  String     @id @default(uuid()) @db.Uuid
   encounterId         String     @map("encounter_id") @db.Uuid
@@ -245,7 +361,7 @@ model ClinicalObservation {
   @@map("clinical_observations")
 }
 
-// ─── 4. UNIVERSAL ORDERS DOMAIN ───
+// ─── 5. UNIVERSAL ORDERS DOMAIN ───
 model ClinicalOrder {
   id                  String         @id @default(uuid()) @db.Uuid
   orderNumber         String         @unique @map("order_number") @db.VarChar(30)
@@ -323,7 +439,7 @@ model RadiologyOrder {
   @@map("radiology_orders")
 }
 
-// ─── 5. BILLING & REVENUE CYCLE ───
+// ─── 6. BILLING & REVENUE CYCLE ───
 model BillingLedger {
   id                  String         @id @default(uuid()) @db.Uuid
   chargeId            String         @unique @map("charge_id") @db.VarChar(50)
@@ -343,7 +459,25 @@ model BillingLedger {
   @@map("billing_ledgers")
 }
 
-// ─── 6. SECURITY & IMMUTABLE AUDIT TRAIL ───
+// ─── 7. TRANSACTIONAL OUTBOX PATTERN ───
+model OutboxEvent {
+  id                  String         @id @default(uuid()) @db.Uuid
+  eventType           String         @map("event_type") @db.VarChar(100)
+  aggregateType       String         @map("aggregate_type") @db.VarChar(50)
+  aggregateId         String         @map("aggregate_id") @db.VarChar(100)
+  payload             Json
+  status              OutboxStatus   @default(PENDING)
+  retryCount          Int            @default(0) @map("retry_count")
+  maxRetries          Int            @default(5) @map("max_retries")
+  errorLog            String?        @map("error_log") @db.Text
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
+  processedAt         DateTime?      @map("processed_at") @db.Timestamptz()
+
+  @@index([status, createdAt])
+  @@map("outbox_events")
+}
+
+// ─── 8. SECURITY & IMMUTABLE BLOCKCHAIN AUDIT TRAIL ───
 model EnterpriseUser {
   id                  String         @id @default(uuid()) @db.Uuid
   employeeId          String         @unique @map("employee_id") @db.VarChar(30)
@@ -361,6 +495,7 @@ model EnterpriseUser {
 
 model UniversalAuditLog {
   id                  String         @id @default(uuid()) @db.Uuid
+  eventVersion        Int            @default(1) @map("event_version")
   actorId             String         @map("actor_id") @db.VarChar(100)
   actorName           String         @map("actor_name") @db.VarChar(255)
   actorRole           String         @map("actor_role") @db.VarChar(50)
@@ -374,8 +509,13 @@ model UniversalAuditLog {
   patientId           String?        @map("patient_id") @db.Uuid
   beforeState         Json?          @map("before_state")
   afterState          Json?          @map("after_state")
+  eventPayload        Json?          @map("event_payload")
+  previousHash        String         @default("GENESIS_BLOCK_HASH_000000000000") @map("previous_hash") @db.VarChar(255)
+  eventHash           String         @map("event_hash") @db.VarChar(255)
   signatureHash       String         @map("signature_hash") @db.VarChar(255)
   createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz()
 
+  @@index([resourceType, resourceId])
+  @@index([patientId])
   @@map("universal_audit_logs")
 }

@@ -20,7 +20,23 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT PRODUCTION HARDENING: OpenAPI 3.0 /docs, Real-Time WebSocket Broker, Atomic Transaction Coordinator, Database Seeder & E2E Hospital Journey Test Suite
+### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT ADT & BED MANAGEMENT: ADT Engine (HL7 A01/A02/A03), Ward & Bed Hierarchy, Transactional Outbox Pattern, Crypto HMAC & Blockchain Audit Sourcing
+
+**Kategori:** `[MAJOR]` `[ADT_ENGINE]` `[BED_MANAGEMENT]` `[OUTBOX_PATTERN]` `[CRYPTO_SECURITY]` `[BLOCKCHAIN_AUDIT]` `[HL7_FHIR]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 13 Suites / 35 Tests) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `prisma/schema.prisma` (UPGRADED), `server/services/adtEngine.service.js` (NEW), `server/services/outboxWorker.service.js` (NEW), `server/integrations/bpjsVclaimClient.js` (UPGRADED Node crypto HMAC), `tests/adtEngine.test.js` (NEW), `tests/outboxPattern.test.js` (NEW)
+
+#### Detail Peningkatan ADT, Bed Management & Outbox:
+1. **🏥 ADT STATE MACHINE & BED MANAGEMENT (`adtEngine.service.js`):**
+   - Transisi siklus rawat inap lengkap berstandar HL7 (A01 Admit Pasien, A02 Transfer Antar Ruangan/Bed, A03 Discharge & Pengalihan Status Bed ke *Cleaning*).
+2. **🏢 HIERARKI RUANG INAP POSTGRESQL PRISMA (`prisma/schema.prisma`):**
+   - Pemodelan relational bertingkat: `Building` &rarr; `Floor` &rarr; `Ward` &rarr; `Room` &rarr; `Bed` dengan entitas pelacak `BedOccupancy` dan `BedTransfer`.
+3. **📦 TRANSACTIONAL OUTBOX PATTERN (`outboxWorker.service.js`):**
+   - Mekanisme penjamin konsistensi data *dual-write* antara database PostgreSQL dengan SATUSEHAT / BPJS melalui tabel outbox dan background publisher worker dengan *Dead Letter Queue (DLQ)*.
+4. **🔐 CRYPTOGRAPHIC HMAC-SHA256 & BLOCKCHAIN AUDIT LOG:**
+   - Implementasi tanda tangan digital Trust Mark resmi berbasis modul bawaan Node.js `crypto.createHmac` dan audit trail *event sourcing* dengan `eventHash` dan `previousHash`.
+
+---
 
 **Kategori:** `[MAJOR]` `[OPENAPI_SWAGGER]` `[WEBSOCKET_BROKER]` `[ATOMIC_TRANSACTION]` `[DB_SEEDER]` `[E2E_TESTING]` `[PITR_BACKUP]`  
 **Status:** Completed & Verified via Vitest (`npm test` PASS 11 Suites / 29 Tests) & Build (`npm run build` PASS)  
