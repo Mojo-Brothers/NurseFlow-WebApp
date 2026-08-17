@@ -15,7 +15,7 @@ const SystemPerformanceSuite = lazy(() => import('../modules/diagnostics/pages/S
 const WayfindingAdmin = lazy(() => import('../modules/enterprise/pages/WayfindingAdmin'));
 const Analytics = lazy(() => import('../modules/dashboard/pages/AnalyticsDashboard'));
 const UiDesignReviewPage = lazy(() => import('../modules/appointment_review/pages/UiDesignReviewPage'));
-const ModularDesignSystemReviewPage = lazy(() => import('../modules/admin/pages/ModularDesignSystemReviewPage'));
+const AuditTrailDashboardPage = lazy(() => import('../modules/admin/pages/AuditTrailDashboardPage'));
 
 export const adminRoutes = (Wrap) => [
   { path: "/review-design-ui-modul", element: <Wrap><UiDesignReviewPage /></Wrap> },
@@ -34,6 +34,7 @@ export const adminRoutes = (Wrap) => [
     children: [
       { path: "/admin", element: <Wrap><AdminHub /></Wrap> },
       { path: "/admin/staff-access", element: <Wrap><StaffManagementPage /></Wrap> },
+      { path: "/audit-trail", element: <Wrap><AuditTrailDashboardPage /></Wrap> },
       { path: "/surveillance", element: <Wrap><InfectionSurveillance /></Wrap> },
       { path: "/admin/master-hub", element: <Wrap><MasterDataHub /></Wrap> },
       { path: "/admin/dev-tools", element: <Wrap><DevTools /></Wrap> },

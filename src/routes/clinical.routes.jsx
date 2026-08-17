@@ -16,7 +16,7 @@ const OrdersWorkspace = lazy(() => import('../modules/orders/components/OrdersWo
 const Worklist = lazy(() => import('../modules/worklist/pages/WorklistPage'));
 const LabPage = lazy(() => import('../modules/lab/pages/LabPage'));
 const WardMonitor = lazy(() => import('../modules/dashboard/pages/WardMonitorPage'));
-const BedManagement = lazy(() => import('../modules/ward/pages/BedManagementPage'));
+const BedManagement = lazy(() => import('../modules/ward/pages/BedManagementCenterPage'));
 const EncounterSummary = lazy(() => import('../modules/reporting/pages/EncounterSummaryPage'));
 
 const BloodBankWorkspacePage = lazy(() => import('../modules/blood_bank/pages/BloodBankWorkspacePage'));

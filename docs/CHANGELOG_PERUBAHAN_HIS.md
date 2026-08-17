@@ -20,6 +20,34 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [17 AGUSTUS 2026] — ENTERPRISE ARCHITECTURE HARDENING: HL7 v2 INTERFACE, EVENT BUS, BED MANAGEMENT & JCI AUDIT TRAIL
+
+**Kategori:** `[MAJOR]` `[ARCHITECTURAL_GOVERNANCE]` `[HL7_V2_ENGINE]` `[EVENT_BUS_EDA]` `[BED_MANAGEMENT_CENTER]` `[JCI_AUDIT_TRAIL]` `[SATUSEHAT_FHIR_R4]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 47 Suites / 201 Tests), Vite Build (`npm run build` PASS — 5.00s)  
+**Komponen Terdampak:** `server/integrations/hl7/hl7Engine.service.js` (NEW), `server/realtime/eventBus.service.js` (NEW), `src/modules/ward/pages/BedManagementCenterPage.jsx` (NEW), `src/modules/admin/pages/AuditTrailDashboardPage.jsx` (NEW), `src/routes/clinical.routes.jsx` (MODIFIED), `src/routes/admin.routes.jsx` (MODIFIED), `tests/enterpriseInfrastructureVerticalSlice.test.js` (NEW)
+
+#### Detail Architectural Governance & Enterprise Infrastructure:
+1. **📡 HL7 v2.5.1 INTERFACE ENGINE (`hl7Engine.service.js`):**
+   - Generator & Parser Pesan Standar Internasional:
+     - `ADT^A01` (Admisi Pasien ke Bangsal dengan Bed dan DPJP).
+     - `ORM^O01` (Order Pemeriksaan Lab / Radiologi dengan kode LOINC dan prioritas STAT/Routine).
+     - `ORU^R01` (Parser Hasil Observasi Auto-Analyzer Laboratorium dengan ekstraksi flag `HH`/`LL` Panic Values).
+2. **⚡ DECOUPLED ENTERPRISE EVENT BUS (`eventBus.service.js`):**
+   - Arsitektur Berbasis Peristiwa (*Event-Driven Architecture*) dengan kontrak domain terstandar: `PATIENT_REGISTERED`, `TRIAGE_COMPLETED`, `ORDER_CREATED`, `SPECIMEN_COLLECTED`, `LAB_RESULT_VERIFIED`, `PANIC_VALUE_TRIGGERED`, `MEDICATION_ADMINISTERED`, `BED_TRANSFERRED`.
+   - Jejak audit event lengkap: `eventId`, `correlationId`, `tenantId`, `actor`, dan `workstationIp`.
+3. **🛏️ BED MANAGEMENT CENTER (`BedManagementCenterPage.jsx`):**
+   - Manajemen Status Tempat Tidur Terintegrasi: `AVAILABLE` (Siap Pakai), `OCCUPIED` (Terisi), `RESERVED` (Admisi IGD), `CLEANING` (Sterilisasi Housekeeping), dan `MAINTENANCE` (Rusak).
+   - Metrik Tingkat Hunian (*Bed Occupancy Rate / BOR%*), Alur Pasien Pulang (*Discharge*) &rarr; Siklus Sterilisasi &rarr; *Bed Ready*.
+4. **🛡️ IMMUTABLE CLINICAL AUDIT DASHBOARD (`AuditTrailDashboardPage.jsx`):**
+   - Buku besar audit forensik sesuai standar **JCI MOI / IPSG** dan **Permenkes 24/2022**:
+     - *Who, When, Where (Ward/Dept), Workstation IP, Old Value &rarr; New Value, Clinical Justification*.
+     - Pencatatan khusus Protokol Gawat Darurat (*Break-Glass Emergency Access*).
+     - Fitur ekspor buku besar audit dalam format JSON terverifikasi untuk survei akreditasi.
+5. **🧪 AUTOMATED INTEGRATION & REGRESSION TESTING (`tests/enterpriseInfrastructureVerticalSlice.test.js`):**
+   - 5 pengujian otomatis memverifikasi generasi HL7 ADT/ORM, parsing HL7 ORU, pub/sub Event Bus, dan serialisasi SATUSEHAT FHIR R4 (Patient, Encounter, Condition).
+
+---
+
 ### 🟢 [17 AGUSTUS 2026] — ARCHITECTURE & UI ACTIVATION GATE 1D.7: LABORATORY INFORMATION SYSTEM (LIS) & SPECIMEN TRACKING
 
 **Kategori:** `[MAJOR]` `[UI_ACTIVATION]` `[CLINICAL_VERTICAL_SLICE]` `[LIS_SPECIMEN_TRACKING]` `[CHAIN_OF_CUSTODY]` `[VACUTAINER_BARCODING]` `[PANIC_VALUE_JCI_IPSG2]` `[DELTA_CHECK]` `[LOINC]`  
