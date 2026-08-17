@@ -1,0 +1,96 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NurseFlow Enterprise HIS REST API",
+    "version": "1.0.0",
+    "description": "API Gateway for NurseFlow Hospital Information System (JCI 7th Edition & Permenkes No. 24/2022)"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local Development / Container Gateway"
+    }
+  ],
+  "paths": {
+    "/health/live": {
+      "get": {
+        "summary": "Container Liveness Probe",
+        "responses": {
+          "200": { "description": "Server is alive and operational" }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "summary": "Readiness Probe for Database & Redis",
+        "responses": {
+          "200": { "description": "Database and Cache connections are healthy" }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "summary": "Prometheus Metrics Endpoint",
+        "responses": {
+          "200": { "description": "Prometheus metric scrapper payload" }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "summary": "Authenticate user & issue JWT token pair",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["username"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Authentication successful" }
+        }
+      }
+    },
+    "/api/v1/patients": {
+      "get": {
+        "summary": "Search Master Patient Index (MPI)",
+        "parameters": [
+          { "name": "q", "in": "query", "schema": { "type": "string" }, "description": "Search by MRN, NIK or Name" }
+        ],
+        "responses": {
+          "200": { "description": "List of matching patients" }
+        }
+      },
+      "post": {
+        "summary": "Register new patient in MPI",
+        "responses": {
+          "201": { "description": "Patient successfully registered" }
+        }
+      }
+    },
+    "/api/v1/orders/prescription": {
+      "post": {
+        "summary": "Create Doctor E-Prescription Order",
+        "responses": {
+          "201": { "description": "Prescription created and queued for pharmacist review" }
+        }
+      }
+    },
+    "/api/v1/billing/invoices": {
+      "post": {
+        "summary": "Generate aggregate hospital invoice for episode",
+        "responses": {
+          "201": { "description": "Invoice issued" }
+        }
+      }
+    }
+  }
+}

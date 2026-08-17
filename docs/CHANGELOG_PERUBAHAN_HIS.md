@@ -20,7 +20,25 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT FOUNDATION & HARDENING: Dedicated Backend REST API, Prisma ORM, SATUSEHAT FHIR R4, BPJS VClaim 2.0 & Observability
+### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT PRODUCTION HARDENING: OpenAPI 3.0 /docs, Real-Time WebSocket Broker, Atomic Transaction Coordinator, Database Seeder & E2E Hospital Journey Test Suite
+
+**Kategori:** `[MAJOR]` `[OPENAPI_SWAGGER]` `[WEBSOCKET_BROKER]` `[ATOMIC_TRANSACTION]` `[DB_SEEDER]` `[E2E_TESTING]` `[PITR_BACKUP]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 11 Suites / 29 Tests) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `server/docs/openapi.json` (NEW), `server/realtime/clinicalWebSocket.js` (NEW), `server/services/atomicTransaction.service.js` (NEW), `database/seeders/master_seed.js` (NEW), `database/migration_runner.js` (NEW), `scripts/backup_postgres_pitr.sh` (NEW), `tests/e2ePatientJourney.test.js` (NEW), `server/server.js` (MODIFIED)
+
+#### Detail Peningkatan Production Hardening:
+1. **📖 OPENAPI 3.0 & SWAGGER SPECIFICATION (`/docs`):**
+   - Dokumentasi antarmuka standar internasional OpenAPI 3.0 untuk seluruh rute endpoint otentikasi, master pasien, CPOE order, dan penagihan kasir.
+2. **⚡ CLINICAL WEBSOCKET & PUB/SUB BROKER (`clinicalWebSocket.js`):**
+   - Menghilangkan beban polling frontend dengan sistem push real-time untuk channel IGD Triage, Nurse Station, Farmasi, dan Panic Value Laboratorium.
+3. **🛡️ ATOMIC TRANSACTION COORDINATOR (`atomicTransaction.service.js`):**
+   - Semantik ACID multi-domain yang menjamin transaksi pendaftaran, pembuatan encounter, dan inisialisasi billing commit secara utuh atau rollback otomatis jika terjadi kegagalan sistem.
+4. **🏥 MASTER CLINICAL SEEDER & MIGRATION RUNNER (`master_seed.js` & `migration_runner.js`):**
+   - Master data kredensial staf medis (DPJP, Emergency, Nurse, Farmasis, Kasir), katalog ICD-10, LOINC, dan tarif pelayanan rumah sakit.
+5. **🧪 MULTI-STEP E2E PATIENT JOURNEY TEST SUITE (`e2ePatientJourney.test.js`):**
+   - Pengujian terintegrasi simulasi alur riil rumah sakit dari admisi, triase ATS, order CPOE, skrining CDSS alergi/ginjal, hingga pelunasan invoice billing.
+
+---
 
 **Kategori:** `[MAJOR]` `[BACKEND_API]` `[PRISMA_ORM]` `[SATUSEHAT_FHIR]` `[BPJS_VCLAIM]` `[API_SECURITY]` `[OBSERVABILITY]` `[INTEGRATION_TESTS]`  
 **Status:** Completed & Verified via Vitest (`npm test` PASS 10 Suites / 25 Tests) & Build (`npm run build` PASS)  

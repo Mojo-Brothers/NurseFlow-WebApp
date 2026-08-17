@@ -44,6 +44,10 @@ app.get('/metrics', (req, res) => {
   res.send(`# HELP http_requests_total Total HTTP Requests\n# TYPE http_requests_total counter\nhttp_requests_total{status="200"} 1248\n`);
 });
 
+app.get('/docs', (req, res) => {
+  res.sendFile('docs/openapi.json', { root: './server' });
+});
+
 // ─── REST API v1 Routes ───
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/patients', patientsRoutes);

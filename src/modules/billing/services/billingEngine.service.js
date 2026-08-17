@@ -9,10 +9,14 @@ import { outboxPublisherService } from '../../front_office/services/outboxPublis
 const INVOICES_STORAGE_KEY = 'nurseflow_hospital_invoices';
 const BILLING_LEDGER_KEY = 'nurseflow_billing_projections_ledger';
 
+let memoryInvoices = [];
+
 const getStoredLedger = () => {
   try {
-    const raw = localStorage.getItem(BILLING_LEDGER_KEY);
-    if (raw) return JSON.parse(raw);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(BILLING_LEDGER_KEY);
+      if (raw) return JSON.parse(raw);
+    }
   } catch (e) {
     console.warn('[BillingEngine] Failed to load ledger:', e);
   }
@@ -21,20 +25,25 @@ const getStoredLedger = () => {
 
 const getStoredInvoices = () => {
   try {
-    const raw = localStorage.getItem(INVOICES_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(INVOICES_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    }
   } catch (e) {
     console.warn('[BillingEngine] Failed to load invoices:', e);
   }
-  return [];
+  return memoryInvoices;
 };
 
 const saveStoredInvoices = (list) => {
   try {
-    localStorage.setItem(INVOICES_STORAGE_KEY, JSON.stringify(list));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(INVOICES_STORAGE_KEY, JSON.stringify(list));
+    }
   } catch (e) {
     console.warn('[BillingEngine] Failed to save invoices:', e);
   }
+  memoryInvoices = list;
 };
 
 export const billingEngineService = {

@@ -17,13 +17,18 @@ export const ALLOWED_ORDER_TRANSITIONS = {
 
 const ORDERS_STORAGE_KEY = 'nurseflow_clinical_orders';
 
+let memoryOrders = null;
+
 const getStoredOrders = () => {
   try {
-    const raw = localStorage.getItem(ORDERS_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(ORDERS_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    }
   } catch (e) {
     console.warn('[UniversalOrderEngine] Failed to load orders:', e);
   }
+  if (memoryOrders) return memoryOrders;
   return [
     {
       id: 'ORD-2026-001',
@@ -77,10 +82,13 @@ const getStoredOrders = () => {
 
 const saveStoredOrders = (list) => {
   try {
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(list));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(list));
+    }
   } catch (e) {
     console.warn('[UniversalOrderEngine] Failed to save orders:', e);
   }
+  memoryOrders = list;
 };
 
 export const universalOrderEngineService = {
