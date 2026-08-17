@@ -20,7 +20,25 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT COT (KAMAR OPERASI), ICU CRITICAL CARE (SOFA), BLOOD BANK (BDRS), STAFF ROSTER & CLINICAL WORKFLOW ORCHESTRATOR
+### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT APPOINTMENT & QUEUE, INA-CBG CLAIM ENGINE, PHARMACY FEFO INVENTORY, MULTI-CHANNEL NOTIFICATION & MULTI-TENANT SAAS SUBSCRIPTION
+
+**Kategori:** `[MAJOR]` `[APPOINTMENT_QUEUE]` `[INACBG_CLAIMS]` `[FEFO_INVENTORY]` `[NOTIFICATION_ENGINE]` `[SAAS_SUBSCRIPTION]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 30 Suites / 74 Tests) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `server/services/appointmentQueue.service.js` (NEW), `server/services/claimInaCbg.service.js` (NEW), `server/services/inventoryManagement.service.js` (NEW), `server/services/notificationEngine.service.js` (NEW), `server/services/tenantSubscription.service.js` (NEW), `tests/appointmentQueue.test.js` (NEW), `tests/claimInaCbg.test.js` (NEW), `tests/inventoryManagement.test.js` (NEW), `tests/notificationEngine.test.js` (NEW), `tests/tenantSubscription.test.js` (NEW)
+
+#### Detail Peningkatan Commercial & Operational SaaS:
+1. **🎟️ APPOINTMENT & QUEUE ENGINE (`appointmentQueue.service.js`):**
+   - Penjadwalan konsultasi dokter spesialis, penerbitan tiket antrean poli otomatis (*e.g. INT-001*), integrasi check-in mandiri, dan siklus status antrean.
+2. **💰 BPJS E-KLAIM & INA-CBG GROUPING ENGINE (`claimInaCbg.service.js`):**
+   - Kodifikasi ICD-10/ICD-9-CM grouping, kalkulasi tarif INA-CBGs (Severity I, II, III), serta analisis variansi biaya riil RS vs klaim BPJS (*Cost-Variance/Profitability Margin*).
+3. **📦 PHARMACY PROCUREMENT & WAREHOUSE FEFO INVENTORY (`inventoryManagement.service.js`):**
+   - Multi-gudang farmasi & depo, alokasi pengeluaran stok resep berdasarkan tanggal kadaluarsa terdekat (*First-Expired, First-Out / FEFO*), dan pemantauan batas stok minimum.
+4. **🔔 MULTI-CHANNEL CLINICAL NOTIFICATION ENGINE (`notificationEngine.service.js`):**
+   - Pengiriman notifikasi darurat nilai kritis lab (*Panic Value*), eskalasi triase merah IGD, dan panggilan poli melalui gateway WhatsApp, Email, SMS, dan sirene in-app.
+5. **🏢 MULTI-TENANT SAAS SUBSCRIPTION & LICENSING (`tenantSubscription.service.js`):**
+   - Manajemen paket berlangganan (*Starter Clinic, Professional Hospital, Enterprise Multi-Branch Network*), batas kapasitas tempat tidur/pengguna, dan *feature-flag gating*.
+
+---
 
 **Kategori:** `[MAJOR]` `[OPERATING_THEATRE]` `[CRITICAL_CARE_SOFA]` `[BLOOD_BANK_BDRS]` `[STAFF_SCHEDULING]` `[WORKFLOW_ORCHESTRATOR]`  
 **Status:** Completed & Verified via Vitest (`npm test` PASS 25 Suites / 66 Tests) & Build (`npm run build` PASS)  
