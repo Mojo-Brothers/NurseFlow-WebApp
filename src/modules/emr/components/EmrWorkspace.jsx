@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
 import SoapWorkspace from './SoapWorkspace.jsx';
-import CpptWorkspace from './CpptWorkspace.jsx';
+import CpptWorkspace from './CPPTWorkspace.jsx';
 import AllergyWorkspace from './AllergyWorkspace.jsx';
 import DiagnosisWorkspace from './DiagnosisWorkspace.jsx';
 import ClinicalObservationWorkspace from './ClinicalObservationWorkspace.jsx';
