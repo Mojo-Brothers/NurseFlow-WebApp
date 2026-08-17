@@ -1,12 +1,13 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
-import EmrWorkspace from '../modules/emr/components/EmrWorkspace';
-import EMR from '../modules/emr/pages/EMRPage';
-import OutpatientEMR from '../modules/emr/pages/OutpatientEMR';
-import InpatientEMR from '../modules/emr/pages/InpatientEMR';
-import PatientCarePage from '../modules/emr/pages/PatientCarePage';
-import SurgeryDashboard from '../modules/emr/pages/SurgeryDashboard';
-import Teleconsultation from '../modules/telemedicine/pages/TeleconsultationPage';
+
+const EmrWorkspace = lazy(() => import('../modules/emr/components/EmrWorkspace'));
+const EMR = lazy(() => import('../modules/emr/pages/EMRPage'));
+const OutpatientEMR = lazy(() => import('../modules/emr/pages/OutpatientEMR'));
+const InpatientEMR = lazy(() => import('../modules/emr/pages/InpatientEMR'));
+const PatientCarePage = lazy(() => import('../modules/emr/pages/PatientCarePage'));
+const SurgeryDashboard = lazy(() => import('../modules/emr/pages/SurgeryDashboard'));
+const Teleconsultation = lazy(() => import('../modules/telemedicine/pages/TeleconsultationPage'));
 
 export const emrRoutes = (Wrap) => [
   { path: "/emr", element: <Wrap><EmrWorkspace /></Wrap> },

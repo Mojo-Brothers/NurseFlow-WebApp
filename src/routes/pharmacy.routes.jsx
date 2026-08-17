@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
-import Pharmacy from '../modules/pharmacy/pages/PharmacyPage';
-import Inventory from '../modules/pharmacy/pages/InventoryPage';
-import EnterpriseInventoryPage from '../modules/inventory/pages/EnterpriseInventoryPage';
 import ProtectedRoute from '../components/ProtectedRoute';
+
+const Pharmacy = lazy(() => import('../modules/pharmacy/pages/PharmacyPage'));
+const Inventory = lazy(() => import('../modules/pharmacy/pages/InventoryPage'));
+const EnterpriseInventoryPage = lazy(() => import('../modules/inventory/pages/EnterpriseInventoryPage'));
 
 export const pharmacyRoutes = (Wrap) => [
   { path: "/inventory", element: <Navigate to="/inventory/material-request" replace /> },

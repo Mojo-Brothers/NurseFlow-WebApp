@@ -20,6 +20,87 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [17 AGUSTUS 2026] — ARCHITECTURE & UI ACTIVATION GATE 1D.7: LABORATORY INFORMATION SYSTEM (LIS) & SPECIMEN TRACKING
+
+**Kategori:** `[MAJOR]` `[UI_ACTIVATION]` `[CLINICAL_VERTICAL_SLICE]` `[LIS_SPECIMEN_TRACKING]` `[CHAIN_OF_CUSTODY]` `[VACUTAINER_BARCODING]` `[PANIC_VALUE_JCI_IPSG2]` `[DELTA_CHECK]` `[LOINC]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 46 Suites / 196 Tests), Vite Build (`npm run build` PASS — 5.82s)  
+**Komponen Terdampak:** `database/migrations/016_lis_specimen_tracking_and_panic_values.sql` (NEW), `server/services/lisPacsEngine.service.js` (MODIFIED), `src/modules/lab/pages/LabPage.jsx` (MODIFIED), `src/modules/lab/components/SpecimenAccessioningStudio.jsx` (NEW), `src/modules/lab/components/AnalyticalResultEntryStudio.jsx` (NEW), `src/modules/lab/components/PanicValueEscalationModal.jsx` (NEW), `src/modules/lab/components/LisCommandCenter.jsx` (NEW), `tests/lisSpecimenTrackingVerticalSlice.test.js` (NEW)
+
+#### Detail Aktivasi LIS & Specimen Tracking Vertical Slice (Gate 1D.7):
+1. **🧪 SPECIMEN CHAIN OF CUSTODY & BARCODING (`SpecimenAccessioningStudio.jsx`):**
+   - Alur hidup spesimen lengkap: `ORDERED` &rarr; `COLLECTED` &rarr; `IN_TRANSIT` &rarr; `RECEIVED_IN_LAB` &rarr; `ANALYZING` &rarr; `VERIFIED` &rarr; `RELEASED`.
+   - Pemilihan tabung vacutainer terstandar ISO 15189:
+     - Tutup Ungu (K2/K3 EDTA) untuk Hematologi / Darah Lengkap.
+     - Tutup Kuning (SST Gel Clot Activator) untuk Kimia Darah / Laktat / Serologi.
+     - Tutup Biru (Natrium Sitrat 3.2%) untuk Koagulasi (PT/APTT/D-Dimer).
+     - Tutup Hijau (Lithium Heparin) untuk Analisa Gas Darah (AGD).
+   - Pelacakan suhu rantai dingin spesimen selama transit ($2^\circ\text{C} - 6^\circ\text{C}$).
+2. **🔬 WORKSTATION ANALITIKAL & DELTA CHECK (`AnalyticalResultEntryStudio.jsx`):**
+   - Penginputan multi-parameter berbasis kode LOINC standar internasional.
+   - Deteksi otomatis Delta Check (peringatan lonjakan variansi hasil $> 50\%$ terhadap hasil lab pasien sebelumnya).
+   - Validasi ganda dan tanda tangan digital Dokter Spesialis Patologi Klinik (Sp.PK) & Analis Medis.
+3. **🚨 JCI IPSG 2 MANDATORY PANIC VALUE ESCALATION (`PanicValueEscalationModal.jsx`):**
+   - Peringatan nilai kritis otomatis (*Hard Thresholds*): Laktat Darah $\ge 4.0\text{ mmol/L}$, Kalium $\le 2.8$ atau $\ge 6.2\text{ mmol/L}$, Glukosa $\le 45\text{ mg/dL}$, Trombosit $\le 20.000\text{ /uL}$, Troponin I $\ge 0.04\text{ ng/mL}$.
+   - Dialog pelaporan wajib *Read-Back Confirmation* sesuai JCI IPSG 2 (mencatat nama dokter/perawat penerima telepon cito, jam lapor $\le 15\text{ menit}$, dan rekaman pembacaan ulang).
+   - Auto-dispatch notifikasi prioritas tinggi ke `NotificationCenterModal` & DPJP context.
+4. **🐘 DATABASE MIGRATION 016 (`016_lis_specimen_tracking_and_panic_values.sql`):**
+   - Tabel `laboratory_specimens`, `laboratory_test_results`, dan `laboratory_panic_alerts` dengan indeks unik barcode dan relasi integritas referensial.
+5. **🛡️ AUTOMATED REGRESSION & SAFETY TESTS (`tests/lisSpecimenTrackingVerticalSlice.test.js`):**
+   - 6 pengujian otomatis memverifikasi pelabelan barcode, accessioning di lab, deteksi nilai kritis laktat/kalium, konfirmasi read-back JCI IPSG 2, dan delta check.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — UI ACTIVATION GATE 1E.5: NURSING CARE, FLUID BALANCE & EMAR WORKSPACE
+
+**Kategori:** `[MAJOR]` `[UI_ACTIVATION]` `[CLINICAL_VERTICAL_SLICE]` `[NURSING_WORKSPACE]` `[EMAR_5_RIGHTS]` `[HIGH_ALERT_DUAL_CHECK]` `[FLUID_BALANCE_24H]` `[MORSE_FALL_SCALE]` `[ISBAR_HANDOVER]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 45 Suites / 190 Tests), Vite Build (`npm run build` PASS — 4.85s)  
+**Komponen Terdampak:** `src/modules/nursing/pages/NursingWorkspacePage.jsx` (NEW), `src/modules/nursing/components/NursingCommandCenter.jsx` (NEW), `src/modules/nursing/components/EmarAdministrationStudio.jsx` (NEW), `src/modules/nursing/components/FluidBalanceSheet.jsx` (NEW), `src/modules/nursing/components/NursingAssessmentAndPlan.jsx` (NEW), `src/modules/nursing/services/nursingCareEngine.service.js` (NEW), `src/routes/clinical.routes.jsx` (MODIFIED), `tests/nursingEmarVerticalSlice.test.js` (NEW)
+
+#### Detail Aktivasi Nursing Care & eMAR Workspace (Gate 1E.5):
+1. **👩‍⚕️ INPATIENT BED GRID & NURSING COMMAND CENTER (`NursingCommandCenter.jsx`):**
+   - Denah keterisian tempat tidur bangsal rawat inap (Bangsal Melati / Bangsal Mawar / ICU) dengan klasifikasi derajat ketergantungan pasien (*Minimal, Partial, Total Care*).
+   - 4 Live KPI Metrik Keperawatan: Jadwal Obat Belum Diberikan (6 Dosis), Monitoring TTV Terlambat (2 Pasien), Pasien Risiko Jatuh Tinggi (3 Pasien &mdash; Gelang Kuning), dan Balans Cairan Kritis (2 Pasien).
+   - Modul Timbang Terima / Handover Antar Shift terstruktur sesuai standar **ISBAR** (*Introduction, Situation, Background, Assessment, Recommendation*) dengan tanda tangan digital perawat primer & perawat saksi.
+2. **💊 ELECTRONIC MEDICATION ADMINISTRATION RECORD (eMAR) STUDIO (`EmarAdministrationStudio.jsx`):**
+   - **Verifikasi 5-Benar JCI IPSG 3:** Validasi ketat Benar Pasien, Benar Obat, Benar Dosis, Benar Rute, dan Benar Waktu sebelum obat diberikan.
+   - **High-Alert Dual Nurse Verification (JCI IPSG 3.1):** Obat berkonsentrasi tinggi & berisiko tinggi (Insulin, Heparin, Kalium Klorida 7.46%) mewajibkan otorisasi ganda (Nama & PIN digital perawat saksi ke-2) dengan *hard blocker*.
+   - Pelacakan status administrasi obat: `SCHEDULED`, `GIVEN`, `HELD` (dengan alasan klinis), dan `REFUSED`.
+3. **💧 24-HOUR FLUID BALANCE & IWL TEMPERATURE CORRECTION (`FluidBalanceSheet.jsx`):**
+   - Pencatatan sistematis Intake (Infus kristaloid, injeksi drip, minum oral, NGT, transfusi darah) vs Output (Urine, NGT drain, luka operasi, feses).
+   - Kalkulasi otomatis *Insensible Water Loss (IWL)* dengan koreksi suhu febris: $\text{IWL} = 15\text{ ml/kgBB/24 jam} \times (1 + 0.10 \times \Delta T)$.
+   - Indikator visual balans cairan netto (*Euvolemic, Overload Risk, Dehydration Risk*).
+4. **⚠️ MORSE FALL SCALE & PPNI 3S NURSING CARE PLAN (`NursingAssessmentAndPlan.jsx`):**
+   - Pengkajian Skrining Risiko Jatuh Dewasa (Morse Fall Scale). Skor $\ge 45$ otomatis memicu protokol keselamatan Gelang Kuning, segitiga peringatan jatuh, penguncian bed, dan side-rail ganda (JCI IPSG 6).
+   - Penyusunan Rencana Asuhan Keperawatan Terstandar PPNI: Diagnosa Keperawatan (SDKI), Luaran (SLKI), dan Intervensi (SIKI).
+5. **🛡️ AUTOMATED REGRESSION & NEGATIVE-PATH TESTS (`tests/nursingEmarVerticalSlice.test.js`):**
+   - 5 pengujian otomatis memverifikasi penolakan ketidakcocokan 5-Benar, penolakan pemberian obat high-alert tanpa perawat saksi, formula balans cairan/IWL, skor Morse Fall Scale, dan pembuatan laporan ISBAR.
+
+---
+
+### 🟢 [17 AGUSTUS 2026] — ENTERPRISE ARCHITECTURE AUDIT, BUNDLE CHUNKING & FORMAL DOCS SUITE
+
+**Kategori:** `[MAJOR]` `[ARCHITECTURAL_HARDENING]` `[BUNDLE_OPTIMIZATION]` `[NOTIFICATION_CENTER]` `[FORMAL_DOCUMENTATION]` `[JCI_COMPLIANCE]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 44 Suites / 185 Tests), Vite Build (`npm run build` PASS — Monolith Chunks Reduced to 322 kB / Gzip 79 kB)  
+**Komponen Terdampak:** `vite.config.js` (MODIFIED), `src/routes/clinical.routes.jsx` (MODIFIED), `src/routes/emr.routes.jsx` (MODIFIED), `src/routes/admin.routes.jsx` (MODIFIED), `src/routes/pharmacy.routes.jsx` (MODIFIED), `src/routes/index.jsx` (MODIFIED), `src/components/ui/ClinicalLoadingSpinner.jsx` (NEW), `src/components/ui/NotificationCenterModal.jsx` (NEW), `src/core/stores/notification.store.js` (NEW), `src/components/ui/ClinicalContextRibbon.jsx` (MODIFIED), `server/controllers/patient.controller.js` (NEW), `server/routes/patients.routes.js` (MODIFIED), `README.md` (MODIFIED), `docs/DATABASE_ERD_ARCHITECTURE.md` (NEW), `docs/CLINICAL_SEQUENCE_DIAGRAMS.md` (NEW), `docs/USER_ROLE_MATRIX_RBAC.md` (NEW), `docs/DEPLOYMENT_ARCHITECTURE.md` (NEW)
+
+#### Detail Audit & Hardening Arsitektur Enterprise:
+1. **⚡ BUNDLE CODE-SPLITTING & LAZY LOADING OPTIMIZATION:**
+   - Konfigurasi `manualChunks` di `vite.config.js` untuk memecah vendor libraries (`vendor-react`, `vendor-firebase`, `vendor-icons`, `vendor-i18n`, `vendor-state`, `vendor-toast`).
+   - Seluruh rute aplikasi (`clinical`, `emr`, `admin`, `pharmacy`) dimuat asinkron via `React.lazy()` + `<Suspense>` dengan fallback `<ClinicalLoadingSpinner />`.
+   - Ukuran bundle utama berhasil dipangkas dari **5.27 MB &rarr; 322 kB (gzip 79.3 kB)**.
+2. **🔔 REAL-TIME CLINICAL NOTIFICATION CENTER:**
+   - Implementasi `useNotificationStore` dan `NotificationCenterModal.jsx` terintegrasi langsung di `ClinicalContextRibbon.jsx`.
+   - Mendukung 4 tingkatan notifikasi klinis real-time: Nilai Kritis Lab (Panic Value), Resep Obat Baru DPJP, Darah Siap Transfusi (BDRS), dan Bed ICU Siap Transfer dengan integrasi muat konteks pasien 1-klik.
+3. **🏛️ FORMAL ENTERPRISE DOCUMENTATION SUITE:**
+   - **ERD & Database Architecture (`docs/DATABASE_ERD_ARCHITECTURE.md`):** Diagram Mermaid relasi entitas, skema RLS multi-tenant, dan proteksi barrier PostgreSQL.
+   - **Clinical Sequence Diagrams (`docs/CLINICAL_SEQUENCE_DIAGRAMS.md`):** Diagram alur Pasien &rarr; EMPI &rarr; Triase IGD &rarr; Konsultasi DPJP &rarr; CDSS &rarr; Transfusi BDRS.
+   - **User Role Matrix & RBAC/ABAC (`docs/USER_ROLE_MATRIX_RBAC.md`):** Matriks kewenangan klinis 8 peran (Dokter, Perawat, Apoteker, Analis Lab, Radiografer, Kasir, Admin, Auditor) sesuai JCI & Permenkes 24/2022.
+   - **High-Availability Deployment Topology (`docs/DEPLOYMENT_ARCHITECTURE.md`):** Arsitektur Kubernetes multi-pod, Nginx Ingress, PostgreSQL Primary-Replica, dan Redis Cluster.
+4. **📚 ENTERPRISE README.MD:**
+   - Dokumentasi komprehensif menampilkan standar kepatuhan (JCI, KARS, Permenkes 24/2022, SATUSEHAT), 4-tier architecture, modul aktif, dan panduan instalasi lokal.
+
+---
+
 ### 🟢 [17 AGUSTUS 2026] — UI ACTIVATION GATE 1E.4: DOCTOR CONSULTATION & CLINICAL CORE WORKSPACE
 
 **Kategori:** `[MAJOR]` `[UI_ACTIVATION]` `[CLINICAL_VERTICAL_SLICE]` `[DOCTOR_WORKSPACE]` `[CPPT_SOAP]` `[CDSS_SEPSIS_STEMI]` `[UNIVERSAL_ORDER_PANEL]` `[JCI_IPSG3]`  

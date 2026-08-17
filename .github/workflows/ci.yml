@@ -1,4 +1,4 @@
-name: NurseFlow Enterprise HIS CI/CD Pipeline
+name: NurseFlow Enterprise HIS CI/CD Quality Pipeline
 
 on:
   push:
@@ -7,12 +7,12 @@ on:
     branches: [ main ]
 
 jobs:
-  test-and-build:
-    name: Test & Build Quality Gate
+  quality-gate:
+    name: 🛡️ Enterprise Quality & Clinical Safety Gate
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Code Repository
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
       - name: ⚙️ Setup Node.js 20 LTS
@@ -22,10 +22,13 @@ jobs:
           cache: 'npm'
 
       - name: 📦 Install Dependencies
-        run: npm install
+        run: npm ci || npm install
 
-      - name: 🧪 Run Automated Test Suite (Vitest)
-        run: npx vitest run
+      - name: 🔍 Validate Prisma ORM Schema & Invariants
+        run: npx prisma validate
 
-      - name: 🏗️ Run Production Bundle Build (Vite)
+      - name: 🧪 Execute Vitest Regression & Negative-Path Suite
+        run: npm test
+
+      - name: 🏗️ Execute Vite Production Bundle Build
         run: npm run build

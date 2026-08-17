@@ -11,7 +11,15 @@ import { patientRoutes } from './patient.routes';
 import { enterpriseRoutes } from './enterprise.routes';
 import { useAuth } from '../contexts/useAuth';
 
-const Wrap = ({ children }) => <ErrorBoundary>{children}</ErrorBoundary>;
+import ClinicalLoadingSpinner from '../components/ui/ClinicalLoadingSpinner';
+
+const Wrap = ({ children }) => (
+  <ErrorBoundary>
+    <React.Suspense fallback={<ClinicalLoadingSpinner />}>
+      {children}
+    </React.Suspense>
+  </ErrorBoundary>
+);
 
 function AuthRedirector({ children }) {
   const { role } = useAuth();
