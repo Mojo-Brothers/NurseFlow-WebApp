@@ -47,6 +47,7 @@ const NAV_SCHEMA = [
     { name: 'nav.master_services', path: '/admin/services', icon: 'medical_information', roles: ['DOCTOR','ADMIN'] },
   ]},
   { label: 'nav.administration', items: [
+    { name: 'Master Data Terpadu (18 Modul)', path: '/master-data', icon: 'dataset', roles: ['ADMIN', 'DOCTOR', 'SUPERVISOR', 'NURSE'] },
     { name: 'nav.admin',       path: '/admin',      icon: 'admin_panel_settings', roles: ['ADMIN'] },
     { name: 'Manajemen Data Dummy HIS', path: '/admin/dummy-data', icon: 'tune', roles: null },
     { name: 'SDM & Hak Akses (RBAC)', path: '/admin/staff-access', icon: 'badge', roles: ['ADMIN', 'SUPERVISOR'] },

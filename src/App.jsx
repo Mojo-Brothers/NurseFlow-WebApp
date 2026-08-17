@@ -57,6 +57,12 @@ import MOIInformationGovernanceHub from './modules/moi/pages/InformationGovernan
 import PFRInformedConsent from './modules/pfr/pages/InformedConsentPage';
 import PFRPatientRightsDashboard from './modules/pfr/pages/PatientRightsDashboard';
 import MasterDataHub from './modules/admin/pages/MasterDataHub';
+import MasterDataWorkspacePage from './modules/master_data/pages/MasterDataWorkspacePage';
+import ClinicalCoreWorkspace from './modules/clinical_core/components/ClinicalCoreWorkspace';
+import RegistrationDeskWorkspace from './modules/front_office/components/RegistrationDeskWorkspace';
+import EmergencyWorkspace from './modules/emergency/components/EmergencyWorkspace';
+import EmrWorkspace from './modules/emr/components/EmrWorkspace';
+import OrdersWorkspace from './modules/orders/components/OrdersWorkspace';
 import DummyDataManagementPage from './modules/admin/pages/DummyDataManagementPage';
 import Teleconsultation from './modules/telemedicine/pages/TeleconsultationPage';
 import VirtualWaitingRoom from './modules/telemedicine/components/VirtualWaitingRoom';
@@ -119,7 +125,14 @@ const router = createBrowserRouter([
           { path: "/admin/services", element: <Wrap><MasterServicePage /></Wrap> },
           { path: "/inventory",  element: <Navigate to="/inventory/material-request" replace /> },
           { path: "/inventory/*", element: <Wrap><EnterpriseInventoryPage /></Wrap> },
-          { path: "/emr",        element: <Wrap><EMR /></Wrap> },
+          { path: "/emr",        element: <Wrap><EmrWorkspace /></Wrap> },
+          { path: "/emr-legacy", element: <Wrap><EMR /></Wrap> },
+          { path: "/orders",     element: <Wrap><OrdersWorkspace /></Wrap> },
+          { path: "/clinical-core", element: <Wrap><ClinicalCoreWorkspace /></Wrap> },
+          { path: "/front-office", element: <Wrap><RegistrationDeskWorkspace /></Wrap> },
+          { path: "/emergency",  element: <Wrap><EmergencyWorkspace /></Wrap> },
+          { path: "/master-data", element: <Wrap><MasterDataWorkspacePage /></Wrap> },
+          { path: "/master-data/:entity", element: <Wrap><MasterDataWorkspacePage /></Wrap> },
           { path: "/emr-rj",     element: <Wrap><OutpatientEMR /></Wrap> },
           { path: "/emr-ri",     element: <Wrap><InpatientEMR /></Wrap> },
           { path: "/credentials", element: <Wrap><SQECredentialsDashboard /></Wrap> },
