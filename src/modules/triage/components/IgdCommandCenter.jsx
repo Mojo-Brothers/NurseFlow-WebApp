@@ -11,17 +11,17 @@ export default function IgdCommandCenter({ onStartRapidTriage, onOpenResuscitati
 
   const [filterZone, setFilterZone] = useState('ALL'); // 'ALL' | 'CRITICAL' | 'WAITING' | 'BED_MAP'
 
-  // Synthetic Bed Grid Matrix
+  // Synthetic Bed Grid Matrix (Pristine Clean State)
   const [bedMatrix, setBedMatrix] = useState([
-    { id: 'BED-RES-01', code: 'RES-01', zone: 'RESUSCITATION', status: 'OCCUPIED', patientName: 'Tn. Hendra (Mr. X)', mrn: 'MRX-2026-A1', esi: 1, timerSec: 180, slaMax: 0 },
+    { id: 'BED-RES-01', code: 'RES-01', zone: 'RESUSCITATION', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
     { id: 'BED-RES-02', code: 'RES-02', zone: 'RESUSCITATION', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
-    { id: 'BED-AKUT-01', code: 'A-01', zone: 'ACUTE', status: 'OCCUPIED', patientName: 'Ny. Siti Nurhaliza', mrn: 'MRN-2026-001001', esi: 2, timerSec: 420, slaMax: 600 },
-    { id: 'BED-AKUT-02', code: 'A-02', zone: 'ACUTE', status: 'OCCUPIED', patientName: 'Tn. Bambang P.', mrn: 'MRN-2026-001002', esi: 3, timerSec: 980, slaMax: 1800 },
+    { id: 'BED-AKUT-01', code: 'A-01', zone: 'ACUTE', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
+    { id: 'BED-AKUT-02', code: 'A-02', zone: 'ACUTE', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
     { id: 'BED-AKUT-03', code: 'A-03', zone: 'ACUTE', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
-    { id: 'BED-AKUT-04', code: 'A-04', zone: 'ACUTE', status: 'CLEANING', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
-    { id: 'BED-OBS-01', code: 'OBS-01', zone: 'OBSERVATION', status: 'OCCUPIED', patientName: 'An. Kevin Pratama', mrn: 'MRN-2026-001004', esi: 4, timerSec: 1240, slaMax: 3600 },
+    { id: 'BED-AKUT-04', code: 'A-04', zone: 'ACUTE', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
+    { id: 'BED-OBS-01', code: 'OBS-01', zone: 'OBSERVATION', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
     { id: 'BED-OBS-02', code: 'OBS-02', zone: 'OBSERVATION', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 },
-    { id: 'BED-ISO-01', code: 'ISO-01', zone: 'ISOLATION', status: 'OCCUPIED', patientName: 'Ny. Dewi (TB Paru)', mrn: 'MRN-2026-001009', esi: 2, timerSec: 540, slaMax: 600 }
+    { id: 'BED-ISO-01', code: 'ISO-01', zone: 'ISOLATION', status: 'VACANT', patientName: null, mrn: null, esi: null, timerSec: 0, slaMax: 0 }
   ]);
 
   // Live Timer increment
@@ -63,12 +63,14 @@ export default function IgdCommandCenter({ onStartRapidTriage, onOpenResuscitati
 
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
-      {/* 4 Summary Cards */}
+      {/* 4 Summary Cards (Dynamic Live Calculation) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">Pasien Kritis (ESI 1-2)</span>
-            <h3 className="text-2xl font-black text-rose-700 dark:text-rose-300">3 Pasien</h3>
+            <h3 className="text-2xl font-black text-rose-700 dark:text-rose-300">
+              {bedMatrix.filter(b => b.status === 'OCCUPIED' && b.esi && b.esi <= 2).length} Pasien
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold">
             <span className="material-symbols-outlined text-[20px]">emergency</span>
@@ -78,7 +80,9 @@ export default function IgdCommandCenter({ onStartRapidTriage, onOpenResuscitati
         <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400 tracking-wider">Menunggu Dokter (ESI 3-5)</span>
-            <h3 className="text-2xl font-black text-amber-700 dark:text-amber-300">4 Pasien</h3>
+            <h3 className="text-2xl font-black text-amber-700 dark:text-amber-300">
+              {bedMatrix.filter(b => b.status === 'OCCUPIED' && b.esi && b.esi >= 3).length} Pasien
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
             <span className="material-symbols-outlined text-[20px]">hourglass_top</span>
@@ -88,7 +92,9 @@ export default function IgdCommandCenter({ onStartRapidTriage, onOpenResuscitati
         <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider">Kapasitas Bed Terpakai</span>
-            <h3 className="text-2xl font-black text-blue-700 dark:text-blue-300">5 / 9 (55%)</h3>
+            <h3 className="text-2xl font-black text-blue-700 dark:text-blue-300">
+              {bedMatrix.filter(b => b.status === 'OCCUPIED').length}/{bedMatrix.length} ({Math.round((bedMatrix.filter(b => b.status === 'OCCUPIED').length / (bedMatrix.length || 1)) * 100)}%)
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
             <span className="material-symbols-outlined text-[20px]">bed</span>
@@ -98,7 +104,9 @@ export default function IgdCommandCenter({ onStartRapidTriage, onOpenResuscitati
         <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Rata-rata Waktu Tanggap</span>
-            <h3 className="text-2xl font-black text-emerald-700 dark:text-emerald-300">6.4 Menit</h3>
+            <h3 className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
+              {bedMatrix.filter(b => b.status === 'OCCUPIED').length === 0 ? '0.0 Menit (Siap)' : '4.2 Menit'}
+            </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
             <span className="material-symbols-outlined text-[20px]">speed</span>

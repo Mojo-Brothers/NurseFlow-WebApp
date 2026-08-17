@@ -112,7 +112,7 @@ export default function NursingWorkspacePage() {
               <span className="material-symbols-outlined text-blue-600 text-[18px]">timeline</span>
               <h4 className="text-xs font-black text-slate-900 dark:text-white">Timeline Asuhan Pasien</h4>
             </div>
-            <PatientJourneyTimeline patientId={activePatient?.id || 'P-1001'} />
+            <PatientJourneyTimeline patientId={activePatient?.id} />
           </div>
         </div>
       </div>

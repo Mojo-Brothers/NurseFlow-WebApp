@@ -15,29 +15,7 @@ const getStoredCarePlans = () => {
   } catch (e) {
     console.warn('[CarePlanEngine] Failed to load care plans:', e);
   }
-  return [
-    {
-      id: 'CP-1001',
-      episode_id: 'EOC-2026-001',
-      patient_id: 'P-1001',
-      title: 'Rencana Asuhan Terpadu: Demam Berdarah Dengue (DHF Grade II)',
-      clinical_goals: [
-        'Mempertahankan stabilitas hemodinamik (MAP ≥ 65 mmHg)',
-        'Mencegah syok dengue (DSS) & perdarahan masif',
-        'Peningkatan trombosit > 100.000 /uL dalam 72 jam'
-      ],
-      interventions: [
-        { discipline: 'DOKTER_DPJP', description: 'Evaluasi TTV, hematokrit & trombosit serial per 12 jam', status: 'COMPLETED' },
-        { discipline: 'PERAWAT', description: 'Monitoring balans cairan ketat & tanda presyok (akral dingin, CRT > 2s)', status: 'PENDING' },
-        { discipline: 'DIETISIEN_GIZI', description: 'Diet cair tinggi kalori protein & hidrasi oral adekuat 2500 ml/hari', status: 'PENDING' },
-        { discipline: 'APOTEKER_KLINIS', description: 'Skrining interaksi obat & pemantauan obat hepatotoksik', status: 'COMPLETED' }
-      ],
-      target_date: '2026-08-20',
-      status: 'ACTIVE',
-      created_by: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      created_at: '2026-08-17T08:30:00Z'
-    }
-  ];
+  return [];
 };
 
 const saveStoredCarePlans = (list) => {

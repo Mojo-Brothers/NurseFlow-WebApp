@@ -1,0 +1,54 @@
+{
+  "title": "NurseFlow Enterprise HIS 2026 — Master Operational Dashboard",
+  "tags": ["his", "production", "hospital", "telemetry"],
+  "timezone": "browser",
+  "schemaVersion": 36,
+  "refresh": "5s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Throughput Transaksi HTTP (Req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "targets": [{ "expr": "sum(rate(http_requests_total[1m]))", "legendFormat": "Requests/sec" }]
+    },
+    {
+      "id": 2,
+      "title": "Latensi Transaksi Klinis (p50, p95, p99)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "targets": [
+        { "expr": "http_request_duration_seconds{quantile=\"0.5\"}", "legendFormat": "p50 (Median)" },
+        { "expr": "http_request_duration_seconds{quantile=\"0.95\"}", "legendFormat": "p95" },
+        { "expr": "http_request_duration_seconds{quantile=\"0.99\"}", "legendFormat": "p99 (Worst)" }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "PostgreSQL Active Connections (Pool: 200)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "targets": [{ "expr": "postgres_connections_active", "legendFormat": "Active Connections" }]
+    },
+    {
+      "id": 4,
+      "title": "Node.js Heap Memory & Event Loop Lag",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "nodejs_heap_size_bytes{type=\"used\"} / 1048576", "legendFormat": "Heap Used (MB)" },
+        { "expr": "nodejs_eventloop_lag_seconds * 1000", "legendFormat": "Event Loop Lag (ms)" }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Security Telemetry (Active Users & Failed Logins)",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        { "expr": "authenticated_users_total", "legendFormat": "Active Nakes Online" },
+        { "expr": "failed_login_total", "legendFormat": "Failed Logins" }
+      ]
+    }
+  ]
+}

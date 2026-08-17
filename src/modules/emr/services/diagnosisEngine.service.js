@@ -27,22 +27,7 @@ const getStoredDiagnoses = () => {
   } catch (e) {
     console.warn('[DiagnosisEngine] Failed to load diagnoses:', e);
   }
-  return [
-    {
-      id: 'DX-1001',
-      encounter_id: 'ENC-2026-001',
-      episode_id: 'EOC-2026-001',
-      patient_id: 'P-1001',
-      diagnosis_type: 'PRIMARY',
-      icd10_code: 'A90',
-      diagnosis_name: 'Dengue fever [classical dengue]',
-      snomed_ct_code: '38362002',
-      is_primary: true,
-      is_active: true,
-      created_at: '2026-08-17T08:30:00Z',
-      diagnosed_by: 'dr. Siti Wijaya, Sp.PD-KGEH'
-    }
-  ];
+  return [];
 };
 
 const saveStoredDiagnoses = (list) => {

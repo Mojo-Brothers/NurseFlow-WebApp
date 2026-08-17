@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { useOrdersStore } from '../store/orders.store.js';
+import { usePatientStore } from '../../patient/patient.store.js';
 import { PHARMACY_CATALOG, LABORATORY_CATALOG, RADIOLOGY_CATALOG } from '../services/orderCatalogEngine.service.js';
 
 export default function OrderEntryWorkspace({ onOrderCreated }) {
   const { createPrescription, createLabOrder, createRadiologyOrder } = useOrdersStore();
+  const { selectedPatient, patients } = usePatientStore();
+
+  const activePatient = selectedPatient || patients[0] || null;
 
   const [orderCategory, setOrderCategory] = useState('PHARMACY'); // 'PHARMACY' | 'LABORATORY' | 'RADIOLOGY'
   const [priority, setPriority] = useState('ROUTINE');
-  const [indication, setIndication] = useState('Terapi klinis rawat jalan & monitoring');
-  const [patientName, setPatientName] = useState('Ny. Siti Nurhaliza, S.Pd');
-  const [mrn, setMrn] = useState('MRN-2026-001001');
+  const [indication, setIndication] = useState('');
+  const [patientName, setPatientName] = useState(activePatient?.name || '');
+  const [mrn, setMrn] = useState(activePatient?.mrn || '');
 
   // Selection
   const [selectedMed, setSelectedMed] = useState(PHARMACY_CATALOG[0]);
@@ -23,13 +27,17 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const activePatientId = activePatient?.id || `P-${Date.now()}`;
+      const activeEpisodeId = activePatient?.episodeId || null;
+      const activeEncounterId = activePatient?.encounterId || null;
+
       if (orderCategory === 'PHARMACY') {
         await createPrescription({
-          patientId: 'P-1001',
+          patientId: activePatientId,
           patientName,
           mrn,
-          episodeId: 'EOC-2026-001',
-          encounterId: 'ENC-2026-001',
+          episodeId: activeEpisodeId,
+          encounterId: activeEncounterId,
           priority,
           clinicalIndication: indication,
           items: [{
@@ -45,11 +53,11 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
         alert('E-Resep Farmasi berhasil dibuat & dikirim ke instalasi farmasi untuk telaah klinis!');
       } else if (orderCategory === 'LABORATORY') {
         await createLabOrder({
-          patientId: 'P-1001',
+          patientId: activePatientId,
           patientName,
           mrn,
-          episodeId: 'EOC-2026-001',
-          encounterId: 'ENC-2026-001',
+          episodeId: activeEpisodeId,
+          encounterId: activeEncounterId,
           priority,
           clinicalIndication: indication,
           items: [{
@@ -63,11 +71,11 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
         alert('Order Laboratorium berhasil dibuat & dikirim ke LIS untuk pengambilan spesimen!');
       } else if (orderCategory === 'RADIOLOGY') {
         await createRadiologyOrder({
-          patientId: 'P-1001',
+          patientId: activePatientId,
           patientName,
           mrn,
-          episodeId: 'EOC-2026-001',
-          encounterId: 'ENC-2026-001',
+          episodeId: activeEpisodeId,
+          encounterId: activeEncounterId,
           priority,
           clinicalIndication: indication,
           items: [{

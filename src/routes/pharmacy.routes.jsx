@@ -2,8 +2,7 @@ import React, { lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
 
-const Pharmacy = lazy(() => import('../modules/pharmacy/pages/PharmacyPage'));
-const Inventory = lazy(() => import('../modules/pharmacy/pages/InventoryPage'));
+const EnterprisePharmacyWorkspacePage = lazy(() => import('../modules/pharmacy/pages/EnterprisePharmacyWorkspacePage'));
 const EnterpriseInventoryPage = lazy(() => import('../modules/inventory/pages/EnterpriseInventoryPage'));
 
 export const pharmacyRoutes = (Wrap) => [
@@ -12,13 +11,8 @@ export const pharmacyRoutes = (Wrap) => [
   {
     element: <ProtectedRoute allowedRoles={['PHARMACIST', 'ADMIN', 'DOCTOR']} />,
     children: [
-      { path: "/pharmacy", element: <Wrap><Pharmacy /></Wrap> }
-    ]
-  },
-  {
-    element: <ProtectedRoute allowedRoles={['PHARMACIST', 'ADMIN']} />,
-    children: [
-      { path: "/pharmacy/inventory", element: <Wrap><Inventory /></Wrap> }
+      { path: "/pharmacy", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
+      { path: "/pharmacy/inventory", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> }
     ]
   }
 ];

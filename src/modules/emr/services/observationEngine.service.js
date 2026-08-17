@@ -26,36 +26,7 @@ const getStoredObservations = () => {
   } catch (e) {
     console.warn('[ObservationEngine] Failed to load observations:', e);
   }
-  return [
-    {
-      id: 'OBS-2026-001',
-      encounter_id: 'ENC-2026-001',
-      episode_id: 'EOC-2026-001',
-      patient_id: 'P-1001',
-      observation_type: 'VITAL_SIGN',
-      loinc_code: '8480-6',
-      loinc_display: 'Systolic blood pressure',
-      observation_value: '130',
-      unit: 'mmHg',
-      interpretation: 'NORMAL',
-      observed_at: '2026-08-17T08:30:00Z',
-      observer_name: 'Ns. Ratna Sari, S.Kep'
-    },
-    {
-      id: 'OBS-2026-002',
-      encounter_id: 'ENC-2026-001',
-      episode_id: 'EOC-2026-001',
-      patient_id: 'P-1001',
-      observation_type: 'VITAL_SIGN',
-      loinc_code: '59408-5',
-      loinc_display: 'Oxygen saturation',
-      observation_value: '97',
-      unit: '%',
-      interpretation: 'NORMAL',
-      observed_at: '2026-08-17T08:30:00Z',
-      observer_name: 'Ns. Ratna Sari, S.Kep'
-    }
-  ];
+  return [];
 };
 
 const saveStoredObservations = (list) => {

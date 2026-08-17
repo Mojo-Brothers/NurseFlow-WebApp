@@ -9,14 +9,16 @@ export default function DoctorWorkspacePage() {
   const { activePatientId, liveContext } = useEncounterStore();
 
   const [activeTab, setActiveTab] = useState('COMMAND_CENTER'); // 'COMMAND_CENTER' | 'SOAP_WORKSPACE'
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
 
-  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || patients[0] || null;
+  const activePatient = selectedPatient || patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || patients[0] || null;
 
   const handleSelectPatient = (patient) => {
+    setSelectedPatient(patient);
     setActiveTab('SOAP_WORKSPACE');
   };
 

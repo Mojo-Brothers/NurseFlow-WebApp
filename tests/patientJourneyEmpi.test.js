@@ -7,9 +7,33 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { mpiEngine } from '../src/core/services/mpiEngine.service.js';
 import { usePatientStore } from '../src/modules/patient/patient.store.js';
 import { useEncounterStore } from '../src/modules/encounter/encounter.store.js';
+import { persistenceAdapter, DB_ENGINE_TYPES } from '../src/core/services/persistenceAdapter.service.js';
 
 describe('Gate 1E.2: Patient Identity, EMPI & Encounter Journey Foundation', () => {
   beforeEach(async () => {
+    persistenceAdapter.setEngine(DB_ENGINE_TYPES.IN_MEMORY);
+    persistenceAdapter.seedMemoryData('patients', [
+      {
+        id: 'P-1001',
+        mrn: 'MRN-2026-001001',
+        nik: '3171015005850001',
+        name: 'Ny. Siti Nurhaliza',
+        dob: '1985-05-20',
+        gender: 'F',
+        phone: '081234567890',
+        status: 'ACTIVE'
+      },
+      {
+        id: 'P-1002',
+        mrn: 'MRN-2026-001002',
+        nik: '3171021208800002',
+        name: 'Tn. Bambang Pamungkas',
+        dob: '1980-08-12',
+        gender: 'M',
+        phone: '081311223344',
+        status: 'ACTIVE'
+      }
+    ]);
     await usePatientStore.getState().fetchPatients();
   });
 

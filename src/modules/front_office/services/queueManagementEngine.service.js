@@ -44,25 +44,7 @@ const getStoredTickets = () => {
   } catch (e) {
     console.warn('[QueueEngine] Failed to load tickets:', e);
   }
-  return [
-    {
-      id: 'TKT-2026-001',
-      ticket_number: 'A-001',
-      pool_code: 'LOKET_ADM',
-      pool_name: 'Loket Pendaftaran & Admisi',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      encounter_id: 'ENC-2026-001',
-      counter_name: 'Loket 1',
-      is_priority: false,
-      priority_reason: 'NONE',
-      queue_status: 'SERVING',
-      created_at: '2026-08-17T08:15:00Z',
-      called_at: '2026-08-17T08:18:00Z',
-      completed_at: null,
-      branch_id: 'BRN-JKT-PST'
-    }
-  ];
+  return [];
 };
 
 const saveStoredTickets = (tickets) => {

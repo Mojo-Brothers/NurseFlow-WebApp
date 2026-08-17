@@ -9,65 +9,21 @@ export default function DoctorCommandCenter({ onSelectPatientForConsultation }) 
 
   const [activeQueueFilter, setActiveQueueFilter] = useState('ALL'); // 'ALL' | 'WAITING' | 'IN_TREATMENT' | 'CRITICAL'
 
-  // Synthetic Worklist Items
-  const doctorWorklist = [
-    {
-      id: 'WL-01',
-      patientId: 'P-1001',
-      patientName: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
-      age: 41,
-      gender: 'P',
-      triageLevel: 'ESI 2',
-      chiefComplaint: 'Demam hari ke-4, badan lemas, petekie (+)',
-      waitTime: '8 Menit',
-      status: 'WAITING',
-      criticalAlert: null,
-      pendingOrders: 2
-    },
-    {
-      id: 'WL-02',
-      patientId: 'P-1002',
-      patientName: 'Tn. Bambang Pamungkas',
-      mrn: 'MRN-2026-001002',
-      age: 46,
-      gender: 'L',
-      triageLevel: 'ESI 3',
-      chiefComplaint: 'Nyeri perut kanan bawah akut, mual',
-      waitTime: '16 Menit',
-      status: 'WAITING',
-      criticalAlert: null,
-      pendingOrders: 1
-    },
-    {
-      id: 'WL-03',
-      patientId: 'P-1003',
-      patientName: 'Mr. X (Darurat Cito Trauma)',
-      mrn: 'MRX-2026-A1',
-      age: 35,
-      gender: 'L',
-      triageLevel: 'ESI 1',
-      chiefComplaint: 'Trauma kepala berat KLL, GCS 6, SpO2 82%',
-      waitTime: '2 Menit',
-      status: 'IN_TREATMENT',
-      criticalAlert: '🚨 PANIC VALUE: Laktat Darah 5.2 mmol/L (Severe Shock)',
-      pendingOrders: 4
-    },
-    {
-      id: 'WL-04',
-      patientId: 'P-1004',
-      patientName: 'An. Kevin Pratama',
-      mrn: 'MRN-2026-001004',
-      age: 7,
-      gender: 'L',
-      triageLevel: 'ESI 4',
-      chiefComplaint: 'Batuk pilek 2 hari, nafsu makan turun',
-      waitTime: '28 Menit',
-      status: 'WAITING',
-      criticalAlert: null,
-      pendingOrders: 0
-    }
-  ];
+  // Dynamic Physician Worklist from Active Patients
+  const doctorWorklist = (patients || []).map((p, idx) => ({
+    id: `WL-${p.id || idx}`,
+    patientId: p.id,
+    patientName: p.name || p.nama || 'Pasien',
+    mrn: p.mrn || p.no_rm || '-',
+    age: p.age || 35,
+    gender: p.gender || 'L',
+    triageLevel: p.triageLevel || 'ESI 3',
+    chiefComplaint: p.chief_complaint || p.keluhan_utama || 'Pemeriksaan Klinis',
+    waitTime: '0 Menit',
+    status: p.status || 'WAITING',
+    criticalAlert: p.criticalAlert || null,
+    pendingOrders: 0
+  }));
 
   const handleOpenConsultation = (item) => {
     const p = patients.find(pt => pt.id === item.patientId || pt.mrn === item.mrn) || {
@@ -91,6 +47,12 @@ export default function DoctorCommandCenter({ onSelectPatientForConsultation }) 
     return true;
   });
 
+  const waitingCount = doctorWorklist.filter(w => w.status === 'WAITING').length;
+  const inTreatmentCount = doctorWorklist.filter(w => w.status === 'IN_TREATMENT').length;
+  const criticalCount = doctorWorklist.filter(w => w.criticalAlert !== null || w.triageLevel === 'ESI 1').length;
+  const pendingOrdersCount = doctorWorklist.reduce((acc, w) => acc + (w.pendingOrders || 0), 0);
+  const totalCount = doctorWorklist.length;
+
   return (
     <div className="flex flex-col gap-6 animate-in fade-in duration-300">
       {/* Clinician Duty Card & KPI Overview */}
@@ -98,7 +60,7 @@ export default function DoctorCommandCenter({ onSelectPatientForConsultation }) 
         <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400 tracking-wider">Menunggu Konsultasi</span>
-            <h3 className="text-2xl font-black text-blue-700 dark:text-blue-300">3 Pasien</h3>
+            <h3 className="text-2xl font-black text-blue-700 dark:text-blue-300">{waitingCount} Pasien</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
             <span className="material-symbols-outlined text-[20px]">schedule</span>
@@ -108,7 +70,7 @@ export default function DoctorCommandCenter({ onSelectPatientForConsultation }) 
         <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Sedang Diperiksa</span>
-            <h3 className="text-2xl font-black text-emerald-700 dark:text-emerald-300">1 Pasien</h3>
+            <h3 className="text-2xl font-black text-emerald-700 dark:text-emerald-300">{inTreatmentCount} Pasien</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
             <span className="material-symbols-outlined text-[20px]">stethoscope</span>
@@ -118,9 +80,9 @@ export default function DoctorCommandCenter({ onSelectPatientForConsultation }) 
         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400 tracking-wider">Hasil Kritis (Panic Alert)</span>
-            <h3 className="text-2xl font-black text-rose-700 dark:text-rose-300">1 Kasus</h3>
+            <h3 className="text-2xl font-black text-rose-700 dark:text-rose-300">{criticalCount} Kasus</h3>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold animate-pulse">
+          <div className={`w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center font-bold ${criticalCount > 0 ? 'animate-pulse' : ''}`}>
             <span className="material-symbols-outlined text-[20px]">warning</span>
           </div>
         </div>
@@ -128,7 +90,7 @@ export default function DoctorCommandCenter({ onSelectPatientForConsultation }) 
         <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400 tracking-wider">Order Menunggu Hasil</span>
-            <h3 className="text-2xl font-black text-purple-700 dark:text-purple-300">7 Order</h3>
+            <h3 className="text-2xl font-black text-purple-700 dark:text-purple-300">{pendingOrdersCount} Order</h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center font-bold">
             <span className="material-symbols-outlined text-[20px]">biotech</span>
@@ -146,10 +108,10 @@ export default function DoctorCommandCenter({ onSelectPatientForConsultation }) 
 
           <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold">
             {[
-              { id: 'ALL', label: 'Semua (4)' },
-              { id: 'WAITING', label: 'Menunggu' },
-              { id: 'IN_TREATMENT', label: 'Aktif' },
-              { id: 'CRITICAL', label: '🚨 Kritis' }
+              { id: 'ALL', label: `Semua (${totalCount})` },
+              { id: 'WAITING', label: `Menunggu (${waitingCount})` },
+              { id: 'IN_TREATMENT', label: `Aktif (${inTreatmentCount})` },
+              { id: 'CRITICAL', label: `🚨 Kritis (${criticalCount})` }
             ].map(tab => (
               <button
                 key={tab.id}

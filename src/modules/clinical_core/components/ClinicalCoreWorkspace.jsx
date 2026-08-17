@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useClinicalCoreStore } from '../clinicalCore.store.js';
+import { usePatientStore } from '../../patient/patient.store.js';
 import { EPISODE_TYPES, EPISODE_STATUSES } from '../services/episodeOfCareEngine.service.js';
 import { ENCOUNTER_CLASSES, ENCOUNTER_STATES } from '../services/encounterEngine.service.js';
 
@@ -24,6 +25,9 @@ export default function ClinicalCoreWorkspace() {
     advanceWorkflow
   } = useClinicalCoreStore();
 
+  const { selectedPatient, patients } = usePatientStore();
+  const activePatient = selectedPatient || patients[0] || null;
+
   const [activeTab, setActiveTab] = useState('EPISODES'); // 'EPISODES' | 'ENCOUNTERS' | 'WORKFLOWS' | 'APPOINTMENTS' | 'LEDGER' | 'EVENTS'
   const [selectedEncounterId, setSelectedEncounterId] = useState('');
 
@@ -38,11 +42,11 @@ export default function ClinicalCoreWorkspace() {
   const [simCategory, setSimCategory] = useState('LABORATORY');
   const [simCode, setSimCode] = useState('LAB-DL');
   const [simName, setSimName] = useState('Hematologi Lengkap 5-Diff Otomatis');
-  const [simPrice, setSimPrice] = useState(110000);
+  const [simPrice, setSimPrice] = useState(180000);
 
-  // Appointment booking state
+  // Appointment booking form state
   const [aptDate, setAptDate] = useState('2026-08-18');
-  const [aptTime, setAptTime] = useState('09:20 - 09:40');
+  const [aptTime, setAptTime] = useState('10:00 - 10:20');
 
   useEffect(() => {
     fetchCoreData();
@@ -54,9 +58,9 @@ export default function ClinicalCoreWorkspace() {
       return;
     }
     await createEpisode({
-      patientId: 'P-1001',
-      patientName: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
+      patientId: activePatient?.id || 'P-001',
+      patientName: activePatient?.name || '-',
+      mrn: activePatient?.mrn || '-',
       episodeType: newEpisodeType,
       attendingPhysicianId: 'DOC-1001',
       attendingPhysicianName: 'dr. Siti Wijaya, Sp.PD-KGEH',
@@ -96,9 +100,9 @@ export default function ClinicalCoreWorkspace() {
   const handleBookNewAppointment = async () => {
     try {
       await bookAppointment({
-        patientId: 'P-1001',
-        patientName: 'Ny. Siti Nurhaliza, S.Pd',
-        mrn: 'MRN-2026-001001',
+        patientId: activePatient?.id || 'P-001',
+        patientName: activePatient?.name || '-',
+        mrn: activePatient?.mrn || '-',
         doctorId: 'DOC-1001',
         doctorName: 'dr. Siti Wijaya, Sp.PD-KGEH',
         clinicId: 'CLI-1001',

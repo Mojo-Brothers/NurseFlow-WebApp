@@ -16,10 +16,7 @@ export default function InsuranceDashboard() {
     { label: t('insurance.stats.rejections'), value: '3', color: 'bg-error' },
   ];
 
-  const claims = [
-    { id: 'CL-9821', patient: 'Budi Santoso', diagnosis: 'K35.8 (Appendicitis)', amount: 'RP 12.500.000', status: 'DRAFT', risk: 'LOW' },
-    { id: 'CL-9819', patient: 'Siti Aminah', diagnosis: 'E11.9 (Diabetes)', amount: 'RP 4.200.000', status: 'DRAFT', risk: 'HIGH' },
-  ];
+  const claims = [];
 
   return (
     <div className="p-8 flex-column gap-10 animate-fade-in max-w-[1600px] mx-auto w-full h-full overflow-y-auto">

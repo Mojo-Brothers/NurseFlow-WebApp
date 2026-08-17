@@ -7,73 +7,8 @@ export default function NursingCommandCenter({ onSelectPatientTab }) {
   const { setLiveContext } = useEncounterStore();
   const [selectedWard, setSelectedWard] = useState('MELATI'); // 'MELATI' | 'MAWAR' | 'ICU'
 
-  // Sample Inpatient Beds
-  const [beds, setBeds] = useState([
-    {
-      bedId: 'BED-MEL-01',
-      bedNumber: 'Melati 01',
-      ward: 'Bangsal Melati',
-      acuity: 'PARTIAL_CARE',
-      patientId: 'P-1001',
-      patientName: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
-      diagnosis: 'DHF Grade II',
-      dpjp: 'dr. Surya Johnson, Sp.PD',
-      dueEmarCount: 2,
-      fallRisk: 'HIGH_RISK', // Gelang Kuning
-      fluidStatus: 'NORMAL',
-      vitalsDue: false,
-      lastVitals: 'TD 110/70 • HR 84 • Suhu 37.8°C'
-    },
-    {
-      bedId: 'BED-MEL-02',
-      bedNumber: 'Melati 02',
-      ward: 'Bangsal Melati',
-      acuity: 'TOTAL_CARE',
-      patientId: 'P-1002',
-      patientName: 'Tn. Bambang Pamungkas',
-      mrn: 'MRN-2026-001002',
-      diagnosis: 'Post Apendektomi H+1',
-      dpjp: 'dr. Budi Santoso, Sp.B',
-      dueEmarCount: 1,
-      fallRisk: 'HIGH_RISK',
-      fluidStatus: 'DEFICIT_RISK',
-      vitalsDue: true, // Overdue
-      lastVitals: 'TD 130/80 • HR 90 • Suhu 38.2°C'
-    },
-    {
-      bedId: 'BED-MEL-03',
-      bedNumber: 'Melati 03',
-      ward: 'Bangsal Melati',
-      acuity: 'MINIMAL_CARE',
-      patientId: 'P-1004',
-      patientName: 'Ny. Dewi Lestari',
-      mrn: 'MRN-2026-001004',
-      diagnosis: 'Dispepsia Fungsional',
-      dpjp: 'dr. Surya Johnson, Sp.PD',
-      dueEmarCount: 0,
-      fallRisk: 'LOW_RISK',
-      fluidStatus: 'NORMAL',
-      vitalsDue: false,
-      lastVitals: 'TD 120/80 • HR 76 • Suhu 36.6°C'
-    },
-    {
-      bedId: 'BED-MEL-04',
-      bedNumber: 'Melati 04',
-      ward: 'Bangsal Melati',
-      acuity: 'TOTAL_CARE',
-      patientId: 'P-1003',
-      patientName: 'Tn. Hendra (Mr. X)',
-      mrn: 'MRX-2026-A1',
-      diagnosis: 'Syok Sepsis ec Pneumonia Berat',
-      dpjp: 'dr. Surya Johnson, Sp.PD',
-      dueEmarCount: 3,
-      fallRisk: 'HIGH_RISK',
-      fluidStatus: 'OVERLOAD_RISK',
-      vitalsDue: true,
-      lastVitals: 'TD 85/50 • HR 122 • SpO2 91%'
-    }
-  ]);
+  // Active Inpatient Beds (Day-1 Clean Slate)
+  const [beds, setBeds] = useState([]);
 
   // ISBAR Handover Modal State
   const [isbarModalOpen, setIsbarModalOpen] = useState(false);
@@ -116,6 +51,13 @@ export default function NursingCommandCenter({ onSelectPatientTab }) {
     setIsbarModalOpen(false);
   };
 
+  const scheduledMedsPending = beds.reduce((acc, b) => acc + (b.pendingMeds || 0), 0);
+  const delayedVitalsCount = beds.filter(b => b.vitalsDelayed).length;
+  const highFallRiskCount = beds.filter(b => b.fallRisk >= 45 || b.safetyFlags?.fall_risk === 'HIGH').length;
+  const criticalFluidImbalanceCount = beds.filter(b => b.fluidImbalanceCritical).length;
+  const occupiedCount = beds.filter(b => b.isOccupied).length;
+  const totalWardBeds = beds.length > 0 ? beds.length : 6;
+
   return (
     <div className="p-4 space-y-5">
       {/* 4 LIVE NURSING METRICS */}
@@ -123,7 +65,7 @@ export default function NursingCommandCenter({ onSelectPatientTab }) {
         <div className="p-4 rounded-3xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-between shadow-xs">
           <div>
             <div className="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">Jadwal Obat Belum Diberikan</div>
-            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">6 <span className="text-xs font-normal">Dosis</span></div>
+            <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">{scheduledMedsPending} <span className="text-xs font-normal">Dosis</span></div>
             <div className="text-[10px] text-slate-500 mt-0.5">eMAR Shift Pagi (07:00 - 14:00)</div>
           </div>
           <div className="w-11 h-11 rounded-2xl bg-blue-600/20 text-blue-600 flex items-center justify-center font-black">
@@ -134,10 +76,10 @@ export default function NursingCommandCenter({ onSelectPatientTab }) {
         <div className="p-4 rounded-3xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-center justify-between shadow-xs">
           <div>
             <div className="text-[10px] font-black uppercase text-rose-600 dark:text-rose-400">Monitoring TTV Terlambat</div>
-            <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">2 <span className="text-xs font-normal">Pasien</span></div>
-            <div className="text-[10px] text-rose-500 font-bold mt-0.5">Melebihi Interval 4 Jam</div>
+            <div className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1">{delayedVitalsCount} <span className="text-xs font-normal">Pasien</span></div>
+            <div className="text-[10px] text-rose-500 font-bold mt-0.5">{delayedVitalsCount > 0 ? 'Melebihi Interval 4 Jam' : 'Seluruh Pasien Termonitor'}</div>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-rose-600/20 text-rose-600 flex items-center justify-center font-black animate-pulse">
+          <div className={`w-11 h-11 rounded-2xl bg-rose-600/20 text-rose-600 flex items-center justify-center font-black ${delayedVitalsCount > 0 ? 'animate-pulse' : ''}`}>
             <span className="material-symbols-outlined text-[24px]">vital_signs</span>
           </div>
         </div>
@@ -145,7 +87,7 @@ export default function NursingCommandCenter({ onSelectPatientTab }) {
         <div className="p-4 rounded-3xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 flex items-center justify-between shadow-xs">
           <div>
             <div className="text-[10px] font-black uppercase text-amber-600 dark:text-amber-400">Pasien Risiko Jatuh Tinggi</div>
-            <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">3 <span className="text-xs font-normal">Gelang Kuning</span></div>
+            <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-1">{highFallRiskCount} <span className="text-xs font-normal">Gelang Kuning</span></div>
             <div className="text-[10px] text-slate-500 mt-0.5">Morse Fall Scale &ge; 45</div>
           </div>
           <div className="w-11 h-11 rounded-2xl bg-amber-600/20 text-amber-600 flex items-center justify-center font-black">
@@ -156,8 +98,8 @@ export default function NursingCommandCenter({ onSelectPatientTab }) {
         <div className="p-4 rounded-3xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex items-center justify-between shadow-xs">
           <div>
             <div className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400">Imbalance Cairan Kritis</div>
-            <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">2 <span className="text-xs font-normal">Pasien</span></div>
-            <div className="text-[10px] text-slate-500 mt-0.5">Perlu Monitoring Diuresis</div>
+            <div className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">{criticalFluidImbalanceCount} <span className="text-xs font-normal">Pasien</span></div>
+            <div className="text-[10px] text-slate-500 mt-0.5">{criticalFluidImbalanceCount > 0 ? 'Perlu Monitoring Diuresis' : 'Balans Cairan Terkendali'}</div>
           </div>
           <div className="w-11 h-11 rounded-2xl bg-purple-600/20 text-purple-600 flex items-center justify-center font-black">
             <span className="material-symbols-outlined text-[24px]">water_damage</span>
@@ -174,7 +116,7 @@ export default function NursingCommandCenter({ onSelectPatientTab }) {
             </div>
             <div>
               <h3 className="text-sm font-black text-slate-900 dark:text-white">Denah Keterisian Tempat Tidur Rawat Inap (Ward Grid)</h3>
-              <p className="text-xs text-slate-400">Bangsal Melati (Kelas 1 & 2 Dewasa) • 4 Terisi / 6 Kapasitas</p>
+              <p className="text-xs text-slate-400">Bangsal {selectedWard} • {occupiedCount} Terisi / {totalWardBeds} Kapasitas</p>
             </div>
           </div>
 

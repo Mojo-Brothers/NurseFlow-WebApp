@@ -1,6 +1,5 @@
 import { db } from '../../../core/firebase.js';
 import { deductStock } from '../../inventory/services/inventory.service.js';
-import { DEMO_RECORDS } from '../../../core/demoData.js';
 import { 
   collection, 
   doc, 
@@ -311,7 +310,6 @@ export const getPatientRecords = async (patientId) => {
   } catch (e) {}
 
   const matchingLocal = localRecords.filter(r => r.patientId === patientId || r.patient_id === patientId || r.mrn === patientId);
-  const matchingDemo = DEMO_RECORDS.filter(r => r.patientId === patientId || r.patient_id === patientId || r.mrn === patientId);
 
   try {
     const q = query(
@@ -324,8 +322,7 @@ export const getPatientRecords = async (patientId) => {
     const firestoreIds = new Set(firestoreRecords.map(r => r.id));
     const combined = [
       ...firestoreRecords,
-      ...matchingLocal.filter(r => !firestoreIds.has(r.id)),
-      ...matchingDemo.filter(r => !firestoreIds.has(r.id))
+      ...matchingLocal.filter(r => !firestoreIds.has(r.id))
     ];
 
     const seen = new Set();
@@ -337,7 +334,7 @@ export const getPatientRecords = async (patientId) => {
     });
   } catch (error) {
     console.error('[EmrService] Failed to fetch records:', error);
-    const combined = [...matchingLocal, ...matchingDemo];
+    const combined = [...matchingLocal];
     const seen = new Set();
     return combined.filter(r => {
       const k = r.id || `${r.moduleName}-${r.date}`;

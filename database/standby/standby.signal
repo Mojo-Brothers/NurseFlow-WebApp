@@ -1,0 +1,2 @@
+# PostgreSQL 16 Standby Replica Signal Marker File
+# Presence of this file indicates node runs in Hot Standby Read-Only Replication mode.

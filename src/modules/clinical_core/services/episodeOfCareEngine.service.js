@@ -46,31 +46,7 @@ const getStoredEpisodes = () => {
   } catch (e) {
     console.warn('[EpisodeOfCareEngine] Failed to load local episodes:', e);
   }
-  return [
-    {
-      id: 'EOC-2026-001',
-      episode_number: 'EOC-2026-001001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
-      episode_type: 'INPATIENT',
-      parent_episode_id: null,
-      branch_id: 'BRN-JKT-PST',
-      organization_id: '100028741',
-      attending_physician_id: 'DOC-1001',
-      attending_physician_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      chief_complaint: 'Demam tinggi 4 hari, trombositopenia susp. DHF Grade II',
-      admission_date: '2026-08-15T08:30:00Z',
-      discharge_date: null,
-      encounters_count: 3,
-      encounter_ids: ['ENC-2026-001', 'ENC-2026-002'],
-      status: 'ACTIVE',
-      created_at: '2026-08-15T08:30:00Z',
-      created_by: 'admin@nurseflow.id',
-      updated_at: '2026-08-15T08:30:00Z',
-      is_deleted: false
-    }
-  ];
+  return [];
 };
 
 const saveStoredEpisodes = (episodes) => {

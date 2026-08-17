@@ -6,7 +6,7 @@ import { triageEngineService } from '../../emergency/services/triageEngine.servi
 import toast from 'react-hot-toast';
 
 export default function RapidTriageStudio({ onTriageCompleted, onTriggerCodeBlue }) {
-  const { patients } = usePatientStore();
+  const { patients, addPatient } = usePatientStore();
   const { activePatientId, activeEncounterId, setLiveContext } = useEncounterStore();
   const { executeSubmit, isSubmitting } = useTriageStore();
 
@@ -18,6 +18,34 @@ export default function RapidTriageStudio({ onTriageCompleted, onTriggerCodeBlue
   const [disabilityGcsEye, setDisabilityGcsEye] = useState(4);
   const [disabilityGcsVerbal, setDisabilityGcsVerbal] = useState(5);
   const [disabilityGcsMotor, setDisabilityGcsMotor] = useState(6);
+
+  const handleQuickCreateMrX = async (gender = 'M') => {
+    const timestamp = Date.now().toString().slice(-4);
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const mrn = `MRX-${today}-${timestamp}`;
+    const name = gender === 'M' ? `Tn. Mr. X (${timestamp})` : `Ny. Mrs. X (${timestamp})`;
+    const newPt = {
+      id: `P-${mrn}`,
+      mrn,
+      name,
+      dob: '1985-01-01',
+      gender,
+      is_anonymous: true,
+      status: 'EMERGENCY_ACTIVE',
+      payer: 'Jasa Raharja / Darurat Kemenkes',
+      emergencyContact: { name: 'Petugas Ambulans 118', phone: '118' }
+    };
+    try {
+      if (addPatient) {
+        await addPatient(newPt, 'Perawat Triase IGD');
+      }
+    } catch (e) {
+      console.warn('[RapidTriageStudio] Local fallback patient creation:', e);
+    }
+    setSelectedPatient(newPt);
+    setLiveContext(newPt.id, null);
+    toast.success(`🚨 Pasien Anonim ${name} (${mrn}) berhasil dibuat & siap ditriase!`);
+  };
 
   // Vitals
   const [sbp, setSbp] = useState(120);
@@ -142,7 +170,17 @@ export default function RapidTriageStudio({ onTriageCompleted, onTriggerCodeBlue
         {/* Patient Selection & Chief Complaint */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Pilih Pasien Terdaftar</label>
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400">Pilih Pasien Terdaftar</label>
+              <button
+                type="button"
+                onClick={() => handleQuickCreateMrX('M')}
+                className="text-[10px] px-2 py-0.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-black flex items-center gap-1 shadow-sm transition-all"
+              >
+                <span className="material-symbols-outlined text-[13px]">person_add</span>
+                + Pasien Darurat (Mr. X)
+              </button>
+            </div>
             <select
               value={selectedPatient?.id || ''}
               onChange={e => {
@@ -153,7 +191,7 @@ export default function RapidTriageStudio({ onTriageCompleted, onTriggerCodeBlue
               className="w-full mt-1 px-3 py-2 text-xs font-bold rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"
               required
             >
-              <option value="">-- Pilih Pasien --</option>
+              <option value="">-- {patients.length === 0 ? 'Belum Ada Pasien (Klik Tombol Merah di Kanan Atas)' : 'Pilih Pasien'} --</option>
               {patients.map(p => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({p.mrn}) - {p.status || 'ACTIVE'}

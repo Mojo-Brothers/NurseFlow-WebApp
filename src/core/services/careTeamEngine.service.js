@@ -21,23 +21,7 @@ class CareTeamEngine {
   }
 
   initializeSampleCareTeams() {
-    const sampleCareTeam = {
-      id: 'CT-2026-0810-001',
-      patientId: 'P-1001',
-      patientName: 'Ny. Siti Nurhaliza',
-      episodeId: 'EPI-2026-0810-001',
-      encounterId: 'ENC-2026-0810-001',
-      status: 'ACTIVE',
-      members: [
-        { practitionerId: 'EMP-2026-0001', name: 'dr. Surya Johnson, Sp.PD-KGEH', role: CARE_TEAM_ROLES.DPJP, assignedAt: '2026-08-01T08:00:00Z', isLead: true },
-        { practitionerId: 'EMP-2026-0002', name: 'dr. Anisa Rahma, Sp.JP', role: CARE_TEAM_ROLES.CONSULTING_PHYSICIAN, assignedAt: '2026-08-01T09:00:00Z', isLead: false },
-        { practitionerId: 'EMP-2026-0101', name: 'Ns. Ratna Sari, S.Kep', role: CARE_TEAM_ROLES.PRIMARY_NURSE, assignedAt: '2026-08-01T08:00:00Z', isLead: false },
-        { practitionerId: 'EMP-2026-0201', name: 'apt. Budi Santoso, S.Farm', role: CARE_TEAM_ROLES.CLINICAL_PHARMACIST, assignedAt: '2026-08-01T08:30:00Z', isLead: false }
-      ],
-      created_at: '2026-08-01T08:00:00Z'
-    };
-
-    this.careTeams.set(sampleCareTeam.id, sampleCareTeam);
+    // Clean state on Day-1 Go-Live
   }
 
   createCareTeam({ patientId, patientName, episodeId, encounterId, dpjpId, dpjpName }) {

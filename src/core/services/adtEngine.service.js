@@ -28,7 +28,7 @@ class ADTEngine {
 
   initializeDefaultBeds() {
     const sampleBeds = [
-      { id: 'BED-AZA-204-1', building: 'Gedung Utama', floor: 'Lantai 2', ward: 'AZALEA', roomNumber: 'Kamar 204', bedCode: '204-A', class: 'Kategori Kelas 1', status: BED_STATUS.OCCUPIED, isolation: ISOLATION_CATEGORY.NONE, currentPatientId: 'P-1002', currentPatientName: 'Tn. Bambang Pamungkas', encounterId: 'ENC-2026-0810-002', dailyRate: 750000 },
+      { id: 'BED-AZA-204-1', building: 'Gedung Utama', floor: 'Lantai 2', ward: 'AZALEA', roomNumber: 'Kamar 204', bedCode: '204-A', class: 'Kategori Kelas 1', status: BED_STATUS.AVAILABLE, isolation: ISOLATION_CATEGORY.NONE, currentPatientId: null, currentPatientName: null, encounterId: null, dailyRate: 750000 },
       { id: 'BED-AZA-204-2', building: 'Gedung Utama', floor: 'Lantai 2', ward: 'AZALEA', roomNumber: 'Kamar 204', bedCode: '204-B', class: 'Kategori Kelas 1', status: BED_STATUS.AVAILABLE, isolation: ISOLATION_CATEGORY.NONE, currentPatientId: null, currentPatientName: null, encounterId: null, dailyRate: 750000 },
       { id: 'BED-VIP-501-1', building: 'Gedung Utama', floor: 'Lantai 5', ward: 'PRESIDENT_SUITE', roomNumber: 'Kamar 501', bedCode: '501-VIP', class: 'VIP Class', status: BED_STATUS.AVAILABLE, isolation: ISOLATION_CATEGORY.NONE, currentPatientId: null, currentPatientName: null, encounterId: null, dailyRate: 2500000 },
       { id: 'BED-ICU-101-1', building: 'Gedung Critical Care', floor: 'Lantai 1', ward: 'ICU', roomNumber: 'Room ICU 01', bedCode: 'ICU-01', class: 'Intensive Care', status: BED_STATUS.AVAILABLE, isolation: ISOLATION_CATEGORY.AIRBORNE, currentPatientId: null, currentPatientName: null, encounterId: null, dailyRate: 3500000 }

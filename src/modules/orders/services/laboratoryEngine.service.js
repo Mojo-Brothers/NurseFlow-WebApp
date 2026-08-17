@@ -166,9 +166,9 @@ export const laboratoryEngineService = {
    */
   releaseLabResult: async ({
     labOrderId,
-    episodeId = 'EOC-2026-001',
-    encounterId = 'ENC-2026-001',
-    patientId = 'P-1001',
+    episodeId = null,
+    encounterId = null,
+    patientId = null,
     isCito = true,
     validatorName = 'dr. Sp.PK (Dokter Patologi Klinik)',
     actorEmail = 'lab@nurseflow.id'

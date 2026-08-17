@@ -1,0 +1,89 @@
+version: '3.8'
+
+# ==============================================================================
+# NurseFlow Enterprise HIS 2026 — High-Availability Multi-Node Cluster Compose
+# Architecture: Nginx -> API -> PgBouncer -> Primary + Standby Replica + Sentinel
+# ==============================================================================
+
+services:
+  # ─── 1. Primary PostgreSQL 16 Node ───
+  postgres-primary:
+    image: postgres:16-alpine
+    container_name: nurseflow_postgres_primary
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nurseflow_enterprise_his
+      POSTGRES_USER: his_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-his_dev_password_local}
+    volumes:
+      - pgdata_primary:/var/lib/postgresql/data
+      - ../../database/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ../../database/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ../../database/migrations:/docker-entrypoint-initdb.d:ro
+      - ../../database/primary/create_replication_user.sql:/scripts/create_replication_user.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U his_admin -d nurseflow_enterprise_his"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    networks:
+      - nurseflow-ha-net
+
+  # ─── 2. Standby Hot Replica Node ───
+  postgres-standby:
+    image: postgres:16-alpine
+    container_name: nurseflow_postgres_standby
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    volumes:
+      - pgdata_standby:/var/lib/postgresql/data
+      - ../../database/standby/setup_standby.sh:/scripts/setup_standby.sh:ro
+      - ../../database/failover/promote_standby.sh:/scripts/promote_standby.sh:ro
+    ports:
+      - "5433:5432"
+    networks:
+      - nurseflow-ha-net
+
+  # ─── 3. PgBouncer Connection Pooler ───
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: nurseflow_pgbouncer
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+    ports:
+      - "6432:6432"
+    networks:
+      - nurseflow-ha-net
+
+  # ─── 4. High-Availability Failover Sentinel ───
+  ha-sentinel:
+    image: postgres:16-alpine
+    container_name: nurseflow_ha_sentinel
+    restart: unless-stopped
+    depends_on:
+      postgres-primary:
+        condition: service_healthy
+      postgres-standby:
+        condition: service_started
+    volumes:
+      - ../../database/failover/failover_sentinel.sh:/scripts/failover_sentinel.sh:ro
+      - ../../database/failover/promote_standby.sh:/scripts/promote_standby.sh:ro
+    command: ["sh", "/scripts/failover_sentinel.sh"]
+    networks:
+      - nurseflow-ha-net
+
+networks:
+  nurseflow-ha-net:
+    driver: bridge
+
+volumes:
+  pgdata_primary:
+  pgdata_standby:

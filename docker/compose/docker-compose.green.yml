@@ -1,0 +1,32 @@
+version: '3.8'
+
+# ==============================================================================
+# NurseFlow Enterprise HIS 2026 — Green Environment (Active/Staging Container)
+# ==============================================================================
+
+services:
+  his-webapp-green:
+    build:
+      context: ../../
+      dockerfile: Dockerfile
+    container_name: nurseflow_his_green
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    environment:
+      - NODE_ENV=production
+      - DEPLOYMENT_SLOT=GREEN
+      - APP_VERSION=2026.8.17-green
+      - PORT=80
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/health/live || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - nurseflow-cluster-net
+
+networks:
+  nurseflow-cluster-net:
+    external: true

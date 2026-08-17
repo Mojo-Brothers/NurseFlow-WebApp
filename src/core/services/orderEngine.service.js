@@ -42,30 +42,7 @@ class OrderEngine {
   }
 
   initializeSampleOrders() {
-    const sampleLabOrder = {
-      id: 'ORD-2026-0810-001',
-      orderNumber: 'ORD-LAB-20260810-001',
-      type: ORDER_TYPES.LABORATORY,
-      encounterId: 'ENC-2026-0810-001',
-      patientId: 'P-1001',
-      patientName: 'Ny. Siti Nurhaliza',
-      mrn: 'MRN-2026-001001',
-      orderingPractitionerId: 'EMP-2026-0001',
-      orderingPractitionerName: 'dr. Surya Johnson, Sp.PD-KGEH',
-      departmentId: 'POLI-PD',
-      targetDepartmentId: 'LAB-CLINICAL',
-      priority: ORDER_PRIORITY.STAT,
-      status: ORDER_STATUS.ORDERED,
-      items: [
-        { code: 'LOINC-57021-8', name: 'Darah Lengkap (CBC)', category: 'Hematologi' },
-        { code: 'LOINC-2345-7', name: 'Glukosa Darah Sewaktu (GDS)', category: 'Kimia Klinik' }
-      ],
-      clinicalNotes: 'Pasien lemas, riwayat DM Tipe 2.',
-      orderedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    this.orders.set(sampleLabOrder.id, sampleLabOrder);
+    // Clean state on Day-1 Go-Live
   }
 
   // Create Order with validation against Encounter Engine & Master Registry

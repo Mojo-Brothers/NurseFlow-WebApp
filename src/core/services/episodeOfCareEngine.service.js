@@ -28,25 +28,7 @@ class EpisodeOfCareEngine {
   }
 
   initializeSampleEpisodes() {
-    const sampleEpisode = {
-      id: 'EPI-2026-0810-001',
-      patientId: 'P-1001',
-      patientName: 'Ny. Siti Nurhaliza',
-      mrn: 'MRN-2026-001001',
-      type: EPISODE_TYPES.CARDIOVASCULAR,
-      status: EPISODE_STATUS.ACTIVE,
-      title: 'Program Perawatan Kardiovaskular & Hipertensi Terpadu',
-      startDate: '2026-08-01T08:00:00Z',
-      endDate: null,
-      primaryDiagnosis: 'I21.9 - Acute Myocardial Infarction',
-      responsiblePractitionerId: 'EMP-2026-0001',
-      responsiblePractitionerName: 'dr. Surya Johnson, Sp.PD-KGEH',
-      careTeamId: 'CT-2026-0810-001',
-      encounterIds: ['ENC-2026-0810-001', 'ENC-2026-0810-002'],
-      created_at: '2026-08-01T08:00:00Z'
-    };
-
-    this.episodes.set(sampleEpisode.id, sampleEpisode);
+    // Clean state on Day-1 Go-Live
   }
 
   createEpisode({ patientId, patientName, mrn, type = EPISODE_TYPES.GENERAL_CARE, title, primaryDiagnosis, responsiblePractitionerId, responsiblePractitionerName }) {

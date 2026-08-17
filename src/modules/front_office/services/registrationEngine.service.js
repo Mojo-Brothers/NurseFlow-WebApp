@@ -19,36 +19,7 @@ const getStoredRegistrations = () => {
   } catch (e) {
     console.warn('[RegistrationEngine] Failed to load registrations:', e);
   }
-  return [
-    {
-      id: 'REG-2026-001',
-      registration_number: 'REG-2026-001001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
-      nik: '3171055508890001',
-      gender: 'FEMALE',
-      birth_date: '1989-08-15',
-      phone_number: '081234567890',
-      episode_id: 'EOC-2026-001',
-      encounter_id: 'ENC-2026-001',
-      guarantor_id: 'GRN-BPJS',
-      guarantor_name: 'BPJS Kesehatan (JKN-PBI)',
-      insurance_card_number: '0001234567891',
-      sep_number: '0115R0010826V000101',
-      department_id: 'CLI-1001',
-      department_name: 'Poliklinik Penyakit Dalam',
-      doctor_id: 'DOC-1001',
-      doctor_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      registration_type: 'RAWAT_JALAN',
-      ticket_number: 'A-001',
-      consent_signed: true,
-      registered_at: '2026-08-17T08:15:00Z',
-      registered_by: 'admin@nurseflow.id',
-      branch_id: 'BRN-JKT-PST',
-      status: 'ACTIVE'
-    }
-  ];
+  return [];
 };
 
 const saveStoredRegistrations = (list) => {

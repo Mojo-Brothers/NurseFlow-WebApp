@@ -111,7 +111,7 @@ export default function AnalyticalResultEntryStudio({ activeSpecimen, onPanicDet
         severity: 'CRITICAL',
         title: `🚨 NILAI KRITIS LAB: ${detectedPanic.testName} (${detectedPanic.numericValue} ${detectedPanic.unit})`,
         message: `Pasien ${specimen.patientName} (${specimen.mrn}) mengalami kondisi kritis: ${detectedPanic.panicThreat}!`,
-        patientId: specimen.patientId || 'P-1003',
+        patientId: specimen.patientId || null,
         patientName: specimen.patientName,
         mrn: specimen.mrn
       });

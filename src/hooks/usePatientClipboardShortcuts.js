@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { usePatientStore } from '../modules/patient/patient.store.js';
-import { DEMO_PATIENTS } from '../core/demoData.js';
 
 /**
  * Custom Hook: usePatientClipboardShortcuts
@@ -29,9 +28,9 @@ export function usePatientClipboardShortcuts({ onPasteMrn } = {}) {
         const selectedText = window.getSelection()?.toString();
         // Hanya picu salin otomatis jika user tidak sedang memblokir/menyalin teks tertentu
         if (!isInput && !selectedText) {
-          const list = (patients && patients.length > 0) ? patients : DEMO_PATIENTS;
-          const activePatient = list.find(p => p.id === selectedPatientId) || list[0];
-          const mrn = activePatient?.mrn || '100001';
+          const list = patients || [];
+          const activePatient = list.find(p => p.id === selectedPatientId) || list[0] || null;
+          const mrn = activePatient?.mrn;
 
           if (mrn) {
             e.preventDefault();

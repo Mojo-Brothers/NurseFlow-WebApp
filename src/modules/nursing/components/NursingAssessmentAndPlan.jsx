@@ -3,13 +3,15 @@ import { nursingCareEngineService } from '../services/nursingCareEngine.service.
 import toast from 'react-hot-toast';
 
 export default function NursingAssessmentAndPlan({ activePatient }) {
-  const patient = activePatient || {
-    id: 'P-1001',
-    name: 'Ny. Siti Nurhaliza, S.Pd',
-    mrn: 'MRN-2026-001001',
-    ward: 'Bangsal Melati',
-    bed: 'Bed 04'
-  };
+  if (!activePatient) {
+    return (
+      <div className="p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        Pilih pasien rawat inap terlebih dahulu untuk membuka lembar pengkajian keperawatan & SDKI/SIKI.
+      </div>
+    );
+  }
+
+  const patient = activePatient;
 
   // Morse Fall Scale State
   const [historyOfFalling, setHistoryOfFalling] = useState(false);

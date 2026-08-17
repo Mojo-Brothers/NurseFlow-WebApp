@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
+import { usePatientStore } from '../../patient/patient.store.js';
 
 export default function CpptWorkspace() {
   const { cpptNotes, recordCpptEntry, selectedPatientId } = useEmrStore();
+  const { selectedPatient, patients } = usePatientStore();
+  const activePatient = selectedPatient || patients.find(p => p.id === selectedPatientId) || patients[0] || null;
 
   const [proType, setProType] = useState('DOKTER_DPJP');
   const [authorName, setAuthorName] = useState('dr. Siti Wijaya, Sp.PD-KGEH');
@@ -17,8 +20,8 @@ export default function CpptWorkspace() {
       await recordCpptEntry({
         episodeId: 'EOC-2026-001',
         encounterId: 'ENC-2026-001',
-        patientId: selectedPatientId,
-        patientName: 'Ny. Siti Nurhaliza, S.Pd',
+        patientId: selectedPatientId || activePatient?.id || 'P-001',
+        patientName: activePatient?.name || '-',
         professionalType: proType,
         authorName,
         soapNotes,

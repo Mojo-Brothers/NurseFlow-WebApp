@@ -4,7 +4,6 @@
  */
 import { create } from 'zustand';
 import { getAllPatients, registerPatient, updatePatient } from './services/patient.service.js';
-import { DEMO_PATIENTS } from '../../core/demoData.js';
 
 export const usePatientStore = create((set, get) => ({
   // ─── State ───────────────────────────────

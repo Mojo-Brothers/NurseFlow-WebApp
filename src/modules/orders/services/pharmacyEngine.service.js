@@ -125,9 +125,9 @@ export const pharmacyEngineService = {
    */
   dispenseMedication: async ({
     orderId,
-    episodeId = 'EOC-2026-001',
-    encounterId = 'ENC-2026-001',
-    patientId = 'P-1001',
+    episodeId = null,
+    encounterId = null,
+    patientId = null,
     pharmacistName = 'apt. Dimas Anggara, S.Farm',
     actorEmail = 'pharmacist@nurseflow.id'
   }) => {

@@ -3,13 +3,24 @@
  * Standards: Permenkes No. 24/2022 (RME), JCI 7th Edition (MMU Medication Safety, IPSG 3), SATUSEHAT FHIR
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { soapEngineService } from '../src/modules/emr/services/soapEngine.service.js';
 import { cdssEngineService } from '../src/modules/emr/services/cdssEngine.service.js';
 import { allergyEngineService } from '../src/modules/emr/services/allergyEngine.service.js';
 import { universalOrderEngineService } from '../src/modules/orders/services/universalOrderEngine.service.js';
 
 describe('Gate 1E.4: Doctor Consultation & Clinical Core Vertical Slice', () => {
+  beforeEach(() => {
+    allergyEngineService.recordAllergy({
+      patientId: 'P-1001',
+      allergyType: 'DRUG',
+      allergen: 'Amoxicillin / Penicillin Group',
+      reaction: 'Anaphylaxis / Urtikaria',
+      severity: 'SEVERE',
+      verificationStatus: 'CONFIRMED',
+      recordedBy: 'dr. Test Specialist'
+    });
+  });
   // 1. Structured SOAP Note & Diagnosis
   it('1. should record structured CPPT/SOAP note and register primary ICD-10 diagnosis', async () => {
     const soap = await soapEngineService.recordSoapNote({

@@ -8,30 +8,7 @@ import { outboxPublisherService } from '../../front_office/services/outboxPublis
 import { diagnosisEngineService } from './diagnosisEngine.service.js';
 import { cdssEngineService } from './cdssEngine.service.js';
 
-let inMemorySoap = [
-  {
-    id: 'SOAP-2026-001',
-    episode_id: 'EOC-2026-001',
-    encounter_id: 'ENC-2026-001',
-    patient_id: 'P-1001',
-    patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-    mrn: 'MRN-2026-001001',
-    subjective: 'Pasien datang dengan keluhan demam hari ke-4, badan pegal linu, mual, dan bintik merah pada kedua lengan.',
-    objective: 'Keadaan umum tampak lemah. TD 110/70 mmHg, Nadi 84 x/menit, RR 20 x/menit, Suhu 37.0°C, SpO2 98%. Ptekie (+) pada ekstremitas atas.',
-    assessment: 'DHF Grade II (Dengue Hemorrhagic Fever dengan manifestasi perdarahan spontan petekie).',
-    plan: '1. Infus Ringer Lactate 2 ml/kgBB/jam.\n2. Cek Darah Lengkap per 12 jam (Pantau Trombosit & Ht).\n3. Paracetamol 500 mg tab 3x1 jika demam (Hindari NSAID/Aspirin).\n4. Edukasi hidrasi cairan oral 2-2.5 Liter/hari.',
-    primary_icd10: 'A90',
-    primary_icd10_name: 'Dengue fever [classical dengue]',
-    secondary_icd10: [{ code: 'R50.9', name: 'Fever, unspecified' }],
-    icd9_procedures: [{ code: '90.59', name: 'Microscopic examination of blood' }],
-    physician_id: 'DOC-1001',
-    physician_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-    is_signed: true,
-    signature_timestamp: '2026-08-17T09:15:00Z',
-    created_at: '2026-08-17T09:00:00Z',
-    updated_at: '2026-08-17T09:15:00Z'
-  }
-];
+let inMemorySoap = [];
 
 const getStoredSoap = () => {
   try {

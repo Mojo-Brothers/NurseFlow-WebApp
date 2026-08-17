@@ -34,47 +34,7 @@ class EncounterEngine {
   }
 
   initializeDefaultEncounters() {
-    const sampleEncounters = [
-      {
-        id: 'ENC-2026-0810-001',
-        encounterNumber: 'ENC-2026-0810-001',
-        patientId: 'P-1001',
-        patientName: 'Ny. Siti Nurhaliza',
-        mrn: 'MRN-2026-001001',
-        type: ENCOUNTER_TYPES.OUTPATIENT,
-        status: ENCOUNTER_STATUS.IN_CONSULTATION,
-        departmentId: 'POLI-PD',
-        departmentName: 'Poli Penyakit Dalam',
-        dpjpId: 'EMP-2026-0001',
-        dpjpName: 'dr. Surya Johnson, Sp.PD-KGEH',
-        payer: 'BPJS Kesehatan',
-        bpjsCardNumber: '0001234567890',
-        admissionDate: '2026-08-10T08:00:00Z',
-        chiefComplaint: 'Nyeri dada pasca aktivitas fisik, sesak napas ringan.',
-        vitals: { hr: 88, bp: '130/85', rr: 20, temp: 36.8, spo2: 98 },
-        created_at: '2026-08-10T08:00:00Z'
-      },
-      {
-        id: 'ENC-2026-0810-002',
-        encounterNumber: 'ENC-2026-0810-002',
-        patientId: 'P-1002',
-        patientName: 'Tn. Bambang Pamungkas',
-        mrn: 'MRN-2026-001002',
-        type: ENCOUNTER_TYPES.INPATIENT,
-        status: ENCOUNTER_STATUS.ADMITTED,
-        departmentId: 'MED-AZALEA',
-        departmentName: 'Ruang Rawat Azalea Kamar 204',
-        dpjpId: 'EMP-2026-0001',
-        dpjpName: 'dr. Surya Johnson, Sp.PD-KGEH',
-        payer: 'Umum / Mandiri',
-        admissionDate: '2026-08-08T14:30:00Z',
-        chiefComplaint: 'Nyeri perut kanan bawah tajam pasca Appendektomi H+2.',
-        vitals: { hr: 76, bp: '120/80', rr: 18, temp: 36.5, spo2: 99 },
-        created_at: '2026-08-08T14:30:00Z'
-      }
-    ];
-
-    persistenceAdapter.seedMemoryData(this.COLLECTION_NAME, sampleEncounters);
+    persistenceAdapter.seedMemoryData(this.COLLECTION_NAME, []);
   }
 
   async getAllEncounters() {

@@ -54,30 +54,7 @@ const getStoredEncounters = () => {
   } catch (e) {
     console.warn('[EncounterEngine] Failed to load local encounters:', e);
   }
-  return [
-    {
-      id: 'ENC-2026-001',
-      encounter_number: 'ENC-2026-001001',
-      episode_id: 'EOC-2026-001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
-      encounter_class: 'IMP',
-      encounter_class_label: 'Inpatient (Rawat Inap Bangsal)',
-      encounter_status: 'IN_PROGRESS',
-      practitioner_id: 'DOC-1001',
-      practitioner_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      location_id: 'FAC-BED-301B',
-      location_name: 'Kamar Mawar 301 (Bed 301-B)',
-      priority: 'ROUTINE',
-      started_at: '2026-08-15T09:00:00Z',
-      ended_at: null,
-      created_at: '2026-08-15T08:45:00Z',
-      created_by: 'admin@nurseflow.id',
-      updated_at: '2026-08-15T09:00:00Z',
-      is_deleted: false
-    }
-  ];
+  return [];
 };
 
 const saveStoredEncounters = (encounters) => {

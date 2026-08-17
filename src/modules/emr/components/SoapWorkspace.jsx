@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
+import { usePatientStore } from '../../patient/patient.store.js';
 import { ICD10_CATALOG } from '../services/diagnosisEngine.service.js';
 
 export default function SoapWorkspace() {
   const { soapNotes, recordSoapNote, selectedPatientId } = useEmrStore();
+  const { selectedPatient, patients } = usePatientStore();
+  const activePatient = selectedPatient || patients.find(p => p.id === selectedPatientId) || patients[0] || null;
 
   const [subjective, setSubjective] = useState('');
   const [objective, setObjective] = useState('');
@@ -23,9 +26,9 @@ export default function SoapWorkspace() {
       await recordSoapNote({
         episodeId: 'EOC-2026-001',
         encounterId: 'ENC-2026-001',
-        patientId: selectedPatientId,
-        patientName: 'Ny. Siti Nurhaliza, S.Pd',
-        mrn: 'MRN-2026-001001',
+        patientId: selectedPatientId || activePatient?.id || 'P-001',
+        patientName: activePatient?.name || '-',
+        mrn: activePatient?.mrn || '-',
         subjective,
         objective,
         assessment,

@@ -4,9 +4,9 @@ import { useEmergencyStore } from '../store/emergency.store.js';
 export default function TriageAssessmentWorkspace({ onTriageSaved }) {
   const { recordTriageAssessment } = useEmergencyStore();
 
-  const [patientName, setPatientName] = useState('Tn. Bambang Hermanto');
-  const [mrn, setMrn] = useState('MRN-2026-009988');
-  const [chiefComplaint, setChiefComplaint] = useState('Nyeri dada retrosternal menjalar ke rahang & keringat dingin');
+  const [patientName, setPatientName] = useState('');
+  const [mrn, setMrn] = useState('');
+  const [chiefComplaint, setChiefComplaint] = useState('');
   const [airway, setAirway] = useState('PATENT');
   const [breathing, setBreathing] = useState('DYSPNEA');
   const [circulation, setCirculation] = useState('NORMAL');

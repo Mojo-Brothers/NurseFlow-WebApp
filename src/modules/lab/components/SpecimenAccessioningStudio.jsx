@@ -1,39 +1,20 @@
 import React, { useState } from 'react';
 import { lisPacsEngineService, VACUTAINER_TUBES } from '../../../../server/services/lisPacsEngine.service.js';
+import { usePatientStore } from '../../patient/patient.store.js';
 import toast from 'react-hot-toast';
 
 export default function SpecimenAccessioningStudio({ onSpecimenSelected }) {
+  const { selectedPatient, patients } = usePatientStore();
+  const activePatient = selectedPatient || patients[0] || null;
+
   const [selectedTube, setSelectedTube] = useState('PURPLE_EDTA');
-  const [patientId, setPatientId] = useState('P-1001');
-  const [patientMrn, setPatientMrn] = useState('MRN-2026-001001');
-  const [patientName, setPatientName] = useState('Ny. Siti Nurhaliza, S.Pd');
+  const [patientId, setPatientId] = useState(activePatient?.id || '');
+  const [patientMrn, setPatientMrn] = useState(activePatient?.mrn || '');
+  const [patientName, setPatientName] = useState(activePatient?.name || '');
   const [phlebotomistName, setPhlebotomistName] = useState('Analis Rina, A.Md.AK');
   const [collectionSite, setCollectionSite] = useState('Vena Fossa Cubiti Dextra');
 
-  const [activeSpecimens, setActiveSpecimens] = useState([
-    {
-      barcode: 'LAB-0817-4812',
-      patientName: 'Ny. Siti Nurhaliza',
-      mrn: 'MRN-2026-001001',
-      tube: 'PURPLE_EDTA',
-      tubeName: 'Tutup Ungu (EDTA)',
-      testName: 'Darah Lengkap 5-Diff (CBC)',
-      status: 'COLLECTED',
-      collectedAt: '10:15 WIB',
-      temperature: '4.2°C'
-    },
-    {
-      barcode: 'LAB-0817-7193',
-      patientName: 'Tn. Hendra (Mr. X)',
-      mrn: 'MRX-2026-A1',
-      tube: 'YELLOW_SST',
-      tubeName: 'Tutup Kuning (SST Gel)',
-      testName: 'Laktat Darah & Elektrolit Cito',
-      status: 'RECEIVED_IN_LAB',
-      collectedAt: '10:30 WIB',
-      temperature: '3.8°C'
-    }
-  ]);
+  const [activeSpecimens, setActiveSpecimens] = useState([]);
 
   const handleCreateSpecimen = (e) => {
     e.preventDefault();

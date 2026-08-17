@@ -13,13 +13,7 @@ export default function InventoryDashboard() {
 
   useEffect(() => {
     getInventoryLevels().then(data => {
-      // If empty, use simulated data for demonstration
-      const demoData = data.length > 0 ? data : [
-        { id: '1', medication_name: 'Paracetamol 500mg', current_stock: 45, unit: 'Tabs', avg_daily_usage: 12, location: 'MAIN_PHARMACY' },
-        { id: '2', medication_name: 'Ceftriaxone 1g (IV)', current_stock: 8, unit: 'Vials', avg_daily_usage: 4, location: 'ER_DEPT' },
-        { id: '3', medication_name: 'Normal Saline 500ml', current_stock: 120, unit: 'Bags', avg_daily_usage: 15, location: 'MAIN_PHARMACY' },
-      ];
-      setItems(demoData);
+      setItems(data || []);
       setLoading(false);
     });
   }, []);

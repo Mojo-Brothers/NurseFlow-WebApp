@@ -1,0 +1,67 @@
+# ==============================================================================
+# NurseFlow Enterprise HIS 2026 — Prometheus Observability Alert Rules
+# Standard: JCI Infrastructure Safety / ISO 27001 System Availability SLA
+# ==============================================================================
+
+groups:
+  - name: his_operational_alerts
+    rules:
+      # 1. Latency Warning (p95 > 500ms)
+      - alert: HighHttpLatencyP95
+        expr: http_request_duration_seconds{quantile="0.95"} > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latensi HTTP p95 melebihi 500ms ({{ $value }}s)"
+          description: "Waktu respon 95% transaksi klinis melambat. Periksa bottleneck database atau network."
+
+      # 2. Latency Critical (p99 > 850ms)
+      - alert: CriticalHttpLatencyP99
+        expr: http_request_duration_seconds{quantile="0.99"} > 0.85
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Latensi HTTP p99 kritis melebihi 850ms ({{ $value }}s)"
+          description: "Respon sistem mendekati batas timeout. Berpotensi mengganggu pelayanan IGD/Kamar Bedah."
+
+      # 3. High Error Rate (> 1%)
+      - alert: HighHttpErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.01
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Tingkat error HTTP 5xx melebihi 1%"
+          description: "Terdeteksi kegagalan transaksi API pada klien rumah sakit."
+
+      # 4. PostgreSQL Connection Pool Near Exhaustion (> 80%)
+      - alert: PostgresPoolNearExhaustion
+        expr: postgres_connections_active > 160
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Penggunaan PostgreSQL Connection Pool melebihi 80% (160/200)"
+          description: "Koneksi database hampir penuh. Segera periksa query yang terkunci atau deadlock."
+
+      # 5. Redis Memory Utilization (> 85%)
+      - alert: RedisMemoryHigh
+        expr: redis_memory_usage_bytes > 425000000
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Penggunaan memori Redis melebihi 85%"
+          description: "Mendekati batas alokasi RAM cache Redis. Evaluasi TTL key dan rate limiter storage."
+
+      # 6. Event Loop Lag High (> 100ms)
+      - alert: NodeJsEventLoopLagHigh
+        expr: nodejs_eventloop_lag_seconds > 0.1
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node.js Event Loop Lag kritis > 100ms ({{ $value }}s)"
+          description: "Tugas komputasi sinkron memblokir thread utama. Berisiko menyebabkan server freeze."

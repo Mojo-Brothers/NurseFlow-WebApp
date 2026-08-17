@@ -9,9 +9,8 @@ import {
 import toast from 'react-hot-toast';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import PatientDetailDrawerModal from './PatientDetailDrawerModal.jsx';
-import DischargeModalClassic from '../../appointment_review/components/DischargeModalClassic.jsx';
-import BmiModalSlider from '../../appointment_review/components/BmiModalSlider.jsx';
-import { DEMO_PATIENTS } from '../../../core/demoData.js';
+import DischargeModalClassic from './DischargeModalClassic.jsx';
+import BmiModalSlider from './BmiModalSlider.jsx';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -304,19 +303,19 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
     }, 1200);
   };
 
-  const patientName = patient?.name || DEMO_PATIENTS[0]?.name || 'Ny. Siti Nurhaliza, S.Pd';
-  const patientMrn = patient?.mrn || '001001';
-  const patientNik = patient?.nik || '3273010001234567';
-  const patientDob = patient?.demographics?.dob || '2001-02-15';
-  const patientGender = patient?.demographics?.gender || 'F';
-  const insuranceType = (patient?.insurance?.type || patient?.insurance?.name || 'BPJS KESEHATAN').toUpperCase();
-  const insuranceNo = patient?.insurance?.no || `000192${patientMrn}`;
-  const regNo = encounter?.id ? encounter.id.toUpperCase() : `REG-2026-${patientMrn}-001`;
-  const departmentName = encounter?.department || (careScope === 'rawat_inap' ? 'Ruang Perawatan Chrysant (Kamar 302)' : 'Poli Penyakit Dalam (Lantai 2)');
-  const doctorName = encounter?.doctor_name || 'dr. Siti Wijaya, Sp.PD';
+  const patientName = patient?.name || '-';
+  const patientMrn = patient?.mrn || '-';
+  const patientNik = patient?.nik || '-';
+  const patientDob = patient?.demographics?.dob || patient?.dob || '-';
+  const patientGender = patient?.demographics?.gender || patient?.gender || '-';
+  const insuranceType = (patient?.insurance?.type || patient?.insurance?.name || patient?.payer || '-').toUpperCase();
+  const insuranceNo = patient?.insurance?.no || patient?.bpjsCardNumber || '-';
+  const regNo = encounter?.id ? encounter.id.toUpperCase() : (encounter?.encounter_number || '-');
+  const departmentName = encounter?.department || (careScope === 'rawat_inap' ? 'Rawat Inap' : 'Poliklinik');
+  const doctorName = encounter?.doctor_name || encounter?.practitioner_name || '-';
   const tglKedatangan = encounter?.admitted_at?.toDate 
     ? encounter.admitted_at.toDate().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) 
-    : '06 Agu 2026, 08.15 WIB';
+    : (encounter?.started_at ? new Date(encounter.started_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }) : '-');
 
   return (
     <div className="w-full max-w-full space-y-6 pb-12 text-slate-800 dark:text-slate-100 font-sans">

@@ -29,55 +29,7 @@ const getStoredOrders = () => {
     console.warn('[UniversalOrderEngine] Failed to load orders:', e);
   }
   if (memoryOrders) return memoryOrders;
-  return [
-    {
-      id: 'ORD-2026-001',
-      order_number: 'ORD-2026-0817-001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
-      episode_id: 'EOC-2026-001',
-      encounter_id: 'ENC-2026-001',
-      ordered_by: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      order_category: 'LABORATORY',
-      priority: 'CITO',
-      clinical_indication: 'Kecurigaan DHF Grade II fase kritis & trombositopenia akut',
-      status: 'VERIFIED',
-      is_cito: true,
-      order_items_count: 2,
-      total_estimated_amount: 340000,
-      history: [
-        { status: 'DRAFT', timestamp: '2026-08-17T09:00:00Z', actor: 'dr. Siti Wijaya, Sp.PD-KGEH' },
-        { status: 'ORDERED', timestamp: '2026-08-17T09:02:00Z', actor: 'dr. Siti Wijaya, Sp.PD-KGEH' },
-        { status: 'VERIFIED', timestamp: '2026-08-17T09:05:00Z', actor: 'Analis Lab Patologi' }
-      ],
-      created_at: '2026-08-17T09:00:00Z',
-      updated_at: '2026-08-17T09:05:00Z'
-    },
-    {
-      id: 'ORD-2026-002',
-      order_number: 'ORD-2026-0817-002',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
-      episode_id: 'EOC-2026-001',
-      encounter_id: 'ENC-2026-001',
-      ordered_by: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      order_category: 'PHARMACY',
-      priority: 'ROUTINE',
-      clinical_indication: 'Terapi suportif antipiretik & rehidrasi cairan',
-      status: 'ORDERED',
-      is_cito: false,
-      order_items_count: 2,
-      total_estimated_amount: 70000,
-      history: [
-        { status: 'DRAFT', timestamp: '2026-08-17T09:10:00Z', actor: 'dr. Siti Wijaya, Sp.PD-KGEH' },
-        { status: 'ORDERED', timestamp: '2026-08-17T09:12:00Z', actor: 'dr. Siti Wijaya, Sp.PD-KGEH' }
-      ],
-      created_at: '2026-08-17T09:10:00Z',
-      updated_at: '2026-08-17T09:12:00Z'
-    }
-  ];
+  return [];
 };
 
 const saveStoredOrders = (list) => {

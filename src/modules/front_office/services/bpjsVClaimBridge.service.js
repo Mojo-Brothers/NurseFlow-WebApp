@@ -15,35 +15,14 @@ const getStoredSeps = () => {
   } catch (e) {
     console.warn('[BpjsVClaimBridge] Failed to load SEPs:', e);
   }
-  return [
-    {
-      id: 'SEP-2026-001',
-      sep_number: '0115R0010826V000101',
-      registration_id: 'REG-2026-001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      bpjs_card_number: '0001234567891',
-      nik: '3171055508890001',
-      referral_number: '0115B0010826P000088',
-      referral_origin_faskes: 'Puskesmas Menteng (Faskes Tingkat 1)',
-      treatment_type: '2', // 2 = Rawat Jalan
-      destination_poli_code: 'INT',
-      destination_poli_name: 'Poli Penyakit Dalam',
-      dpjp_bpjs_code: '12884',
-      dpjp_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      primary_diagnose_icd10: 'A90',
-      primary_diagnose_name: 'Dengue fever [classical dengue]',
-      created_at: '2026-08-17T08:15:00Z',
-      status: 'ACTIVE'
-    }
-  ];
+  return [];
 };
 
 const saveStoredSeps = (seps) => {
   try {
     localStorage.setItem(BPJS_SEP_STORAGE_KEY, JSON.stringify(seps));
   } catch (e) {
-    console.warn('[BpjsVClaimBridge] Failed to save SEPs:', e);
+    console.warn('[BpjsVClaimBridge] Failed to persist SEP store:', e);
   }
 };
 
@@ -62,14 +41,14 @@ export const bpjsVClaimBridgeService = {
       try {
         const participantData = {
           noKartu: bpjsCardNumber,
-          nik: '3171055508890001',
-          nama: 'Ny. Siti Nurhaliza, S.Pd',
+          nik: '3201010000000000',
+          nama: 'Peserta BPJS Terverifikasi',
           pisa: '1',
-          sex: 'P',
-          tglLahir: '1989-08-15',
+          sex: 'L',
+          tglLahir: '1990-01-01',
           statusPeserta: {
             kode: '0',
-            keterangan: 'AKTIF (JKN-PBI APBD DKI)'
+            keterangan: 'AKTIF (JKN-KIS Terdaftar)'
           },
           hakKelas: {
             kode: '1',

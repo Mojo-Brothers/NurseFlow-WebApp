@@ -192,7 +192,7 @@ export default function RegistrationDeskWorkspace() {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Contoh: Ny. Siti Nurhaliza, S.Pd"
+                  placeholder="Contoh: Nama Lengkap Pasien Sesuai KTP"
                   className="w-full px-3.5 py-2 rounded-xl bg-surface-container border text-xs font-bold text-on-surface"
                   required
                 />
@@ -205,7 +205,7 @@ export default function RegistrationDeskWorkspace() {
                     type="text"
                     value={nik}
                     onChange={(e) => setNik(e.target.value)}
-                    placeholder="3171055508890001"
+                    placeholder="Contoh: 16 Digit NIK Pasien"
                     maxLength={16}
                     className="w-full px-3.5 py-2 rounded-xl bg-surface-container border text-xs font-mono text-on-surface"
                     required

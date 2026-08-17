@@ -3,31 +3,20 @@ import { nursingCareEngineService } from '../services/nursingCareEngine.service.
 import toast from 'react-hot-toast';
 
 export default function FluidBalanceSheet({ activePatient }) {
-  const patient = activePatient || {
-    id: 'P-1001',
-    name: 'Ny. Siti Nurhaliza, S.Pd',
-    mrn: 'MRN-2026-001001',
-    ward: 'Bangsal Melati',
-    bed: 'Bed 04',
-    bodyWeightKg: 55,
-    temperatureCelsius: 37.8
-  };
+  if (!activePatient) {
+    return (
+      <div className="p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        Pilih pasien rawat inap terlebih dahulu untuk membuka lembar monitoring balans cairan 24 jam.
+      </div>
+    );
+  }
 
-  const [bodyWeightKg, setBodyWeightKg] = useState(patient.bodyWeightKg || 55);
-  const [temperatureCelsius, setTemperatureCelsius] = useState(patient.temperatureCelsius || 37.8);
+  const patient = activePatient;
+  const [bodyWeightKg, setBodyWeightKg] = useState(patient.bodyWeightKg || 60);
+  const [temperatureCelsius, setTemperatureCelsius] = useState(patient.temperatureCelsius || 36.5);
 
-  const [intakeList, setIntakeList] = useState([
-    { id: 'IN-1', time: '07:00', category: 'INFUSION', label: 'Infus Ringer Lactate', amountMl: 500 },
-    { id: 'IN-2', time: '09:00', category: 'ORAL', label: 'Minum Air Putih', amountMl: 250 },
-    { id: 'IN-3', time: '11:00', category: 'INJECTION', label: 'Ceftriaxone 1g dalam 100ml NaCl', amountMl: 100 },
-    { id: 'IN-4', time: '13:00', category: 'ORAL', label: 'Kuah Sup & Jus Buah', amountMl: 200 }
-  ]);
-
-  const [outputList, setOutputList] = useState([
-    { id: 'OUT-1', time: '08:00', category: 'URINE', label: 'Urine Spontan (Urinal)', amountMl: 350 },
-    { id: 'OUT-2', time: '12:00', category: 'URINE', label: 'Urine Spontan (Urinal)', amountMl: 400 },
-    { id: 'OUT-3', time: '13:30', category: 'STOOL', label: 'Defekasi Lunak', amountMl: 100 }
-  ]);
+  const [intakeList, setIntakeList] = useState(patient.intakes || []);
+  const [outputList, setOutputList] = useState(patient.outputs || []);
 
   // Form input for new item
   const [newEntryType, setNewEntryType] = useState('INTAKE'); // 'INTAKE' | 'OUTPUT'

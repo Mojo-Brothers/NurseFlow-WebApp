@@ -14,10 +14,7 @@ const getStoredQueue = () => {
   } catch (e) {
     console.warn('[QueueManagement] Failed to read queue store:', e);
   }
-  return [
-    { id: 'Q-101', queue_number: 'A-001', patient_name: 'Ny. Siti Nurhaliza', department_name: 'Poliklinik Penyakit Dalam', queue_status: 'WAITING', created_at: new Date().toISOString() },
-    { id: 'Q-102', queue_number: 'A-002', patient_name: 'Tn. Hendra Gunawan', department_name: 'Poliklinik Penyakit Dalam', queue_status: 'WAITING', created_at: new Date().toISOString() }
-  ];
+  return [];
 };
 
 const saveStoredQueue = (tickets) => {

@@ -15,43 +15,7 @@ const getStoredCppt = () => {
   } catch (e) {
     console.warn('[CpptEngine] Failed to load CPPT notes:', e);
   }
-  return [
-    {
-      id: 'CPPT-1001',
-      episode_id: 'EOC-2026-001',
-      encounter_id: 'ENC-2026-001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      professional_type: 'DOKTER_DPJP',
-      author_id: 'DOC-1001',
-      author_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      soap_notes: 'S: Demam hari ke-4 turun, nyeri ulu hati berkurang.\nO: TD 110/70, Nadi 84, Suhu 36.8°C, Trombosit 48.000 /uL, Hematokrit 42%.\nA: DHF Grade II fase kritis.\nP: Lanjut infus RL 2 ml/kgBB/jam, cek DL serial per 12 jam, observasi perdarahan spontan.',
-      instruction_notes: 'Transfusi Trombosit Konsentrat 4 unit jika trombosit < 20.000 atau terjadi perdarahan masif.',
-      dpjp_verified: true,
-      dpjp_verifier_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      dpjp_verified_at: '2026-08-17T09:00:00Z',
-      created_at: '2026-08-17T08:45:00Z'
-    },
-    {
-      id: 'CPPT-1002',
-      episode_id: 'EOC-2026-001',
-      encounter_id: 'ENC-2026-001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      professional_type: 'PERAWAT',
-      author_id: 'NUR-1001',
-      author_name: 'Ns. Ratna Sari, S.Kep',
-      sbar_situation: 'Pasien mengeluh mual saat minum air putih.',
-      sbar_background: 'DHF Grade II hari rawat ke-2.',
-      sbar_assessment: 'Risiko defisit volume cairan.',
-      sbar_recommendation: 'Edukasi minum sedikit tapi sering, pantau balans cairan per 6 jam.',
-      instruction_notes: 'Cairan masuk 1500ml / 8 jam, urin keluar 500ml.',
-      dpjp_verified: true,
-      dpjp_verifier_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      dpjp_verified_at: '2026-08-17T09:05:00Z',
-      created_at: '2026-08-17T08:50:00Z'
-    }
-  ];
+  return [];
 };
 
 const saveStoredCppt = (list) => {

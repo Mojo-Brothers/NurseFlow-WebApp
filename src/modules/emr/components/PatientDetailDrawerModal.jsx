@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { X, User, MapPin, Phone, Mail, FileText, CheckCircle2, Copy, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
-import { DEMO_PATIENTS } from '../../../core/demoData.js';
 
 export default function PatientDetailDrawerModal({ isOpen, onClose, patient }) {
   const [copiedField, setCopiedField] = useState(null);

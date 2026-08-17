@@ -10,11 +10,15 @@ export const useEmrStore = create((set, get) => ({
   diagnoses: [],
   carePlans: [],
   cdssAlerts: [],
-  selectedPatientId: 'P-1001',
+  selectedPatientId: null,
   loading: false,
   error: null,
 
-  fetchEmrData: async (patientId = 'P-1001') => {
+  fetchEmrData: async (patientId = null) => {
+    if (!patientId) {
+      set({ patientTimeline: null, soapNotes: [], cpptNotes: [], allergies: [], observations: [], diagnoses: [], carePlans: [], cdssAlerts: [], selectedPatientId: null, loading: false });
+      return;
+    }
     set({ loading: true, error: null, selectedPatientId: patientId });
     try {
       const [timeline, soapNotes, cpptNotes, allergies, observations, diagnoses, carePlans, cdssAlerts] = await Promise.all([

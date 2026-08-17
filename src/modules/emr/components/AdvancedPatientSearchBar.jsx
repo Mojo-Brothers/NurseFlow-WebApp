@@ -7,7 +7,6 @@ import {
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
-import { DEMO_PATIENTS } from '../../../core/demoData.js';
 import PatientSearchModal from './PatientSearchModal.jsx';
 import toast from 'react-hot-toast';
 import usePatientClipboardShortcuts from '../../../hooks/usePatientClipboardShortcuts.js';
@@ -57,9 +56,8 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Filter patients based on query and active chip (with DEMO_PATIENTS fallback & NRM paste cleaning)
   const filteredPatients = useMemo(() => {
-    const list = (patients && patients.length > 0) ? patients : DEMO_PATIENTS;
+    const list = patients || [];
     
     return list.filter(p => {
       // Exclude merged
@@ -102,7 +100,7 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
   const handleSimulateScan = () => {
     setIsScanModalOpen(true);
     setTimeout(() => {
-      const list = (patients && patients.length > 0) ? patients : DEMO_PATIENTS;
+      const list = patients || [];
       const target = list.find(p => p.status !== 'MERGED') || list[0];
       if (target) {
         setIsScanModalOpen(false);

@@ -63,44 +63,7 @@ export const TRIAGE_LEVEL_SPECS = {
 
 const TRIAGE_STORAGE_KEY = 'nurseflow_emergency_triage_assessments';
 
-let inMemoryTriages = [
-  {
-    id: 'TRG-2026-001',
-    episode_id: 'EOC-2026-001',
-    encounter_id: 'ENC-2026-001',
-    patient_id: 'P-1001',
-    patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-    mrn: 'MRN-2026-001001',
-    triage_method: 'ATS',
-    triage_level: 'P2_EMERGENT',
-    ats_level: 2,
-    esi_level: 2,
-    chief_complaint: 'Nyeri dada hebat menjalar ke lengan kiri, keringat dingin, sesak nafas akut',
-    airway_status: 'PATENT',
-    breathing_status: 'DYSPNEA',
-    circulation_status: 'SHOCK',
-    disability_status: 'ALERT',
-    vitals: {
-      bloodPressureSystolic: 90,
-      bloodPressureDiastolic: 60,
-      heartRate: 118,
-      respiratoryRate: 28,
-      temperature: 36.8,
-      spo2: 93,
-      gcsEye: 4,
-      gcsVerbal: 5,
-      gcsMotor: 6,
-      gcsTotal: 15,
-      painScale: 8
-    },
-    is_trauma: false,
-    is_cito: true,
-    target_response_minutes: 10,
-    assessed_at: '2026-08-17T08:20:00Z',
-    assessed_by: 'Ns. Ratna Sari, S.Kep (Perawat Triase)',
-    branch_id: 'BRN-JKT-PST'
-  }
-];
+let inMemoryTriages = [];
 
 const getStoredTriages = () => {
   try {

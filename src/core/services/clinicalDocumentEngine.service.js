@@ -37,32 +37,7 @@ class ClinicalDocumentEngine {
   }
 
   initializeSampleDocuments() {
-    const sampleDoc = {
-      id: 'DOC-SOAP-20260810-001',
-      documentType: DOCUMENT_TYPES.SOAP,
-      patientId: 'P-1001',
-      patientName: 'Ny. Siti Nurhaliza',
-      mrn: 'MRN-2026-001001',
-      encounterId: 'ENC-2026-0810-001',
-      episodeId: 'EPI-2026-0810-001',
-      authorId: 'EMP-2026-0001',
-      authorName: 'dr. Surya Johnson, Sp.PD-KGEH',
-      authorRole: 'DPJP',
-      title: 'Asesmen Awal Pasien Rawat Jalan - Nyeri Dada',
-      content: {
-        subjective: 'Nyeri dada menjalar ke lengan kiri sejak 2 jam SMRS.',
-        objective: 'TD: 140/90 mmHg, HR: 98 x/mnt, RR: 22 x/mnt, Temp: 36.8 C. GDS: 145 mg/dL.',
-        assessment: 'I21.9 - Acute Myocardial Infarction (STEMI Suspected)',
-        plan: 'O2 4 LPM, EKG 12 Lead, STAT Lab Darah Lengkap & Troponin I, Konsul dr. Anisa Sp.JP.'
-      },
-      status: DOCUMENT_STATUS.SIGNED,
-      version: 1,
-      signedAt: '2026-08-10T08:35:00Z',
-      signedBy: 'dr. Surya Johnson',
-      created_at: '2026-08-10T08:30:00Z'
-    };
-
-    this.documents.set(sampleDoc.id, sampleDoc);
+    // Clean state on Day-1 Go-Live
   }
 
   createDocument({ documentType, patientId, patientName, mrn, encounterId, episodeId = null, authorId, authorName, authorRole = 'Practitioner', title, content }) {

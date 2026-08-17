@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import usePatientClipboardShortcuts from '../../../hooks/usePatientClipboardShortcuts.js';
 import { saveSoapNote, getPatientRecords, saveClinicalRecord } from '../services/emr.service.js';
-import { DEMO_ENCOUNTERS } from '../../../core/demoData.js';
 import CPPTWorkspace from '../components/CPPTWorkspace.jsx';
 import CPOEWorkspace from '../components/CPOEWorkspace.jsx';
 import InitialAssessment from '../components/InitialAssessment.jsx';
@@ -185,8 +184,7 @@ export default function OutpatientEMR() {
     return (
       activeEncounters?.find(e => e.id === (selectedEncounterId || liveContext?.encounterId)) ||
       activeEncounters?.find(e => e.patient_id === selectedPatientId || e.patientId === selectedPatientId) ||
-      DEMO_ENCOUNTERS.find(e => e.patient_id === selectedPatientId) ||
-      {}
+      null
     );
   }, [activeEncounters, selectedEncounterId, liveContext, selectedPatientId]);
 
@@ -256,22 +254,22 @@ export default function OutpatientEMR() {
               <div className="space-y-2">
                 <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
                   <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Tekanan Darah</span>
-                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.bp || '120/80'} <span className="text-[9px] text-slate-400">mmHg</span></span>
+                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.bp || '-'} <span className="text-[9px] text-slate-400">mmHg</span></span>
                 </div>
                 <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
                   <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Detak Jantung</span>
-                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.hr || '82'} <span className="text-[9px] text-slate-400">bpm</span></span>
+                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.hr || '-'} <span className="text-[9px] text-slate-400">bpm</span></span>
                 </div>
                 <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
                   <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Suhu Tubuh</span>
-                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.temp || '36.8'} <span className="text-[9px] text-slate-400">°C</span></span>
+                  <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.temp || '-'} <span className="text-[9px] text-slate-400">°C</span></span>
                 </div>
               </div>
             </div>
             <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between">
               <span className="text-[9px] font-black uppercase text-emerald-700">EWS NEWS2 SCORE</span>
               <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {activeEncounter?.news2_score || 1} (LOW RISK)
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {activeEncounter?.news2_score ?? 0} ({activeEncounter?.news2_score ? 'ACTIVE RISK' : 'NORMAL / BASELINE'})
               </span>
             </div>
           </div>
@@ -285,15 +283,15 @@ export default function OutpatientEMR() {
               <div className="space-y-2">
                 <div className="p-2 bg-teal-500/8 border border-teal-500/20 rounded-xl">
                   <span className="text-[8px] font-black uppercase text-teal-700 block">DPJP POLIKLINIK</span>
-                  <span className="text-xs font-black text-[var(--on-surface)] truncate block">{activeEncounter?.doctor_name || activeEncounter?.doctor || 'dr. Siti Wijaya, Sp.PD'}</span>
+                  <span className="text-xs font-black text-[var(--on-surface)] truncate block">{activeEncounter?.doctor_name || activeEncounter?.doctor || '-'}</span>
                 </div>
                 <div className="p-2 bg-[var(--surface-container)] rounded-xl">
                   <span className="text-[8px] font-black uppercase text-[var(--on-surface-variant)] block">PERAWAT POLI</span>
-                  <span className="text-xs font-bold text-[var(--on-surface)] truncate block">Ns. Ratna, S.Kep</span>
+                  <span className="text-xs font-bold text-[var(--on-surface)] truncate block">{activeEncounter?.nurse_name || '-'}</span>
                 </div>
                 <div className="p-2 bg-[var(--surface-container)] rounded-xl">
                   <span className="text-[8px] font-black uppercase text-[var(--on-surface-variant)] block">APOTEKER DEPO</span>
-                  <span className="text-xs font-bold text-[var(--on-surface)] truncate block">Apt. Siti Aminah, S.Farm</span>
+                  <span className="text-xs font-bold text-[var(--on-surface)] truncate block">{activeEncounter?.pharmacist_name || '-'}</span>
                 </div>
               </div>
             </div>
@@ -308,18 +306,18 @@ export default function OutpatientEMR() {
               <div className="space-y-2">
                 {activePatient?.allergies?.length > 0 ? (
                   <div className="p-2 bg-red-500/10 border border-red-500/25 rounded-xl text-red-700 text-xs font-bold flex items-center gap-1.5 truncate">
-                    <ShieldAlert size={13} className="shrink-0" /> Alergi: {activePatient.allergies[0].agent}
+                    <ShieldAlert size={13} className="shrink-0" /> Alergi: {activePatient.allergies[0].agent || activePatient.allergies[0].allergen || activePatient.allergies[0]}
                   </div>
                 ) : (
                   <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 text-xs font-bold flex items-center gap-1.5">
                     <ShieldCheck size={13} className="shrink-0" /> NKDA (Tidak ada alergi)
                   </div>
                 )}
-                <div className="p-2 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-700 text-[11px] font-bold flex items-center gap-1.5">
-                  <AlertTriangle size={13} className="shrink-0" /> Fall Risk Poli: LOW
+                <div className="p-2 bg-slate-500/10 border border-slate-500/25 rounded-xl text-slate-700 dark:text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
+                  <AlertTriangle size={13} className="shrink-0" /> Fall Risk: {activePatient?.safety_flags?.fall_risk || 'Belum Dinilai'}
                 </div>
-                <div className="p-2 bg-blue-500/10 border border-blue-500/25 rounded-xl text-blue-700 text-[11px] font-bold flex items-center gap-1.5">
-                  <Scale size={13} className="shrink-0" /> Status Gizi: NORMAL (MST 0)
+                <div className="p-2 bg-slate-500/10 border border-slate-500/25 rounded-xl text-slate-700 dark:text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
+                  <Scale size={13} className="shrink-0" /> Status Gizi: {activePatient?.safety_flags?.nutritional_status || 'Belum Dinilai'}
                 </div>
               </div>
             </div>

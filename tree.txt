@@ -1,0 +1,1093 @@
+NURSEFLOW ENTERPRISE HIS 2026 — REPOSITORY STRUCTURE
+=======================================================
+Root: C:\Users\Mojo\NurseFlow-WebApp
+Generated: 2026-08-17T15:31:57.777Z
+
+├── .agents
+│   └── AGENTS.md
+├── .env
+├── .env.example
+├── .env.local
+├── .github
+│   ├── GITHUB_ACTIONS_SETUP.md
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── workflows
+│       ├── ci.yml
+│       ├── deploy-production.yml
+│       ├── deploy-staging.yml
+│       └── rollback-production.yml
+├── .gitignore
+├── build.css
+├── build_log.txt
+├── database
+│   ├── failover
+│   │   ├── failover_sentinel.sh
+│   │   ├── promote_standby.sh
+│   │   └── recovery_runbook.md
+│   ├── migrations
+│   │   ├── 001_master_patients.sql
+│   │   ├── 002_episodes_and_encounters.sql
+│   │   ├── 003_front_office_and_queues.sql
+│   │   ├── 004_triage_and_emergency.sql
+│   │   ├── 005_emr_soap_cppt_and_cdss.sql
+│   │   ├── 006_universal_orders_pharmacy_lis_pacs.sql
+│   │   ├── 007_billing_revenue_and_claims.sql
+│   │   ├── 008_audit_trail_and_security.sql
+│   │   ├── 009_tenant_identity_foundation.sql
+│   │   ├── 010_bed_ward_hierarchy.sql
+│   │   ├── 011_appointment_and_queue_persistence.sql
+│   │   ├── 012_pharmacy_inventory_fefo.sql
+│   │   ├── 013_blood_bank_bdrs_persistence.sql
+│   │   ├── 014_operating_theatre_and_icu_acuity.sql
+│   │   ├── 015_staff_roster_credentialing_privileging.sql
+│   │   ├── 016_lis_specimen_tracking_and_panic_values.sql
+│   │   ├── 017_pacs_radiology_dicom_studies.sql
+│   │   ├── 018_radiology_orders_workflow_and_audit.sql
+│   │   ├── 019_operating_theatre_surgeries_and_who_checklist.sql
+│   │   ├── 020_operating_theatre_enterprise_aims_cssd_and_scheduling.sql
+│   │   ├── 021_surgical_revenue_cycle_implant_tracking_and_inacbg.sql
+│   │   ├── 022_enterprise_pharmacy_multidepot_fefo_and_recalls.sql
+│   │   ├── 023_blood_bank_hemovigilance_and_mtp.sql
+│   │   ├── 024_revenue_cycle_and_casemix_center.sql
+│   │   ├── 025_reference_and_demography_tables.sql
+│   │   ├── 026_spatial_master_hierarchy.sql
+│   │   ├── 027_clinical_organization.sql
+│   │   ├── 028_dedicated_coding_systems.sql
+│   │   ├── 029_human_resources_practitioners.sql
+│   │   ├── 030_global_clinical_catalogs.sql
+│   │   ├── 031_financial_catalogs_tariffs.sql
+│   │   ├── 032_enterprise_auth_rbac.sql
+│   │   ├── 033_system_configuration_integrations.sql
+│   │   ├── 034_lightweight_audit_engine.sql
+│   │   └── 035_canonical_seed_data.sql
+│   ├── migration_runner.js
+│   ├── pg_hba.conf
+│   ├── postgresql.conf
+│   ├── primary
+│   │   ├── create_replication_user.sql
+│   │   └── setup_primary.sh
+│   ├── seeders
+│   │   └── master_seed.js
+│   └── standby
+│       ├── setup_standby.sh
+│       └── standby.signal
+├── docker
+│   ├── compose
+│   │   ├── docker-compose.blue.yml
+│   │   ├── docker-compose.green.yml
+│   │   ├── docker-compose.ha.yml
+│   │   └── pgbouncer.ini
+│   └── monitoring
+│       ├── alert_rules.yml
+│       ├── grafana
+│       │   └── dashboards
+│       │       └── his_overview.json
+│       └── prometheus.yml
+├── docker-compose.yml
+├── Dockerfile
+├── docs
+│   ├── 01_DEEP_CLEAN_AUDIT_REPORT.md
+│   ├── 02_DATABASE_RESET_REPORT.md
+│   ├── 03_MASTER_DATA_CONFIGURATION.md
+│   ├── 04_PATIENT_ZERO_SIMULATION.md
+│   ├── 05_END_TO_END_USER_MANUAL.md
+│   ├── 06_ROLE_BASED_TRAINING_MANUAL.md
+│   ├── 07_GO_LIVE_READINESS_CHECKLIST.md
+│   ├── CHANGELOG_PERUBAHAN_HIS.md
+│   ├── CHECKLIST_VALIDASI_LAPANGAN_100_PASIEN_IGD.md
+│   ├── CLINICAL_SEQUENCE_DIAGRAMS.md
+│   ├── DATABASE_ERD_ARCHITECTURE.md
+│   ├── DEPLOYMENT_ARCHITECTURE.md
+│   ├── DEVELOPMENT.md
+│   ├── device_sync_log.md
+│   ├── ENTERPRISE_HIS_DATABASE_AUDIT.md
+│   ├── HISTORICAL_PATCH_NOTES_CHANGELOG.md
+│   ├── implementation_plan.md
+│   ├── laporan_patient_master_data.md
+│   ├── MANUAL_IMPLEMENTASI_LAPANGAN_PRIMAYA_IGD.md
+│   ├── MASTER_DEPLOYMENT_RUNBOOK.md
+│   ├── MASTER_ENTERPRISE_HIS_SRS_ARCHITECTURE.md
+│   ├── master_prompt_enterprise_emr.md
+│   ├── MASTER_SHADOW_MODE_AND_GOLIVE_PROTOCOL.md
+│   ├── MASTER_USER_DIRECTIVES.md
+│   ├── MASTER_USER_GUIDE_IGD_END_TO_END.md
+│   ├── NURSEFLOW_CORE_PROTOCOL.md
+│   ├── NURSEFLOW_DESIGN_RULES.md
+│   ├── NURSEFLOW_OPERATIONAL_MANUAL_2026.md
+│   ├── PANDUAN_ALUR_TRIASE_DAN_PASIEN_ANONIM_IGD.md
+│   ├── scratchpad_ovaqcrqw.md
+│   ├── SECURITY_SECRET_MANAGEMENT.md
+│   ├── task.md
+│   ├── USER_ROLE_MATRIX_RBAC.md
+│   ├── walkthrough.md
+│   └── workflow_patch.md
+├── eslint.config.js
+├── et --hard COMMIT_ID
+├── firebase.json
+├── firestore.indexes.json
+├── firestore.rules
+├── functions
+│   ├── package.json
+│   └── src
+│       ├── api
+│       │   └── bpjs
+│       │       └── vclaim.js
+│       ├── audit
+│       │   └── eventLogger.js
+│       ├── clinical
+│       │   └── ewsCalculator.js
+│       ├── domain
+│       │   └── clinicalEngine.js
+│       └── index.js
+├── get_audit_logs.js
+├── index.html
+├── lint_output.txt
+├── nginx.conf
+├── nginx.upstream.conf
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── prisma
+│   └── schema.prisma
+├── public
+│   ├── favicon.svg
+│   ├── icons.svg
+│   └── manifest.json
+├── README.md
+├── repository_structure.txt
+├── scratch
+│   ├── check_firestore_data.js
+│   ├── elevate_admin.js
+│   ├── simulate_chaos.js
+│   └── test_firestore.js
+├── screenshot.png
+├── screenshot.txt
+├── scripts
+│   ├── audit-design.js
+│   ├── backup_postgres_pitr.sh
+│   ├── check-data.js
+│   ├── cleanup-anonymous.js
+│   ├── device-sync.js
+│   ├── fix-encounter-status.js
+│   ├── fix-mrx.js
+│   ├── generate_tree.js
+│   ├── load_testing
+│   │   ├── k6_01_baseline_benchmark.js
+│   │   └── k6_07_disaster_scenarios.js
+│   ├── master_seeder.js
+│   ├── scan-secrets.js
+│   ├── seed-200-general-items.js
+│   ├── seed-200-inventory.js
+│   ├── seed-520-staff.js
+│   ├── seed-beds.cjs
+│   ├── seed-departments.js
+│   ├── seedDashboard.js
+│   ├── seed_diagnoses.js
+│   ├── seed_now.js
+│   ├── seed_staff.js
+│   ├── seed_triage_test.js
+│   ├── setup.js
+│   ├── test_patient_access_slice.js
+│   ├── test_write.js
+│   └── verify_disaster_recovery_drill.js
+├── server
+│   ├── config
+│   │   └── envValidator.js
+│   ├── controllers
+│   │   └── patient.controller.js
+│   ├── docs
+│   │   └── openapi.json
+│   ├── integrations
+│   │   ├── bpjsVclaimClient.js
+│   │   ├── fhir
+│   │   │   ├── allergy.mapper.js
+│   │   │   ├── index.js
+│   │   │   ├── observation.mapper.js
+│   │   │   ├── patient.mapper.js
+│   │   │   └── practitioner.mapper.js
+│   │   ├── hl7
+│   │   │   └── hl7Engine.service.js
+│   │   └── satusehatClient.js
+│   ├── middlewares
+│   │   ├── authMiddleware.js
+│   │   ├── observabilityMiddleware.js
+│   │   ├── rateLimiterMiddleware.js
+│   │   ├── rbacMiddleware.js
+│   │   └── tenantMiddleware.js
+│   ├── realtime
+│   │   ├── clinicalWebSocket.js
+│   │   └── eventBus.service.js
+│   ├── routes
+│   │   ├── auth.routes.js
+│   │   ├── billing.routes.js
+│   │   ├── dicomweb.routes.js
+│   │   ├── orders.routes.js
+│   │   └── patients.routes.js
+│   ├── server.js
+│   ├── services
+│   │   ├── abacSecurity.service.js
+│   │   ├── adtEngine.service.js
+│   │   ├── appointmentQueue.service.js
+│   │   ├── atomicTransaction.service.js
+│   │   ├── bedManagementFsmEngine.service.js
+│   │   ├── bloodBank.service.js
+│   │   ├── bloodBankEnterpriseEngine.service.js
+│   │   ├── bpjsVclaimLifecycleEngine.service.js
+│   │   ├── casemixRevenueCycleEngine.service.js
+│   │   ├── claimInaCbg.service.js
+│   │   ├── clinicalUxAnalytics.service.js
+│   │   ├── clinicalWorkflowOrchestrator.service.js
+│   │   ├── concurrencyBenchmark.service.js
+│   │   ├── criticalCare.service.js
+│   │   ├── criticalResultEscalation.service.js
+│   │   ├── cssdSterilizationEngine.service.js
+│   │   ├── deploymentGatekeeper.service.js
+│   │   ├── disasterRecoveryDrill.service.js
+│   │   ├── eMarEngine.service.js
+│   │   ├── emergencyUatJourney.service.js
+│   │   ├── empiEngine.service.js
+│   │   ├── enterprisePharmacyEngine.service.js
+│   │   ├── executiveCommandCenter.service.js
+│   │   ├── featureFlag.service.js
+│   │   ├── fieldValidationWarRoom.service.js
+│   │   ├── forensicAuditEcosystem.service.js
+│   │   ├── healthCheck.service.js
+│   │   ├── healthVerification.service.js
+│   │   ├── hospitalMetrics.service.js
+│   │   ├── implantRecallEngine.service.js
+│   │   ├── inventoryManagement.service.js
+│   │   ├── legalConsentBsre.service.js
+│   │   ├── lisPacsEngine.service.js
+│   │   ├── masterDataGovernance.service.js
+│   │   ├── masterDataGovernanceEngine.service.js
+│   │   ├── masterInacbgTariffEngine.service.js
+│   │   ├── metrics.service.js
+│   │   ├── migrationRunner.service.js
+│   │   ├── notificationEngine.service.js
+│   │   ├── operatingTheatre.service.js
+│   │   ├── outboxWorker.service.js
+│   │   ├── radiologyAudit.service.js
+│   │   ├── radiologyWorkflowEngine.service.js
+│   │   ├── redisRateLimiter.service.js
+│   │   ├── replicationHealth.service.js
+│   │   ├── rollback.service.js
+│   │   ├── satusehatFhirStudio.service.js
+│   │   ├── securityHardeningEngine.service.js
+│   │   ├── shadowModeOperations.service.js
+│   │   ├── staffScheduling.service.js
+│   │   ├── structuredLogger.service.js
+│   │   ├── surgicalRevenueCycle.service.js
+│   │   ├── surgicalSchedulingEngine.service.js
+│   │   └── tenantSubscription.service.js
+│   └── utils
+│       └── logSanitizer.js
+├── src
+│   ├── App.css
+│   ├── App.jsx
+│   ├── archive
+│   │   └── future_gates
+│   │       ├── AnalyticsDashboard.jsx
+│   │       ├── ExecutiveDashboard.jsx
+│   │       └── InfectionSurveillance.jsx
+│   ├── assets
+│   │   ├── docs
+│   │   │   ├── admin-system.md
+│   │   │   ├── Alur_Pelayanan_Rawat_Jalan.md
+│   │   │   ├── clinical-dashboard.md
+│   │   │   ├── emergency-triage.md
+│   │   │   ├── emr-documentation.md
+│   │   │   ├── governance-compliance.md
+│   │   │   ├── HIS_Master_Reference.md
+│   │   │   ├── index.md
+│   │   │   ├── operational-workflow.md
+│   │   │   ├── patient-management.md
+│   │   │   ├── scenario-igd-stemi.md
+│   │   │   ├── scenario-poli-routine.md
+│   │   │   ├── task.md
+│   │   │   ├── walkthrough.md
+│   │   │   └── ward-management.md
+│   │   ├── hero.png
+│   │   ├── react.svg
+│   │   └── vite.svg
+│   ├── components
+│   │   ├── ErrorBoundary.jsx
+│   │   ├── HistorySparkline.css
+│   │   ├── HistorySparkline.jsx
+│   │   ├── KeypadInput.css
+│   │   ├── KeypadInput.jsx
+│   │   ├── ProtectedRoute.jsx
+│   │   ├── TopAppBar.css
+│   │   ├── TopAppBar.jsx
+│   │   ├── ui
+│   │   │   ├── button.jsx
+│   │   │   ├── card.jsx
+│   │   │   ├── checkbox.jsx
+│   │   │   ├── ClinicalAlertBanner.jsx
+│   │   │   ├── ClinicalCard.jsx
+│   │   │   ├── ClinicalContextRibbon.jsx
+│   │   │   ├── ClinicalLoadingSpinner.jsx
+│   │   │   ├── DataTable.jsx
+│   │   │   ├── EmptyState.jsx
+│   │   │   ├── FilterToolbar.jsx
+│   │   │   ├── input.jsx
+│   │   │   ├── label.jsx
+│   │   │   ├── LanguageSwitcher.jsx
+│   │   │   ├── NotificationCenterModal.jsx
+│   │   │   ├── OceanicTealLoadingSpinner.jsx
+│   │   │   ├── OfflineStatusIndicator.jsx
+│   │   │   ├── PillSearchBar.jsx
+│   │   │   ├── PresentationCard.jsx
+│   │   │   ├── radio-group.jsx
+│   │   │   ├── SegmentedTabs.jsx
+│   │   │   ├── select.jsx
+│   │   │   ├── separator.jsx
+│   │   │   ├── StatusBadge.jsx
+│   │   │   ├── TablePagination.jsx
+│   │   │   ├── textarea.jsx
+│   │   │   ├── ThemeToggle.css
+│   │   │   └── ThemeToggle.jsx
+│   │   └── VersionDisplay.jsx
+│   ├── config
+│   │   └── firebase.js
+│   ├── contexts
+│   │   ├── AuthContext.jsx
+│   │   ├── AuthContextInstance.js
+│   │   └── useAuth.js
+│   ├── core
+│   │   ├── audit
+│   │   │   └── audit.service.js
+│   │   ├── constants.js
+│   │   ├── demoData.js
+│   │   ├── departments.js
+│   │   ├── domain
+│   │   │   ├── clinicalEngine.js
+│   │   │   └── fhir_types.ts
+│   │   ├── firebase.js
+│   │   ├── hooks
+│   │   │   ├── useClinicalMetrics.js
+│   │   │   ├── useConnectionStatus.js
+│   │   │   └── useStressMonitor.js
+│   │   ├── i18n
+│   │   │   ├── i18n.js
+│   │   │   └── locales
+│   │   │       ├── en.json
+│   │   │       ├── id.json
+│   │   │       └── sys.json
+│   │   ├── repositories
+│   │   │   ├── baseRepository.js
+│   │   │   ├── billingRepository.js
+│   │   │   └── patientRepository.js
+│   │   ├── security
+│   │   │   ├── enterpriseAuth.service.js
+│   │   │   ├── jwtSecurity.service.js
+│   │   │   ├── PermissionGate.jsx
+│   │   │   └── rbacGuard.service.js
+│   │   ├── securityTokens.js
+│   │   ├── services
+│   │   │   ├── adtEngine.service.js
+│   │   │   ├── analytics.service.js
+│   │   │   ├── audit.service.js
+│   │   │   ├── careTeamEngine.service.js
+│   │   │   ├── cds.service.js
+│   │   │   ├── cdssEngine.service.js
+│   │   │   ├── clinicalDocumentEngine.service.js
+│   │   │   ├── clinicalSafetyEngine.service.js
+│   │   │   ├── clinicalTimelineEngine.service.js
+│   │   │   ├── coreRegistry.service.js
+│   │   │   ├── domainEventEngine.service.js
+│   │   │   ├── eMARService.js
+│   │   │   ├── encounterEngine.service.js
+│   │   │   ├── episodeOfCareEngine.service.js
+│   │   │   ├── idempotency.service.js
+│   │   │   ├── integrationEngine.service.js
+│   │   │   ├── monitoring.service.js
+│   │   │   ├── mpiEngine.service.js
+│   │   │   ├── notificationEngine.service.js
+│   │   │   ├── orderEngine.service.js
+│   │   │   ├── persistenceAdapter.service.js
+│   │   │   ├── predictive.service.js
+│   │   │   ├── reportGenerator.js
+│   │   │   ├── satusehatFhir.service.js
+│   │   │   ├── syncProcessor.js
+│   │   │   ├── syncQueue.service.js
+│   │   │   ├── taskEngine.service.js
+│   │   │   └── telemetry.service.js
+│   │   ├── staffRegistry.js
+│   │   ├── store
+│   │   │   ├── featureFlag.store.js
+│   │   │   └── session.store.js
+│   │   ├── stores
+│   │   │   └── notification.store.js
+│   │   └── types.js
+│   ├── design-system
+│   │   ├── components
+│   │   │   ├── EnterpriseFooter.jsx
+│   │   │   ├── KpiCard.jsx
+│   │   │   ├── LoadingSkeleton.jsx
+│   │   │   ├── NurseStationLargeDisplay.jsx
+│   │   │   ├── StatusIndicator.jsx
+│   │   │   └── ThreePanelLayout.jsx
+│   │   └── tokens
+│   │       ├── colors.js
+│   │       └── typography.js
+│   ├── hooks
+│   │   ├── usePagination.js
+│   │   └── usePatientClipboardShortcuts.js
+│   ├── index.css
+│   ├── integrations
+│   │   └── satusehat
+│   │       ├── auth
+│   │       │   └── oauth.service.js
+│   │       ├── fhir
+│   │       │   └── bundle.builder.js
+│   │       ├── gateway
+│   │       │   └── fhirDispatcher.service.js
+│   │       └── validators
+│   │           └── terminology.validator.js
+│   ├── layouts
+│   │   └── MainLayout.jsx
+│   ├── lib
+│   │   └── utils.js
+│   ├── main.jsx
+│   ├── modules
+│   │   ├── admin
+│   │   │   ├── components
+│   │   │   │   ├── audit
+│   │   │   │   │   ├── AuditLedgerExplorerStudio.jsx
+│   │   │   │   │   ├── BreakTheGlassMonitorStudio.jsx
+│   │   │   │   │   ├── ComplianceReportingStudio.jsx
+│   │   │   │   │   ├── HighRiskAccessDetectorStudio.jsx
+│   │   │   │   │   └── Sha256ChainVerifierStudio.jsx
+│   │   │   │   ├── RbacMatrixTable.jsx
+│   │   │   │   ├── ServiceBundleModal.jsx
+│   │   │   │   ├── ServiceFormModal.jsx
+│   │   │   │   └── StaffPortfolioDetailModal.jsx
+│   │   │   ├── masterData.store.js
+│   │   │   ├── pages
+│   │   │   │   ├── AdminHubPage.jsx
+│   │   │   │   ├── AuditTrailDashboardPage.jsx
+│   │   │   │   ├── DataGovernanceHub.jsx
+│   │   │   │   ├── InfectionSurveillance.jsx
+│   │   │   │   ├── MasterDataHub.jsx
+│   │   │   │   ├── MasterServicePage.jsx
+│   │   │   │   ├── StaffManagementPage.jsx
+│   │   │   │   └── SystemHealthPage.jsx
+│   │   │   ├── services
+│   │   │   │   ├── admin.service.js
+│   │   │   │   ├── alert.service.js
+│   │   │   │   ├── hospitalProfessionsTaxonomy.js
+│   │   │   │   ├── masterData.service.js
+│   │   │   │   ├── masterService.service.js
+│   │   │   │   ├── patientMaster32Taxonomy.js
+│   │   │   │   └── staffManagement.service.js
+│   │   │   └── styles
+│   │   │       └── Surveillance.css
+│   │   ├── analytics
+│   │   │   ├── pages
+│   │   │   │   └── QualityAssuranceHub.jsx
+│   │   │   └── services
+│   │   │       └── kpi.service.js
+│   │   ├── appointment
+│   │   │   ├── appointment.store.js
+│   │   │   ├── components
+│   │   │   │   ├── AppointmentGrid.jsx
+│   │   │   │   └── BookingModal.jsx
+│   │   │   ├── pages
+│   │   │   │   └── AppointmentPage.jsx
+│   │   │   └── services
+│   │   │       └── appointment.service.js
+│   │   ├── auth
+│   │   │   ├── auth.store.js
+│   │   │   ├── pages
+│   │   │   │   └── LoginPage.jsx
+│   │   │   ├── services
+│   │   │   │   └── auth.service.js
+│   │   │   └── styles
+│   │   │       └── Login.css
+│   │   ├── billing
+│   │   │   ├── components
+│   │   │   │   ├── BpjsDisputeManagementStudio.jsx
+│   │   │   │   ├── CasemixClaimsQueueStudio.jsx
+│   │   │   │   ├── ClaimValidatorWidget.jsx
+│   │   │   │   ├── InaCbgGroupingStudio.jsx
+│   │   │   │   ├── PaymentModal.jsx
+│   │   │   │   └── RevenueCycleAnalyticsStudio.jsx
+│   │   │   ├── pages
+│   │   │   │   ├── BillingPage.jsx
+│   │   │   │   └── InsuranceDashboard.jsx
+│   │   │   └── services
+│   │   │       ├── billing.service.js
+│   │   │       ├── billingEngine.service.js
+│   │   │       ├── claimEngine.service.js
+│   │   │       └── payment.service.js
+│   │   ├── blood_bank
+│   │   │   ├── components
+│   │   │   │   ├── BedsideTransfusionVerificationStudio.jsx
+│   │   │   │   ├── BloodInventoryColdChainStudio.jsx
+│   │   │   │   └── DigitalCrossmatchStudio.jsx
+│   │   │   └── pages
+│   │   │       └── BloodBankWorkspacePage.jsx
+│   │   ├── clinical_core
+│   │   │   ├── clinicalCore.store.js
+│   │   │   ├── components
+│   │   │   │   ├── ClinicalCoreWorkspace.jsx
+│   │   │   │   ├── ClinicalDecisionSupportCard.jsx
+│   │   │   │   ├── DoctorCommandCenter.jsx
+│   │   │   │   ├── DoctorSoapWorkspace.jsx
+│   │   │   │   └── UniversalOrderModal.jsx
+│   │   │   ├── pages
+│   │   │   │   └── DoctorWorkspacePage.jsx
+│   │   │   └── services
+│   │   │       ├── appointmentEngine.service.js
+│   │   │       ├── clinicalCoreApi.service.js
+│   │   │       ├── clinicalWorkflowEngine.service.js
+│   │   │       ├── encounterEngine.service.js
+│   │   │       ├── episodeOfCareEngine.service.js
+│   │   │       └── universalEventContract.service.js
+│   │   ├── core
+│   │   │   ├── pages
+│   │   │   │   └── HealthCheckPage.jsx
+│   │   │   └── services
+│   │   │       └── pci.service.js
+│   │   ├── critical_care
+│   │   │   └── pages
+│   │   │       └── IcuAcuityWorkspacePage.jsx
+│   │   ├── dashboard
+│   │   │   ├── components
+│   │   │   │   ├── BloodBankCommandStudio.jsx
+│   │   │   │   ├── CapacityCommandStudio.jsx
+│   │   │   │   ├── ClinicalSafetyCommandStudio.jsx
+│   │   │   │   ├── EmergencyCommandStudio.jsx
+│   │   │   │   ├── ExecutiveAlertCenter.jsx
+│   │   │   │   ├── ExecutiveKpiCommandStudio.jsx
+│   │   │   │   ├── FinancialCommandStudio.jsx
+│   │   │   │   ├── KPICard.jsx
+│   │   │   │   ├── PublicQueueDisplay.jsx
+│   │   │   │   └── StaffingOptimizationCard.jsx
+│   │   │   ├── hooks
+│   │   │   │   └── useLiveDashboard.js
+│   │   │   ├── pages
+│   │   │   │   ├── AnalyticsDashboard.jsx
+│   │   │   │   ├── DashboardPage.jsx
+│   │   │   │   ├── HospitalCentralCommandCenterPage.jsx
+│   │   │   │   ├── PredictiveCommandCenter.jsx
+│   │   │   │   └── WardMonitorPage.jsx
+│   │   │   ├── services
+│   │   │   │   ├── analytics.service.js
+│   │   │   │   └── dashboard.service.js
+│   │   │   └── styles
+│   │   │       └── Dashboard.css
+│   │   ├── diagnostics
+│   │   │   ├── components
+│   │   │   │   ├── DiagnosticViewer.jsx
+│   │   │   │   └── LabOrderTracking.jsx
+│   │   │   ├── pages
+│   │   │   │   └── SystemPerformanceSuite.jsx
+│   │   │   └── services
+│   │   │       ├── diagnostics.service.js
+│   │   │       └── lis.service.js
+│   │   ├── emergency
+│   │   │   ├── components
+│   │   │   │   ├── EmergencyPatientTracker.jsx
+│   │   │   │   ├── EmergencyProtocolModal.jsx
+│   │   │   │   ├── EmergencyWorkspace.jsx
+│   │   │   │   ├── ResuscitationWorkspace.jsx
+│   │   │   │   ├── SlaTimerDashboard.jsx
+│   │   │   │   └── TriageAssessmentWorkspace.jsx
+│   │   │   ├── services
+│   │   │   │   ├── emergencyAlertEngine.service.js
+│   │   │   │   ├── emergencyApi.service.js
+│   │   │   │   ├── emergencyProtocolEngine.service.js
+│   │   │   │   ├── emergencyWorkflowEngine.service.js
+│   │   │   │   ├── triageEngine.service.js
+│   │   │   │   └── triageSlaEngine.service.js
+│   │   │   ├── store
+│   │   │   │   └── emergency.store.js
+│   │   │   └── types
+│   │   │       └── emergency.types.ts
+│   │   ├── emr
+│   │   │   ├── components
+│   │   │   │   ├── A4Layout.jsx
+│   │   │   │   ├── AdmissionNoteForm.jsx
+│   │   │   │   ├── AdvancedPatientSearchBar.jsx
+│   │   │   │   ├── AISummaryBox.jsx
+│   │   │   │   ├── AldreteScoreForm.jsx
+│   │   │   │   ├── AllergyWorkspace.jsx
+│   │   │   │   ├── AnamnesisForm.jsx
+│   │   │   │   ├── BloodTransfusionForm.jsx
+│   │   │   │   ├── BmiModalSlider.jsx
+│   │   │   │   ├── BPOMMESOPharmacovigilanceForm.jsx
+│   │   │   │   ├── BradenScaleForm.jsx
+│   │   │   │   ├── CarePlanWorkspace.jsx
+│   │   │   │   ├── CareTeamManager.jsx
+│   │   │   │   ├── CdssAlertCenter.jsx
+│   │   │   │   ├── ClinicalCarePlanForm.jsx
+│   │   │   │   ├── ClinicalFormShell.jsx
+│   │   │   │   ├── ClinicalModuleModal.jsx
+│   │   │   │   ├── ClinicalObservationWorkspace.jsx
+│   │   │   │   ├── ClinicalTimeline.jsx
+│   │   │   │   ├── ConsultationRequestForm.jsx
+│   │   │   │   ├── ConsultationResponseForm.jsx
+│   │   │   │   ├── CPOEWorkspace.jsx
+│   │   │   │   ├── CPPTWorkspace.jsx
+│   │   │   │   ├── DiagnosisWorkspace.jsx
+│   │   │   │   ├── DigitalInformedConsent.jsx
+│   │   │   │   ├── DischargeModalClassic.jsx
+│   │   │   │   ├── DischargeReadinessForm.jsx
+│   │   │   │   ├── DischargeSummaryForm.jsx
+│   │   │   │   ├── DNRForm.jsx
+│   │   │   │   ├── DPJPAssignmentForm.jsx
+│   │   │   │   ├── EarlyWarningSystem.jsx
+│   │   │   │   ├── EMARForm.jsx
+│   │   │   │   ├── EmrCPOE.jsx
+│   │   │   │   ├── EmrCPPT.jsx
+│   │   │   │   ├── EmrSidebar.jsx
+│   │   │   │   ├── EmrWorkspace.jsx
+│   │   │   │   ├── HandHygieneAudit.jsx
+│   │   │   │   ├── ICUAdmissionCriteriaForm.jsx
+│   │   │   │   ├── ICUDischargeCriteriaForm.jsx
+│   │   │   │   ├── IncidentReportForm.jsx
+│   │   │   │   ├── InitialAssessment.jsx
+│   │   │   │   ├── IPSGDashboard.jsx
+│   │   │   │   ├── LabAlertSystem.jsx
+│   │   │   │   ├── LongitudinalTimeline.jsx
+│   │   │   │   ├── MedicalCertificateCauseOfDeathForm.jsx
+│   │   │   │   ├── MedicationOrderForm.jsx
+│   │   │   │   ├── MedicationReconciliationForm.jsx
+│   │   │   │   ├── MEOWSForm.jsx
+│   │   │   │   ├── NursingDailyAssessmentForm.jsx
+│   │   │   │   ├── NursingHandoverForm.jsx
+│   │   │   │   ├── NutritionScreeningForm.jsx
+│   │   │   │   ├── PainReassessmentForm.jsx
+│   │   │   │   ├── PAPSForm.jsx
+│   │   │   │   ├── PatientCarePanel.jsx
+│   │   │   │   ├── PatientDetailDrawerModal.jsx
+│   │   │   │   ├── PatientEducationForm.jsx
+│   │   │   │   ├── PatientSearchModal.jsx
+│   │   │   │   ├── PatientVerificationModal.jsx
+│   │   │   │   ├── PEWSForm.jsx
+│   │   │   │   ├── PhysicalExaminationForm.jsx
+│   │   │   │   ├── PreAnesthesiaAssessmentForm.jsx
+│   │   │   │   ├── ReferralLetterForm.jsx
+│   │   │   │   ├── RestraintAssessmentForm.jsx
+│   │   │   │   ├── SafetyDashboard.jsx
+│   │   │   │   ├── SepsisSOFACriteriaForm.jsx
+│   │   │   │   ├── SoapNoteModal.jsx
+│   │   │   │   ├── SoapWorkspace.jsx
+│   │   │   │   ├── SurgicalChecklist.jsx
+│   │   │   │   ├── SurgicalSafetyChecklistForm.jsx
+│   │   │   │   ├── TransferInternalForm.jsx
+│   │   │   │   ├── UgdAssessmentForm.jsx
+│   │   │   │   ├── WHOChildAnthropometryForm.jsx
+│   │   │   │   ├── WHOHandHygieneAuditForm.jsx
+│   │   │   │   └── WHOLabourCareGuideForm.jsx
+│   │   │   ├── pages
+│   │   │   │   ├── InpatientEMR.jsx
+│   │   │   │   ├── OutpatientEMR.jsx
+│   │   │   │   └── SignaturePadEndpoint.jsx
+│   │   │   ├── services
+│   │   │   │   ├── allergyEngine.service.js
+│   │   │   │   ├── carePlanEngine.service.js
+│   │   │   │   ├── cdssEngine.service.js
+│   │   │   │   ├── cpptEngine.service.js
+│   │   │   │   ├── diagnosisEngine.service.js
+│   │   │   │   ├── emr.service.js
+│   │   │   │   ├── emrApi.service.js
+│   │   │   │   ├── emrTimelineEngine.service.js
+│   │   │   │   ├── mmu.service.js
+│   │   │   │   ├── observationEngine.service.js
+│   │   │   │   ├── pfe.service.js
+│   │   │   │   ├── pfr.service.js
+│   │   │   │   ├── soapEngine.service.js
+│   │   │   │   └── surgery.service.js
+│   │   │   ├── store
+│   │   │   │   └── emr.store.js
+│   │   │   ├── styles
+│   │   │   │   ├── EMR.css
+│   │   │   │   └── Surgery.css
+│   │   │   └── types
+│   │   │       └── emr.types.ts
+│   │   ├── encounter
+│   │   │   ├── components
+│   │   │   │   └── EncounterWorkspaceModal.jsx
+│   │   │   ├── encounter.store.js
+│   │   │   ├── pages
+│   │   │   │   └── EncounterPage.jsx
+│   │   │   └── services
+│   │   │       └── encounter.service.js
+│   │   ├── enterprise
+│   │   │   ├── components
+│   │   │   │   └── IncidentReport.jsx
+│   │   │   ├── pages
+│   │   │   │   ├── EnterpriseHub.jsx
+│   │   │   │   └── ExecutiveDashboard.jsx
+│   │   │   ├── services
+│   │   │   │   ├── enterprise.service.js
+│   │   │   │   ├── gld.service.js
+│   │   │   │   └── moi.service.js
+│   │   │   └── styles
+│   │   │       └── Executive.css
+│   │   ├── front_office
+│   │   │   ├── components
+│   │   │   │   ├── BpjsBridgingControlModal.jsx
+│   │   │   │   ├── MultiQueueDisplayBoard.jsx
+│   │   │   │   ├── PatientWristbandPrintPreview.jsx
+│   │   │   │   └── RegistrationDeskWorkspace.jsx
+│   │   │   ├── services
+│   │   │   │   ├── bpjsAntreanBridge.service.js
+│   │   │   │   ├── bpjsVClaimBridge.service.js
+│   │   │   │   ├── frontOfficeApi.service.js
+│   │   │   │   ├── outboxPublisher.service.js
+│   │   │   │   ├── queueManagementEngine.service.js
+│   │   │   │   └── registrationEngine.service.js
+│   │   │   ├── store
+│   │   │   │   └── frontOffice.store.js
+│   │   │   └── types
+│   │   │       └── frontOffice.types.ts
+│   │   ├── handover
+│   │   │   ├── components
+│   │   │   │   └── HandoverModal.jsx
+│   │   │   └── services
+│   │   │       └── handover.service.js
+│   │   ├── interoperability
+│   │   │   ├── components
+│   │   │   │   ├── FhirBundleBuilderStudio.jsx
+│   │   │   │   ├── FhirResourceExplorerStudio.jsx
+│   │   │   │   ├── FhirResourceValidatorStudio.jsx
+│   │   │   │   └── SatusehatTransmissionSimulatorStudio.jsx
+│   │   │   └── pages
+│   │   │       └── SatusehatInteroperabilityStudioPage.jsx
+│   │   ├── inventory
+│   │   │   ├── components
+│   │   │   │   ├── CentralInventoryDashboard.jsx
+│   │   │   │   ├── ExpiryManagementWorkspace.jsx
+│   │   │   │   ├── ImplantConsignmentWorkspace.jsx
+│   │   │   │   ├── InternalUseTab.jsx
+│   │   │   │   ├── InventoryHeader.jsx
+│   │   │   │   ├── InventoryValuationReportsWorkspace.jsx
+│   │   │   │   ├── ItemDepartmentTab.jsx
+│   │   │   │   ├── ItemMasterWorkspace.jsx
+│   │   │   │   ├── KartuStockTab.jsx
+│   │   │   │   ├── MaterialRequestTab.jsx
+│   │   │   │   ├── MutasiBarangTab.jsx
+│   │   │   │   ├── ProcurementSupplierWorkspace.jsx
+│   │   │   │   ├── QuarantineRecallWorkspace.jsx
+│   │   │   │   ├── ReceiveMutasiTab.jsx
+│   │   │   │   ├── StockAdjustmentTab.jsx
+│   │   │   │   └── WarehouseLocationWorkspace.jsx
+│   │   │   ├── inventory.store.js
+│   │   │   ├── pages
+│   │   │   │   ├── EnterpriseInventoryPage.jsx
+│   │   │   │   ├── InternalUsePage.jsx
+│   │   │   │   ├── InventoryDashboard.jsx
+│   │   │   │   ├── ItemDepartmentPage.jsx
+│   │   │   │   ├── KartuStockPage.jsx
+│   │   │   │   ├── MaterialRequestPage.jsx
+│   │   │   │   ├── ReceiveMutasiPage.jsx
+│   │   │   │   ├── StockAdjustmentPage.jsx
+│   │   │   │   └── VerificationEndpoint.jsx
+│   │   │   └── services
+│   │   │       ├── enterpriseInventory.service.js
+│   │   │       └── inventory.service.js
+│   │   ├── lab
+│   │   │   ├── components
+│   │   │   │   ├── AnalyticalResultEntryStudio.jsx
+│   │   │   │   ├── LisCommandCenter.jsx
+│   │   │   │   ├── PanicValueEscalationModal.jsx
+│   │   │   │   └── SpecimenAccessioningStudio.jsx
+│   │   │   └── pages
+│   │   │       └── LabPage.jsx
+│   │   ├── master_data
+│   │   │   ├── components
+│   │   │   │   ├── domains
+│   │   │   │   │   ├── AuditTrailWorkspace.jsx
+│   │   │   │   │   ├── ClinicalMasterWorkspace.jsx
+│   │   │   │   │   ├── FacilityHierarchyWorkspace.jsx
+│   │   │   │   │   ├── HumanResourceWorkspace.jsx
+│   │   │   │   │   ├── IntegrationWorkspace.jsx
+│   │   │   │   │   ├── OrganizationWorkspace.jsx
+│   │   │   │   │   ├── PatientMasterWorkspace.jsx
+│   │   │   │   │   ├── ReferenceDataWorkspace.jsx
+│   │   │   │   │   └── SecurityRbacWorkspace.jsx
+│   │   │   │   ├── MasterDataDetailDrawer.jsx
+│   │   │   │   ├── MasterDataFilterBar.jsx
+│   │   │   │   ├── MasterDataFormModal.jsx
+│   │   │   │   ├── MasterDataImportModal.jsx
+│   │   │   │   ├── MasterDataStatsBar.jsx
+│   │   │   │   ├── MasterDataTable.jsx
+│   │   │   │   └── submodules
+│   │   │   │       └── RbacMatrixModal.jsx
+│   │   │   ├── data
+│   │   │   │   ├── enterpriseMasterSchemas.js
+│   │   │   │   ├── enterpriseMasterSeed.js
+│   │   │   │   ├── masterDataSchemas.js
+│   │   │   │   ├── masterDataSeed.js
+│   │   │   │   └── permissionsRegistry.js
+│   │   │   ├── masterData.store.js
+│   │   │   ├── pages
+│   │   │   │   └── MasterDataWorkspacePage.jsx
+│   │   │   └── services
+│   │   │       ├── admissionTransferDischarge.service.js
+│   │   │       ├── bedManagement.service.js
+│   │   │       ├── businessRuleEngine.service.js
+│   │   │       ├── clinicalEventBus.service.js
+│   │   │       ├── dataRetention.service.js
+│   │   │       ├── encounter.service.js
+│   │   │       ├── enterpriseAuditEngine.service.js
+│   │   │       ├── enterpriseFhirMapper.service.js
+│   │   │       ├── enterpriseMasterApi.service.js
+│   │   │       ├── episodeOfCare.service.js
+│   │   │       ├── kpiCalculation.service.js
+│   │   │       ├── masterDataApi.service.js
+│   │   │       ├── masterDataExport.service.js
+│   │   │       ├── masterDataImport.service.js
+│   │   │       ├── medicationSafety.service.js
+│   │   │       ├── mrnMergeEngine.service.js
+│   │   │       ├── notificationEngine.service.js
+│   │   │       ├── pharmacyInventory.service.js
+│   │   │       ├── queueManagement.service.js
+│   │   │       ├── securityContext.service.js
+│   │   │       ├── tariffVersioning.service.js
+│   │   │       └── universalAuditTrail.service.js
+│   │   ├── nursing
+│   │   │   ├── components
+│   │   │   │   ├── EmarAdministrationStudio.jsx
+│   │   │   │   ├── FluidBalanceSheet.jsx
+│   │   │   │   ├── NursingAssessmentAndPlan.jsx
+│   │   │   │   └── NursingCommandCenter.jsx
+│   │   │   ├── pages
+│   │   │   │   └── NursingWorkspacePage.jsx
+│   │   │   └── services
+│   │   │       └── nursingCareEngine.service.js
+│   │   ├── orders
+│   │   │   ├── components
+│   │   │   │   ├── LaboratoryResultWorkspace.jsx
+│   │   │   │   ├── LaboratoryWorkspace.jsx
+│   │   │   │   ├── MedicationReviewWorkspace.jsx
+│   │   │   │   ├── OrderEntryWorkspace.jsx
+│   │   │   │   ├── OrdersWorkspace.jsx
+│   │   │   │   ├── OrderTimelineWorkspace.jsx
+│   │   │   │   ├── PharmacyWorkspace.jsx
+│   │   │   │   ├── RadiologyViewerWorkspace.jsx
+│   │   │   │   └── RadiologyWorkspace.jsx
+│   │   │   ├── services
+│   │   │   │   ├── laboratoryEngine.service.js
+│   │   │   │   ├── lisBridge.service.js
+│   │   │   │   ├── medicationInteractionEngine.service.js
+│   │   │   │   ├── medicationReviewEngine.service.js
+│   │   │   │   ├── orderCatalogEngine.service.js
+│   │   │   │   ├── ordersApi.service.js
+│   │   │   │   ├── pacsBridge.service.js
+│   │   │   │   ├── pharmacyEngine.service.js
+│   │   │   │   ├── radiologyEngine.service.js
+│   │   │   │   └── universalOrderEngine.service.js
+│   │   │   ├── store
+│   │   │   │   └── orders.store.js
+│   │   │   └── types
+│   │   │       └── orders.types.ts
+│   │   ├── patient
+│   │   │   ├── components
+│   │   │   │   ├── AuditTrailModal.jsx
+│   │   │   │   ├── EmergencyUnknownPatientModal.jsx
+│   │   │   │   ├── GlobalPatientSearch.jsx
+│   │   │   │   ├── PatientIdentityCard.jsx
+│   │   │   │   ├── PatientJourneyTimeline.jsx
+│   │   │   │   └── PatientRegistrationWithEmpiModal.jsx
+│   │   │   ├── pages
+│   │   │   │   ├── PatientCommandCenterPage.jsx
+│   │   │   │   └── PatientPortal.jsx
+│   │   │   ├── patient.store.js
+│   │   │   ├── services
+│   │   │   │   ├── patient.service.js
+│   │   │   │   ├── portal.service.js
+│   │   │   │   ├── queue.service.js
+│   │   │   │   └── wayfinding.service.js
+│   │   │   └── styles
+│   │   │       └── Patients.css
+│   │   ├── pharmacy
+│   │   │   ├── components
+│   │   │   │   ├── AntibioticStewardshipWorkspace.jsx
+│   │   │   │   ├── ClinicalDispensingStudio.jsx
+│   │   │   │   ├── ControlledDrugsWorkspace.jsx
+│   │   │   │   ├── DeviceRecallAndImplantSafetyStudio.jsx
+│   │   │   │   ├── DispenseQueue.jsx
+│   │   │   │   ├── IpsgVerificationModal.jsx
+│   │   │   │   ├── MedicationMasterWorkspace.jsx
+│   │   │   │   ├── MedicationReconciliationWorkspace.jsx
+│   │   │   │   ├── MultiDepotFefoInventoryStudio.jsx
+│   │   │   │   ├── PharmacistVerificationWorkspace.jsx
+│   │   │   │   ├── PharmacyDashboardWorkspace.jsx
+│   │   │   │   ├── PharmacyIntegrationsReportsWorkspace.jsx
+│   │   │   │   ├── PharmacySafetyInterventionWorkspace.jsx
+│   │   │   │   ├── SpecializedPharmacyWorkspace.jsx
+│   │   │   │   └── StockAdjustmentModal.jsx
+│   │   │   ├── pages
+│   │   │   │   └── EnterprisePharmacyWorkspacePage.jsx
+│   │   │   ├── pharmacy.store.js
+│   │   │   └── services
+│   │   │       ├── inventory.service.js
+│   │   │       └── pharmacy.service.js
+│   │   ├── radiology
+│   │   │   ├── components
+│   │   │   │   ├── DicomWebViewer.jsx
+│   │   │   │   ├── ModalityWorklistStudio.jsx
+│   │   │   │   ├── PatientClinicalTimeline.jsx
+│   │   │   │   ├── RadiologyKpiDashboard.jsx
+│   │   │   │   ├── RadiologyReportingStudio.jsx
+│   │   │   │   └── UrgentRadiologyAlertModal.jsx
+│   │   │   ├── pages
+│   │   │   │   └── RadiologyWorkspacePage.jsx
+│   │   │   └── services
+│   │   │       └── pacsDicomEngine.service.js
+│   │   ├── reporting
+│   │   │   ├── pages
+│   │   │   │   └── EncounterSummaryPage.jsx
+│   │   │   └── services
+│   │   │       └── reporting.service.js
+│   │   ├── staff
+│   │   │   └── pages
+│   │   │       └── StaffPrivilegingWorkspacePage.jsx
+│   │   ├── surgery
+│   │   │   ├── components
+│   │   │   │   ├── InteractiveSurgeryBoard.jsx
+│   │   │   │   ├── PacuRecoveryAndAldreteStudio.jsx
+│   │   │   │   ├── SurgicalClinicalNotesStudio.jsx
+│   │   │   │   ├── SurgicalRevenueAndInaCbgStudio.jsx
+│   │   │   │   └── WhoSurgicalSafetyStudio.jsx
+│   │   │   ├── pages
+│   │   │   │   └── OperatingTheatreWorkspacePage.jsx
+│   │   │   └── services
+│   │   │       ├── aimsAnesthesiaEngine.service.js
+│   │   │       └── operatingTheatreEngine.service.js
+│   │   ├── triage
+│   │   │   ├── components
+│   │   │   │   ├── BedPickerModal.jsx
+│   │   │   │   ├── DetailedAssessment.jsx
+│   │   │   │   ├── IgdCommandCenter.jsx
+│   │   │   │   ├── MonitorCommand.jsx
+│   │   │   │   ├── PoliTriage.jsx
+│   │   │   │   ├── RapidIntake.jsx
+│   │   │   │   ├── RapidTriageStudio.jsx
+│   │   │   │   ├── ResuscitationBoardModal.jsx
+│   │   │   │   └── VitalTouchGrid.jsx
+│   │   │   ├── logic
+│   │   │   │   └── ClinicalEngine.ts
+│   │   │   ├── pages
+│   │   │   │   └── TriagePage.jsx
+│   │   │   ├── services
+│   │   │   │   └── triage.service.js
+│   │   │   ├── styles
+│   │   │   │   └── Triage.css
+│   │   │   └── triage.store.js
+│   │   ├── ward
+│   │   │   ├── components
+│   │   │   │   ├── BarberJohnsonAnalyticsStudio.jsx
+│   │   │   │   ├── HousekeepingQueueStudio.jsx
+│   │   │   │   ├── LiveWardMapStudio.jsx
+│   │   │   │   └── PredictiveBedAvailabilityStudio.jsx
+│   │   │   ├── pages
+│   │   │   │   └── BedManagementCenterPage.jsx
+│   │   │   └── services
+│   │   │       └── bed.service.js
+│   │   └── worklist
+│   │       ├── pages
+│   │       │   └── WorklistPage.jsx
+│   │       └── services
+│   │           └── worklist.service.js
+│   ├── routes
+│   │   ├── admin.routes.jsx
+│   │   ├── auth.routes.jsx
+│   │   ├── clinical.routes.jsx
+│   │   ├── emr.routes.jsx
+│   │   ├── enterprise.routes.jsx
+│   │   ├── index.jsx
+│   │   ├── patient.routes.jsx
+│   │   └── pharmacy.routes.jsx
+│   ├── service-worker.js
+│   ├── shared
+│   │   ├── constants
+│   │   │   └── roles.js
+│   │   ├── sharedGovernanceFacade.service.js
+│   │   └── sharedQueueFacade.service.js
+│   └── utils
+│       ├── clinicalCalculators.js
+│       ├── clinicalEngine.js
+│       └── displayUtils.js
+├── tailwind.config.js
+├── tests
+│   ├── abacSecurity.test.js
+│   ├── adtEngine.test.js
+│   ├── allergyEngine.test.js
+│   ├── appointmentQueue.test.js
+│   ├── appointmentQueuePersistence.test.js
+│   ├── authentication.test.js
+│   ├── bedManagementFsmBarberJohnsonVerticalSlice.test.js
+│   ├── bedWardPersistence.test.js
+│   ├── billingEngine.test.js
+│   ├── bloodBank.test.js
+│   ├── bloodBankEnterpriseVerticalSlice.test.js
+│   ├── bloodBankPersistence.test.js
+│   ├── blueGreenDeployment.test.js
+│   ├── bootstrap.test.js
+│   ├── bpjsVclaimIntegration.test.js
+│   ├── casemixRevenueCycleVerticalSlice.test.js
+│   ├── cdssEngine.test.js
+│   ├── claimInaCbg.test.js
+│   ├── clinicalSafetyVerification.test.js
+│   ├── clinicalUxAnalyticsSuite.test.js
+│   ├── criticalCare.test.js
+│   ├── databaseHighAvailability.test.js
+│   ├── disasterRecoveryDrillVerticalSlice.test.js
+│   ├── doctorWorkspaceVerticalSlice.test.js
+│   ├── e2ePatientJourney.test.js
+│   ├── eMarEngine.test.js
+│   ├── emergencyUatClinicalJourneySuite.test.js
+│   ├── empiEngine.test.js
+│   ├── encounterFsm.test.js
+│   ├── enterpriseConcurrencyLoadTestingVerticalSlice.test.js
+│   ├── enterpriseInfrastructureVerticalSlice.test.js
+│   ├── enterpriseMasterDataGovernanceVerticalSlice.test.js
+│   ├── enterprisePharmacyVerticalSlice.test.js
+│   ├── enterpriseUiDesignSystem.test.js
+│   ├── environmentValidation.test.js
+│   ├── fhirMappers.test.js
+│   ├── fieldValidationWarRoomSuite.test.js
+│   ├── forensicAuditEcosystemVerticalSlice.test.js
+│   ├── hospitalCentralCommandCenterVerticalSlice.test.js
+│   ├── hospitalMetrics.test.js
+│   ├── inventoryManagement.test.js
+│   ├── legalConsentBsreDigitalSignatureSuite.test.js
+│   ├── lisPacsEngine.test.js
+│   ├── lisSpecimenTrackingVerticalSlice.test.js
+│   ├── loggingRedaction.test.js
+│   ├── masterDataGovernance.test.js
+│   ├── notificationEngine.test.js
+│   ├── nursingEmarVerticalSlice.test.js
+│   ├── observabilityMetricsHealthSuite.test.js
+│   ├── operatingTheatre.test.js
+│   ├── operatingTheatreEnterpriseAimsCssd.test.js
+│   ├── operatingTheatrePersistence.test.js
+│   ├── operatingTheatreVerticalSlice.test.js
+│   ├── outboxPattern.test.js
+│   ├── pacsRadiologyVerticalSlice.test.js
+│   ├── pacsWorkflowIntegrationVerticalSlice.test.js
+│   ├── patientJourneyEmpi.test.js
+│   ├── pharmacyInventoryPersistence.test.js
+│   ├── rbac.test.js
+│   ├── satusehatEnterpriseGatewayVerticalSlice.test.js
+│   ├── satusehatFhirR4StudioVerticalSlice.test.js
+│   ├── satusehatIntegration.test.js
+│   ├── securityHardeningOwaspPenetration.test.js
+│   ├── shadowModeOperationsSuite.test.js
+│   ├── staffPrivilegingPersistence.test.js
+│   ├── staffScheduling.test.js
+│   ├── surgicalRevenueCycleInaCbg.test.js
+│   ├── tenantFoundation.test.js
+│   ├── tenantSubscription.test.js
+│   ├── triageEngine.test.js
+│   ├── triageVerticalSlice.test.js
+│   ├── universalOrderEngine.test.js
+│   └── workflowOrchestrator.test.js
+├── test_v5_logic.js
+├── tree.txt
+└── vite.config.js

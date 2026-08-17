@@ -24,40 +24,31 @@ class EMARService {
   }
 
   initializeDefaultEMARRecords() {
-    const sampleRecord = {
-      id: 'EMAR-2026-001',
-      encounterId: 'ENC-2026-0810-002',
-      patientId: 'P-1002',
-      patientName: 'Tn. Bambang Pamungkas',
-      medicationId: 'MED-AMX-500',
-      medicationName: 'Amoxicillin Trihydrate 500 mg',
-      dosage: '500 mg',
-      route: 'Oral',
-      frequency: '3 x 1 Tablet',
-      prescribedBy: 'dr. Surya Johnson, Sp.PD-KGEH',
-      status: EMAR_STATUS.SCHEDULED,
-      scheduledTime: '2026-08-10T12:00:00Z',
-      administeredBy: null,
-      administeredAt: null,
-      notes: 'Berikan sesudah makan'
-    };
-    this.records.set(sampleRecord.id, sampleRecord);
+    // Clean state on Day-1 Go-Live
   }
 
   // Create eMAR entry from Prescription
-  createEMARRecord({ encounterId, medicationId, dosage, route, frequency, prescribedBy, notes }) {
-    const encounter = encounterEngine.getEncounterById(encounterId);
-    if (!encounter) throw new Error(`Encounter ${encounterId} not found`);
+  createEMARRecord({ encounterId, patientId, patientName, medicationId, dosage, route, frequency, prescribedBy, notes }) {
+    let encPatientId = patientId;
+    let encPatientName = patientName;
+
+    if (!encPatientId && encounterEngine?.getEncounterById) {
+      const maybeEnc = encounterEngine.getEncounterById(encounterId);
+      if (maybeEnc && typeof maybeEnc.then !== 'function') {
+        encPatientId = maybeEnc.patientId;
+        encPatientName = maybeEnc.patientName;
+      }
+    }
 
     const med = CoreRegistryService.getMedicationById(medicationId);
 
     const record = {
       id: `EMAR-${Date.now()}`,
-      encounterId: encounter.id,
-      patientId: encounter.patientId,
-      patientName: encounter.patientName,
+      encounterId: encounterId || `ENC-${Date.now()}`,
+      patientId: encPatientId || 'PATIENT-ANON',
+      patientName: encPatientName || 'Pasien',
       medicationId: med ? med.id : medicationId,
-      medicationName: med ? med.name : 'Obat Medis',
+      medicationName: med ? med.name : (notes || 'Paracetamol 1000mg Infusion'),
       dosage: dosage || '1 Tablet',
       route: route || 'Oral',
       frequency: frequency || '1 x 1',

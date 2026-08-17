@@ -20,9 +20,7 @@ class CDSSEngine {
       { medA: 'MED-INS-GLA', medB: 'MED-MET-500', severity: ALERT_SEVERITY.INFO, message: 'Kombinasi Insulin Glargine + Metformin: Pantau kadar glukosa darah secara rutin.' }
     ];
 
-    this.patientAllergies = new Map([
-      ['P-1001', [{ allergen: 'Penicillin', severity: 'SEVERE', reaction: 'Anaphylaxis / Ruam Hebat' }]]
-    ]);
+    this.patientAllergies = new Map();
   }
 
   // Check Drug-Drug Interactions

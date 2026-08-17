@@ -27,7 +27,6 @@ import {
 
 import usePatientClipboardShortcuts from '../../../hooks/usePatientClipboardShortcuts.js';
 import { saveSoapNote, getPatientRecords } from '../services/emr.service.js';
-import { DEMO_ENCOUNTERS } from '../../../core/demoData.js';
 
 // Import Shared Form Components
 import CPPTWorkspace from '../components/CPPTWorkspace.jsx';
@@ -156,21 +155,20 @@ export default function InpatientEMR() {
     }
   }, [selectedPatientId, fetchPatientActiveEncounter]);
 
-  const activePatient = useMemo(() => patients.find(p => p.id === selectedPatientId) || {}, [patients, selectedPatientId]);
+  const activePatient = useMemo(() => patients.find(p => p.id === selectedPatientId) || null, [patients, selectedPatientId]);
   const activeEncounter = useMemo(() => {
     return (
       activeEncounters?.find(e => e.id === selectedEncounterId) ||
       activeEncounters?.find(e => e.patient_id === selectedPatientId || e.patientId === selectedPatientId) ||
-      DEMO_ENCOUNTERS.find(e => e.patient_id === selectedPatientId) ||
-      { type: 'INPATIENT', room: 'Ruang Mawar 302', bed: 'Bed B', lengthOfStay: '4 Hari', status: 'ACTIVE' }
+      null
     );
   }, [activeEncounters, selectedEncounterId, selectedPatientId]);
 
-  const noReg = activeEncounter?.id ? activeEncounter.id.slice(-8).toUpperCase() : 'RI-2026-0801';
+  const noReg = activeEncounter?.id ? activeEncounter.id.slice(-8).toUpperCase() : '-';
   const noRM = activePatient?.mrn || '-';
   const dob = activePatient?.demographics?.dob || '-';
   const age = activePatient?.id ? calculateAge(dob) : '-';
-  const patientName = activePatient?.name || activeEncounter?.patient_name || 'PASIEN RAWAT INAP';
+  const patientName = activePatient?.name || activeEncounter?.patient_name || 'PASIEN RAWAT INAP (BELUM DIPILIH)';
 
   const [previewRecord, setPreviewRecord] = useState(null);
 
@@ -215,7 +213,7 @@ export default function InpatientEMR() {
                 Dashboard EMR Rawat Inap
               </h2>
               <p className="text-sm font-bold text-[var(--on-surface-variant)]/60 mt-1">
-                Kamar: {activeEncounter?.room || 'Mawar 302'} • {activeEncounter?.bed || 'Bed A'} | LOS: {activeEncounter?.lengthOfStay || '3 Hari'}
+                Kamar: {activeEncounter?.room || '-'} • {activeEncounter?.bed || '-'} | LOS: {activeEncounter?.lengthOfStay || '-'}
               </p>
             </div>
           </div>
@@ -231,22 +229,22 @@ export default function InpatientEMR() {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
                     <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Tekanan Darah</span>
-                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.bp || '120/80'} <span className="text-[9px] text-slate-400">mmHg</span></span>
+                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.bp || '-'} <span className="text-[9px] text-slate-400">mmHg</span></span>
                   </div>
                   <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
                     <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Detak Jantung</span>
-                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.hr || '82'} <span className="text-[9px] text-slate-400">bpm</span></span>
+                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.hr || '-'} <span className="text-[9px] text-slate-400">bpm</span></span>
                   </div>
                   <div className="flex justify-between items-center p-2 bg-[var(--surface-container)] rounded-xl">
                     <span className="text-[11px] font-bold text-[var(--on-surface-variant)]">Suhu Tubuh</span>
-                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.temp || '36.8'} <span className="text-[9px] text-slate-400">°C</span></span>
+                    <span className="text-xs font-black text-[var(--on-surface)]">{activeEncounter?.vitals?.temp || '-'} <span className="text-[9px] text-slate-400">°C</span></span>
                   </div>
                 </div>
               </div>
               <div className="mt-3 p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between">
                 <span className="text-[9px] font-black uppercase text-emerald-700">EWS NEWS2 SCORE</span>
                 <span className="text-xs font-black text-emerald-700 flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {activeEncounter?.news2_score || 1} (LOW RISK)
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {activeEncounter?.news2_score ?? 0} ({activeEncounter?.news2_score ? 'ACTIVE RISK' : 'NORMAL / BASELINE'})
                 </span>
               </div>
             </div>
@@ -260,15 +258,15 @@ export default function InpatientEMR() {
                 <div className="space-y-2">
                   <div className="p-2 bg-teal-500/8 border border-teal-500/20 rounded-xl">
                     <span className="text-[8px] font-black uppercase text-teal-700 block">DPJP UTAMA</span>
-                    <span className="text-xs font-black text-[var(--on-surface)] truncate block">{activeEncounter?.doctor_name || 'dr. Robby Viory, Sp.B'}</span>
+                    <span className="text-xs font-black text-[var(--on-surface)] truncate block">{activeEncounter?.doctor_name || activeEncounter?.doctor || '-'}</span>
                   </div>
                   <div className="p-2 bg-[var(--surface-container)] rounded-xl">
                     <span className="text-[8px] font-black uppercase text-[var(--on-surface-variant)] block">PERAWAT SHIFT</span>
-                    <span className="text-xs font-bold text-[var(--on-surface)] truncate block">Ns. Sarah, S.Kep</span>
+                    <span className="text-xs font-bold text-[var(--on-surface)] truncate block">{activeEncounter?.nurse_name || '-'}</span>
                   </div>
                   <div className="p-2 bg-[var(--surface-container)] rounded-xl">
                     <span className="text-[8px] font-black uppercase text-[var(--on-surface-variant)] block">APOTEKER KLINIK</span>
-                    <span className="text-xs font-bold text-[var(--on-surface)] truncate block">Apt. Siti Aminah, S.Farm</span>
+                    <span className="text-xs font-bold text-[var(--on-surface)] truncate block">{activeEncounter?.pharmacist_name || '-'}</span>
                   </div>
                 </div>
               </div>
@@ -283,18 +281,18 @@ export default function InpatientEMR() {
                 <div className="space-y-2">
                   {activePatient?.allergies?.length > 0 ? (
                     <div className="p-2 bg-red-500/10 border border-red-500/25 rounded-xl text-red-700 text-xs font-bold flex items-center gap-1.5 truncate">
-                      <ShieldAlert size={13} className="shrink-0" /> Alergi: {activePatient.allergies[0].agent}
+                      <ShieldAlert size={13} className="shrink-0" /> Alergi: {activePatient.allergies[0].agent || activePatient.allergies[0].allergen || activePatient.allergies[0]}
                     </div>
                   ) : (
                     <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-700 text-xs font-bold flex items-center gap-1.5">
                       <ShieldCheck size={13} className="shrink-0" /> NKDA (Tidak ada alergi)
                     </div>
                   )}
-                  <div className="p-2 bg-amber-500/10 border border-amber-500/25 rounded-xl text-amber-700 text-[11px] font-bold flex items-center gap-1.5">
-                    <AlertTriangle size={13} className="shrink-0" /> Morse Fall Risk: SEDANG (35)
+                  <div className="p-2 bg-slate-500/10 border border-slate-500/25 rounded-xl text-slate-700 dark:text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
+                    <AlertTriangle size={13} className="shrink-0" /> Fall Risk: {activePatient?.safety_flags?.fall_risk || 'Belum Dinilai'}
                   </div>
-                  <div className="p-2 bg-blue-500/10 border border-blue-500/25 rounded-xl text-blue-700 text-[11px] font-bold flex items-center gap-1.5">
-                    <Scale size={13} className="shrink-0" /> Braden Score: 18 (LOW RISK)
+                  <div className="p-2 bg-slate-500/10 border border-slate-500/25 rounded-xl text-slate-700 dark:text-slate-300 text-[11px] font-bold flex items-center gap-1.5">
+                    <Scale size={13} className="shrink-0" /> Skala Dekubitus: {activePatient?.safety_flags?.pressure_injury_risk || 'Belum Dinilai'}
                   </div>
                 </div>
               </div>

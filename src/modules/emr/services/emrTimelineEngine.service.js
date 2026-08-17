@@ -14,7 +14,8 @@ export const emrTimelineEngineService = {
   /**
    * Generate Full Longitudinal Patient Care Timeline
    */
-  generatePatientTimeline: (patientId = 'P-1001') => {
+  generatePatientTimeline: (patientId = null) => {
+    if (!patientId) return [];
     const soapList = soapEngineService.getSoapNotes(patientId);
     const cpptList = cpptEngineService.getCpptNotes();
     const obsList = observationEngineService.getObservations(patientId);

@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-08-17T16:51:31.697Z",
+  "totalFilesScanned": 768,
+  "totalViolations": 0,
+  "status": "PASSED",
+  "rules": [
+    {
+      "id": 1,
+      "name": "Hardcoded Patient/Clinical IDs in Production (src/)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 2,
+      "name": "Suspicious Demo/Mock/Fake Data Constants in Production (src/)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 3,
+      "name": "Uncontrolled Random Generators for Clinical Data (src/core, src/modules)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 4,
+      "name": "Hardcoded Dummy Names in Production UI (src/)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 5,
+      "name": "Zustand Stores Initial Contamination (src/core/stores, src/modules/*/store)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 6,
+      "name": "Mock API Server or Axios Mock Adapter in Production (src/)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 7,
+      "name": "SATUSEHAT / BPJS Dummy/Test Hardcoded Keys (src/)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 8,
+      "name": "Ward & Bed Management Mock Occupied Initial State (src/modules/ward, src/core/services)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 9,
+      "name": "In-Memory Clinical Documents / Encounters Initialized with Data (src/core/services)",
+      "violationsCount": 0,
+      "findings": []
+    },
+    {
+      "id": 10,
+      "name": "Hardcoded Fallback Identifiers in EMR Workspaces (src/modules/emr)",
+      "violationsCount": 0,
+      "findings": []
+    }
+  ]
+}

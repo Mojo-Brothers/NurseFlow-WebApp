@@ -115,96 +115,13 @@ export const ENTERPRISE_MASTER_SEED = {
   ],
 
   // ─── 5. PATIENT 360, ADT & QUEUE ───
-  patients: [
-    {
-      id: 'P-1001',
-      mrn: 'MRN-2026-001001',
-      nik: '3171015005850001',
-      bpjs_number: '0001234567890',
-      satusehat_ihs_number: 'P10002874101',
-      full_name: 'Ny. Siti Nurhaliza, S.Pd',
-      birth_date: '1985-05-20',
-      gender_label: 'Perempuan',
-      city_label: 'Jakarta Selatan',
-      allergies_summary: 'Amoxicillin, Seafood',
-      allergies: [
-        { type: 'DRUG', agent: 'Amoxicillin', reaction: 'Angioedema & Rash', severity: 'SEVERE' }
-      ],
-      merge_history: [],
-      status: 'ACTIVE',
-      is_deleted: false
-    }
-  ],
-
-  episodes_of_care: [
-    {
-      id: 'EOC-2026-001',
-      episode_number: 'EOC-2026-001001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      episode_type: 'INPATIENT',
-      admission_date: '2026-08-15T08:30:00Z',
-      discharge_date: null,
-      attending_physician_id: 'DOC-1001',
-      status: 'ACTIVE',
-      is_deleted: false
-    }
-  ],
-
-  encounters: [
-    {
-      id: 'ENC-2026-001',
-      encounter_number: 'ENC-2026-001001',
-      episode_id: 'EOC-2026-001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      encounter_type_label: 'Pelayanan Rawat Inap',
-      encounter_status: 'IN_PROGRESS',
-      location_id: 'FAC-BED-301B',
-      practitioner_id: 'DOC-1001',
-      started_at: '2026-08-15T09:00:00Z',
-      ended_at: null,
-      is_deleted: false
-    }
-  ],
-
-  admissions: [
-    {
-      id: 'ADM-2026-001',
-      admission_number: 'ADM-2026-001',
-      episode_id: 'EOC-2026-001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      admission_type: 'EMERGENCY_ADMISSION',
-      assigned_bed_id: 'FAC-BED-301B',
-      admitting_doctor_id: 'DOC-1001',
-      admitted_at: '2026-08-15T08:45:00Z',
-      status: 'ADMITTED',
-      is_deleted: false
-    }
-  ],
-
-  transfers: [
-    {
-      id: 'TRF-2026-001',
-      episode_id: 'EOC-2026-001',
-      patient_id: 'P-1001',
-      from_bed_id: 'FAC-BED-IGD-01',
-      to_bed_id: 'FAC-BED-301B',
-      transfer_reason: 'Pasien stabil dari IGD dipindahkan ke Bangsal Mawar',
-      transferred_at: '2026-08-15T09:30:00Z',
-      transferred_by: 'Ns. Fajar Purnama, S.Kep',
-      status: 'COMPLETED',
-      is_deleted: false
-    }
-  ],
-
+  patients: [],
+  episodes_of_care: [],
+  encounters: [],
+  admissions: [],
+  transfers: [],
   discharges: [],
-
-  queue_tickets: [
-    { id: 'QTK-01', queue_number: 'A-001', patient_name: 'Ny. Siti Nurhaliza, S.Pd', department_name: 'Poliklinik Penyakit Dalam', queue_status: 'CALLED', created_at: '2026-08-17T08:15:00Z', is_deleted: false },
-    { id: 'QTK-02', queue_number: 'A-002', patient_name: 'Tn. Hendra Gunawan', department_name: 'Poliklinik Penyakit Dalam', queue_status: 'WAITING', created_at: '2026-08-17T08:20:00Z', is_deleted: false }
-  ],
+  queue_tickets: [],
 
   guarantors: [{ id: 'GRN-1001', code: 'GRN-BPJS', name: 'BPJS Kesehatan Kantor Cabang Utama', status: 'ACTIVE', is_deleted: false }],
   insurances: [{ id: 'ASR-1001', code: 'ASR-INHEALTH-PLAT', name: 'Mandiri Inhealth Platinum Group', status: 'ACTIVE', is_deleted: false }],

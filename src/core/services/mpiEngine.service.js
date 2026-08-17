@@ -8,7 +8,6 @@
 import { persistenceAdapter } from './persistenceAdapter.service.js';
 import { domainEventEngine, DOMAIN_EVENTS } from './domainEventEngine.service.js';
 import { clinicalTimelineEngine } from './clinicalTimelineEngine.service.js';
-import { DEMO_PATIENTS } from '../demoData.js';
 
 class MPIEngine {
   constructor() {
@@ -18,47 +17,7 @@ class MPIEngine {
   }
 
   initializeSampleMPI() {
-    const samplePatients = [
-      {
-        id: 'P-1001',
-        mrn: 'MRN-2026-001001',
-        nik: '3171015005850001',
-        name: 'Ny. Siti Nurhaliza',
-        dob: '1985-05-20',
-        gender: 'F',
-        phone: '081234567890',
-        email: 'siti.nurhaliza@example.com',
-        address: 'Jl. Sudirman No. 45, Jakarta Selatan',
-        emergencyContact: { name: 'Ahmad Nur', relation: 'Suami', phone: '081298765432' },
-        payer: 'BPJS Kesehatan',
-        bpjsCardNumber: '0001234567890',
-        status: 'ACTIVE',
-        created_at: '2026-08-01T10:00:00Z'
-      },
-      {
-        id: 'P-1002',
-        mrn: 'MRN-2026-001002',
-        nik: '3171021208800002',
-        name: 'Tn. Bambang Pamungkas',
-        dob: '1980-08-12',
-        gender: 'M',
-        phone: '081311223344',
-        email: 'bambang.p@example.com',
-        address: 'Jl. Gatot Subroto No. 12, Jakarta Selatan',
-        emergencyContact: { name: 'Dewi Pamungkas', relation: 'Istri', phone: '081399887766' },
-        payer: 'Umum / Mandiri',
-        bpjsCardNumber: null,
-        status: 'ACTIVE',
-        created_at: '2026-08-02T11:30:00Z'
-      },
-      ...DEMO_PATIENTS.map(p => ({
-        ...p,
-        id: p.id || p.mrn,
-        status: p.status || 'ACTIVE'
-      }))
-    ];
-
-    persistenceAdapter.seedMemoryData(this.COLLECTION_NAME, samplePatients);
+    persistenceAdapter.seedMemoryData(this.COLLECTION_NAME, []);
   }
 
   async getAllPatients() {

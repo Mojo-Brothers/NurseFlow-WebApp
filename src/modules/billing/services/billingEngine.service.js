@@ -51,13 +51,13 @@ export const billingEngineService = {
    * Aggregate All Ledger Charges for an Episode into an Invoice
    */
   generateInvoice: async ({
-    episodeId = 'EOC-2026-001',
-    patientId = 'P-1001',
-    patientName = 'Ny. Siti Nurhaliza, S.Pd',
+    episodeId = 'EOC-001',
+    patientId = 'P-001',
+    patientName = '-',
     guarantorType = 'BPJS',
     cashierName = 'Kasir Utama',
     actorEmail = 'cashier@nurseflow.id'
-  }) => {
+  } = {}) => {
     const ledger = getStoredLedger();
     const episodeCharges = ledger.filter(c => c.episode_id === episodeId);
 

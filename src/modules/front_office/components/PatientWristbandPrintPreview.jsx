@@ -24,7 +24,7 @@ export default function PatientWristbandPrintPreview({ patient, onClose }) {
             <div>
               <p className="text-[10px] font-black uppercase text-slate-500">RS NURSEFLOW ENTERPRISE JAKARTA</p>
               <h4 className="text-base font-black text-black tracking-tight">{patient.patient_name || patient.full_name}</h4>
-              <p className="text-xs font-bold text-slate-700">NIK: {patient.nik || '3171055508890001'}</p>
+              <p className="text-xs font-bold text-slate-700">NIK: {patient.nik || '-'}</p>
             </div>
             <div className="text-right">
               <span className="text-[9px] font-black px-1.5 py-0.5 bg-slate-200 rounded text-black block">RAWAT INAP/JALAN</span>

@@ -3,77 +3,16 @@ import { emarEngineService, EMAR_STATUS } from '../../../../server/services/eMar
 import toast from 'react-hot-toast';
 
 export default function EmarAdministrationStudio({ activePatient }) {
-  const patient = activePatient || {
-    id: 'P-1001',
-    name: 'Ny. Siti Nurhaliza, S.Pd',
-    mrn: 'MRN-2026-001001',
-    ward: 'Bangsal Melati',
-    bed: 'Bed 04',
-    allergies: ['Amoxicillin / Penicillin Group']
-  };
+  if (!activePatient) {
+    return (
+      <div className="p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        Pilih pasien rawat inap terlebih dahulu untuk membuka lembar kerja administrasi obat eMAR.
+      </div>
+    );
+  }
 
-  const [medications, setMedications] = useState([
-    {
-      id: 'MED-01',
-      code: 'DRUG-CEFTRIAXONE',
-      name: 'Ceftriaxone 1g IV',
-      dose: '1 gram',
-      route: 'IV',
-      frequency: 'Tiap 12 Jam',
-      scheduleTime: '06:00',
-      isHighAlert: false,
-      status: 'SCHEDULED', // 'SCHEDULED' | 'GIVEN' | 'HELD' | 'REFUSED'
-      prescribedBy: 'dr. Surya Johnson, Sp.PD',
-      administeredBy: null,
-      witnessNurse: null,
-      administeredAt: null
-    },
-    {
-      id: 'MED-02',
-      code: 'DRUG-INSULIN-RAPID',
-      name: 'Novorapid (Insulin Aspart) 6 IU SC',
-      dose: '6 IU',
-      route: 'SC',
-      frequency: 'Sebelum Makan Pagi',
-      scheduleTime: '06:30',
-      isHighAlert: true, // HIGH-ALERT MEDICATION (Mandatory Dual Sign)
-      status: 'SCHEDULED',
-      prescribedBy: 'dr. Surya Johnson, Sp.PD',
-      administeredBy: null,
-      witnessNurse: null,
-      administeredAt: null
-    },
-    {
-      id: 'MED-03',
-      code: 'DRUG-PARACETAMOL-DRIP',
-      name: 'Paracetamol Infus 1000mg / 100ml',
-      dose: '1000 mg',
-      route: 'IV',
-      frequency: 'Tiap 8 Jam (K/P Demam)',
-      scheduleTime: '12:00',
-      isHighAlert: false,
-      status: 'SCHEDULED',
-      prescribedBy: 'dr. Surya Johnson, Sp.PD',
-      administeredBy: null,
-      witnessNurse: null,
-      administeredAt: null
-    },
-    {
-      id: 'MED-04',
-      code: 'DRUG-KCL-CONCENTRATE',
-      name: 'Kalium Klorida (KCl 7.46%) 25 mEq dalam 500ml NaCl 0.9%',
-      dose: '25 mEq',
-      route: 'IV Drip Lambat',
-      frequency: 'Per 24 Jam via Syringe Pump',
-      scheduleTime: '14:00',
-      isHighAlert: true, // HIGH-ALERT ELECTROLYTE (Mandatory Dual Sign)
-      status: 'SCHEDULED',
-      prescribedBy: 'dr. Surya Johnson, Sp.PD',
-      administeredBy: null,
-      witnessNurse: null,
-      administeredAt: null
-    }
-  ]);
+  const patient = activePatient;
+  const [medications, setMedications] = useState(patient.medications || []);
 
   // Modal State for Administration & High-Alert Check
   const [selectedMed, setSelectedMed] = useState(null);

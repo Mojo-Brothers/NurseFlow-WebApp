@@ -28,25 +28,7 @@ class TaskEngine {
   }
 
   initializeSampleTasks() {
-    const sampleTask = {
-      id: 'TSK-20260810-001',
-      taskType: 'LAB_PROCESSING',
-      title: 'Proses Sampel Darah Lengkap & GDS (STAT)',
-      patientId: 'P-1001',
-      patientName: 'Ny. Siti Nurhaliza',
-      encounterId: 'ENC-2026-0810-001',
-      sourceEntityType: 'Order',
-      sourceEntityId: 'ORD-LAB-20260810-001',
-      assignedDepartmentId: 'LAB-CLINICAL',
-      assignedTo: 'Analis Supriadi',
-      priority: TASK_PRIORITY.STAT,
-      status: TASK_STATUS.IN_PROGRESS,
-      dueAt: '2026-08-10T09:30:00Z',
-      completedAt: null,
-      created_at: '2026-08-10T08:45:00Z'
-    };
-
-    this.tasks.set(sampleTask.id, sampleTask);
+    // Clean state on Day-1 Go-Live
   }
 
   createTask({ taskType, title, patientId, patientName, encounterId, sourceEntityType, sourceEntityId, assignedDepartmentId, assignedTo = null, priority = TASK_PRIORITY.ROUTINE, dueAt = null }) {

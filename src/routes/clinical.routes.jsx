@@ -3,12 +3,10 @@ import { Navigate } from 'react-router-dom';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 const Dashboard = lazy(() => import('../modules/dashboard/pages/DashboardPage'));
-const Patients = lazy(() => import('../modules/patient/pages/PatientPage'));
 const PatientCommandCenterPage = lazy(() => import('../modules/patient/pages/PatientCommandCenterPage'));
 const AppointmentPage = lazy(() => import('../modules/appointment/pages/AppointmentPage'));
 const Encounters = lazy(() => import('../modules/encounter/pages/EncounterPage'));
 const Triage = lazy(() => import('../modules/triage/pages/TriagePage'));
-const ClinicalCoreWorkspace = lazy(() => import('../modules/clinical_core/components/ClinicalCoreWorkspace'));
 const DoctorWorkspacePage = lazy(() => import('../modules/clinical_core/pages/DoctorWorkspacePage'));
 const RegistrationDeskWorkspace = lazy(() => import('../modules/front_office/components/RegistrationDeskWorkspace'));
 const EmergencyWorkspace = lazy(() => import('../modules/emergency/components/EmergencyWorkspace'));
@@ -23,6 +21,9 @@ const BloodBankWorkspacePage = lazy(() => import('../modules/blood_bank/pages/Bl
 const IcuAcuityWorkspacePage = lazy(() => import('../modules/critical_care/pages/IcuAcuityWorkspacePage'));
 const StaffPrivilegingWorkspacePage = lazy(() => import('../modules/staff/pages/StaffPrivilegingWorkspacePage'));
 const NursingWorkspacePage = lazy(() => import('../modules/nursing/pages/NursingWorkspacePage'));
+const RadiologyWorkspacePage = lazy(() => import('../modules/radiology/pages/RadiologyWorkspacePage'));
+const OperatingTheatreWorkspacePage = lazy(() => import('../modules/surgery/pages/OperatingTheatreWorkspacePage'));
+const EnterprisePharmacyWorkspacePage = lazy(() => import('../modules/pharmacy/pages/EnterprisePharmacyWorkspacePage'));
 
 export const clinicalRoutes = (Wrap, AuthRedirector) => [
   {
@@ -46,6 +47,15 @@ export const clinicalRoutes = (Wrap, AuthRedirector) => [
   { path: "/emar", element: <Wrap><NursingWorkspacePage /></Wrap> },
   { path: "/fluid-balance", element: <Wrap><NursingWorkspacePage /></Wrap> },
   { path: "/orders", element: <Wrap><OrdersWorkspace /></Wrap> },
+  { path: "/radiology", element: <Wrap><RadiologyWorkspacePage /></Wrap> },
+  { path: "/pacs", element: <Wrap><RadiologyWorkspacePage /></Wrap> },
+  { path: "/pacs-viewer", element: <Wrap><RadiologyWorkspacePage /></Wrap> },
+  { path: "/operating-theatre", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> },
+  { path: "/ibs", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> },
+  { path: "/surgery-board", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> },
+  { path: "/pharmacy-enterprise", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
+  { path: "/farmasi-fefo", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
+  { path: "/fefo-dispensing", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
   { path: "/blood-bank", element: <Wrap><BloodBankWorkspacePage /></Wrap> },
   { path: "/icu-acuity", element: <Wrap><IcuAcuityWorkspacePage /></Wrap> },
   { path: "/staff-privileges", element: <Wrap><StaffPrivilegingWorkspacePage /></Wrap> },

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
+import { usePatientStore } from '../../patient/patient.store.js';
 import SoapWorkspace from './SoapWorkspace.jsx';
 import CpptWorkspace from './CPPTWorkspace.jsx';
 import AllergyWorkspace from './AllergyWorkspace.jsx';
@@ -16,6 +17,8 @@ export default function EmrWorkspace() {
     cdssAlerts,
     selectedPatientId
   } = useEmrStore();
+  const { selectedPatient, patients } = usePatientStore();
+  const activePatient = selectedPatient || patients.find(p => p.id === selectedPatientId) || patients[0] || null;
 
   const [activeTab, setActiveTab] = useState('SOAP'); // 'SOAP' | 'CPPT' | 'ALLERGY' | 'DIAGNOSIS' | 'OBSERVATION' | 'CARE_PLAN' | 'CDSS' | 'TIMELINE'
 
@@ -36,13 +39,13 @@ export default function EmrWorkspace() {
             <span className="text-slate-400 text-xs font-mono">SATUSEHAT HL7 FHIR R4 & JCI 7th Edition</span>
           </div>
           <h2 className="text-xl font-headline font-black tracking-tight text-white flex items-center gap-2">
-            <span>Ny. Siti Nurhaliza, S.Pd</span>
+            <span>{activePatient?.name || 'Belum Ada Pasien Dipilih'}</span>
             <span className="text-xs font-mono text-teal-400 font-bold bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700">
-              MRN-2026-001001
+              {activePatient?.mrn || '-'}
             </span>
           </h2>
           <p className="text-xs text-slate-400 mt-1">
-            NIK: <span className="font-mono text-slate-200">3171055508890001</span> &bull; DPJP: <span className="text-teal-300 font-bold">dr. Siti Wijaya, Sp.PD-KGEH</span> &bull; Episode: <span className="font-mono text-slate-200">EOC-2026-001</span>
+            NIK: <span className="font-mono text-slate-200">{activePatient?.nik || '-'}</span> &bull; Status: <span className="text-teal-300 font-bold">{activePatient?.status || 'ACTIVE'}</span> &bull; Episode: <span className="font-mono text-slate-200">EOC-2026-001</span>
           </p>
         </div>
 

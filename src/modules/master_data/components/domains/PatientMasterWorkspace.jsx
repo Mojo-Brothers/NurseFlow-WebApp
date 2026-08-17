@@ -489,7 +489,7 @@ export default function PatientMasterWorkspace() {
                   type="text"
                   value={sourceMrn}
                   onChange={(e) => setSourceMrn(e.target.value)}
-                  placeholder="Contoh: MRN-2026-001002"
+                  placeholder="Contoh: MRN-XXXX-XXXXXX"
                   className="w-full px-3.5 py-2 rounded-xl bg-surface-container border border-outline-variant/40 text-xs font-mono text-on-surface"
                 />
               </div>
@@ -500,7 +500,7 @@ export default function PatientMasterWorkspace() {
                   type="text"
                   value={targetMrn}
                   onChange={(e) => setTargetMrn(e.target.value)}
-                  placeholder="Contoh: MRN-2026-001001"
+                  placeholder="Contoh: MRN-XXXX-XXXXXX"
                   className="w-full px-3.5 py-2 rounded-xl bg-surface-container border border-outline-variant/40 text-xs font-mono text-on-surface"
                 />
               </div>

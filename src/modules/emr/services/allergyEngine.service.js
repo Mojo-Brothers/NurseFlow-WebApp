@@ -8,30 +8,7 @@ import { outboxPublisherService } from '../../front_office/services/outboxPublis
 
 const ALLERGY_STORAGE_KEY = 'nurseflow_patient_allergies';
 
-let inMemoryAllergies = [
-  {
-    id: 'ALG-1001',
-    patient_id: 'P-1001',
-    allergy_type: 'DRUG',
-    allergen: 'Amoxicillin / Penicillin Group',
-    reaction: 'Urtikaria menyeluruh, Angioedema, Bronkospasme',
-    severity: 'SEVERE',
-    verification_status: 'CONFIRMED',
-    recorded_by: 'dr. Siti Wijaya, Sp.PD-KGEH',
-    created_at: '2026-08-15T08:00:00Z'
-  },
-  {
-    id: 'ALG-1002',
-    patient_id: 'P-1001',
-    allergy_type: 'FOOD',
-    allergen: 'Seafood (Udang & Kepiting)',
-    reaction: 'Gatal-gatal pada kulit & kemerahan',
-    severity: 'MODERATE',
-    verification_status: 'CONFIRMED',
-    recorded_by: 'Ns. Ratna Sari, S.Kep',
-    created_at: '2026-08-15T08:00:00Z'
-  }
-];
+let inMemoryAllergies = [];
 
 const getStoredAllergies = () => {
   try {

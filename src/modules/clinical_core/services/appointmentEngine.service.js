@@ -26,26 +26,7 @@ const getStoredAppointments = () => {
   } catch (e) {
     console.warn('[AppointmentEngine] Failed to load local appointments:', e);
   }
-  return [
-    {
-      id: 'APT-2026-001',
-      booking_code: 'APT-2026-0817-001',
-      patient_id: 'P-1001',
-      patient_name: 'Ny. Siti Nurhaliza, S.Pd',
-      mrn: 'MRN-2026-001001',
-      doctor_id: 'DOC-1001',
-      doctor_name: 'dr. Siti Wijaya, Sp.PD-KGEH',
-      clinic_id: 'CLI-1001',
-      clinic_name: 'Poliklinik Penyakit Dalam',
-      appointment_date: '2026-08-18',
-      slot_time: '09:00 - 09:20',
-      queue_number: 'A-005',
-      channel: 'MOBILE_JKN',
-      status: 'CONFIRMED',
-      created_at: '2026-08-17T08:00:00Z',
-      is_deleted: false
-    }
-  ];
+  return [];
 };
 
 const saveStoredAppointments = (appointments) => {
