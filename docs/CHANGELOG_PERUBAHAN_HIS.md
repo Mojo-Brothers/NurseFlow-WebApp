@@ -20,7 +20,25 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT MASTER DATA, eMAR (BCMA 5-RIGHT), HOSPITAL METRICS (BOR/ALOS) & CI/CD PIPELINE
+### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT FHIR MAPPERS, EMPI DEDUPLICATION, ABAC ROW-LEVEL SECURITY, LIS & RIS/PACS ENGINE & MULTI-TENANT ISOLATION
+
+**Kategori:** `[MAJOR]` `[FHIR_R4_MAPPERS]` `[EMPI_DEDUPLICATION]` `[ABAC_SECURITY]` `[LIS_PACS_ENGINE]` `[MULTI_TENANT_SAAS]`  
+**Status:** Completed & Verified via Vitest (`npm test` PASS 20 Suites / 55 Tests) & Build (`npm run build` PASS)  
+**Komponen Terdampak:** `server/integrations/fhir/*` (NEW: `patient.mapper.js`, `practitioner.mapper.js`, `observation.mapper.js`, `allergy.mapper.js`), `server/services/empiEngine.service.js` (NEW), `server/services/abacSecurity.service.js` (NEW), `server/services/lisPacsEngine.service.js` (NEW), `server/middlewares/tenantMiddleware.js` (NEW), `tests/fhirMappers.test.js` (NEW), `tests/empiEngine.test.js` (NEW), `tests/abacSecurity.test.js` (NEW), `tests/lisPacsEngine.test.js` (NEW)
+
+#### Detail Peningkatan FHIR, EMPI & ABAC Security:
+1. **🌐 SATUSEHAT FHIR R4 RESOURCE MAPPER LAYER (`server/integrations/fhir/`):**
+   - Generator resource profil standar HL7 FHIR R4: `Patient` (NIK/MRN/BPJS), `Practitioner` (SIP/STR/IHS), `Observation` (LOINC Lab/Vitals), dan `AllergyIntolerance` (SNOMED CT).
+2. **🧬 ENTERPRISE MASTER PATIENT INDEX (EMPI) DEDUPLICATION (`empiEngine.service.js`):**
+   - Algoritma pencocokan hibrida (Deterministik NIK/BPJS + Probabilistik Fuzzy Levenshtein Distance $\ge 85\%$) untuk mendeteksi variasi nama duplikat serta mutasi penggabungan rekam medis (*Patient Merge/Link*).
+3. **🛡️ ABAC & ROW-LEVEL SECURITY POLICY ENGINE (`abacSecurity.service.js`):**
+   - Kontrol otorisasi berbasis atribut kontekstual (Penugasan DPJP utama, perawat ruangan/bangsal terkait, pencegahan akses catatan medis oleh staf kasir, dan mode darurat *Emergency Break-The-Glass* dengan bendera audit).
+4. **🔬 TRUE LIS & RIS/PACS CLINICAL WORKFLOW (`lisPacsEngine.service.js`):**
+   - Siklus barcode spesimen laboratorium, eskalasi notifikasi nilai kritis (*Panic Value Alert*), serta penjadwalan DICOM Study Instance UID untuk penampil radiologi.
+5. **🏢 MULTI-TENANT SAAS ISOLATION (`tenantMiddleware.js`):**
+   - Resolusi header `X-Tenant-ID` dan `X-Branch-ID` untuk isolasi multi-rumah sakit dalam satu platform terpusat.
+
+---
 
 **Kategori:** `[MAJOR]` `[MASTER_DATA]` `[EMAR_BCMA]` `[HOSPITAL_METRICS]` `[CI_CD_WORKFLOW]` `[JCI_PATIENT_SAFETY]`  
 **Status:** Completed & Verified via Vitest (`npm test` PASS 16 Suites / 43 Tests) & Build (`npm run build` PASS)  
