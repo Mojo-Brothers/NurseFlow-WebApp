@@ -20,7 +20,27 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT 5: Universal Order Management, Farmasi E-Resep, Laboratorium (LIS) & Radiologi (PACS/DICOM)
+### 🟢 [17 AGUSTUS 2026] — Implementasi SPRINT 5.5: Enterprise Foundation, Technical Debt Hardening, Database Migrations, Repository Pattern, RBAC & CI/CD Docker
+
+**Kategori:** `[MAJOR]` `[TECHNICAL_DEBT]` `[DATABASE_MIGRATION]` `[REPOSITORY_PATTERN]` `[RBAC_SECURITY]` `[BILLING_ENGINE]` `[UNIT_TESTS]` `[CI_CD_DOCKER]`  
+**Status:** Completed & Verified via Build (`npm run build` PASS)  
+**Komponen Terdampak:** `database/migrations/001_master_patients.sql` (NEW), `database/migrations/002_episodes_and_encounters.sql` (NEW), `database/migrations/003_front_office_and_queues.sql` (NEW), `database/migrations/004_triage_and_emergency.sql` (NEW), `database/migrations/005_emr_soap_cppt_and_cdss.sql` (NEW), `database/migrations/006_universal_orders_pharmacy_lis_pacs.sql` (NEW), `database/migrations/007_billing_revenue_and_claims.sql` (NEW), `database/migrations/008_audit_trail_and_security.sql` (NEW), `src/core/repositories/baseRepository.js` (NEW), `src/core/repositories/patientRepository.js` (NEW), `src/core/repositories/billingRepository.js` (NEW), `src/core/security/rbacGuard.service.js` (NEW), `src/core/security/enterpriseAuth.service.js` (NEW), `src/core/security/PermissionGate.jsx` (NEW), `src/modules/billing/services/billingEngine.service.js` (NEW), `src/shared/sharedQueueFacade.service.js` (NEW), `src/shared/sharedGovernanceFacade.service.js` (NEW), `tests/triageEngine.test.js` (NEW), `tests/allergyEngine.test.js` (NEW), `tests/universalOrderEngine.test.js` (NEW), `.github/workflows/ci.yml` (NEW), `Dockerfile` (NEW), `docker-compose.yml` (NEW), `nginx.conf` (NEW)
+
+#### Detail Peningkatan Sprint 5.5 Enterprise Hardening:
+1. **🗄️ POSTGRESQL PRODUCTION MIGRATIONS (`database/migrations/`):**
+   - 8 berkas migrasi SQL lengkap dari *001 s/d 008* yang mencakup seluruh skema relational database: Pasien, Episode, Encounter, Antrean, BPJS SEP, Triase, SOAP, CPPT, Alergi, Universal Orders, Billing Ledger, Invoice, hingga Trigger Immutability Audit Trail JCI.
+2. **🏛️ REPOSITORY PATTERN LAYER (`src/core/repositories/`):**
+   - Pemisahan bersih antara Application/Service Layer dengan Persistence Storage melalui `BaseRepository`, `patientRepository`, dan `billingRepository`.
+3. **🔐 ENTERPRISE AUTHENTICATION & RBAC SECURITY (`src/core/security/`):**
+   - Matriks perizinan 8 peran tenaga medis (Doctor, Nurse, Pharmacist, Lab, Radiographer, Cashier, Registration, Super Admin) dengan `PermissionGate` dan simulasi JWT session expiration.
+4. **💰 BILLING ENGINE & REVENUE CYCLE MANAGEMENT (`billingEngine.service.js`):**
+   - Agregasi charge ledger ke invoice resmi, kalkulator tarif INA-CBGs & analisa varians klaim, serta multi-payment settlement.
+5. **🧪 TEST AUTOMATION SUITES (`tests/`):**
+   - Unit tests untuk mesin klinis kritis: `triageEngine`, `allergyEngine`, dan `universalOrderEngine`.
+6. **🚀 DEVOPS, CI/CD PIPELINE & CONTAINERIZATION:**
+   - Multi-stage `Dockerfile` dengan Nginx Alpine, konfigurasi `docker-compose.yml` (PostgreSQL 16 & Redis 7), serta pipeline GitHub Actions `.github/workflows/ci.yml`.
+
+---
 
 **Kategori:** `[MAJOR]` `[UNIVERSAL_ORDERS]` `[CPOE]` `[PHARMACY_ERESEP]` `[LIS]` `[PACS_DICOM]` `[LOINC]` `[MEDICATION_REVIEW]` `[BILLING_EVENT_BUS]`  
 **Status:** Completed & Verified via Build (`npm run build` PASS)  
