@@ -20,6 +20,42 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 33: SPRINT 3C POINT-OF-CARE 5-RIGHTS BARCODE VERIFICATION ENGINE — SENSOR EVIDENCE LAYER, GS1-DATAMATRIX PARSER, TIME-WINDOW EVALUATION, AND BEDSIDE DUAL-SIGN SCANNER MODAL
+
+**Tag Rilis:** `poc-5rights-verified`  
+**Kategori:** `[MAJOR]` `[POINT_OF_CARE_VERIFICATION]` `[5_RIGHTS_SAFETY]` `[BARCODE_SENSOR_LAYER]` `[GS1_PARSER]` `[BEDSIDE_EMAR]` `[JCI_IPSG_3]`  
+**Status:** 100% Passed (90/90 Vitest Suites, 421 Tests Passed), Seluruh Skenario Sensor 5-Benar, Penolakan Obat Expired, Proteksi Stale UI, dan Verifikasi Antarmuka Browser E2E Terpenuhi Penuh.
+
+**Pencapaian Lengkap Sprint 3C:**
+1. **Barcode Sensor Abstraction Layer (`barcodeScannerAdapter.service.js`):**
+   - Mengabstraksi seluruh perangkat keras input pemindai (USB HID Scanner, Kamera WebRTC/Wasm, dan 2D Imager).
+   - Parser Standar GS1 Application Identifier (AI):
+     - `(01)` GTIN / Kode Obat Unit Dose
+     - `(17)` Tanggal Kedaluwarsa (*Expiry Date* YYMMDD)
+     - `(10)` Nomor Batch / Lot Farmasi
+     - `(21)` Nomor Seri Unik Produk
+     - `(8008)` Identitas Pasien (MRN / NIK pada Gelang Pasien)
+2. **Point-of-Care 5-Rights Validator Engine (`pointOfCareFiveRightsValidator.service.js`):**
+   - Menegakkan prinsip arsitektur: **Barcode adalah sensor evidence, bukan sumber kebenaran**.
+   - Evaluasi 5-Benar terhadap State Kanonikal:
+     1. **Right Patient**: Scanned MRN cocok dengan MRN resep dan encounter aktif pasien. Gagal $\rightarrow$ `WRONG_PATIENT`.
+     2. **Right Drug & Non-Expired**: Scanned code cocok dengan master obat & tanggal kedaluwarsa divalidasi. Gagal $\rightarrow$ `WRONG_DRUG` atau `EXPIRED_MEDICATION`.
+     3. **Right Dose**: Dosis pemberian diverifikasi terhadap instruksi CPOE. Gagal $\rightarrow$ `WRONG_DOSE`.
+     4. **Right Route**: Rute administrasi (Oral, IV, SC, IM, SL) diverifikasi. Gagal $\rightarrow$ `WRONG_ROUTE`.
+     5. **Right Time Window**: Evaluasi slot waktu diskret ($\pm 60$ menit window: `ON_TIME`, `EARLY`, `LATE`, `MISSED`). Gagal $\rightarrow$ `WRONG_TIME`.
+   - **High-Alert Dual-Signature Mandatory Enforcement**: Memblokir pemberian obat risiko tinggi tanpa tanda tangan perawat kedua (`HIGH_ALERT_DUAL_SIGN_REQUIRED`).
+3. **Bedside 5-Rights Scanner Component (`BedsideFiveRightsScannerModal.jsx`):**
+   - Alur verifikasi interaktif 4-langkah: Step 1 (Scan Pasien) $\rightarrow$ Step 2 (Scan Obat) $\rightarrow$ Step 3 (Evaluasi 5-Benar & Saksi High-Alert) $\rightarrow$ Step 4 (Konfirmasi Sukses).
+   - Tombol administrasi terkunci mati (*disabled*) hingga seluruh 5-Benar lolos (*PASS*).
+4. **Integrasi eMAR Studio (`EmarAdministrationStudio.jsx`):**
+   - Tombol *"Scan 5-Benar"* pada setiap baris jadwal obat pasien rawat inap.
+   - Sinkronisasi otomatis ke buku besar event `medication_events` dan pembaharuan proyeksi `emar_projections`.
+5. **Automated Adversarial Suite (`tests/pointOfCareFiveRightsVerification.test.js`):**
+   - 8 skenario pengujian sensor ekstrem (Happy path, Wrong patient, Wrong drug, Wrong dose/route, Time window early/late, Expired drug GS1, High-Alert dual-sign, Malformed/empty barcode).
+   - Total Suite: **90 Test Files Passed (421 Tests)**.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — HARDENING GATE: MEDICATION EVENT STORE HARDENING GATE (PRE SPRINT 3C) — APPEND-ONLY PERSISTENCE ENFORCEMENT, IDEMPOTENT REPLAY & ADVERSARIAL SUITE
 
 **Kategori:** `[MAJOR]` `[HARDENING_GATE]` `[IMMUTABLE_EVENT_STORE]` `[PROJECTION_ISOLATION]` `[JCI_MEDICOLEGAL]`  
