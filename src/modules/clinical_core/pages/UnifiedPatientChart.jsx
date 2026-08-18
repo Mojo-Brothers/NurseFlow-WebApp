@@ -17,6 +17,7 @@ import usePatientClipboardShortcuts from '../../../hooks/usePatientClipboardShor
 import toast from 'react-hot-toast';
 import { saveSoapNote, getPatientRecords, saveClinicalRecord } from '../../emr/services/emr.service.js';
 import { CARE_STATES } from '../../../core/services/careStateEngine.service.js';
+import { clinicalActionabilityEngine } from '../../../core/services/clinicalActionabilityEngine.service.js';
 
 // ─── 34 MEDICAL FORMS IMPORTS (REUSE WITHOUT REWRITE) ──────────
 
@@ -273,6 +274,16 @@ export default function UnifiedPatientChart() {
     return ['ALL', ...Array.from(mods)];
   }, [soapRecords]);
 
+  // Real-Time Clinical Actionability State
+  const actionability = useMemo(() => {
+    return clinicalActionabilityEngine.evaluateActionability({
+      patient: activePatient,
+      encounter: activeEncounter,
+      role: currentUser?.role || 'DOCTOR',
+      clinicalRecords: soapRecords
+    });
+  }, [activePatient, activeEncounter, currentUser?.role, soapRecords]);
+
   // ─── DYNAMIC FORM WORKSPACE RENDERER (ALL 34 FORMS) ───────────
   const renderModuleWorkspace = () => {
     if (mainViewTab === 'TIMELINE') {
@@ -295,9 +306,16 @@ export default function UnifiedPatientChart() {
                 <span className="material-symbols-outlined text-[26px]">folder_shared</span>
               </div>
               <div>
-                <h2 className="text-xl font-black text-[var(--on-surface)] tracking-tight">
-                  Patient Chart & Rekam Medis Longitudinal
-                </h2>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-xl font-black text-[var(--on-surface)] tracking-tight">
+                    Patient Chart & Rekam Medis Longitudinal
+                  </h2>
+                  {actionability?.isClosed && (
+                    <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-white font-mono text-[9px] font-black uppercase">
+                      HISTORICAL ENCOUNTER (READONLY)
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-[var(--on-surface-variant)]">
                   Kamar/Unit: <strong className="text-[var(--primary)]">{activeEncounter?.room || 'Rawat Aktif'} • {activeEncounter?.bed || 'Bed Utama'}</strong> | Mode Encounter: <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 font-bold text-[10px]">{encounterType}</span>
                 </p>
@@ -312,6 +330,90 @@ export default function UnifiedPatientChart() {
                 <span className="material-symbols-outlined text-[16px] text-blue-600">timeline</span>
                 <span>Alur Timeline Pasien</span>
               </button>
+            </div>
+          </div>
+
+          {/* ─── CLINICAL ACTIONABILITY COCKPIT (WHAT TO DO NOW) ─── */}
+          <div className="p-5 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white border border-slate-700/50 shadow-lg space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-700/60 pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-amber-400 text-[24px]">crisis_alert</span>
+                <div>
+                  <h3 className="text-sm font-black tracking-wide uppercase">Clinical Actionability & Decision Cockpit</h3>
+                  <p className="text-[11px] text-slate-300">Rangkuman kondisi aktif & tindakan yang harus dilakukan oleh tim medis saat ini</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-black uppercase tracking-wider">
+                  {actionability?.totalPendingCount || 0} TINDAKAN PENDING
+                </span>
+                <span className="px-2.5 py-1 rounded-lg bg-blue-500/20 border border-blue-400/40 text-blue-300 text-[10px] font-mono font-bold">
+                  EVENT TERAKHIR: {new Date(actionability?.lastClinicalEvent?.timestamp || Date.now()).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              {/* Active Problems */}
+              <div className="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/60 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px] text-indigo-400">format_list_bulleted</span>
+                  Active Problems (Masalah Aktif)
+                </span>
+                <ul className="space-y-1 text-[11px] text-slate-200">
+                  {actionability?.activeProblems?.map((prob, pIdx) => (
+                    <li key={pIdx} className="flex items-center gap-2 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                      <span>{prob}</span>
+                    </li>
+                  )) || <li>Observasi Klinis Aktif</li>}
+                </ul>
+              </div>
+
+              {/* Pending Clinical Actions (What to do NOW) */}
+              <div className="p-3.5 rounded-2xl bg-amber-950/40 border border-amber-500/40 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px]">pending_actions</span>
+                  Pending Actions (Wajib Ditindaklanjuti)
+                </span>
+                {actionability?.pendingActions?.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {actionability.pendingActions.map((act) => (
+                      <div key={act.id} className="flex items-center justify-between gap-2 p-2 rounded-xl bg-amber-900/40 border border-amber-500/30">
+                        <span className="text-[11px] font-bold text-amber-200">{act.title}</span>
+                        <button
+                          onClick={() => setSelectedModule(act.targetModule)}
+                          className="px-2 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[9px] uppercase cursor-pointer"
+                        >
+                          Tindak ⚡
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-emerald-300 flex items-center gap-1.5 py-2 font-bold">
+                    <CheckCircle2 size={14} className="text-emerald-400" />
+                    Semua pengkajian & tindakan utama terkini terpenuhi.
+                  </div>
+                )}
+              </div>
+
+              {/* Safety Flags & Last Event */}
+              <div className="p-3.5 rounded-2xl bg-slate-800/80 border border-slate-700/60 space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-[14px] text-rose-400">security</span>
+                  Safety Flags & Jejak Terakhir
+                </span>
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="p-1.5 rounded-lg bg-rose-950/60 border border-rose-500/30 text-rose-200 font-bold flex items-center gap-1.5">
+                    <AlertTriangle size={12} className="text-rose-400" />
+                    {actionability?.allergies?.[0] || 'Tidak ada alergi'}
+                  </div>
+                  <p className="text-[10px] text-slate-300 mt-1">
+                    Event Terakhir: <strong>{actionability?.lastClinicalEvent?.title}</strong> oleh <em>{actionability?.lastClinicalEvent?.doctor}</em>
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
