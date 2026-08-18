@@ -1,4 +1,15 @@
 /**
+ * ============================================================================
+ * ARCHITECTURE FREEZE — DOMAIN CONTRACT BASELINE v1.0
+ * 
+ * WARNING:
+ * This contract is the authoritative architectural foundation of NurseFlow.
+ * DO NOT MODIFY WITHOUT FORMAL ARCHITECTURAL REVIEW.
+ * 
+ * Version: 1.0 (Baseline Commit: 06c6b44)
+ * Standard: JCI Dynamic Role-Based Clinical Routing
+ * ============================================================================
+ * 
  * NurseFlow Enterprise HIS — Dynamic Care Workspace Resolver
  * Resolves target route, title, clinical actions, and permissions based on:
  * (careState, userRole, permissions) — Gate 0G & Non-Negotiable Rule 5.

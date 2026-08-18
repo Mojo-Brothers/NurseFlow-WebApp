@@ -1,8 +1,17 @@
 /**
+ * ============================================================================
+ * ARCHITECTURE FREEZE — DOMAIN CONTRACT BASELINE v1.0
+ * 
+ * WARNING:
+ * This contract is the authoritative architectural foundation of NurseFlow.
+ * DO NOT MODIFY WITHOUT FORMAL ARCHITECTURAL REVIEW.
+ * 
+ * Version: 1.0 (Baseline Commit: 06c6b44)
+ * Standard: JCI IPSG 1 / Permenkes 24/2022 / ISO 27799 WORM Event Sourcing
+ * ============================================================================
+ * 
  * NurseFlow Enterprise HIS — Canonical Patient Care State Engine
  * Single Source of Truth for Clinical Care Journey, Location, and State-Driven Routing.
- * Implements: Gate 0A (Transition Matrix), Gate 0B (Event Taxonomy), Gate 0C (Location Hierarchy),
- * Gate 0D (Event Sourcing), and JCI / Permenkes 24/2022 Audit Compliance.
  */
 
 import { persistenceAdapter } from './persistenceAdapter.service.js';

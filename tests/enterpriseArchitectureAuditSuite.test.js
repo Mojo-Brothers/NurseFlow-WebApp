@@ -169,4 +169,82 @@ describe('Sprint 2.5 Architecture Audit & Stress Verification Suite', () => {
     expect(results[0].name).toBe('Pasien Uji Performa 789');
     expect(durationMs).toBeLessThan(100); // Target SLA < 100ms for 1,000 records
   });
+
+  // Audit 8: Deterministic Event Replay Across System Versions
+  it('5. Audit 8: should deterministically replay historical event stream across system versions and preserve identical state, bed, and workspace resolution', async () => {
+    const enc = {
+      id: 'ENC-VERSION-REPLAY',
+      encounterNumber: 'REG-2026-VREPLAY',
+      patientId: 'PAT-VREPLAY',
+      patientName: 'Bambang Soediro',
+      mrn: 'MRN-2026-VREPLAY',
+      primaryState: CARE_STATES.REGISTERED,
+      status: 'REGISTERED'
+    };
+    await persistenceAdapter.save('encounters', enc.id, enc);
+
+    // Sequence 1: REGISTERED -> TRIAGE_PENDING
+    await careStateEngine.transition({
+      encounterId: 'ENC-VERSION-REPLAY',
+      targetState: CARE_STATES.TRIAGE_PENDING,
+      eventType: CLINICAL_EVENTS.START_TRIAGE,
+      actorName: 'Ners Maya'
+    });
+
+    // Sequence 2: TRIAGE_PENDING -> IGD_ACTIVE
+    await careStateEngine.transition({
+      encounterId: 'ENC-VERSION-REPLAY',
+      targetState: CARE_STATES.IGD_ACTIVE,
+      eventType: CLINICAL_EVENTS.COMPLETE_TRIAGE,
+      actorName: 'dr. Triase'
+    });
+
+    // Sequence 3: IGD_ACTIVE -> ADMISSION_PENDING
+    await careStateEngine.transition({
+      encounterId: 'ENC-VERSION-REPLAY',
+      targetState: CARE_STATES.ADMISSION_PENDING,
+      eventType: CLINICAL_EVENTS.REQUEST_ADMISSION,
+      actorName: 'dr. Spesialis'
+    });
+
+    // Sequence 4: ADMISSION_PENDING -> INPATIENT_ACTIVE
+    await careStateEngine.transition({
+      encounterId: 'ENC-VERSION-REPLAY',
+      targetState: CARE_STATES.INPATIENT_ACTIVE,
+      eventType: CLINICAL_EVENTS.ALLOCATE_WARD_BED,
+      bedId: 'BED-AZA-204-2',
+      location: {
+        departmentName: 'Instalasi Rawat Inap',
+        wardName: 'Bangsal Azalea',
+        roomNumber: 'Kamar 204',
+        bedCode: '204-B'
+      },
+      actorName: 'Admisi Ranap'
+    });
+
+    // Simulate "Next System Version (2027) Replay": Wipe and rebuild from event stream
+    await persistenceAdapter.seedMemoryData('care_state_projections', []);
+    const replayResult = await careStateMigrationService.rebuildAllProjections();
+    expect(replayResult.success).toBe(true);
+
+    const replayedProjection = await persistenceAdapter.findById('care_state_projections', 'ENC-VERSION-REPLAY');
+    
+    // Exact Deterministic Invariant Checks:
+    expect(replayedProjection.primaryState).toBe(CARE_STATES.INPATIENT_ACTIVE);
+    expect(replayedProjection.location.bedCode).toBe('204-B');
+    expect(replayedProjection.location.wardName).toBe('Bangsal Azalea');
+
+    // Dynamic Workspace Resolver Invariant Check:
+    const resolvedNurseWorkspace = careWorkspaceResolver.resolve({
+      careState: replayedProjection.primaryState,
+      role: 'NURSE'
+    });
+    expect(resolvedNurseWorkspace.path).toBe('/nursing-workspace');
+
+    const resolvedDoctorWorkspace = careWorkspaceResolver.resolve({
+      careState: replayedProjection.primaryState,
+      role: 'DOCTOR'
+    });
+    expect(resolvedDoctorWorkspace.path).toBe('/doctor-workspace');
+  });
 });
