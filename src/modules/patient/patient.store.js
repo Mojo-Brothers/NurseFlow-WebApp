@@ -21,8 +21,12 @@ export const usePatientStore = create((set, get) => ({
   fetchPatients: async () => {
     set({ isLoading: true, error: null });
     try {
-      const patients = await getAllPatients();
-      set({ patients, isLoading: false });
+      const rawPatients = await getAllPatients();
+      // Filter: sembunyikan pasien yang sudah MERGED (rekonsiliasi EMPI) — standar JCI
+      const activePatients = rawPatients.filter(
+        p => p.status !== 'MERGED' && p.status !== 'MERGED_INACTIVE' && !p.mergedIntoId
+      );
+      set({ patients: activePatients, isLoading: false });
     } catch (err) {
       console.error('[PatientStore] fetchPatients error:', err);
       set({ error: err.message, isLoading: false });
@@ -37,11 +41,16 @@ export const usePatientStore = create((set, get) => ({
       if (id) {
         // Mode Update
         await updatePatient(id, patientData, registeredBy);
+        const isMerged = patientData.status === 'MERGED' || patientData.status === 'MERGED_INACTIVE' || patientData.mergedIntoId;
         set(state => ({
-          patients: state.patients.map(p => p.id === id ? { ...p, ...patientData } : p),
+          // Jika status MERGED, langsung hapus dari list aktif
+          patients: isMerged
+            ? state.patients.filter(p => p.id !== id)
+            : state.patients.map(p => p.id === id ? { ...p, ...patientData } : p),
           isLoading: false
         }));
         return { id, ...patientData };
+
       } else {
         // Mode Create
         const newPatient = await registerPatient(patientData, registeredBy);

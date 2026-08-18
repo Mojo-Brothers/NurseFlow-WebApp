@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 
 export default function EmergencyUnknownPatientModal({ isOpen, onClose, onCreated, targetPatientToReconcile = null }) {
   const { addPatient, patients, fetchPatients } = usePatientStore();
+
   const { openEncounter, setLiveContext } = useEncounterStore();
   const { setOperationalMode } = useTriageStore();
 
@@ -89,7 +90,12 @@ export default function EmergencyUnknownPatientModal({ isOpen, onClose, onCreate
         'Petugas HIM & Admisi IGD'
       );
 
-      await fetchPatients();
+      // Hapus Mr. X langsung dari state lokal (optimistic update) — tidak perlu tunggu re-fetch
+      const { patients: currentPatients } = usePatientStore.getState();
+      usePatientStore.setState({
+        patients: currentPatients.filter(p => p.id !== targetPatientToReconcile.id)
+      });
+
       setLiveContext(selectedMasterPatientId, null);
 
       toast.success(`✅ REKONSILIASI SUKSES: Data pasien anonim ${targetPatientToReconcile.name} telah digabungkan ke ${result.primary.name} (${result.primary.mrn}) tanpa menghapus riwayat encounter darurat!`, {
@@ -97,6 +103,9 @@ export default function EmergencyUnknownPatientModal({ isOpen, onClose, onCreate
       });
 
       onClose();
+
+      // Re-fetch di background untuk sinkronisasi penuh
+      fetchPatients();
     } catch (err) {
       toast.error(`Rekonsiliasi gagal: ${err.message}`);
     } finally {
