@@ -22,8 +22,9 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 30: ENTERPRISE PATIENT JOURNEY & STATE-DRIVEN WORKSPACE REFACTORING — CANONICAL CARE STATE ENGINE, EVENT SOURCING, DYNAMIC ROLE-BASED WORKSPACE RESOLVER & 2-TAB GLOBAL SEARCH
 
+**Tag Rilis:** `architecture-baseline-v1.0`  
 **Kategori:** `[MAJOR]` `[PATIENT_JOURNEY]` `[CARE_STATE_ENGINE]` `[EVENT_SOURCING]` `[DYNAMIC_WORKSPACE_RESOLVER]` `[JCI_STANDARDS]`  
-**Status:** 100% Passed (85/85 Vitest Suites, 393 Tests Passed), Seluruh 7 Gerbang Arsitektur (Gate 0A–0G) dan 5 Gerbang Produksi (Gate P1–P5) Terpenuhi Penuh.
+**Status:** 100% Passed (86/86 Vitest Suites, 398 Tests Passed), Seluruh 7 Gerbang Arsitektur (Gate 0A–0G), 5 Gerbang Produksi (Gate P1–P5), dan Uji Replay Deterministik Lintas Versi Terpenuhi Penuh.
 
 **Pencapaian Lengkap Sprint 30:**
 1. **Core Care State Engine (`src/core/services/careStateEngine.service.js`):**
