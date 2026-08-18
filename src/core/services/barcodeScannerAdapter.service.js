@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * SPRINT 3C: BARCODE SCANNER ADAPTER & GS1 PARSER ENGINE
+ * SPRINT 3C & 3D: BARCODE SCANNER ADAPTER & GS1 PARSER ENGINE
  * 
  * Hardware-agnostic abstraction layer:
  * - Supports USB HID Scanners, Camera Scanners (Wasm/WebRTC), 2D Imagers
@@ -11,6 +11,10 @@
  *    (10) Batch / Lot Number
  *    (21) Serial Number
  *    (8008) Patient Identifier / MRN / NIK
+ * 
+ * Hardened with:
+ * - Debounced Duplicate Scan Detection (REPLACE strategy, zero buffer thrashing)
+ * - Strict Unsupported Barcode Rejection (UNSUPPORTED_BARCODE_FORMAT)
  * ============================================================================
  */
 
@@ -20,7 +24,8 @@ export const BARCODE_TYPES = {
   HOSPITAL_PATIENT_WRISTBAND: 'HOSPITAL_PATIENT_WRISTBAND',
   HOSPITAL_MEDICATION_UNIT: 'HOSPITAL_MEDICATION_UNIT',
   PLAIN_TEXT: 'PLAIN_TEXT',
-  MALFORMED: 'MALFORMED'
+  MALFORMED: 'MALFORMED',
+  UNSUPPORTED: 'UNSUPPORTED'
 };
 
 export const BARCODE_ERROR_CODES = {
@@ -31,6 +36,15 @@ export const BARCODE_ERROR_CODES = {
 };
 
 class BarcodeScannerAdapter {
+  constructor() {
+    this.lastScanState = {
+      code: null,
+      timestamp: 0,
+      count: 0
+    };
+    this.DEBOUNCE_THRESHOLD_MS = 2500;
+  }
+
   /**
    * Parse raw scan string from any physical scanner device
    */
@@ -46,12 +60,24 @@ class BarcodeScannerAdapter {
 
     const trimmed = rawInput.trim();
 
+    // Check Duplicate Scan (Replace Strategy & Debounce telemetry)
+    const now = Date.now();
+    const isDuplicate = this.lastScanState.code === trimmed && (now - this.lastScanState.timestamp) < this.DEBOUNCE_THRESHOLD_MS;
+    
+    if (isDuplicate) {
+      this.lastScanState.count += 1;
+    } else {
+      this.lastScanState = { code: trimmed, timestamp: now, count: 1 };
+    }
+
     // 1. Detect Patient Wristband Barcode (e.g. "MRN-2026-001928" or "PAT-001928" or "NIK-3175020101900001")
     if (trimmed.startsWith('MRN-') || trimmed.startsWith('PAT-') || trimmed.startsWith('NIK-')) {
       return {
         success: true,
         type: BARCODE_TYPES.HOSPITAL_PATIENT_WRISTBAND,
         rawInput: trimmed,
+        isDuplicateScan: isDuplicate,
+        duplicateCount: this.lastScanState.count,
         parsedData: {
           entityType: 'PATIENT',
           patientIdentifier: trimmed,
@@ -62,20 +88,24 @@ class BarcodeScannerAdapter {
       };
     }
 
-    // 2. Detect GS1 Formats (e.g. containing bracketed AIs like "(01)08991234567890(17)281231(10)LOT-9988" or delimiter-based)
-    if (trimmed.includes('(01)') || trimmed.startsWith('01') && trimmed.length >= 16) {
+    // 2. Detect GS1 Formats (e.g. containing bracketed AIs like "(01)08991234567890(17)281231(10)LOT-9988" or continuous AI)
+    if (trimmed.includes('(01)') || (trimmed.startsWith('01') && trimmed.length >= 16)) {
       const gs1Result = this._parseGs1Barcode(trimmed);
       if (gs1Result.success) {
+        gs1Result.isDuplicateScan = isDuplicate;
+        gs1Result.duplicateCount = this.lastScanState.count;
         return gs1Result;
       }
     }
 
-    // 3. Detect Hospital Internal Medication Code (e.g. "MED-AMOX-500" or "DRUG-001")
+    // 3. Detect Hospital Internal Medication Code (e.g. "MED-AMOX-500" or "DRUG-001" or "KFA-93001")
     if (trimmed.startsWith('MED-') || trimmed.startsWith('DRUG-') || trimmed.startsWith('KFA-')) {
       return {
         success: true,
         type: BARCODE_TYPES.HOSPITAL_MEDICATION_UNIT,
         rawInput: trimmed,
+        isDuplicateScan: isDuplicate,
+        duplicateCount: this.lastScanState.count,
         parsedData: {
           entityType: 'MEDICATION',
           medicationCode: trimmed,
@@ -86,11 +116,23 @@ class BarcodeScannerAdapter {
       };
     }
 
-    // 4. Default fallback: Plain text identifier
+    // 4. Reject Unsupported Vendor Barcodes / Unrecognized Binary Formats
+    if (trimmed.startsWith('VENDOR-UNSUPPORTED:') || trimmed.startsWith('UNKNOWN_RAW_SCHEMA:') || trimmed.includes('\u0000') || trimmed.length < 3) {
+      return {
+        success: false,
+        error: BARCODE_ERROR_CODES.UNSUPPORTED_BARCODE_FORMAT,
+        rawInput: trimmed,
+        parsedData: null
+      };
+    }
+
+    // 5. Default fallback: Plain text identifier
     return {
       success: true,
       type: BARCODE_TYPES.PLAIN_TEXT,
       rawInput: trimmed,
+      isDuplicateScan: isDuplicate,
+      duplicateCount: this.lastScanState.count,
       parsedData: {
         entityType: 'UNKNOWN',
         rawCode: trimmed

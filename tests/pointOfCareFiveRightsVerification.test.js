@@ -428,4 +428,95 @@ describe('Sprint 3C: Point-of-Care 5-Rights Barcode Verification Engine Suite', 
     expect(verif.rights.rightPatient.code).toBe(SENSOR_ERROR_CODES.MALFORMED_BARCODE);
     expect(verif.rights.rightDrug.code).toBe(SENSOR_ERROR_CODES.MALFORMED_BARCODE);
   });
+
+  // I. Consecutive Duplicate Scan Handling (REPLACE strategy with Debounce count)
+  it('I. should cleanly handle duplicate consecutive scans without buffer thrashing (REPLACE strategy)', () => {
+    // First scan
+    const scan1 = barcodeScannerAdapter.parseRawScan('MRN-2026-POC01');
+    expect(scan1.success).toBe(true);
+    expect(scan1.parsedData.mrn).toBe('MRN-2026-POC01');
+    expect(scan1.isDuplicateScan).toBe(false);
+
+    // Second scan (rapid consecutive)
+    const scan2 = barcodeScannerAdapter.parseRawScan('MRN-2026-POC01');
+    expect(scan2.success).toBe(true);
+    expect(scan2.isDuplicateScan).toBe(true);
+    expect(scan2.duplicateCount).toBe(2);
+
+    // Third scan with a different patient barcode replaces state cleanly
+    const scan3 = barcodeScannerAdapter.parseRawScan('MRN-2026-NEW-PATIENT');
+    expect(scan3.success).toBe(true);
+    expect(scan3.parsedData.mrn).toBe('MRN-2026-NEW-PATIENT');
+    expect(scan3.isDuplicateScan).toBe(false);
+  });
+
+  // J. Unsupported Vendor Barcode Format Rejection
+  it('J. should reject unsupported barcode schemas with UNSUPPORTED_BARCODE_FORMAT', () => {
+    const unsuppScan = barcodeScannerAdapter.parseRawScan('VENDOR-UNSUPPORTED:HEX0928374928');
+    expect(unsuppScan.success).toBe(false);
+    expect(unsuppScan.error).toBe('UNSUPPORTED_BARCODE_FORMAT');
+  });
+
+  // K. Multi-User Race Condition: Nurse A scans while Nurse B administers concurrently
+  it('K. should block administration if another nurse administered the slot concurrently (Multi-User OCC)', async () => {
+    const enc = {
+      id: 'ENC-CONCURRENT-RACE',
+      patientId: 'PAT-RACE-01',
+      patientName: 'Ny. Concurrent',
+      mrn: 'MRN-2026-RACE',
+      primaryState: CARE_STATES.INPATIENT_ACTIVE
+    };
+    await persistenceAdapter.save('encounters', enc.id, enc);
+
+    const rxRes = await medicationLifecycleEngine.prescribeMedication({
+      encounterId: 'ENC-CONCURRENT-RACE',
+      patientId: 'PAT-RACE-01',
+      patientName: 'Ny. Concurrent',
+      mrn: 'MRN-2026-RACE',
+      prescriberId: 'DOC-001',
+      prescriberName: 'dr. Budi',
+      medicationCode: 'MED-PARACETAMOL-500',
+      medicationName: 'Paracetamol 500 mg',
+      dose: 500,
+      doseUnit: 'mg',
+      route: 'Oral',
+      frequency: 'QD'
+    });
+
+    const slot = rxRes.order.scheduleSlots[0];
+
+    // Nurse A validates 5-Rights (PASS)
+    const verifA = await pointOfCareFiveRightsValidator.validateFiveRights({
+      rawPatientBarcode: 'MRN-2026-RACE',
+      rawMedicationBarcode: 'MED-PARACETAMOL-500',
+      orderId: rxRes.order.id,
+      slotId: slot.slotId,
+      currentTimestamp: slot.targetTimestamp
+    });
+    expect(verifA.status).toBe(FIVE_RIGHTS_STATUS.PASS);
+
+    // Meanwhile, Nurse B administers on Terminal 2
+    await pointOfCareFiveRightsValidator.executeBedsideAdministration({
+      rawPatientBarcode: 'MRN-2026-RACE',
+      rawMedicationBarcode: 'MED-PARACETAMOL-500',
+      orderId: rxRes.order.id,
+      slotId: slot.slotId,
+      nurseId: 'NURSE-B',
+      nurseName: 'Ners Terminal B',
+      currentTimestamp: slot.targetTimestamp
+    });
+
+    // Now Nurse A on Terminal 1 clicks Administer -> MUST BE HARD STOPPED!
+    await expect(
+      pointOfCareFiveRightsValidator.executeBedsideAdministration({
+        rawPatientBarcode: 'MRN-2026-RACE',
+        rawMedicationBarcode: 'MED-PARACETAMOL-500',
+        orderId: rxRes.order.id,
+        slotId: slot.slotId,
+        nurseId: 'NURSE-A',
+        nurseName: 'Ners Terminal A',
+        currentTimestamp: slot.targetTimestamp
+      })
+    ).rejects.toThrow(/SLOT_ALREADY_ADMINISTERED/);
+  });
 });

@@ -135,7 +135,7 @@ class PointOfCareFiveRightsValidator {
     if (!parsedPatient.success) {
       rights.rightPatient = {
         status: FIVE_RIGHTS_STATUS.FAIL,
-        code: SENSOR_ERROR_CODES.MALFORMED_BARCODE,
+        code: parsedPatient.error || SENSOR_ERROR_CODES.MALFORMED_BARCODE,
         details: 'Patient wristband barcode could not be read or parsed'
       };
       failedRights.push('RIGHT_PATIENT');
@@ -158,12 +158,12 @@ class PointOfCareFiveRightsValidator {
     }
 
     // ----------------------------------------------------
-    // RIGHT 2: DRUG & EXPIRY VERIFICATION
+    // RIGHT 2: DRUG, LOT/BATCH & EXPIRY VERIFICATION
     // ----------------------------------------------------
     if (!parsedMedication.success) {
       rights.rightDrug = {
         status: FIVE_RIGHTS_STATUS.FAIL,
-        code: SENSOR_ERROR_CODES.MALFORMED_BARCODE,
+        code: parsedMedication.error || SENSOR_ERROR_CODES.MALFORMED_BARCODE,
         details: 'Medication barcode could not be read or parsed'
       };
       failedRights.push('RIGHT_DRUG');
@@ -174,11 +174,23 @@ class PointOfCareFiveRightsValidator {
       const barcodeExpiry = parsedMedication.parsedData.expiryDate;
       const isExpired = barcodeExpiry && new Date(barcodeExpiry).getTime() < new Date(currentTimestamp).getTime();
 
+      // Check Lot/Batch match if dispensed batch is recorded
+      const dispensedBatch = order.dispenseInfo?.batchNumber;
+      const scannedBatch = parsedMedication.parsedData.batchNumber;
+      const isLotMismatch = dispensedBatch && scannedBatch && dispensedBatch !== scannedBatch;
+
       if (isExpired) {
         rights.rightDrug = {
           status: FIVE_RIGHTS_STATUS.FAIL,
           code: SENSOR_ERROR_CODES.EXPIRED_MEDICATION,
           details: `Scanned drug is EXPIRED (Expiry: ${barcodeExpiry}). Hard Stop!`
+        };
+        failedRights.push('RIGHT_DRUG');
+      } else if (isLotMismatch) {
+        rights.rightDrug = {
+          status: FIVE_RIGHTS_STATUS.FAIL,
+          code: SENSOR_ERROR_CODES.LOT_MISMATCH,
+          details: `Batch/Lot mismatch! Scanned lot "${scannedBatch}" does not match pharmacy dispensed lot "${dispensedBatch}". Hard Stop!`
         };
         failedRights.push('RIGHT_DRUG');
       } else if (scannedDrugCode === order.medicationCode) {
