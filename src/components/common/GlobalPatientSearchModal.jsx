@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 // Master List Ruangan & Unit Pelayanan Terstruktur
 const ROOM_COLUMN_OPTIONS = [
-  { id: 'ALL', label: '🏢 Semua Ruangan & Unit Pelayanan', group: 'SEMUA', type: 'ALL' },
+  { id: 'ALL', label: '🏢 Semua Ruangan & Unit Pelayanan', group: 'SEMUA RUANGAN', type: 'ALL' },
   
   // Rawat Inap (Ranap)
   { id: 'RANAP_ALL', label: '🛏️ Semua Bangsal Rawat Inap', group: 'RAWAT INAP (RANAP)', type: 'INPATIENT', keyword: '' },
@@ -55,14 +55,12 @@ export default function GlobalPatientSearchModal({
   const [filterNoRM, setFilterNoRM] = useState('');
   const [filterNoReg, setFilterNoReg] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState(initialRoomId);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [filterDPJP, setFilterDPJP] = useState('');
   const [filterPenjamin, setFilterPenjamin] = useState('ALL'); // 'ALL' | 'BPJS' | 'UMUM' | 'ASURANSI'
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'TRIAGE' | 'DISCHARGED'
-  
-  // Date Range Filter
-  const [dateRangePreset, setDateRangePreset] = useState('ALL'); // 'ALL' | 'TODAY' | 'LAST_7' | 'THIS_MONTH' | 'CUSTOM'
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [dateRangePreset, setDateRangePreset] = useState('ALL'); // 'ALL' | 'TODAY' | 'LAST_7' | 'THIS_MONTH'
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const searchInputRef = useRef(null);
@@ -105,12 +103,12 @@ export default function GlobalPatientSearchModal({
     setFilterNoRM('');
     setFilterNoReg('');
     setSelectedRoomId('ALL');
+    setStartDate('');
+    setEndDate('');
     setFilterDPJP('');
     setFilterPenjamin('ALL');
     setFilterStatus('ALL');
     setDateRangePreset('ALL');
-    setStartDate('');
-    setEndDate('');
     setSelectedIndex(0);
   };
 
@@ -359,7 +357,7 @@ export default function GlobalPatientSearchModal({
         onKeyDown={handleKeyDown}
       >
         {/* ─── 1. Top Header Bar ─── */}
-        <div className="px-6 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-950/70">
+        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/90 dark:bg-slate-950/80">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#015C80] text-white flex items-center justify-center font-bold shadow-md shadow-[#015C80]/20">
               <span className="material-symbols-outlined text-[24px]">manage_search</span>
@@ -369,13 +367,13 @@ export default function GlobalPatientSearchModal({
                 <h2 className="text-base font-black text-slate-900 dark:text-white tracking-tight">
                   Pusat Pencarian Pasien & Sensus Pelayanan Real-Time
                 </h2>
-                <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] font-extrabold border border-emerald-500/30 flex items-center gap-1">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-mono text-[10px] font-extrabold border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   LIVE DATABASE
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 font-medium">
-                Pencarian multi-kolom terpadu berbasis Nama/NIK, No. RM (Medrec), No. Registrasi, Ruangan, Tanggal, & DPJP
+                Pencarian multi-kolom terpadu berbasis Nama/NIK, No. RM, No. Registrasi, Ruangan, Tanggal, & DPJP
               </p>
             </div>
           </div>
@@ -388,13 +386,13 @@ export default function GlobalPatientSearchModal({
                 fetchActiveEncounters();
                 toast.success('Data sensus pasien diperbarui!');
               }}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer flex items-center gap-1 font-bold"
+              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer flex items-center gap-1.5 font-bold"
               title="Sinkronisasi Ulang Data Realtime"
             >
               <span className={`material-symbols-outlined text-[18px] ${isPatientsLoading || isEncountersLoading ? 'animate-spin' : ''}`}>
                 sync
               </span>
-              <span className="hidden sm:inline text-xs">Sinkron</span>
+              <span>Sinkron</span>
             </button>
 
             <button
@@ -407,16 +405,16 @@ export default function GlobalPatientSearchModal({
           </div>
         </div>
 
-        {/* ─── 2. Multi-Column Filter Panel (Form Grid Lengkap) ─── */}
-        <div className="p-4 bg-slate-50/50 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 space-y-3 shrink-0">
+        {/* ─── 2. Multi-Column Filter Panel (Form Grid 4 x 2 Sejajar & Rapi) ─── */}
+        <div className="p-5 bg-slate-50/60 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 space-y-4 shrink-0">
           
-          {/* Row 1: 4 Primary Filter Columns */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Row 1: 4 Kolom Identitas & Ruangan */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
             {/* Kolom 1: Nama Pasien / NIK */}
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px] text-blue-500">person</span>
-                Nama Pasien / NIK
+            <div className="flex flex-col">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-blue-500">person</span>
+                <span>Nama Pasien / NIK</span>
               </label>
               <input
                 ref={searchInputRef}
@@ -427,15 +425,15 @@ export default function GlobalPatientSearchModal({
                   setSelectedIndex(0);
                 }}
                 placeholder="Ketik Nama atau NIK 16-digit..."
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
               />
             </div>
 
-            {/* Kolom 2: No. Rekam Medis (Medrec) */}
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px] text-blue-500">fingerprint</span>
-                No. Rekam Medis (Medrec)
+            {/* Kolom 2: No. Rekam Medis (No. RM) */}
+            <div className="flex flex-col">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-blue-500">fingerprint</span>
+                <span>No. Rekam Medis (Medrec)</span>
               </label>
               <input
                 type="text"
@@ -445,15 +443,15 @@ export default function GlobalPatientSearchModal({
                   setSelectedIndex(0);
                 }}
                 placeholder="Contoh: MRN-1002 / 2026..."
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
               />
             </div>
 
-            {/* Kolom 3: No. Registrasi (No. Reg / Kunjungan) */}
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px] text-blue-500">tag</span>
-                No. Registrasi (No. Reg)
+            {/* Kolom 3: No. Registrasi */}
+            <div className="flex flex-col">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-blue-500">tag</span>
+                <span>No. Registrasi (No. Reg)</span>
               </label>
               <input
                 type="text"
@@ -463,15 +461,15 @@ export default function GlobalPatientSearchModal({
                   setSelectedIndex(0);
                 }}
                 placeholder="Contoh: REG-8619 / ENC-..."
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
               />
             </div>
 
-            {/* Kolom 4: List Menu Ruangan / Unit / Bangsal / Poliklinik */}
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px] text-blue-500">meeting_room</span>
-                Ruangan / Unit Pelayanan
+            {/* Kolom 4: Ruangan / Unit Pelayanan */}
+            <div className="flex flex-col">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-blue-500">meeting_room</span>
+                <span>Ruangan / Unit Pelayanan</span>
               </label>
               <select
                 value={selectedRoomId}
@@ -479,7 +477,7 @@ export default function GlobalPatientSearchModal({
                   setSelectedRoomId(e.target.value);
                   setSelectedIndex(0);
                 }}
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer transition-colors"
               >
                 {Object.entries(roomGroups).map(([grpName, options]) => (
                   <optgroup key={grpName} label={`── ${grpName} ──`}>
@@ -494,60 +492,47 @@ export default function GlobalPatientSearchModal({
             </div>
           </div>
 
-          {/* Row 2: Date Range, DPJP, Penjamin & Reset (4 Columns) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
-            {/* Kolom 5: Rentang Tanggal Berobat */}
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[13px] text-blue-500">calendar_month</span>
-                  Rentang Tanggal Berobat
-                </label>
-                <div className="flex items-center gap-1">
-                  {['ALL', 'TODAY', 'LAST_7'].map(p => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => handlePresetChange(p)}
-                      className={`px-1.5 py-0.5 rounded text-[9px] font-black transition-all cursor-pointer ${
-                        dateRangePreset === p
-                          ? 'bg-[#015C80] text-white'
-                          : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                      }`}
-                    >
-                      {p === 'ALL' ? 'Semua' : p === 'TODAY' ? 'Hari Ini' : '7 Hari'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={e => {
-                    setStartDate(e.target.value);
-                    setDateRangePreset('CUSTOM');
-                  }}
-                  className="w-1/2 px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden text-[11px]"
-                />
-                <span className="text-slate-400 text-xs">s/d</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={e => {
-                    setEndDate(e.target.value);
-                    setDateRangePreset('CUSTOM');
-                  }}
-                  className="w-1/2 px-2 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden text-[11px]"
-                />
-              </div>
+          {/* Row 2: 4 Kolom Tanggal, DPJP & Penjamin (Sejajar Sempurna) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end pt-1">
+            {/* Kolom 5: Dari Tanggal */}
+            <div className="flex flex-col">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-blue-500">calendar_today</span>
+                <span>Dari Tanggal</span>
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={e => {
+                  setStartDate(e.target.value);
+                  setDateRangePreset('CUSTOM');
+                }}
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
+              />
             </div>
 
-            {/* Kolom 6: Dokter DPJP */}
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px] text-blue-500">stethoscope</span>
-                Dokter Penanggung Jawab (DPJP)
+            {/* Kolom 6: Sampai Tanggal */}
+            <div className="flex flex-col">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-blue-500">event</span>
+                <span>Sampai Tanggal</span>
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={e => {
+                  setEndDate(e.target.value);
+                  setDateRangePreset('CUSTOM');
+                }}
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
+              />
+            </div>
+
+            {/* Kolom 7: Dokter DPJP */}
+            <div className="flex flex-col">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-blue-500">stethoscope</span>
+                <span>Dokter DPJP</span>
               </label>
               <input
                 type="text"
@@ -557,15 +542,15 @@ export default function GlobalPatientSearchModal({
                   setSelectedIndex(0);
                 }}
                 placeholder="Ketik Nama Dokter DPJP..."
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
               />
             </div>
 
-            {/* Kolom 7: Penjamin / Pembayar */}
-            <div>
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1 flex items-center gap-1">
-                <span className="material-symbols-outlined text-[13px] text-blue-500">account_balance_wallet</span>
-                Penjamin / Pembayar
+            {/* Kolom 8: Penjamin / Pembayar */}
+            <div className="flex flex-col">
+              <label className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[15px] text-blue-500">account_balance_wallet</span>
+                <span>Penjamin / Pembayar</span>
               </label>
               <select
                 value={filterPenjamin}
@@ -573,7 +558,7 @@ export default function GlobalPatientSearchModal({
                   setFilterPenjamin(e.target.value);
                   setSelectedIndex(0);
                 }}
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer"
               >
                 <option value="ALL">Semua Penjamin</option>
                 <option value="BPJS">BPJS Kesehatan / Ketenagakerjaan</option>
@@ -581,44 +566,77 @@ export default function GlobalPatientSearchModal({
                 <option value="ASURANSI">Asuransi Swasta / Korporasi</option>
               </select>
             </div>
+          </div>
 
-            {/* Kolom 8: Status Pelayanan & Tombol Reset */}
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 block mb-1 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[13px] text-blue-500">flag</span>
-                  Status Pelayanan
-                </label>
-                <select
-                  value={filterStatus}
-                  onChange={e => {
-                    setFilterStatus(e.target.value);
+          {/* Row 3: Quick Filter Chips Toolbar (Preset Tanggal, Status Layanan & Reset) */}
+          <div className="pt-2 border-t border-slate-200/80 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+            {/* Left: Quick Date Presets */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] font-bold text-slate-400 mr-1">Preset Tanggal:</span>
+              {[
+                { id: 'ALL', label: 'Semua Tanggal' },
+                { id: 'TODAY', label: 'Hari Ini' },
+                { id: 'LAST_7', label: '7 Hari Terakhir' },
+                { id: 'THIS_MONTH', label: 'Bulan Ini' }
+              ].map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => handlePresetChange(p.id)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    dateRangePreset === p.id
+                      ? 'bg-[#015C80] text-white shadow-xs'
+                      : 'bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Center / Right: Quick Status Chips & Reset Button */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold text-slate-400 mr-1">Status:</span>
+              {[
+                { id: 'ALL', label: 'Semua Status' },
+                { id: 'ACTIVE', label: 'Aktif Dirawat' },
+                { id: 'TRIAGE', label: 'Triase IGD' },
+                { id: 'DISCHARGED', label: 'Selesai / Pulang' }
+              ].map(st => (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => {
+                    setFilterStatus(st.id);
                     setSelectedIndex(0);
                   }}
-                  className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer"
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    filterStatus === st.id
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
+                      : 'bg-slate-200/80 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700'
+                  }`}
                 >
-                  <option value="ALL">Semua Status</option>
-                  <option value="ACTIVE">Aktif Dalam Perawatan</option>
-                  <option value="TRIAGE">Triase IGD</option>
-                  <option value="DISCHARGED">Selesai / Pulang</option>
-                </select>
-              </div>
+                  {st.label}
+                </button>
+              ))}
+
+              <div className="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-1 hidden sm:block"></div>
 
               <button
                 type="button"
                 onClick={handleResetFilters}
-                className="px-3 py-2 rounded-xl border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer font-extrabold text-xs shadow-2xs flex items-center gap-1 shrink-0"
+                className="px-3.5 py-1 rounded-lg border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer font-black text-xs flex items-center gap-1.5 shadow-2xs"
                 title="Reset Seluruh Filter"
               >
-                <span className="material-symbols-outlined text-[16px]">restart_alt</span>
-                <span>Reset</span>
+                <span className="material-symbols-outlined text-[15px]">restart_alt</span>
+                <span>Reset Filter</span>
               </button>
             </div>
           </div>
         </div>
 
         {/* ─── 3. Patient Results List (Full Width Census Cards) ─── */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2.5 custom-scrollbar bg-slate-100/40 dark:bg-slate-950/20">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5 custom-scrollbar bg-slate-100/40 dark:bg-slate-950/20">
           {filteredPatients.length === 0 ? (
             <div className="py-20 flex flex-col items-center justify-center text-center gap-3">
               <div className="w-16 h-16 rounded-3xl bg-white dark:bg-slate-800 text-slate-400 flex items-center justify-center shadow-md border border-slate-200 dark:border-slate-700">
@@ -735,7 +753,7 @@ export default function GlobalPatientSearchModal({
         </div>
 
         {/* ─── 4. Footer Summary & Quick Action Bar ─── */}
-        <div className="p-3.5 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+        <div className="p-4 bg-slate-50 dark:bg-slate-950/80 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
           <div className="flex items-center gap-2">
             <span className="text-slate-500 font-bold">Hasil Sensus Realtime:</span>
             <span className="px-2.5 py-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 font-mono font-black text-slate-800 dark:text-slate-200">
@@ -753,7 +771,7 @@ export default function GlobalPatientSearchModal({
                 onClose();
                 navigate('/patients');
               }}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold transition-colors cursor-pointer flex items-center gap-1.5 shadow-2xs"
             >
               <span className="material-symbols-outlined text-[16px] text-blue-500">person_add</span>
               <span>+ Registrasi Pasien Baru</span>
@@ -762,7 +780,7 @@ export default function GlobalPatientSearchModal({
             <button
               type="button"
               onClick={handleCreateMrX}
-              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold shadow-sm transition-transform active:scale-95 cursor-pointer flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold shadow-sm transition-transform active:scale-95 cursor-pointer flex items-center gap-1.5"
             >
               <span className="material-symbols-outlined text-[16px]">emergency</span>
               <span>+ Pasien Darurat (Mr. X)</span>
