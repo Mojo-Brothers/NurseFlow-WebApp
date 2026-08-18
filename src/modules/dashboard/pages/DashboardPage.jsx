@@ -12,6 +12,10 @@ export default function DashboardPage() {
   const [isPrivacyShieldOn, setIsPrivacyShieldOn] = useState(false);
   const { metrics, activeTriage, auditLogs, isLoading } = useLiveDashboard();
 
+  const handleSeedData = () => {
+    console.log('[Dashboard] Dev seed data requested.');
+  };
+
   return (
     <div className="p-4 lg:p-8 w-full max-w-full">
       {/* ─── Header ─── */}
