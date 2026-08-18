@@ -44,7 +44,13 @@ export const migrationRunner = {
     '038_create_medication_interactions_and_alternatives.sql',
     '039_create_patient_allergies_scd2.sql',
     '040_create_hospital_formulary_and_stewardship.sql',
-    '041_seed_initial_medication_knowledge_base.sql'
+    '041_seed_initial_medication_knowledge_base.sql',
+    '042_create_clinical_rules.sql',
+    '043_create_clinical_rule_conditions.sql',
+    '044_create_cdss_executions.sql',
+    '045_seed_ddi_rules.sql',
+    '046_seed_renal_adjustment_rules.sql',
+    '047_seed_pediatric_rules.sql'
   ],
 
   verifyMigrationStatus: () => {

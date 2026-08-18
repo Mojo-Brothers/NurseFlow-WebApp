@@ -20,6 +20,41 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 28: FASE 2 PRODUCTION DELIVERY — DYNAMIC CDSS ENGINE, SYMMETRICAL DDI B-TREE, ALLERGY CROSS-MATCHING, PEDIATRIC/RENAL DOSE ADJUSTER & MEDICOLEGAL REPLAY ENGINE
+
+**Kategori:** `[MAJOR]` `[CDSS_RULES_ENGINE]` `[SYMMETRICAL_DDI]` `[PEDIATRIC_RENAL_DOSE]` `[MEDICOLEGAL_REPLAY]` `[REST_API]`  
+**Status:** 100% Passed (81/81 Vitest Suites, 377 Tests, Production Build Succeeded), Seluruh Deliverable Fase 2 Berhasil Dibuat dan Diverifikasi.  
+
+**Pencapaian Lengkap Fase 2:**
+1. **Database Migrations (PostgreSQL 16 & SQLite Sync):**
+   - `042_create_clinical_rules.sql`: DDL tabel header aturan klinis terversi temporal (`rule_code`, `rule_version`, `rule_type`, `severity`, `effective_from`, `effective_until`, `is_active`).
+   - `043_create_clinical_rule_conditions.sql`: DDL kondisi relasional terindeks B-Tree tanpa parsing JSON runtime yang lambat.
+   - `044_create_cdss_executions.sql`: DDL buku besar snapshot eksekusi medikolegal (`encounter_id`, `input_snapshot_json`, `output_snapshot_json`, `override_justification`, `executed_by_practitioner_id`).
+   - `045_seed_ddi_rules.sql`: Dataset aturan DDI kanonikal (Warfarin + Aspirin, Duplikasi Paracetamol Oral + IV).
+   - `046_seed_renal_adjustment_rules.sql`: Dataset penyesuaian dosis eGFR (Meropenem eGFR < 30, Vancomycin eGFR < 50).
+   - `047_seed_pediatric_rules.sql`: Dataset proteksi overdosis anak (Paracetamol max 15 mg/kg, Ceftriaxone max 80 mg/kg).
+2. **Domain Entities & Repository Layer (`server/`):**
+   - Domain Entities: `ClinicalRule`, `ClinicalRuleCondition`, `CdssExecution`.
+   - Repositories: `clinicalRule.repository.js` (evaluasi kondisi dinamis sub-milidetik), `cdssExecution.repository.js` (pencatatan snapshot kepatuhan JCI MCI).
+3. **Service Layer & Business Logic (`server/services/`):**
+   - `dynamicCdssEngine.service.js`: Layanan orkestrasi peresepan cerdas (Allergy Cross-Matching, Symmetrical DDI Matcher, Duplicate Therapy Guard, Pediatric mg/kg Validator, Renal eGFR Adjuster, dan Formulary Restriction).
+   - `cdssReplayEngine.service.js`: Layanan investigasi medikolegal rekonsiliasi deterministik 100% dari snapshot input historis.
+4. **REST API Gateway Endpoints (`server/routes/cdss.routes.js`):**
+   - `POST /api/v1/cdss/evaluate` (Evaluasi resep live terhadap basis data kebenaran).
+   - `POST /api/v1/cdss/executions/record` (Pencatatan snapshot eksekusi & justifikasi override DPJP).
+   - `GET /api/v1/cdss/executions/:encounterId` (Audit trail lengkap per kunjungan pasien).
+   - `POST /api/v1/cdss/replay/:executionId` (Rekonstruksi & verifikasi replay medikolegal).
+5. **CPOE Safety Shield & Audit Replay UI (`src/modules/`):**
+   - `CdssSafetyShieldModal.jsx`: Modal pembatas keselamatan JCI IPSG 3 dengan penolakan keras (*Fatal Hard Stop*) dan kolom justifikasi klinis DPJP untuk override.
+   - `CdssAuditReplayStudio.jsx`: Antarmuka investigasi audit medikolegal dengan visualisasi perbandingan snapshot asli vs evaluasi ulang replay.
+6. **Automated Unit & End-to-End Integration Test Suites:**
+   - `tests/dynamicCdssRulesEngine.test.js` (5 tests passed).
+   - `tests/cdssAuditReplayEngine.test.js` (2 tests passed).
+   - `tests/cpoeCdssEndToEndIntegration.test.js` (2 tests passed: Pipeline penuh CPOE -> Terminology -> Allergy -> Symmetrical DDI -> Renal -> Pediatric -> Formulary -> Decision).
+   - Total Suite: **81 Test Files Passed (377 Tests)**.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 27: FASE 1 PRODUCTION DELIVERY — MEDICATION KNOWLEDGE GRAPH, TERMINOLOGY BRIDGE, PATIENT ALLERGIES (SCD TYPE-2) & HOSPITAL FORMULARY
 
 **Kategori:** `[MAJOR]` `[MEDICATION_KNOWLEDGE_BASE]` `[TERMINOLOGY_SERVICE]` `[SCD2_ALLERGIES]` `[HOSPITAL_FORMULARY]` `[REST_API]`  
