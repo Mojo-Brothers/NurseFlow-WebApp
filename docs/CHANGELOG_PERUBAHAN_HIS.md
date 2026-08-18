@@ -20,6 +20,40 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 34: SPRINT 3D MULTI-DEPOT FEFO & BATCH/EXPIRY INVENTORY ENGINE — LOGISTIK FARMASI RS TERPADU, STRICT FEFO ALLOCATION, MUTASI DISPATCH/RECEIPT, COLD CHAIN (2-8°C), BPOM RECALL, DAN HARDENING SENSOR POC (DUPLICATE DEBOUNCE, UNSUPPORTED REJECTION, MULTI-USER OCC, LOT RECONCILIATION)
+
+**Tag Rilis:** `fefo-multidepot-verified`  
+**Kategori:** `[MAJOR]` `[FEFO_INVENTORY]` `[MULTI_DEPOT_LOGISTICS]` `[STOCK_TRANSFER]` `[COLD_CHAIN]` `[BATCH_RECALL]` `[POINT_OF_CARE_HARDENING]` `[JCI_MMU]`  
+**Status:** 100% Passed (91/91 Vitest Suites, 428 Tests Passed), Seluruh Skenario Alokasi FEFO, Mutasi Gudang ➔ Depo ➔ Bangsal, Pemantauan Suhu Cold Chain, dan Hardening 4 Temuan Audit Terpenuhi Penuh.
+
+**Pencapaian Lengkap Sprint 3D & Hardening Audit:**
+1. **Multi-Depot Hierarchy & Strict FEFO Engine (`fefoMultiDepotInventoryEngine.service.js`):**
+   - Hierarki pergudangan farmasi rumah sakit lengkap:
+     - `CENTRAL_WAREHOUSE` (Gudang Farmasi Utama)
+     - `CENTRAL_PHARMACY` (Depo Farmasi Sentral)
+     - `INPATIENT_SATELLITE` (Depo Farmasi Rawat Inap)
+     - `OUTPATIENT_SATELLITE` (Depo Farmasi Rawat Jalan)
+     - `EMERGENCY_DEPOT` (Depo Gawat Darurat / IGD)
+     - `WARD_FLOOR_STOCK` (Floor Stock / Emergency Kit Bangsal)
+   - Algoritma Strict FEFO: Secara otomatis memilih batch dengan tanggal kedaluwarsa paling awal (*Earliest Expiry First*), memotong stok lintas batch bila permintaan melebihi kuantitas batch tunggal, serta mengecualikan batch kedaluwarsa atau batch yang dikarantina.
+2. **Mutasi Antar Depo / Stock Transfer Reconciliation:**
+   - Siklus 3-langkah terintegrasi: *Request Transfer* $\rightarrow$ *FEFO Dispatch (Potong Stok Gudang Asal)* $\rightarrow$ *Receipt & Batch Reconciliation (Tambah Stok Depo Tujuan)*.
+3. **Cold Chain Storage & Temperature Excursion Monitoring (2-8°C):**
+   - Pencatatan suhu real-time untuk insulin, vaksin, dan produk biologi dengan deteksi deviasi suhu (*Temperature Excursion Alarm*).
+4. **Karantina & Recall BPOM Global Lock:**
+   - Karantina instan terhadap nomor batch yang bermasalah, langsung memblokir dispensing dan administrasi obat di seluruh depo rumah sakit.
+5. **Hardening Point-of-Care 5-Rights Sensor:**
+   - **Duplicate Scan Handling**: Strategi *REPLACE* dengan debounce telemetering tanpa penumpukan buffer.
+   - **Unsupported Barcode Format**: Penolakan terstandar `UNSUPPORTED_BARCODE_FORMAT` untuk skema vendor yang tidak valid.
+   - **Multi-User OCC Race Protection**: Memblokir perawat yang menekan tombol *Administer* jika slot obat telah didahului oleh perawat lain di terminal berbeda (`SLOT_ALREADY_ADMINISTERED`).
+   - **Batch/Lot FEFO Reconciliation**: Memvalidasi kesesuaian nomor batch hasil scan barcode kemasan terhadap nomor batch yang didispensing farmasi (`LOT_MISMATCH`).
+6. **Antarmuka Farmasi Enterprise Terpadu (`MultiDepotFefoInventoryStudio.jsx`):**
+   - Sub-tab visual: *Alokasi Stok FEFO Multi-Depot*, *Mutasi Antar Depo*, dan *Cold Chain Monitoring*.
+7. **Automated Adversarial Suite (`tests/fefoMultiDepotInventoryEngine.test.js` & `tests/pointOfCareFiveRightsVerification.test.js`):**
+   - 91 Test Files Passed (428 Tests).
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 33: SPRINT 3C POINT-OF-CARE 5-RIGHTS BARCODE VERIFICATION ENGINE — SENSOR EVIDENCE LAYER, GS1-DATAMATRIX PARSER, TIME-WINDOW EVALUATION, AND BEDSIDE DUAL-SIGN SCANNER MODAL
 
 **Tag Rilis:** `poc-5rights-verified`  
