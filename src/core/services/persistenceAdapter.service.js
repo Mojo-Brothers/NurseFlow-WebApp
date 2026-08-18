@@ -13,6 +13,11 @@ export const DB_ENGINE_TYPES = {
   IN_MEMORY: 'IN_MEMORY'
 };
 
+export const IMMUTABLE_EVENT_COLLECTIONS = new Set([
+  'medication_events',
+  'patient_care_state_events'
+]);
+
 const STORAGE_PREFIX = 'nurseflow_pa_';
 
 class PersistenceAdapter {
@@ -99,10 +104,17 @@ class PersistenceAdapter {
   }
 
   async save(collectionName, id, payload) {
+    // 0. Immutability Enforcement (Append-Only Clinical Ledger)
+    const memoryMap = this._loadFromLocalStorage(collectionName);
+    if (IMMUTABLE_EVENT_COLLECTIONS.has(collectionName) && memoryMap.has(id)) {
+      throw new Error(
+        `[PersistenceAdapter:IMMUTABILITY_VIOLATION] Collection "${collectionName}" is an append-only immutable clinical event ledger. Mutating existing event "${id}" is strictly forbidden by JCI / ISO 27799.`
+      );
+    }
+
     const record = { ...payload, id, updatedAt: new Date().toISOString() };
 
     // 1. Update in-memory Map
-    const memoryMap = this._loadFromLocalStorage(collectionName);
     memoryMap.set(id, record);
 
     // 2. Persist to LocalStorage immediately (survives page reload / F5)
@@ -121,6 +133,17 @@ class PersistenceAdapter {
     }
 
     return record;
+  }
+
+  async delete(collectionName, id) {
+    if (IMMUTABLE_EVENT_COLLECTIONS.has(collectionName)) {
+      throw new Error(
+        `[PersistenceAdapter:IMMUTABILITY_VIOLATION] Deleting clinical events from "${collectionName}" is strictly forbidden by law & JCI standard.`
+      );
+    }
+    const memoryMap = this._loadFromLocalStorage(collectionName);
+    memoryMap.delete(id);
+    this._saveToLocalStorage(collectionName);
   }
 
   async query(collectionName, filterFnOrWhereConditions) {
