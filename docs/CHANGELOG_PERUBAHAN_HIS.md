@@ -20,6 +20,31 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 26: FORENSIC UI/UX AUDIT, DUPLICATE ELIMINATION & EMPI RESPONSIVE REFACTORING (JCI 7TH & WCAG 2.2)
+
+**Kategori:** `[MAJOR]` `[UI_UX_FORENSIC]` `[EMPI_REFACTORING]` `[RESPONSIVE_ENTERPRISE]` `[WCAG_2.2]`  
+**Status:** 100% Passed (74/74 Vitest Suites, 351 Tests, Production Build Succeeded), Seluruh Kecacatan Layout & Tombol Duplikat Berhasil Diperbaiki.  
+
+**Pencapaian Utama Sprint 26:**
+1. **Pemusnahan Tombol Duplikat (Duplicate Action Button Elimination):**
+   - Mengeliminasi tombol duplikat `+ Registrasi Pasien` dan `+ Pasien Darurat` pada toolbar pencarian `GlobalPatientSearch.jsx`.
+   - Menata ulang hierarki tombol CTA utama pada Header `PatientCommandCenterPage.jsx` dengan prinsip *Single Source of Truth* aksi (Primary Solid Blue untuk Registrasi Pasien Baru, Secondary Rose Accent untuk Pasien Darurat Anonim).
+2. **Refactoring Layout EMPI & Eliminasi Overlapping:**
+   - Mengubah grid kartu pasien pada `GlobalPatientSearch.jsx` menjadi layout kolom tunggal yang proporsional (`flex flex-col gap-3`) guna mencegah pemotongan teks (*text clipping*) dan penumpukan kartu pada resolusi monitor 1024px–1920px.
+   - Menerapkan layout 2 kolom responsif CSS Grid (`lg:grid-cols-12` dengan rasio 5:7) dengan jarak aman `gap-6` (24px) tanpa *absolute positioning* yang rentan tabrakan.
+3. **Penyempurnaan Toolbar Pencarian & Filter Penjamin:**
+   - Mengganti dropdown standar dengan *Payer Filter Pills* instan (`Semua`, `BPJS`, `Asuransi`, `Umum`) dengan indikator hitungan pasien real-time.
+   - Menambahkan tombol *Clear Search* instan dan focus ring standar WCAG 2.2.
+4. **Desain Empty State Kaya Informasi Klinis:**
+   - Memperbarui tampilan saat pasien tidak ditemukan dengan panduan pencarian terstruktur (Nama, No. RM, NIK, No. BPJS) serta tombol CTA langsung menuju pendaftaran pasien baru.
+5. **Navigasi Responsif Komprehensif (320px – 4K Ultra HD):**
+   - Menambahkan *Mobile Navigation Drawer* dan tombol toggle hamburger pada `MainLayout.jsx` untuk menjamin aksesibilitas 10 domain navigasi enterprise pada perangkat tablet dan mobile (320px, 375px, 768px).
+6. **Verifikasi Kualitas & Non-Regresi:**
+   - Build produksi Vite sukses tanpa error (`npm run build` rampung dalam 4.30 detik).
+   - Seluruh 74 file pengujian (351 tes) vitest lulus 100%.
+
+---
+
 ### 🟢 [17 AGUSTUS 2026] — SPRINT 25: PENERAPAN MODUL TUNGGAL "CLINICAL EVIDENCE WAREHOUSE" & 10 CORE PROOF POINTS AUDIT MATRIX
 
 **Kategori:** `[MAJOR]` `[CLINICAL_EVIDENCE]` `[DATA_WAREHOUSE]` `[JCI_KARS_AUDIT]` `[PROOF_OF_IMPACT]`  

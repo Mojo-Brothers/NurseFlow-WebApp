@@ -117,6 +117,7 @@ export default function MainLayout() {
   const { currentUser, role, logout } = useAuth();
   const { stressLevel } = useStressMonitor();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [openDomain, setOpenDomain] = useState(() => {
     // Open active section automatically based on current path
     const active = ENTERPRISE_NAV_SCHEMA.find(sec => 
@@ -130,12 +131,17 @@ export default function MainLayout() {
   const [selectedFacility, setSelectedFacility] = useState('RSUP Nasional - Pusat Rujukan');
   const [selectedDepartment, setSelectedDepartment] = useState('Semua Departemen Pelayanan');
 
-  const { addPatient } = usePatientStore();
+  const { addPatient, patients } = usePatientStore();
   const { openEncounter, setLiveContext } = useEncounterStore();
   const { setOperationalMode } = useTriageStore();
   const [isCreatingEmergency, setIsCreatingEmergency] = useState(false);
 
   usePatientClipboardShortcuts();
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [location.pathname]);
 
   // Command Palette Keyboard Shortcut (Ctrl+K / Cmd+K)
   useEffect(() => {
@@ -229,7 +235,7 @@ export default function MainLayout() {
   return (
     <div className="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col lg:flex-row h-screen relative overflow-hidden font-sans">
       
-      {/* ─── Global Enterprise Sidebar ─── */}
+      {/* ─── Global Enterprise Sidebar (Desktop) ─── */}
       <aside 
         className={`hidden lg:flex flex-col h-screen fixed left-0 top-0 z-40 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 shadow-md ${
           isCollapsed ? 'w-[76px]' : 'w-[280px]'
@@ -371,6 +377,124 @@ export default function MainLayout() {
         </div>
       </aside>
 
+      {/* ─── Mobile Navigation Drawer (320px - 1024px) ─── */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity animate-in fade-in"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+          
+          {/* Slide-out Drawer */}
+          <div className="relative w-4/5 max-w-xs bg-white dark:bg-slate-900 h-full flex flex-col shadow-2xl border-r border-slate-200 dark:border-slate-800 animate-in slide-in-from-left duration-200 z-10">
+            <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#015C80] rounded-2xl flex items-center justify-center text-white shadow-md shadow-[#015C80]/30">
+                  <span className="material-symbols-outlined text-[24px]">local_hospital</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-base font-black tracking-tight text-[#015C80] dark:text-cyan-400">NurseFlow</span>
+                  <span className="text-[10px] font-mono font-bold text-slate-400">Enterprise HIS</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 flex items-center justify-center cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+
+            {/* Mobile Navigation Links */}
+            <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1 no-scrollbar text-xs">
+              {ENTERPRISE_NAV_SCHEMA.map((section) => {
+                const hasItems = section.items && section.items.length > 0;
+                if (!hasItems) {
+                  const isActive = location.pathname === section.path;
+                  return (
+                    <Link
+                      key={section.domain}
+                      to={section.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-bold transition-all ${
+                        isActive
+                          ? 'bg-[#015C80] text-white shadow-xs'
+                          : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-[20px]">{section.icon}</span>
+                      <span>{section.label}</span>
+                    </Link>
+                  );
+                }
+
+                return (
+                  <div key={section.domain} className="space-y-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setOpenDomain(openDomain === section.domain ? null : section.domain)}
+                      className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-[20px]">{section.icon}</span>
+                        <span>{section.label}</span>
+                      </div>
+                      <span className={`material-symbols-outlined text-[16px] transition-transform ${openDomain === section.domain ? 'rotate-180' : ''}`}>
+                        expand_more
+                      </span>
+                    </button>
+
+                    {openDomain === section.domain && (
+                      <div className="pl-9 pr-1 py-1 space-y-0.5 border-l-2 border-[#015C80]/30 ml-4">
+                        {section.items.map((item) => {
+                          const isItemActive = location.pathname === item.path;
+                          return (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                              className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-[11px] font-bold ${
+                                isItemActive
+                                  ? 'bg-[#015C80] text-white'
+                                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                              }`}
+                            >
+                              <span className="material-symbols-outlined text-[15px]">{item.icon}</span>
+                              <span className="truncate">{item.name}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </nav>
+
+            {/* Mobile Footer */}
+            <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#015C80] text-white flex items-center justify-center font-black text-xs">
+                  {currentUser?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[140px]">
+                  {currentUser?.email || 'dr. Budi Santoso'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="p-1.5 text-slate-400 hover:text-rose-600"
+              >
+                <span className="material-symbols-outlined text-[20px]">logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── Main Content Container ─── */}
       <div className={`flex-1 flex flex-col min-w-0 h-screen overflow-hidden ${
         isCollapsed ? 'lg:ml-[76px]' : 'lg:ml-[280px]'
@@ -379,10 +503,20 @@ export default function MainLayout() {
         <ClinicalContextRibbon />
 
         {/* 2. Top Navigation Bar (Facility, Breadcrumb & Global Search) */}
-        <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs z-30">
-          {/* Left: Breadcrumbs & Facility Selector */}
+        <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-xs z-30">
+          {/* Left: Mobile Hamburger, Breadcrumbs & Facility Selector */}
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500">
+            {/* Hamburger Button for Mobile (< 1024px) */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center cursor-pointer"
+              title="Buka Menu Navigasi"
+            >
+              <span className="material-symbols-outlined text-[20px]">menu</span>
+            </button>
+
+            <div className="hidden sm:flex items-center gap-1 text-[11px] font-bold text-slate-500">
               {getBreadcrumbs().map((c, i, arr) => (
                 <React.Fragment key={c.path + i}>
                   {i > 0 && <span className="text-slate-400">/</span>}
@@ -396,22 +530,22 @@ export default function MainLayout() {
               ))}
             </div>
 
-            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
 
             {/* Facility Selector */}
             <select
               value={selectedFacility}
               onChange={(e) => setSelectedFacility(e.target.value)}
-              className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-[11px] text-slate-800 dark:text-slate-200 cursor-pointer"
+              className="px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-[11px] text-slate-800 dark:text-slate-200 cursor-pointer max-w-[200px] sm:max-w-none truncate"
             >
-              <option value="RSUP Nasional - Pusat Rujukan">🏥 RSUP Nasional (Main Facility)</option>
+              <option value="RSUP Nasional - Pusat Rujukan">🏥 RSUP Nasional</option>
               <option value="RSUD Satelit IGD & Rawat Inap">🏥 RSUD Satelit IGD</option>
               <option value="Klinik Pratama Rawat Jalan">🏥 Klinik Pratama Terpadu</option>
             </select>
           </div>
 
           {/* Center / Right: Global Search Trigger & Utility Controls */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {/* Global Search Button */}
             <button
               type="button"
@@ -419,8 +553,8 @@ export default function MainLayout() {
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
             >
               <span className="material-symbols-outlined text-[16px] text-[#015C80]">search</span>
-              <span className="hidden md:inline">Cari Pasien, Obat, Lab, Operasi...</span>
-              <kbd className="px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 font-mono text-[9px] font-bold">
+              <span className="hidden md:inline">Cari Pasien, Obat, Lab...</span>
+              <kbd className="hidden sm:inline px-1.5 py-0.5 rounded bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 font-mono text-[9px] font-bold">
                 Ctrl+K
               </kbd>
             </button>
