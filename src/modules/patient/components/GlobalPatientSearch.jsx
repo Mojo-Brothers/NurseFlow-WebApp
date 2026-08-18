@@ -55,28 +55,38 @@ export default function GlobalPatientSearch({ onSelectPatient, onNewEncounter, o
     <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs flex flex-col gap-4">
       {/* 1. Search Bar & Filter Pills (Streamlined Toolbar) */}
       <div className="flex flex-col gap-3">
-        <div className="relative w-full">
-          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">
-            search
-          </span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari Pasien (Nama, No. RM, NIK, No. BPJS, Telp)..."
-            className="w-full pl-11 pr-10 py-3 text-xs font-bold rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all shadow-inner"
-            autoFocus
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-              title="Bersihkan Pencarian"
-            >
-              <span className="material-symbols-outlined text-[18px]">cancel</span>
-            </button>
-          )}
-        </div>
+        <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-2 w-full">
+          <div className="relative flex-1">
+            <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">
+              search
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari Pasien (Nama, No. RM, NIK, No. BPJS, Telp)..."
+              className="w-full pl-11 pr-10 py-3 text-xs font-bold rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-hidden transition-all shadow-inner"
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                title="Bersihkan Pencarian"
+              >
+                <span className="material-symbols-outlined text-[18px]">cancel</span>
+              </button>
+            )}
+          </div>
+          <button
+            type="submit"
+            className="h-11 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-transform active:scale-95 cursor-pointer whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined text-[18px]">search</span>
+            <span>Cari</span>
+          </button>
+        </form>
 
         {/* Payer Filter Pills */}
         <div className="flex items-center justify-between gap-2 flex-wrap">

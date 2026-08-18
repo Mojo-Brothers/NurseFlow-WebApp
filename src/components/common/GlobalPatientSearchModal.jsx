@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
-
-const getTodayStr = () => new Date().toISOString().slice(0, 10);
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePatientStore } from '../../modules/patient/patient.store.js';
 import { useEncounterStore } from '../../modules/encounter/encounter.store.js';
@@ -52,16 +50,15 @@ export default function GlobalPatientSearchModal({
   const { activeEncounters, fetchActiveEncounters, setLiveContext, openEncounter, isLoading: isEncountersLoading } = useEncounterStore();
   const { user } = useAuthStore();
 
-  // Multi-Field Structured Search Filters (1 Single Row)
+  // Multi-Field Structured Search Filters
   const [filterNama, setFilterNama] = useState('');
   const [filterNoRM, setFilterNoRM] = useState('');
   const [filterNoReg, setFilterNoReg] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState(initialRoomId);
-  const [filterDate, setFilterDate] = useState(getTodayStr); // Default: Hari Ini
+  const [filterDate, setFilterDate] = useState('');
   const [filterDPJP, setFilterDPJP] = useState('');
   const [filterPenjamin, setFilterPenjamin] = useState('ALL'); // 'ALL' | 'BPJS' | 'UMUM' | 'ASURANSI'
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'TRIAGE' | 'DISCHARGED'
-  const [dateRangePreset, setDateRangePreset] = useState('TODAY'); // Default: Hari Ini
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const searchInputRef = useRef(null);
@@ -75,33 +72,27 @@ export default function GlobalPatientSearchModal({
     }
   }, [isOpen, fetchPatients, fetchActiveEncounters]);
 
-  // Set Date Range Presets
-  const handlePresetChange = (preset) => {
-    setDateRangePreset(preset);
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
-
-    if (preset === 'TODAY') {
-      setFilterDate(todayStr);
-    } else if (preset === 'ALL') {
-      setFilterDate('');
-    }
-  };
-
   const handleResetFilters = () => {
     setFilterNama('');
     setFilterNoRM('');
     setFilterNoReg('');
     setSelectedRoomId('ALL');
-    setFilterDate(getTodayStr()); // Reset kembali ke Hari Ini
+    setFilterDate('');
     setFilterDPJP('');
     setFilterPenjamin('ALL');
     setFilterStatus('ALL');
-    setDateRangePreset('TODAY'); // Reset ke Hari Ini
     setSelectedIndex(0);
   };
 
-  // 100% REALTIME DATA AGGREGATION (NO DUMMY)
+  const handleExecuteSearch = (e) => {
+    if (e) e.preventDefault();
+    fetchPatients();
+    fetchActiveEncounters();
+    setSelectedIndex(0);
+    toast.success('Pencarian dieksekusi!', { icon: '🔍', duration: 1500 });
+  };
+
+  // 100% REALTIME DATA AGGREGATION
   const realCensusData = useMemo(() => {
     if (!patients || patients.length === 0) return [];
 
@@ -132,7 +123,7 @@ export default function GlobalPatientSearchModal({
       const diagnosis = matchingEnc?.chief_complaint || matchingEnc?.diagnosis || p.chiefComplaint || 'Pemeriksaan Klinis Terpadu';
       const payer = p.payer || p.insurance?.name || (typeof p.insurance === 'string' ? p.insurance : 'BPJS Kesehatan');
 
-      // Resolve Real Timestamp
+      // Resolve Real Timestamp Robustly
       let admissionDateObj = new Date();
       if (matchingEnc?.admitted_at) {
         admissionDateObj = matchingEnc.admitted_at.toDate ? matchingEnc.admitted_at.toDate() : new Date(matchingEnc.admitted_at);
@@ -214,7 +205,7 @@ export default function GlobalPatientSearchModal({
       list = list.filter(p => p.noReg?.toLowerCase().includes(q));
     }
 
-    // 5. Filter Tanggal Berobat
+    // 5. Filter Tanggal Berobat (Hanya jika diisi spesifik oleh pengguna)
     if (filterDate) {
       list = list.filter(p => p.dateIso === filterDate);
     }
@@ -390,15 +381,14 @@ export default function GlobalPatientSearchModal({
           </div>
         </div>
 
-        {/* ─── 2. Multi-Column Filter Panel (1 Baris Sejajar — Full Width Proporsional) ─── */}
-        <div className="px-5 py-4 bg-slate-50/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 shrink-0">
+        {/* ─── 2. Multi-Column Filter Panel (1 Baris Sejajar — Full Width Proporsional dengan Tombol Cari) ─── */}
+        <form onSubmit={handleExecuteSearch} className="px-5 py-3.5 bg-slate-50/70 dark:bg-slate-950/40 border-b border-slate-200 dark:border-slate-800 shrink-0">
           
-          {/* Form Baris Sejajar — inline-flex dengan lebar eksplisit tiap kolom */}
-          <div className="flex items-end gap-3 w-full">
+          <div className="flex items-end gap-2.5 w-full">
 
-            {/* Kolom 1: Nama Pasien / NIK — lebar 2x (paling penting) */}
-            <div className="flex flex-col flex-[2.5] min-w-0">
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            {/* Kolom 1: Nama Pasien / NIK */}
+            <div className="flex flex-col flex-[2.2] min-w-0">
+              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1 truncate">
                 <span className="material-symbols-outlined text-[14px] text-blue-500">person</span>
                 <span>Nama Pasien / NIK</span>
               </label>
@@ -408,13 +398,13 @@ export default function GlobalPatientSearchModal({
                 value={filterNama}
                 onChange={e => { setFilterNama(e.target.value); setSelectedIndex(0); }}
                 placeholder="Ketik Nama atau NIK 16-digit..."
-                className="w-full h-10 px-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
               />
             </div>
 
             {/* Kolom 2: No. RM (Medrec) */}
-            <div className="flex flex-col flex-[1.5] min-w-0">
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <div className="flex flex-col flex-[1.4] min-w-0">
+              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1 truncate">
                 <span className="material-symbols-outlined text-[14px] text-blue-500">fingerprint</span>
                 <span>No. RM (Medrec)</span>
               </label>
@@ -423,13 +413,13 @@ export default function GlobalPatientSearchModal({
                 value={filterNoRM}
                 onChange={e => { setFilterNoRM(e.target.value); setSelectedIndex(0); }}
                 placeholder="Contoh: MRN-1002..."
-                className="w-full h-10 px-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
               />
             </div>
 
             {/* Kolom 3: No. Registrasi */}
-            <div className="flex flex-col flex-[1.5] min-w-0">
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <div className="flex flex-col flex-[1.4] min-w-0">
+              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1 truncate">
                 <span className="material-symbols-outlined text-[14px] text-blue-500">tag</span>
                 <span>No. Reg (Kunjungan)</span>
               </label>
@@ -438,20 +428,20 @@ export default function GlobalPatientSearchModal({
                 value={filterNoReg}
                 onChange={e => { setFilterNoReg(e.target.value); setSelectedIndex(0); }}
                 placeholder="Contoh: REG-8619..."
-                className="w-full h-10 px-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs transition-colors"
               />
             </div>
 
             {/* Kolom 4: Ruangan / Unit Pelayanan */}
-            <div className="flex flex-col flex-[2] min-w-0">
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <div className="flex flex-col flex-[1.8] min-w-0">
+              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1 truncate">
                 <span className="material-symbols-outlined text-[14px] text-blue-500">meeting_room</span>
-                <span>Ruangan / Unit Pelayanan</span>
+                <span>Ruangan / Unit</span>
               </label>
               <select
                 value={selectedRoomId}
                 onChange={e => { setSelectedRoomId(e.target.value); setSelectedIndex(0); }}
-                className="w-full h-10 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer transition-colors"
+                className="w-full h-10 px-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer transition-colors"
               >
                 {Object.entries(roomGroups).map(([grpName, options]) => (
                   <optgroup key={grpName} label={`── ${grpName} ──`}>
@@ -465,21 +455,21 @@ export default function GlobalPatientSearchModal({
 
             {/* Kolom 5: Tanggal Berobat */}
             <div className="flex flex-col flex-[1.2] min-w-0">
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1 truncate">
                 <span className="material-symbols-outlined text-[14px] text-blue-500">calendar_today</span>
                 <span>Tgl Berobat</span>
               </label>
               <input
                 type="date"
                 value={filterDate}
-                onChange={e => { setFilterDate(e.target.value); setDateRangePreset('CUSTOM'); }}
-                className="w-full h-10 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
+                onChange={e => { setFilterDate(e.target.value); }}
+                className="w-full h-10 px-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
               />
             </div>
 
             {/* Kolom 6: Dokter DPJP */}
-            <div className="flex flex-col flex-[1.8] min-w-0">
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <div className="flex flex-col flex-[1.6] min-w-0">
+              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1 truncate">
                 <span className="material-symbols-outlined text-[14px] text-blue-500">stethoscope</span>
                 <span>Dokter DPJP</span>
               </label>
@@ -487,39 +477,39 @@ export default function GlobalPatientSearchModal({
                 type="text"
                 value={filterDPJP}
                 onChange={e => { setFilterDPJP(e.target.value); setSelectedIndex(0); }}
-                placeholder="Nama Dokter DPJP..."
-                className="w-full h-10 px-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
+                placeholder="Nama Dokter..."
+                className="w-full h-10 px-3.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs"
               />
             </div>
 
             {/* Kolom 7: Penjamin */}
-            <div className="flex flex-col flex-[1.5] min-w-0">
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <div className="flex flex-col flex-[1.3] min-w-0">
+              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1 truncate">
                 <span className="material-symbols-outlined text-[14px] text-blue-500">account_balance_wallet</span>
                 <span>Penjamin</span>
               </label>
               <select
                 value={filterPenjamin}
                 onChange={e => { setFilterPenjamin(e.target.value); setSelectedIndex(0); }}
-                className="w-full h-10 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer"
+                className="w-full h-10 px-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer"
               >
                 <option value="ALL">Semua Penjamin</option>
-                <option value="BPJS">BPJS Kesehatan</option>
-                <option value="UMUM">Umum / Mandiri</option>
-                <option value="ASURANSI">Asuransi Swasta</option>
+                <option value="BPJS">BPJS</option>
+                <option value="UMUM">Umum</option>
+                <option value="ASURANSI">Asuransi</option>
               </select>
             </div>
 
             {/* Kolom 8: Status Layanan */}
-            <div className="flex flex-col flex-1 min-w-0">
-              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1">
+            <div className="flex flex-col flex-[1.1] min-w-0">
+              <label className="text-[10px] font-black uppercase text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1 truncate">
                 <span className="material-symbols-outlined text-[14px] text-blue-500">flag</span>
                 <span>Status</span>
               </label>
               <select
                 value={filterStatus}
                 onChange={e => { setFilterStatus(e.target.value); setSelectedIndex(0); }}
-                className="w-full h-10 px-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer"
+                className="w-full h-10 px-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white outline-hidden focus:border-[#015C80] text-xs shadow-2xs cursor-pointer"
               >
                 <option value="ALL">Semua</option>
                 <option value="ACTIVE">Aktif</option>
@@ -528,18 +518,29 @@ export default function GlobalPatientSearchModal({
               </select>
             </div>
 
-            {/* Tombol Reset */}
-            <button
-              type="button"
-              onClick={handleResetFilters}
-              className="h-10 px-4 rounded-xl border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer font-black text-xs flex items-center gap-1.5 shrink-0 shadow-2xs whitespace-nowrap"
-              title="Reset Seluruh Filter"
-            >
-              <span className="material-symbols-outlined text-[16px]">restart_alt</span>
-              <span>Reset</span>
-            </button>
+            {/* Tombol Cari (Search CTA) & Tombol Reset */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="submit"
+                className="h-10 px-4 rounded-xl bg-[#015C80] hover:bg-[#014966] text-white font-black text-xs flex items-center gap-1.5 shadow-md shadow-[#015C80]/20 transition-transform active:scale-95 cursor-pointer whitespace-nowrap"
+                title="Eksekusi Pencarian Pasien"
+              >
+                <span className="material-symbols-outlined text-[18px]">search</span>
+                <span>Cari</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="h-10 px-3.5 rounded-xl border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer font-black text-xs flex items-center gap-1 shrink-0 shadow-2xs whitespace-nowrap"
+                title="Reset Seluruh Filter"
+              >
+                <span className="material-symbols-outlined text-[16px]">restart_alt</span>
+                <span>Reset</span>
+              </button>
+            </div>
           </div>
-        </div>
+        </form>
 
         {/* ─── 3. Patient Results List (Full Width Census Cards) ─── */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5 custom-scrollbar bg-slate-100/40 dark:bg-slate-950/20">
@@ -550,10 +551,10 @@ export default function GlobalPatientSearchModal({
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-800 dark:text-slate-200">
-                  Tidak Ditemukan Pasien Realtime Sesuai Kriteria
+                  Tidak Ditemukan Pasien Sesuai Kriteria
                 </h3>
                 <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                  Tidak ada rekam medis di database yang cocok dengan kombinasi filter di atas. Coba gunakan tombol reset atau lakukan pendaftaran pasien baru.
+                  Gunakan tombol <strong className="text-[#015C80]">Reset</strong> atau periksa kembali kata kunci pencarian nama, No. RM, atau NIK pasien.
                 </p>
               </div>
             </div>
