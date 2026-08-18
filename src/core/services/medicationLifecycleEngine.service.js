@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * MEDICATION LIFECYCLE PLATFORM — SPRINT 3A DOMAIN CONTRACT
+ * MEDICATION LIFECYCLE PLATFORM — SPRINT 3A & 3B DOMAIN CONTRACT
  * 
  * WARNING:
  * This engine is the authoritative clinical safety foundation for all medication
@@ -13,6 +13,33 @@
 
 import { persistenceAdapter } from './persistenceAdapter.service.js';
 import { CARE_STATES, TERMINAL_STATES } from './careStateEngine.service.js';
+
+// Canonical Machine-Readable Medication Error Codes (Gate 3B)
+export const MED_ERROR_CODES = {
+  ORDER_CANCELLED: 'ORDER_CANCELLED',
+  PATIENT_TERMINAL: 'PATIENT_TERMINAL',
+  DISCHARGE_BEDSIDE_ADMIN_BLOCKED: 'DISCHARGE_BEDSIDE_ADMIN_BLOCKED',
+  WRONG_PATIENT: 'WRONG_PATIENT',
+  WRONG_DRUG: 'WRONG_DRUG',
+  WRONG_DOSE: 'WRONG_DOSE',
+  WRONG_ROUTE: 'WRONG_ROUTE',
+  WRONG_TIME: 'WRONG_TIME',
+  HIGH_ALERT_DUAL_SIGN_REQUIRED: 'HIGH_ALERT_DUAL_SIGN_REQUIRED',
+  SLOT_ALREADY_ADMINISTERED: 'SLOT_ALREADY_ADMINISTERED',
+  OCC_CONFLICT: 'OCC_CONFLICT',
+  COMMAND_ALREADY_PROCESSED: 'COMMAND_ALREADY_PROCESSED',
+  ORDER_NOT_ACTIVE: 'ORDER_NOT_ACTIVE',
+  RIGHT_REASON_REQUIRED: 'RIGHT_REASON_REQUIRED'
+};
+
+export class MedicationSafetyException extends Error {
+  constructor(code, message, details = {}) {
+    super(`[${code}] ${message}`);
+    this.name = 'MedicationSafetyException';
+    this.code = code;
+    this.details = details;
+  }
+}
 
 // Canonical Medication Order States
 export const MEDICATION_ORDER_STATES = {
@@ -69,47 +96,6 @@ export const HIGH_ALERT_CATEGORIES = {
   NEUROMUSCULAR_BLOCKER: 'NEUROMUSCULAR_BLOCKER'
 };
 
-// Allowed Slot State Transition Matrix
-const SLOT_TRANSITION_MATRIX = {
-  [MEDICATION_SLOT_STATES.SCHEDULED]: [
-    MEDICATION_SLOT_STATES.PREPARED,
-    MEDICATION_SLOT_STATES.READY_AT_BEDSIDE,
-    MEDICATION_SLOT_STATES.ADMINISTERED,
-    MEDICATION_SLOT_STATES.HELD,
-    MEDICATION_SLOT_STATES.REFUSED,
-    MEDICATION_SLOT_STATES.MISSED,
-    MEDICATION_SLOT_STATES.CANCELLED
-  ],
-  [MEDICATION_SLOT_STATES.PREPARED]: [
-    MEDICATION_SLOT_STATES.READY_AT_BEDSIDE,
-    MEDICATION_SLOT_STATES.ADMINISTERED,
-    MEDICATION_SLOT_STATES.HELD,
-    MEDICATION_SLOT_STATES.REFUSED,
-    MEDICATION_SLOT_STATES.CANCELLED
-  ],
-  [MEDICATION_SLOT_STATES.READY_AT_BEDSIDE]: [
-    MEDICATION_SLOT_STATES.ADMINISTERED,
-    MEDICATION_SLOT_STATES.PARTIALLY_ADMINISTERED,
-    MEDICATION_SLOT_STATES.HELD,
-    MEDICATION_SLOT_STATES.REFUSED,
-    MEDICATION_SLOT_STATES.NOT_GIVEN,
-    MEDICATION_SLOT_STATES.CANCELLED
-  ],
-  [MEDICATION_SLOT_STATES.HELD]: [
-    MEDICATION_SLOT_STATES.READY_AT_BEDSIDE,
-    MEDICATION_SLOT_STATES.ADMINISTERED,
-    MEDICATION_SLOT_STATES.CANCELLED
-  ],
-  // Terminal Slot States
-  [MEDICATION_SLOT_STATES.ADMINISTERED]: [],
-  [MEDICATION_SLOT_STATES.PARTIALLY_ADMINISTERED]: [],
-  [MEDICATION_SLOT_STATES.REFUSED]: [],
-  [MEDICATION_SLOT_STATES.MISSED]: [],
-  [MEDICATION_SLOT_STATES.OMITTED]: [],
-  [MEDICATION_SLOT_STATES.NOT_GIVEN]: [],
-  [MEDICATION_SLOT_STATES.CANCELLED]: []
-};
-
 class MedicationLifecycleEngine {
   constructor() {
     this.ORDERS_COLLECTION = 'medication_orders';
@@ -120,7 +106,6 @@ class MedicationLifecycleEngine {
 
   /**
    * Helper: Generate Discrete Administration Slots from Frequency
-   * e.g. 'TID' / '3x1' ➔ ['08:00', '14:00', '20:00']
    */
   generateScheduleSlots(frequency, startDate = new Date(), durationDays = 1) {
     const timeMappings = {
@@ -195,6 +180,7 @@ class MedicationLifecycleEngine {
     highAlertCategory = null,
     isLasa = false,
     lasaPairDrug = null,
+    workflowType = 'INPATIENT_ROUTINE', // 'INPATIENT_ROUTINE' | 'DISCHARGE_TAKE_HOME'
     commandId = null,
     correlationId = null
   }) {
@@ -202,11 +188,14 @@ class MedicationLifecycleEngine {
       return this.processedCommandIds.get(commandId);
     }
 
-    // Invariant Check 1: Patient must be in an active care state (not discharged/cancelled)
+    // Invariant Check 1: Patient must be in an active care state (unless discharge take-home meds)
     const encounter = await persistenceAdapter.findById('encounters', encounterId);
     if (!encounter) throw new Error(`[MedicationLifecycle] Encounter "${encounterId}" not found`);
-    if (TERMINAL_STATES.has(encounter.primaryState)) {
-      throw new Error(`[MedicationSafety] Cannot prescribe medication for encounter in terminal state "${encounter.primaryState}"`);
+    if (TERMINAL_STATES.has(encounter.primaryState) && workflowType !== 'DISCHARGE_TAKE_HOME') {
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.PATIENT_TERMINAL,
+        `Cannot prescribe routine inpatient medication for encounter in terminal state "${encounter.primaryState}"`
+      );
     }
 
     const orderId = `ORD-MED-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
@@ -232,6 +221,7 @@ class MedicationLifecycleEngine {
       frequency,
       durationDays,
       instructions,
+      workflowType,
       isHighAlert: !!isHighAlert,
       highAlertCategory: highAlertCategory || null,
       isLasa: !!isLasa,
@@ -252,17 +242,24 @@ class MedicationLifecycleEngine {
       aggregateId: order.id,
       aggregateVersion: 1,
       correlationId: corrId,
+      commandId,
       eventType: MEDICATION_EVENTS.PRESCRIBE_MEDICATION,
       patientId,
       encounterId,
+      medicationOrderId: order.id,
+      administrationSlotId: null,
+      previousState: null,
+      newState: MEDICATION_ORDER_STATES.ORDERED,
+      occurredAt: timestamp,
+      recordedAt: timestamp,
       performedBy: { id: prescriberId, name: prescriberName, role: 'DOCTOR' },
-      performedAt: timestamp,
       payload: {
         orderId: order.id,
         medicationName,
         dose: `${dose} ${doseUnit}`,
         route,
         frequency,
+        workflowType,
         slotCount: scheduleSlots.length
       }
     };
@@ -274,7 +271,73 @@ class MedicationLifecycleEngine {
   }
 
   /**
-   * 2. Pharmacy Verification & Dispensing (Apoteker ➔ Verify & Allocate FEFO Batch)
+   * 2. Cancel Medication Order (Doctor / System ➔ Cancel Active Order)
+   */
+  async cancelMedicationOrder({
+    orderId,
+    cancelledById,
+    cancelledByName,
+    cancellationReason = 'Clinical order cancelled by physician',
+    commandId = null,
+    correlationId = null
+  }) {
+    if (commandId && this.processedCommandIds.has(commandId)) {
+      return this.processedCommandIds.get(commandId);
+    }
+
+    const order = await persistenceAdapter.findById(this.ORDERS_COLLECTION, orderId);
+    if (!order) throw new Error(`[MedicationLifecycle] Order "${orderId}" not found`);
+
+    const timestamp = new Date().toISOString();
+    const previousState = order.status;
+    order.status = MEDICATION_ORDER_STATES.CANCELLED;
+    order.version = (order.version || 1) + 1;
+    order.cancellationInfo = {
+      cancelledById,
+      cancelledByName,
+      cancellationReason,
+      cancelledAt: timestamp
+    };
+
+    // Mark remaining scheduled slots as CANCELLED
+    order.scheduleSlots = order.scheduleSlots.map(s => {
+      if (s.status === MEDICATION_SLOT_STATES.SCHEDULED || s.status === MEDICATION_SLOT_STATES.PREPARED) {
+        return { ...s, status: MEDICATION_SLOT_STATES.CANCELLED, version: (s.version || 1) + 1 };
+      }
+      return s;
+    });
+
+    order.updatedAt = timestamp;
+    await persistenceAdapter.save(this.ORDERS_COLLECTION, order.id, order);
+
+    const event = {
+      id: `EVT-MED-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+      eventVersion: '1.0',
+      aggregateId: order.id,
+      aggregateVersion: order.version,
+      correlationId: correlationId || `CORR-CANCEL-${Date.now()}`,
+      commandId,
+      eventType: MEDICATION_EVENTS.CANCEL_ORDER,
+      patientId: order.patientId,
+      encounterId: order.encounterId,
+      medicationOrderId: order.id,
+      administrationSlotId: null,
+      previousState,
+      newState: MEDICATION_ORDER_STATES.CANCELLED,
+      occurredAt: timestamp,
+      recordedAt: timestamp,
+      performedBy: { id: cancelledById, name: cancelledByName, role: 'DOCTOR' },
+      payload: order.cancellationInfo
+    };
+    await persistenceAdapter.save(this.EVENTS_COLLECTION, event.id, event);
+
+    const response = { success: true, order, event };
+    if (commandId) this.processedCommandIds.set(commandId, response);
+    return response;
+  }
+
+  /**
+   * 3. Pharmacy Verification & Dispensing (Apoteker ➔ Verify & Allocate FEFO Batch)
    */
   async verifyAndDispense({
     orderId,
@@ -295,10 +358,14 @@ class MedicationLifecycleEngine {
     const order = await persistenceAdapter.findById(this.ORDERS_COLLECTION, orderId);
     if (!order) throw new Error(`[MedicationLifecycle] Order "${orderId}" not found`);
     if (order.status === MEDICATION_ORDER_STATES.CANCELLED) {
-      throw new Error(`[MedicationSafety] Cannot dispense a CANCELLED medication order`);
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.ORDER_CANCELLED,
+        `Cannot dispense a CANCELLED medication order`
+      );
     }
 
     const timestamp = new Date().toISOString();
+    const previousState = order.status;
     order.status = MEDICATION_ORDER_STATES.DISPENSED;
     order.version = (order.version || 1) + 1;
     order.dispenseInfo = {
@@ -321,11 +388,17 @@ class MedicationLifecycleEngine {
       aggregateId: order.id,
       aggregateVersion: order.version,
       correlationId: correlationId || `CORR-DISP-${Date.now()}`,
+      commandId,
       eventType: MEDICATION_EVENTS.DISPENSE_MEDICATION,
       patientId: order.patientId,
       encounterId: order.encounterId,
+      medicationOrderId: order.id,
+      administrationSlotId: null,
+      previousState,
+      newState: MEDICATION_ORDER_STATES.DISPENSED,
+      occurredAt: timestamp,
+      recordedAt: timestamp,
       performedBy: { id: pharmacistId, name: pharmacistName, role: 'PHARMACIST' },
-      performedAt: timestamp,
       payload: order.dispenseInfo
     };
     await persistenceAdapter.save(this.EVENTS_COLLECTION, event.id, event);
@@ -336,7 +409,7 @@ class MedicationLifecycleEngine {
   }
 
   /**
-   * 3. Point-of-Care Bedside Medication Administration (7-Rights & Dual Verification Engine)
+   * 4. Point-of-Care Bedside Medication Administration (7-Rights & Dual Verification Engine)
    */
   async administerDose({
     orderId,
@@ -363,15 +436,29 @@ class MedicationLifecycleEngine {
     const order = await persistenceAdapter.findById(this.ORDERS_COLLECTION, orderId);
     if (!order) throw new Error(`[MedicationLifecycle] Order "${orderId}" not found`);
 
-    // Invariant Check: Order must not be cancelled
+    // Invariant Check 1: Order must not be cancelled
     if (order.status === MEDICATION_ORDER_STATES.CANCELLED) {
-      throw new Error(`[MedicationSafety:HARD_STOP] Cannot administer dose from CANCELLED order "${order.orderNumber}"`);
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.ORDER_CANCELLED,
+        `Cannot administer dose from CANCELLED order "${order.orderNumber}"`
+      );
     }
 
-    // 2. Fetch Active Patient Encounter & Verify Invariant
+    // 2. Fetch Active Patient Encounter & Verify Invariants
     const encounter = await persistenceAdapter.findById('encounters', order.encounterId);
-    if (encounter && TERMINAL_STATES.has(encounter.primaryState)) {
-      throw new Error(`[MedicationSafety:HARD_STOP] Patient is already in terminal state "${encounter.primaryState}". Bedside administration blocked.`);
+    if (encounter) {
+      if (encounter.primaryState === CARE_STATES.DECEASED) {
+        throw new MedicationSafetyException(
+          MED_ERROR_CODES.PATIENT_TERMINAL,
+          `Patient is DECEASED. All medication administration strictly prohibited.`
+        );
+      }
+      if (encounter.primaryState === CARE_STATES.DISCHARGED && order.workflowType !== 'DISCHARGE_TAKE_HOME') {
+        throw new MedicationSafetyException(
+          MED_ERROR_CODES.DISCHARGE_BEDSIDE_ADMIN_BLOCKED,
+          `Patient is already DISCHARGED from hospital. Inpatient bedside administration is blocked.`
+        );
+      }
     }
 
     // 3. Find Schedule Slot
@@ -382,28 +469,44 @@ class MedicationLifecycleEngine {
 
     // Optimistic Concurrency Control (OCC) Check on Slot
     if (expectedSlotVersion !== null && slot.version !== undefined && slot.version !== expectedSlotVersion) {
-      throw new Error(`[MedicationLifecycle:OCC_CONFLICT] Slot "${slotId}" was already updated by another nurse. (Current Slot Version: ${slot.version}, Client Expected: ${expectedSlotVersion})`);
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.OCC_CONFLICT,
+        `Slot "${slotId}" was already modified by another clinical actor (Server Slot Version: ${slot.version}, Client Expected: ${expectedSlotVersion})`
+      );
     }
 
     // Double Administration Prevention: Slot cannot be re-administered if already terminal
     if (slot.status === MEDICATION_SLOT_STATES.ADMINISTERED) {
-      throw new Error(`[MedicationSafety:DOUBLE_ADMIN_PREVENTION] Dose for slot "${slot.scheduledTime}" has ALREADY been administered at ${slot.administeredAt} by ${slot.administeredBy?.name}. Double administration strictly blocked!`);
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.SLOT_ALREADY_ADMINISTERED,
+        `Dose for slot "${slot.scheduledTime}" has ALREADY been administered at ${slot.administeredAt} by ${slot.administeredBy?.name}. Double administration strictly blocked!`
+      );
     }
 
     // 4. Clinical Safety Invariant: High-Alert Dual Independent Verification (JCI IPSG 3)
     if (order.isHighAlert && (!coSignatureNurseId || !coSignatureNurseName)) {
-      throw new Error(`[MedicationSafety:HIGH_ALERT_POLICY] Medication "${order.medicationName}" is a HIGH-ALERT drug (${order.highAlertCategory || 'Critical'}). Independent Dual-Verification (Co-Signature) by a second RN is mandatory!`);
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.HIGH_ALERT_DUAL_SIGN_REQUIRED,
+        `Medication "${order.medicationName}" is classified as HIGH-ALERT (${order.highAlertCategory || 'High Risk'}). Independent Dual-Verification (Co-Signature) by a second RN is mandatory!`
+      );
     }
 
     // 5. 7-Rights Validation
     if (scannedPatientMrn && scannedPatientMrn !== order.mrn) {
-      throw new Error(`[MedicationSafety:WRONG_PATIENT] Barcode mismatch! Scanned Patient MRN "${scannedPatientMrn}" does NOT match order MRN "${order.mrn}"`);
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.WRONG_PATIENT,
+        `Barcode mismatch! Scanned Patient MRN "${scannedPatientMrn}" does NOT match order MRN "${order.mrn}"`
+      );
     }
     if (scannedMedicationCode && scannedMedicationCode !== order.medicationCode) {
-      throw new Error(`[MedicationSafety:WRONG_DRUG] Barcode mismatch! Scanned Drug Code "${scannedMedicationCode}" does NOT match ordered "${order.medicationCode}" (${order.medicationName})`);
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.WRONG_DRUG,
+        `Barcode mismatch! Scanned Drug Code "${scannedMedicationCode}" does NOT match ordered code "${order.medicationCode}" (${order.medicationName})`
+      );
     }
 
     const timestamp = new Date().toISOString();
+    const previousSlotState = slot.status;
 
     // 6. Mutate Slot State
     slot.status = MEDICATION_SLOT_STATES.ADMINISTERED;
@@ -441,11 +544,17 @@ class MedicationLifecycleEngine {
       aggregateId: order.id,
       aggregateVersion: order.version,
       correlationId: correlationId || `CORR-ADM-${Date.now()}`,
+      commandId,
       eventType: MEDICATION_EVENTS.ADMINISTER_DOSE,
       patientId: order.patientId,
       encounterId: order.encounterId,
+      medicationOrderId: order.id,
+      administrationSlotId: slot.slotId,
+      previousState: previousSlotState,
+      newState: MEDICATION_SLOT_STATES.ADMINISTERED,
+      occurredAt: timestamp,
+      recordedAt: timestamp,
       performedBy: { id: nurseId, name: nurseName, role: 'NURSE' },
-      performedAt: timestamp,
       payload: {
         orderId: order.id,
         slotId: slot.slotId,
@@ -466,12 +575,12 @@ class MedicationLifecycleEngine {
   }
 
   /**
-   * 4. Record Non-Administration (Right Reason: Refused, Held, Missed, Omitted)
+   * 5. Record Non-Administration (Right Reason: Refused, Held, Missed, Omitted)
    */
   async recordNonAdministration({
     orderId,
     slotId,
-    reasonCategory, // 'HELD', 'REFUSED', 'MISSED', 'CONTRAINDICATED', 'PATIENT_UNAVAILABLE'
+    reasonCategory,
     detailedReason,
     nurseId,
     nurseName,
@@ -483,7 +592,10 @@ class MedicationLifecycleEngine {
     }
 
     if (!reasonCategory || !detailedReason) {
-      throw new Error(`[MedicationSafety:RIGHT_REASON] Recording non-administration requires a clinical reasonCategory and detailedReason`);
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.RIGHT_REASON_REQUIRED,
+        `Recording non-administration requires a clinical reasonCategory and detailedReason`
+      );
     }
 
     const order = await persistenceAdapter.findById(this.ORDERS_COLLECTION, orderId);
@@ -494,6 +606,7 @@ class MedicationLifecycleEngine {
 
     const slot = order.scheduleSlots[slotIndex];
     const timestamp = new Date().toISOString();
+    const previousSlotState = slot.status;
 
     const targetStatus = reasonCategory === 'REFUSED' 
       ? MEDICATION_SLOT_STATES.REFUSED 
@@ -520,11 +633,17 @@ class MedicationLifecycleEngine {
       aggregateId: order.id,
       aggregateVersion: order.version,
       correlationId: correlationId || `CORR-NONADMIN-${Date.now()}`,
+      commandId,
       eventType: reasonCategory === 'REFUSED' ? MEDICATION_EVENTS.RECORD_REFUSED_DOSE : MEDICATION_EVENTS.RECORD_HELD_DOSE,
       patientId: order.patientId,
       encounterId: order.encounterId,
+      medicationOrderId: order.id,
+      administrationSlotId: slot.slotId,
+      previousState: previousSlotState,
+      newState: targetStatus,
+      occurredAt: timestamp,
+      recordedAt: timestamp,
       performedBy: { id: nurseId, name: nurseName, role: 'NURSE' },
-      performedAt: timestamp,
       payload: {
         orderId: order.id,
         slotId: slot.slotId,

@@ -1,7 +1,7 @@
 /**
- * Sprint 3A: Medication Lifecycle Platform Adversarial Test Suite
+ * Sprint 3A & 3B: Medication Lifecycle Platform Adversarial Test Suite
  * Validates: 7-Rights Invariants, Schedule Slot Engine, High-Alert Dual Check,
- * Double Administration Prevention, OCC & Idempotency Key Deduplication.
+ * Double Administration Prevention, OCC, Machine-Readable Error Codes & Idempotency.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -9,12 +9,13 @@ import {
   medicationLifecycleEngine, 
   MEDICATION_ORDER_STATES, 
   MEDICATION_SLOT_STATES,
-  HIGH_ALERT_CATEGORIES
+  HIGH_ALERT_CATEGORIES,
+  MED_ERROR_CODES
 } from '../src/core/services/medicationLifecycleEngine.service.js';
 import { persistenceAdapter, DB_ENGINE_TYPES } from '../src/core/services/persistenceAdapter.service.js';
 import { CARE_STATES } from '../src/core/services/careStateEngine.service.js';
 
-describe('Sprint 3A: Medication Lifecycle Platform & Safety Invariants Suite', () => {
+describe('Sprint 3A & 3B: Medication Lifecycle Platform & Machine-Readable Safety Invariants Suite', () => {
   beforeEach(() => {
     persistenceAdapter.setEngine(DB_ENGINE_TYPES.IN_MEMORY);
   });
@@ -90,7 +91,7 @@ describe('Sprint 3A: Medication Lifecycle Platform & Safety Invariants Suite', (
   });
 
   // 2. Invariant Check: High-Alert Dual-Verification Policy (JCI IPSG 3)
-  it('2. should enforce independent dual-signature verification for High-Alert medications (Insulin / Opioid)', async () => {
+  it('2. should enforce independent dual-signature verification with HIGH_ALERT_DUAL_SIGN_REQUIRED code', async () => {
     const enc = {
       id: 'ENC-HIGH-ALERT',
       encounterNumber: 'REG-2026-HA',
@@ -123,16 +124,19 @@ describe('Sprint 3A: Medication Lifecycle Platform & Safety Invariants Suite', (
     const slot1 = rxRes.order.scheduleSlots[0];
 
     // Single Nurse attempts administration without second co-signature ➔ Hard Stop!
-    await expect(
-      medicationLifecycleEngine.administerDose({
+    try {
+      await medicationLifecycleEngine.administerDose({
         orderId: rxRes.order.id,
         slotId: slot1.slotId,
         nurseId: 'NURSE-001',
         nurseName: 'Ners Dewi',
         scannedPatientMrn: 'MRN-2026-HA001',
         scannedMedicationCode: 'MED-INS-NOVORAPID'
-      })
-    ).rejects.toThrow(/HIGH_ALERT_POLICY/);
+      });
+      expect.fail('Should have thrown HIGH_ALERT_DUAL_SIGN_REQUIRED');
+    } catch (err) {
+      expect(err.code).toBe(MED_ERROR_CODES.HIGH_ALERT_DUAL_SIGN_REQUIRED);
+    }
 
     // With Dual Co-Signature ➔ Passes
     const adminWithDualSign = await medicationLifecycleEngine.administerDose({
@@ -151,7 +155,7 @@ describe('Sprint 3A: Medication Lifecycle Platform & Safety Invariants Suite', (
   });
 
   // 3. Invariant Check: 7-Rights Barcode Mismatch Blocks
-  it('3. should strictly reject administration when scanned patient MRN or drug code mismatches', async () => {
+  it('3. should strictly reject administration with WRONG_PATIENT or WRONG_DRUG machine-readable codes', async () => {
     const enc = {
       id: 'ENC-MISMATCH-TEST',
       patientId: 'PAT-MISMATCH',
@@ -180,28 +184,34 @@ describe('Sprint 3A: Medication Lifecycle Platform & Safety Invariants Suite', (
     const slot1 = rxRes.order.scheduleSlots[0];
 
     // Wrong Patient Scanned
-    await expect(
-      medicationLifecycleEngine.administerDose({
+    try {
+      await medicationLifecycleEngine.administerDose({
         orderId: rxRes.order.id,
         slotId: slot1.slotId,
         nurseId: 'NURSE-001',
         nurseName: 'Ners Dewi',
         scannedPatientMrn: 'MRN-WRONG-PATIENT-999',
         scannedMedicationCode: 'MED-CEFTRIAXONE-1G'
-      })
-    ).rejects.toThrow(/WRONG_PATIENT/);
+      });
+      expect.fail('Should have failed with WRONG_PATIENT');
+    } catch (err) {
+      expect(err.code).toBe(MED_ERROR_CODES.WRONG_PATIENT);
+    }
 
     // Wrong Drug Scanned
-    await expect(
-      medicationLifecycleEngine.administerDose({
+    try {
+      await medicationLifecycleEngine.administerDose({
         orderId: rxRes.order.id,
         slotId: slot1.slotId,
         nurseId: 'NURSE-001',
         nurseName: 'Ners Dewi',
         scannedPatientMrn: 'MRN-2026-ROBBY',
         scannedMedicationCode: 'MED-CEFOTAXIME-1G'
-      })
-    ).rejects.toThrow(/WRONG_DRUG/);
+      });
+      expect.fail('Should have failed with WRONG_DRUG');
+    } catch (err) {
+      expect(err.code).toBe(MED_ERROR_CODES.WRONG_DRUG);
+    }
   });
 
   // 4. Clinical Exception Path: Refused / Held with Right Reason
@@ -249,7 +259,7 @@ describe('Sprint 3A: Medication Lifecycle Platform & Safety Invariants Suite', (
   });
 
   // 5. Adversarial Concurrency & Double Administration Prevention
-  it('5. should prevent concurrent double administration and deduplicate retried commands idempotently', async () => {
+  it('5. should prevent concurrent double administration with SLOT_ALREADY_ADMINISTERED and deduplicate retries', async () => {
     const enc = {
       id: 'ENC-CONCURRENT-MED',
       patientId: 'PAT-CONC',
@@ -305,9 +315,9 @@ describe('Sprint 3A: Medication Lifecycle Platform & Safety Invariants Suite', (
     });
     expect(retryAttempt).toBe(attemptA);
 
-    // Nurse B concurrently attempting on the same slot without the same commandId ➔ DOUBLE ADMIN BLOCKED!
-    await expect(
-      medicationLifecycleEngine.administerDose({
+    // Nurse B concurrently attempting on the same slot without the same commandId ➔ SLOT_ALREADY_ADMINISTERED!
+    try {
+      await medicationLifecycleEngine.administerDose({
         orderId: rxRes.order.id,
         slotId: slot1.slotId,
         nurseId: 'NURSE-B',
@@ -315,7 +325,10 @@ describe('Sprint 3A: Medication Lifecycle Platform & Safety Invariants Suite', (
         scannedPatientMrn: 'MRN-2026-BAMBANG',
         scannedMedicationCode: 'MED-ONDANSETRON-4MG',
         commandId: 'CMD-DIFFERENT-NURSE-B'
-      })
-    ).rejects.toThrow(/DOUBLE_ADMIN_PREVENTION/);
+      });
+      expect.fail('Should have thrown SLOT_ALREADY_ADMINISTERED');
+    } catch (err) {
+      expect(err.code).toBe(MED_ERROR_CODES.SLOT_ALREADY_ADMINISTERED);
+    }
   });
 });
