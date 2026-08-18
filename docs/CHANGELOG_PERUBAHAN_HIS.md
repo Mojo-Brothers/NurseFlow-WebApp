@@ -20,6 +20,32 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 38: CLINICAL WORKFLOW TORTURE TEST, SAFETY AUDIT & CLINICAL ACTIONABILITY COCKPIT — 4 SKENARIO END-TO-END PERSONA KLINIS, HARD ENCOUNTER BOUNDARY, WORM AUDIT PROVENANCE, DAN PENDING ACTION DECISION ENGINE
+
+**Tag Rilis:** `clinical-actionability-verified`  
+**Kategori:** `[MAJOR]` `[CLINICAL_ACTIONABILITY]` `[SAFETY_AUDIT]` `[HARD_ENCOUNTER_BOUNDARY]` `[WORM_AUDIT_PROVENANCE]` `[E2E_WORKFLOW_TORTURE_TEST]`  
+**Status:** 100% Passed (94/94 Vitest Suites, 443 Tests Passed), 4 Skenario Klinis Nyata (IGD Anonim, IGD $\rightarrow$ Ranap, Ranap $\rightarrow$ Pulang, Pasien Lama Kembali) Lolos 100%, Cockpit Terverifikasi di Browser.
+
+**Pencapaian Lengkap Sprint 38 (Clinical Actionability & Workflow Torture Test):**
+1. **Pembangunan `clinicalActionabilityEngine.service.js`:**
+   - Menghitung secara real-time status aksi klinis aktif: *Active Problems (Masalah Aktif)*, *Pending Actions (Tindakan Tertunda yang Wajib Ditindaklanjuti)*, *Critical Lab / Safety Flags*, dan *Jejak Event Terakhir*.
+   - Menerapkan **Clinical Applicability Matrix** yang ketat (`Form ➔ Role ➔ Encounter Type ➔ Care State ➔ Permission ➔ Write Policy`).
+2. **Integrasi Clinical Actionability & Decision Cockpit di `UnifiedPatientChart.jsx`:**
+   - Mentransformasi Patient Chart dari sekadar "penampil formulir pasif" menjadi **Actionable Clinical Cockpit** yang menjawab pertanyaan klinis dalam hitungan detik (*What to do NOW*).
+   - Tombol **`Tindak ⚡`** pada daftar tugas pending langsung membuka formulir target (misal: Rekonsiliasi Obat, Pengkajian Awal, Resume Medis) dalam 1 klik.
+3. **Penerapan *Hard Encounter Boundary* (Pemisahan Tegas Riwayat Historis vs Kunjungan Aktif):**
+   - Kunjungan masa lalu yang telah berstatus terminal/closed otomatis dikunci sebagai arsip *Read-Only* dengan watermark medikolegal, mencegah kontaminasi state antar-kunjungan.
+4. **Validasi 4 Skenario Perjalanan Pasien Nyata (*Clinical Workflow Torture Test*):**
+   - **Skenario 1 (IGD Pasien Anonim):** Registrasi Mr. X $\rightarrow$ Triase ESI 2 Cito $\rightarrow$ CPOE Resep/Lab $\rightarrow$ eMAR $\rightarrow$ CPPT $\rightarrow$ Disposisi.
+   - **Skenario 2 (IGD $\rightarrow$ Admisi Rawat Inap):** SPRI $\rightarrow$ Alokasi Bed ADT $\rightarrow$ Pengkajian AOP 1.1 $\rightarrow$ Rekonsiliasi Obat $\rightarrow$ ISBAR Handover.
+   - **Skenario 3 (Rawat Inap $\rightarrow$ Discharge):** Visite Harian $\rightarrow$ eMAR 5-Benar $\rightarrow$ Kesiapan Pulang $\rightarrow$ Resume Medis $\rightarrow$ Terminal Closed Lock.
+   - **Skenario 4 (Pasien Lama Kembali):** Isolasi multi-encounter tanpa kebocoran konteks rekam medis.
+5. **Verifikasi *WORM Immutable Audit Provenance*:**
+   - Memvalidasi silsilah versi event (`version lineage`, `correlationId`, `actorId`, `performed_at`) dan resistensi manipulasi data.
+   - 94 test suite (443 skenario pengujian) lulus 100%.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 37: UNIFIED PATIENT CHART & LONGITUDINAL CLINICAL DOSSIER PLATFORM — MIGRASI PARADIGMA DARI DEPARTMENT-CENTRIC MENUJU PATIENT-CENTRIC, KONSOLIDASI 34 FORMULIR MEDIS JCI TERPADU, ATRIBUT DATA ENCOUNTER VISIBILITY, DAN INTEGRASI WORKLIST
 
 **Tag Rilis:** `unified-patient-chart-ready`  
