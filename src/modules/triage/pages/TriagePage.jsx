@@ -55,12 +55,15 @@ export default function TriagePage() {
         patientId: newPatient.id,
         encounterType: 'emergency',
         chiefComplaint: 'Pasien darurat tidak sadar (Trauma / Cito)',
-        status: 'TRIAGE',
+        status: 'TRIAGE_PENDING',
+        primaryState: 'TRIAGE_PENDING',
         triageStatus: 'PENDING',
-        department: 'IGD'
+        department: 'IGD',
+        departmentId: 'DEPT-IGD',
+        departmentName: 'Instalasi Gawat Darurat (IGD)'
       }, user?.email || 'system');
 
-      setLiveContext(newPatient.id, encounterId);
+      setLiveContext(newPatient.id, encounterId, 'TRIAGE_PENDING');
       setActiveTab('RAPID_INTAKE');
       toast.success(`🚨 Pasien Darurat ${newPatient.name} dibuat! Langsung masuk form triase cepat.`);
     } catch (error) {

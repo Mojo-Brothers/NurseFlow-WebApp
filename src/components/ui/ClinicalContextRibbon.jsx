@@ -1,32 +1,33 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/useAuth.js';
 import { useEncounterStore } from '../../modules/encounter/encounter.store.js';
 import { usePatientStore } from '../../modules/patient/patient.store.js';
 import { useNotificationStore } from '../../core/stores/notification.store.js';
+import { careWorkspaceResolver } from '../../core/services/careWorkspaceResolver.service.js';
 import NotificationCenterModal from './NotificationCenterModal.jsx';
 import toast from 'react-hot-toast';
 
 export default function ClinicalContextRibbon() {
-  const { currentUser } = useAuth();
-  const { activePatientId } = useEncounterStore();
+  const navigate = useNavigate();
+  const { currentUser, role } = useAuth();
+  const { activePatientId, activeEncounterId, currentCareState, currentLocation } = useEncounterStore();
   const { patients } = usePatientStore();
   const { notifications, togglePanel } = useNotificationStore();
 
   const unreadCount = notifications.filter(n => !n.read).length;
-  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || (activePatientId ? {
-    id: activePatientId,
-    mrn: activePatientId,
-    name: 'Tn. Hendra (Mr. X)',
-    age: '42 Thn',
-    gender: 'Laki-laki',
-    bed: 'Bed OK-01 (IBS) / Bed ICU-02',
-    insurance: 'BPJS Kesehatan (PBI)',
-    triageLevel: 'ESI 2 (EMERGENCY)',
-    codeStatus: 'FULL CODE',
-    allergies: ['Penicillin G', 'Sulfa'],
-    dpjp: 'dr. Budi Santoso, Sp.B',
-    criticalAlert: 'Troponin-I ↑ High (0.84 ng/ml)'
-  } : null);
+  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || null;
+
+  const handleNavigateToActiveWorkspace = () => {
+    if (!activePatient) return;
+    const resolution = careWorkspaceResolver.resolve({
+      careState: currentCareState || activePatient.status,
+      role: role || 'DOCTOR',
+      encounterId: activeEncounterId
+    });
+    navigate(resolution.path);
+    toast.success(`⚡ Beralih ke ${resolution.workspaceName}`, { icon: '🩺' });
+  };
 
   const handleTriggerCodeBlue = () => {
     toast.error('🚨 CODE BLUE ACTIVATED: Tim Resusitasi IGD / ICU dipanggil segera!', {
@@ -56,10 +57,24 @@ export default function ClinicalContextRibbon() {
               <span className="text-[11px] text-cyan-100">({activePatient.age || '42 Th'} • {activePatient.gender || 'L'})</span>
             </div>
 
-            {/* Bed & Acuity */}
+            {/* Canonical Care State Badge (Clickable to Workspace) */}
+            <button
+              type="button"
+              onClick={handleNavigateToActiveWorkspace}
+              className="px-2.5 py-1 rounded-lg bg-teal-900/90 text-teal-200 border border-teal-500/60 font-black text-[10px] uppercase flex items-center gap-1 hover:bg-teal-800 transition-colors cursor-pointer"
+              title="Klik untuk membuka Ruang Kerja Aktif Pasien"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+              <span>{currentCareState || activePatient.status || 'INPATIENT_ACTIVE'}</span>
+              <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+            </button>
+
+            {/* Bed & Location */}
             <div className="flex items-center gap-1 bg-[#014460] px-2 py-1 rounded-lg border border-[#02759f]">
-              <span className="material-symbols-outlined text-[15px] text-cyan-300">bed</span>
-              <span className="font-bold text-cyan-100">{activePatient.bed || 'Bed Ranap A-302'}</span>
+              <span className="material-symbols-outlined text-[15px] text-cyan-300">location_on</span>
+              <span className="font-bold text-cyan-100">
+                {currentLocation?.bedCode ? `Bed ${currentLocation.bedCode}` : (activePatient.room || 'Bed Ranap Melati 201-A')}
+              </span>
             </div>
 
             {/* Insurance */}
@@ -67,16 +82,6 @@ export default function ClinicalContextRibbon() {
               {typeof activePatient.insurance === 'string'
                 ? activePatient.insurance
                 : activePatient.insurance?.name || activePatient.payer || 'BPJS AKTIF'}
-            </span>
-
-            {/* Triage Acuity */}
-            <span className="px-2 py-0.5 rounded bg-rose-900 text-rose-200 border border-rose-500/50 font-black text-[10px] uppercase">
-              {activePatient.triageLevel || 'ESI 2'}
-            </span>
-
-            {/* Code Status */}
-            <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-200 border border-slate-700 font-mono font-bold text-[10px]">
-              {activePatient.codeStatus || 'FULL CODE'}
             </span>
 
             {/* Allergies Warning */}
@@ -89,16 +94,9 @@ export default function ClinicalContextRibbon() {
               </span>
             )}
 
-            {/* Lab Critical Alert */}
-            {activePatient.criticalAlert && (
-              <span className="px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-600 font-mono font-bold text-[10px]">
-                ⚡ {activePatient.criticalAlert}
-              </span>
-            )}
-
             {/* DPJP */}
             <span className="text-[11px] text-cyan-200 hidden lg:inline">
-              DPJP: <strong className="text-white">{activePatient.dpjp || 'dr. Budi Santoso, Sp.B'}</strong>
+              DPJP: <strong className="text-white">{activePatient.dpjp || 'dr. Surya Johnson, Sp.PD'}</strong>
             </span>
 
             {/* Clear Patient Context Button */}

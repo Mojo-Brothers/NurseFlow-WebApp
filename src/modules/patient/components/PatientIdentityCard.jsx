@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/useAuth.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
+import { careWorkspaceResolver } from '../../../core/services/careWorkspaceResolver.service.js';
 import toast from 'react-hot-toast';
 
 export default function PatientIdentityCard({ 
@@ -10,7 +12,8 @@ export default function PatientIdentityCard({
   onOpenGlobalSearch 
 }) {
   const navigate = useNavigate();
-  const { liveContext, clearLiveContext } = useEncounterStore();
+  const { role } = useAuth();
+  const { liveContext, currentCareState, activeEncounterId } = useEncounterStore();
 
   if (!patient) {
     return (
@@ -39,6 +42,7 @@ export default function PatientIdentityCard({
   }
 
   const isEmergencyAnon = patient.status === 'EMERGENCY' || patient.name?.startsWith('Mr. X') || patient.name?.startsWith('Mrs. X');
+  const activeState = currentCareState || (isEmergencyAnon ? 'IGD_ACTIVE' : 'INPATIENT_ACTIVE');
 
   // Calculate age from DOB
   const calculateAge = (dob) => {
@@ -57,11 +61,13 @@ export default function PatientIdentityCard({
   };
 
   const handleOpenWorkspace = () => {
-    if (patient.status === 'EMERGENCY' || isEmergencyAnon) {
-      navigate('/triage');
-    } else {
-      navigate('/doctor-workspace');
-    }
+    const resolution = careWorkspaceResolver.resolve({
+      careState: activeState,
+      role: role || 'DOCTOR',
+      encounterId: activeEncounterId
+    });
+    navigate(resolution.path);
+    toast.success(`⚡ Membuka ${resolution.workspaceName}`, { icon: '🩺' });
   };
 
   return (
@@ -89,23 +95,23 @@ export default function PatientIdentityCard({
                 {patient.mrn}
               </span>
 
-              {isEmergencyAnon ? (
+              <span className="px-2.5 py-0.5 rounded-lg bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 text-[10px] font-black uppercase flex items-center gap-1 border border-teal-300 dark:border-teal-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
+                STATE: {activeState}
+              </span>
+
+              {isEmergencyAnon && (
                 <span className="px-2.5 py-0.5 rounded-lg bg-rose-600 text-white text-[10px] font-black uppercase tracking-wider animate-pulse">
                   🚨 PASIEN ANONIM DARURAT
                 </span>
-              ) : (
-                <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase ${
-                  patient.gender === 'F' || patient.demographics?.gender === 'F'
-                    ? 'bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300' 
-                    : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
-                }`}>
-                  {patient.gender === 'F' || patient.demographics?.gender === 'F' ? 'Perempuan' : 'Laki-Laki'}
-                </span>
               )}
 
-              <span className="px-2.5 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-black uppercase flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                LIVE CONTEXT AKTIF
+              <span className={`px-2.5 py-0.5 rounded-lg text-[10px] font-black uppercase ${
+                patient.gender === 'F' || patient.demographics?.gender === 'F'
+                  ? 'bg-pink-100 dark:bg-pink-950 text-pink-700 dark:text-pink-300' 
+                  : 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300'
+              }`}>
+                {patient.gender === 'F' || patient.demographics?.gender === 'F' ? 'Perempuan' : 'Laki-Laki'}
               </span>
             </div>
 
@@ -121,6 +127,16 @@ export default function PatientIdentityCard({
 
         {/* Right: Quick Action Buttons */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+          <button
+            type="button"
+            onClick={handleOpenWorkspace}
+            className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-black flex items-center gap-1.5 shadow-md shadow-teal-600/30 transition-transform active:scale-95 cursor-pointer"
+            title="Buka Ruang Kerja Klinis Berdasarkan Care State"
+          >
+            <span className="material-symbols-outlined text-[16px]">stethoscope</span>
+            <span>Buka Workspace Klinis</span>
+          </button>
+
           <button
             type="button"
             onClick={onOpenGlobalSearch}
@@ -208,7 +224,7 @@ export default function PatientIdentityCard({
             <span className="material-symbols-outlined text-[22px]">meeting_room</span>
           </div>
           <div className="flex flex-col min-w-0">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Unit / Ruangan</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Unit / Lokasi Pelayanan</span>
             <span className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
               {isEmergencyAnon ? 'IGD - Zona Resusitasi' : (patient.room || 'Bangsal Rawat Inap Melati')}
             </span>
