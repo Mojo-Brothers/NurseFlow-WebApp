@@ -258,4 +258,63 @@ describe('Sprint 2.5 Architecture Audit & Stress Verification Suite', () => {
     });
     expect(resolvedDoctorWorkspace.path).toBe('/doctor-workspace');
   });
+
+  // Audit 9: Idempotency Key & Command Deduplication (Network Retry Protection)
+  it('6. Audit 9: should deduplicate retried commands with identical commandId/idempotencyKey', async () => {
+    const enc = {
+      id: 'ENC-IDEMPOTENT-001',
+      encounterNumber: 'REG-2026-IDEM01',
+      patientId: 'PAT-IDEM01',
+      patientName: 'Kusuma Wardani',
+      mrn: 'MRN-2026-IDEM01',
+      primaryState: CARE_STATES.REGISTERED,
+      status: 'REGISTERED'
+    };
+    await persistenceAdapter.save('encounters', enc.id, enc);
+
+    const commandId = 'CMD-TRANSFER-ICU-UUID-9876';
+
+    // First Execution
+    const firstAttempt = await careStateEngine.transition({
+      encounterId: 'ENC-IDEMPOTENT-001',
+      targetState: CARE_STATES.TRIAGE_PENDING,
+      eventType: CLINICAL_EVENTS.START_TRIAGE,
+      actorName: 'Ners Triase',
+      metadata: { commandId }
+    });
+    expect(firstAttempt.success).toBe(true);
+
+    // Network Retry with exact same commandId
+    const retryAttempt = await careStateEngine.transition({
+      encounterId: 'ENC-IDEMPOTENT-001',
+      targetState: CARE_STATES.TRIAGE_PENDING,
+      eventType: CLINICAL_EVENTS.START_TRIAGE,
+      actorName: 'Ners Triase',
+      metadata: { commandId }
+    });
+
+    // Must return cached result without creating a duplicate event
+    expect(retryAttempt).toBe(firstAttempt);
+    const eventStream = await careStateEngine.getEventStreamByEncounter('ENC-IDEMPOTENT-001');
+    expect(eventStream.length).toBe(1); // Exact 1 event, zero duplicate!
+  });
+
+  // Audit 10: Device Form-Factor Support in Workspace Resolver
+  it('7. Audit 10: should resolve device-aware views (Large Display / Central Station vs Desktop)', () => {
+    const largeDisplayRes = careWorkspaceResolver.resolve({
+      careState: CARE_STATES.INPATIENT_ACTIVE,
+      role: 'NURSE',
+      device: 'LARGE_DISPLAY'
+    });
+    expect(largeDisplayRes.viewMode).toBe('CENTRAL_STATION_TELEMETRY');
+    expect(largeDisplayRes.workspaceName).toContain('Central Station');
+
+    const desktopRes = careWorkspaceResolver.resolve({
+      careState: CARE_STATES.INPATIENT_ACTIVE,
+      role: 'NURSE',
+      device: 'DESKTOP'
+    });
+    expect(desktopRes.path).toBe('/nursing-workspace');
+  });
 });
+

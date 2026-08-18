@@ -179,6 +179,7 @@ class CareStateEngine {
     this.EVENTS_COLLECTION = 'patient_care_state_events';
     this.ENCOUNTERS_COLLECTION = 'encounters';
     this.PROJECTIONS_COLLECTION = 'care_state_projections';
+    this.processedCommandIds = new Map();
   }
 
   /**
@@ -218,6 +219,12 @@ class CareStateEngine {
     if (!encounterId) throw new Error('[CareStateEngine] encounterId is mandatory');
     if (!targetState || !CARE_STATES[targetState]) {
       throw new Error(`[CareStateEngine] Invalid targetState: "${targetState}"`);
+    }
+
+    // 0. Idempotency Key Check (Deduplicate retried network commands)
+    const commandId = metadata?.commandId || metadata?.idempotencyKey;
+    if (commandId && this.processedCommandIds.has(commandId)) {
+      return this.processedCommandIds.get(commandId);
     }
 
     // 1. Fetch current Encounter
@@ -358,11 +365,17 @@ class CareStateEngine {
       icon: isTerminal ? 'task_alt' : 'clinical_notes'
     });
 
-    return {
+    const response = {
       success: true,
       encounter: savedEncounter,
       event: careEvent
     };
+
+    if (commandId) {
+      this.processedCommandIds.set(commandId, response);
+    }
+
+    return response;
   }
 
   /**

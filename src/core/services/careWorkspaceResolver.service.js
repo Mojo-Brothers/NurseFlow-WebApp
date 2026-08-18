@@ -32,7 +32,7 @@ export const USER_ROLES = {
 class CareWorkspaceResolver {
   /**
    * Context-Aware Dynamic Workspace Resolver
-   * Resolves: Care State + Role + Permission + Department + Specialty + Location
+   * Resolves: Care State + Role + Permission + Department + Specialty + Location + Device
    */
   resolve({ 
     careState, 
@@ -40,14 +40,26 @@ class CareWorkspaceResolver {
     department = null,
     specialty = null,
     location = null,
+    device = 'DESKTOP',
     encounterId = null, 
     isTerminal = false 
   }) {
     const normalizedRole = (role || '').toUpperCase();
     const normalizedDept = (department || '').toUpperCase();
     const normalizedSpecialty = (specialty || '').toUpperCase();
+    const normalizedDevice = (device || 'DESKTOP').toUpperCase();
     const effectiveState = careState || CARE_STATES.REGISTERED;
     const isEncounterClosed = isTerminal || TERMINAL_STATES.has(effectiveState);
+
+    // 0. Large Display / Central Station Overview Mode
+    if (normalizedDevice.includes('LARGE_DISPLAY') || normalizedDevice.includes('TV')) {
+      return {
+        path: '/patients',
+        workspaceName: 'Central Station Command Center & Sensus Bangsal',
+        moduleDomain: 'DASHBOARD',
+        viewMode: 'CENTRAL_STATION_TELEMETRY'
+      };
+    }
 
     // 1. Terminal / Closed Encounters always route to Historical / Readonly View
     if (isEncounterClosed) {
@@ -56,6 +68,7 @@ class CareWorkspaceResolver {
         workspaceName: 'Rekam Medis Historis (Readonly)',
         moduleDomain: 'REPORTING',
         isReadOnly: true,
+        viewMode: 'HISTORICAL_READONLY',
         badgeLabel: effectiveState === CARE_STATES.DECEASED ? 'DECEASED' : 'CLOSED ENCOUNTER',
         badgeColor: effectiveState === CARE_STATES.DECEASED ? 'bg-slate-900 text-white' : 'bg-slate-200 text-slate-700'
       };
