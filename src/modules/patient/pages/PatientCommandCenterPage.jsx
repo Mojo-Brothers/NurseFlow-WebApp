@@ -16,6 +16,9 @@ export default function PatientCommandCenterPage() {
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [isEncounterModalOpen, setIsEncounterModalOpen] = useState(false);
   const [reconcileTargetPatient, setReconcileTargetPatient] = useState(null);
+  const [targetEncounterPatient, setTargetEncounterPatient] = useState(null);
+
+  const { setLiveContext } = useEncounterStore();
 
   useEffect(() => {
     fetchPatients();
@@ -30,7 +33,12 @@ export default function PatientCommandCenterPage() {
   };
 
   const handleOpenNewEncounter = (patient) => {
-    setIsEncounterModalOpen(true);
+    const target = patient || activePatient;
+    if (target) {
+      setTargetEncounterPatient(target);
+      setLiveContext(target.id || target.mrn, null);
+      setIsEncounterModalOpen(true);
+    }
   };
 
   return (
@@ -126,8 +134,11 @@ export default function PatientCommandCenterPage() {
 
       <EncounterWorkspaceModal
         isOpen={isEncounterModalOpen}
-        onClose={() => setIsEncounterModalOpen(false)}
-        patient={activePatient}
+        onClose={() => {
+          setIsEncounterModalOpen(false);
+          setTargetEncounterPatient(null);
+        }}
+        patient={targetEncounterPatient || activePatient}
         onCreated={() => {
           fetchPatients();
         }}
