@@ -20,6 +20,43 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — PHASE 4: ARCHITECTURE HARDENING, CONTROLLED LEGACY ELIMINATION & CANONICAL DOMAIN CONTRACT FREEZE (PRE-FHIR GATEWAY)
+
+**Tag Rilis:** `architecture-hardening-frozen`  
+**Kategori:** `[MAJOR]` `[ARCHITECTURE_HARDENING]` `[DEAD_CODE_ELIMINATION]` `[CANONICAL_DOMAIN_CONTRACT]` `[PRE_FHIR_FREEZE]`  
+**Status:** 100% Passed (95/95 Vitest Suites, 450 Tests Passed), 5 File Legacy Dieliminasi Tanpa Regresi, Canonical Domain Contract v1.0 Resmi Dibekukan (*Frozen*).
+
+**Pencapaian Lengkap Phase 4 (Architecture Hardening & Canonical Freeze):**
+1. **Audit Arsitektur Menyeluruh & Eliminasi Kode Legacy (*Controlled Dead Code Elimination*):**
+   - Mengaudit dependency graph secara komprehensif terhadap modul pencarian dan EMR legacy.
+   - Mengeliminasi 5 berkas fisik legacy (mengurangi >3.400 baris kode mati):
+     - `src/modules/emr/components/PatientSearchModal.jsx` (Dihapus)
+     - `src/modules/emr/components/AdvancedPatientSearchBar.jsx` (Dihapus)
+     - `src/components/ui/PillSearchBar.jsx` (Dihapus)
+     - `src/modules/emr/pages/OutpatientEMR.jsx` (Dihapus — diserap penuh ke `UnifiedPatientChart.jsx`)
+     - `src/modules/emr/pages/InpatientEMR.jsx` (Dihapus — diserap penuh ke `UnifiedPatientChart.jsx`)
+   - Membersihkan lazy import tak terpakai di `src/routes/emr.routes.jsx` tanpa merusak compatibility alias `/emr-rj` dan `/emr-ri`.
+2. **Pembekuan Canonical Clinical Domain Contract (`src/core/contracts/canonicalClinicalDomain.contract.js`):**
+   - Mendefinisikan spesifikasi kanonikal berstandar enterprise (`1.0.0-FROZEN`) untuk 8 entitas inti:
+     - `Patient` (EMPI identity, alternate keys, SATUSEHAT Patient profile target)
+     - `Encounter` (FSM lifecycle, terminal lock states, DPJP, class mapping AMB/IMP/EMER/SS)
+     - `CareState` (WORM immutable ledger, append-only policy, audit provenance)
+     - `ClinicalRecord` (JCI 34 Chapters, digital signature, WORM lineage)
+     - `Medication` (CPOE, 5-Benar, FEFO batching, eMAR events, KFA code system)
+     - `Observation` (Vitals, NEWS2, GCS, Panic Labs, LOINC code system)
+     - `Procedure` (Surgical Checklist, OK records, ICD-9-CM code system)
+     - `Document` (Legal consent, Resume medis, BSrE digital signature)
+   - Setiap entitas mencakup atribut wajib: `identity`, `ownership`, `lifecycle`, `version`, `audit provenance`, `encounter relationship`, dan `FHIR mapping target`.
+3. **Penyusunan Arsitektur Pipeline SATUSEHAT Non-Spaghetti:**
+   - Membekukan blueprint integrasi 5-tahap:
+     `NurseFlow Clinical Domain` ➔ `Canonical Clinical Events` ➔ `FHIR Mapping Layer` ➔ `FHIR R4 Resources` ➔ `SATUSEHAT Gateway`.
+   - Mengeliminasi potensi *integration spaghetti* dari pemetaan langsung di masing-masing modul UI.
+4. **Verifikasi Regresi Penuh & Browser Smoke Test:**
+   - 95 test suite (450 test) lolos 100%.
+   - Browser subagent memverifikasi navigasi `/emr-rj`, `/emr-ri`, `/patient-chart`, serta *Global Patient Search Switcher* berjalan mulus tanpa error konsol.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 38: CLINICAL WORKFLOW TORTURE TEST, SAFETY AUDIT & CLINICAL ACTIONABILITY COCKPIT — 4 SKENARIO END-TO-END PERSONA KLINIS, HARD ENCOUNTER BOUNDARY, WORM AUDIT PROVENANCE, DAN PENDING ACTION DECISION ENGINE
 
 **Tag Rilis:** `clinical-actionability-verified`  
