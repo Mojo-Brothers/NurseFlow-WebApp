@@ -155,6 +155,23 @@ class MedicationRepository {
         isNarcotic: false,
         pregnancyCategory: 'B',
         recordStatus: 'ACTIVE'
+      }),
+      new Medication({
+        id: 'MED-010',
+        genericName: 'Clopidogrel Bisulfate',
+        brandName: 'Plavix 75mg Tablet',
+        atcCode: 'B01AC04',
+        rxnormCode: '32968',
+        kfaCode: '93010022',
+        dosageForm: 'TABLET',
+        strengthAmount: 75,
+        strengthUnit: 'mg',
+        drugClassCode: 'ANTIPLATELET',
+        isHighAlert: false,
+        isLasa: false,
+        isNarcotic: false,
+        pregnancyCategory: 'B',
+        recordStatus: 'ACTIVE'
       })
     ];
 

@@ -50,7 +50,10 @@ export const migrationRunner = {
     '044_create_cdss_executions.sql',
     '045_seed_ddi_rules.sql',
     '046_seed_renal_adjustment_rules.sql',
-    '047_seed_pediatric_rules.sql'
+    '047_seed_pediatric_rules.sql',
+    '048_clinical_rule_provenance_and_governance.sql',
+    '049_immutable_cdss_execution_snapshots_and_tamper_proofing.sql',
+    '050_multi_drug_interaction_graphs.sql'
   ],
 
   verifyMigrationStatus: () => {

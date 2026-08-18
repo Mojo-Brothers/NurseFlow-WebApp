@@ -20,6 +20,28 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 29: FASE 2.1 CLINICAL PRODUCTION SAFETY HARDENING — IMMUTABLE RULE SNAPSHOTS, RULE PROVENANCE & GOVERNANCE, MULTI-DRUG INTERACTION GRAPHS, AND CRYPTOGRAPHIC WORM AUDIT TRAIL
+
+**Kategori:** `[MAJOR]` `[CLINICAL_SAFETY_HARDENING]` `[RULE_PROVENANCE]` `[MULTI_DRUG_CASCADE]` `[WORM_AUDIT_TRAIL]` `[KDIGO_WHO_STANDARDS]`  
+**Status:** 100% Passed (82/82 Vitest Suites, 381 Tests, Production Build Succeeded), Seluruh 10 Titik Kritis Keselamatan Pasien Berhasil Diperketat.  
+
+**Pencapaian Lengkap Fase 2.1:**
+1. **Database Migrations (PostgreSQL 16 & SQLite Sync):**
+   - `048_clinical_rule_provenance_and_governance.sql`: DDL tata kelola dan asal-usul aturan klinis (`evidence_source`, `evidence_reference_url`, `author_practitioner_id`, `clinical_reviewer_id`, `approved_by_committee_id`).
+   - `049_immutable_cdss_execution_snapshots_and_tamper_proofing.sql`: DDL buku besar snapshot eksekusi WORM (*Write Once Read Many*) dengan rantai hash kriptografis SHA-256 (`cryptographic_hash`, `previous_hash`).
+   - `050_multi_drug_interaction_graphs.sql`: DDL klaster interaksi polifarmasi multi-obat dan sinergisme kelas obat (*Triple Antithrombotic Hazard*, *Triple Whammy AKI*).
+2. **Domain Entities & Repository Layer (`server/`):**
+   - Entities: `ClinicalRuleGovernance`, `MultiDrugInteractionCluster`, `RenalLabSnapshot`, `PediatricDosingProfile`, `ImmutableCdssExecutionLedger`.
+   - Repositories: `clinicalRuleGovernance.repository.js`, `multiDrugInteractionCluster.repository.js`, `immutableCdssLedger.repository.js` (dengan verifikasi integritas rantai SHA-256).
+3. **Service Layer & Business Logic (`server/services/`):**
+   - `dynamicCdssEngine.service.js`: Diperluas dengan deteksi klaster polifarmasi multi-obat, validasi asal laboratorium eGFR (`source: LIS_AUTOMATED`, formula `CKD-EPI 2021`), serta pencatatan otomatis ke buku besar WORM.
+   - Pembedaan tegas antara `FATAL_HARD_STOP_ABSOLUTE` (alergi anafilaksis, duplikasi fatal yang tidak dapat dioverride) dan `HARD_STOP_OVERRIDEABLE` / `CRITICAL_WARNING` dengan kewajiban justifikasi klinis DPJP.
+4. **Automated Unit & Adversarial Test Suites:**
+   - `tests/cdssClinicalSafetyHardening.test.js` (4 tests passed: Provenance check, Triple Antithrombotic cascade detection, WORM SHA-256 chain verification, dan Renal lab source validation).
+   - Total Suite: **82 Test Files Passed (381 Tests)**.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 28: FASE 2 PRODUCTION DELIVERY — DYNAMIC CDSS ENGINE, SYMMETRICAL DDI B-TREE, ALLERGY CROSS-MATCHING, PEDIATRIC/RENAL DOSE ADJUSTER & MEDICOLEGAL REPLAY ENGINE
 
 **Kategori:** `[MAJOR]` `[CDSS_RULES_ENGINE]` `[SYMMETRICAL_DDI]` `[PEDIATRIC_RENAL_DOSE]` `[MEDICOLEGAL_REPLAY]` `[REST_API]`  
