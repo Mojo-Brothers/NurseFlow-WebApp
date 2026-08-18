@@ -20,6 +20,44 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 35: SPRINT 3D.1–3D.4 ENTERPRISE LOGISTICS SUITE & HL7 FHIR R4 INTERNAL MAPPER — ISOLATED INVENTORY EVENT STORE, BPOM ZERO-LATENCY PATIENT RECALL, WASTE MANAGEMENT, RETURN WORKFLOW, COLD-CHAIN FSM, CONTROLLED SUBSTANCES LEDGER & FHIR ADAPTERS
+
+**Tag Rilis:** `logistics-fefo-fhir-ready`  
+**Kategori:** `[MAJOR]` `[INVENTORY_EVENT_STORE]` `[BPOM_PATIENT_TRACEABILITY]` `[WASTE_MANAGEMENT]` `[RETURN_WORKFLOW]` `[COLD_CHAIN_FSM]` `[CONTROLLED_SUBSTANCES_SIPNAP]` `[HL7_FHIR_R4_MAPPER]` `[JCI_MMU]`  
+**Status:** 100% Passed (91/91 Vitest Suites, 433 Tests Passed), Seluruh 7 Domain Rekomendasi Audit Terpenuhi 100%.
+
+**Pencapaian Lengkap Sprint 3D.1 – 3D.4 & FHIR Mapper:**
+1. **Isolated Append-Only `inventory_events` Event Store (Sprint 3D.1):**
+   - Pemisahan mutlak antara event logistik pergudangan (`inventory_events`) dan event pemberian klinis (`medication_events`).
+   - Taksonomi event: `RECEIVED`, `TRANSFER_REQUESTED`, `TRANSFER_APPROVED`, `TRANSFER_DISPATCHED`, `TRANSFER_RECEIVED`, `DISPENSED`, `RETURNED`, `RESTOCKED`, `WASTED`, `QUARANTINED`, `RECALLED`, `EXPIRED`, `STOCK_OPNAME_ADJUSTED`, `STOCK_DESTRUCTION`, `TEMPERATURE_EXCURSION`.
+   - Terdaftar di `IMMUTABLE_EVENT_COLLECTIONS` adapter layer.
+2. **BPOM Recall & Zero-Latency Patient Traceability Engine (Sprint 3D.2):**
+   - Pembekuan stok instan di seluruh gudang, depo satelit, dan floor stock bangsal saat ada peringatan penarikan BPOM.
+   - Penelusuran otomatis ke `medication_events` untuk mengidentifikasi **seluruh pasien terdampak** (nama, MRN, encounter, nomor batch, tanggal & waktu pemberian, ners pelaksana, dosis) dan menerbitkan *BPOM Incident Manifest*.
+3. **Hospital Waste & Destruction Management (Sprint 3D.3):**
+   - Pencatatan limbah dan pemusnahan obat rusak dengan klasifikasi: `BROKEN`, `SPILLAGE`, `EXPIRED`, `DAMAGED`, `PARTIAL_VIAL`, `CONTAMINATED`.
+   - Wajib saksi ganda (*Dual Witness Verification*) dan pencatatan otomatis di event ledger.
+4. **Patient/Ward Return-to-Pharmacy Workflow (Sprint 3D.3):**
+   - Alur pengembalian obat dari bangsal ke instalasi farmasi: `RETURN_REQUESTED` $\rightarrow$ `RETURN_VERIFIED` $\rightarrow$ `RETURN_ACCEPTED` (Restock) atau `RETURN_WASTED`.
+5. **Cold Chain Excursion Finite State Machine (Sprint 3D.3):**
+   - Siklus status: `NORMAL` $\rightarrow$ `EXCURSION_DETECTED` $\rightarrow$ `QUARANTINED` $\rightarrow$ `UNDER_INVESTIGATION` $\rightarrow$ `RELEASED` atau `DESTROYED`.
+   - Deteksi sensor suhu IoT otomatis membekukan batch biologi/vaksin/insulin bila berada di luar rentang $2.0^\circ\text{C} - 8.0^\circ\text{C}$.
+6. **Controlled Substance (Narkotika/Psikotropika) Ledger (Sprint 3D.4):**
+   - Pembukuan khusus zat terkontrol (SIPNAP / Kemenkes RI):
+   - Penegakan invariansi matematika: $\text{Closing} = \text{Opening} + \text{Received} - \text{Dispensed} - \text{Administered} + \text{Returned} - \text{Destroyed}$.
+   - Wajib SIP Dokter, NIK/MRN Pasien, SIK Apoteker, dan Perawat Saksi.
+7. **HL7 FHIR R4 Internal Mapping Layer (`fhirMedicationMapper.service.js`):**
+   - Pemetaan model kanonikal internal ke spesifikasi FHIR R4:
+     - `MedicationOrder` $\rightarrow$ `MedicationRequest`
+     - `PharmacyDispense` $\rightarrow$ `MedicationDispense`
+     - `BedsideAdministration` $\rightarrow$ `MedicationAdministration`
+     - `DrugMaster` $\rightarrow$ `Medication` (KFA Coding)
+     - `Batch & Expiry` $\rightarrow$ `lotNumber` & `expirationDate`
+8. **Automated Adversarial Suite (`tests/fefoMultiDepotInventoryEngine.test.js`):**
+   - 91 Test Files Passed (433 Tests).
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 34: SPRINT 3D MULTI-DEPOT FEFO & BATCH/EXPIRY INVENTORY ENGINE — LOGISTIK FARMASI RS TERPADU, STRICT FEFO ALLOCATION, MUTASI DISPATCH/RECEIPT, COLD CHAIN (2-8°C), BPOM RECALL, DAN HARDENING SENSOR POC (DUPLICATE DEBOUNCE, UNSUPPORTED REJECTION, MULTI-USER OCC, LOT RECONCILIATION)
 
 **Tag Rilis:** `fefo-multidepot-verified`  
