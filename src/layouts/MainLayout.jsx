@@ -12,6 +12,7 @@ import { usePatientStore } from '../modules/patient/patient.store.js';
 import { useEncounterStore } from '../modules/encounter/encounter.store.js';
 import { useTriageStore } from '../modules/triage/triage.store.js';
 import { usePatientClipboardShortcuts } from '../hooks/usePatientClipboardShortcuts.js';
+import GlobalPatientSearchModal from '../components/common/GlobalPatientSearchModal.jsx';
 
 // Enterprise 10-Domain Navigation Schema
 const ENTERPRISE_NAV_SCHEMA = [
@@ -568,72 +569,11 @@ export default function MainLayout() {
           </div>
         </header>
 
-        {/* 3. Global Search & Command Palette Modal (Ctrl+K) */}
-        {isSearchOpen && (
-          <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-start justify-center pt-20 p-4 animate-in fade-in">
-            <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col text-xs">
-              <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-3">
-                <span className="material-symbols-outlined text-[#015C80] text-[22px]">search</span>
-                <input
-                  autoFocus
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Cari Pasien (Nama/MRN/NIK), Dokter, Obat, Hasil Lab, Jadwal Operasi, Kantong Darah..."
-                  className="flex-1 bg-transparent border-none outline-hidden text-slate-900 dark:text-white font-bold text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setIsSearchOpen(false)}
-                  className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 font-mono text-[10px] font-bold cursor-pointer"
-                >
-                  ESC
-                </button>
-              </div>
-
-              {/* Search Results List */}
-              <div className="max-h-80 overflow-y-auto p-3 space-y-1">
-                {searchQuery.trim() === '' ? (
-                  <div className="p-4 space-y-2">
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Aksi Cepat Medis:</span>
-                    <button
-                      type="button"
-                      onClick={handleCreateEmergencyPatient}
-                      className="w-full flex items-center gap-3 p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 text-rose-700 dark:text-rose-300 font-bold border border-rose-200 dark:border-rose-900 cursor-pointer"
-                    >
-                      <span className="material-symbols-outlined text-[20px]">emergency</span>
-                      <div className="text-left">
-                        <div className="text-xs font-black">Registrasi Cepat Pasien Darurat (Mr. X)</div>
-                        <div className="text-[10px] text-rose-600/80">Bypass administrasi, langsung buka triase IGD</div>
-                      </div>
-                    </button>
-                  </div>
-                ) : quickNavSearchResults.length === 0 ? (
-                  <div className="py-8 text-center text-slate-400">
-                    Tidak ditemukan data rekam medis yang sesuai dengan "{searchQuery}".
-                  </div>
-                ) : (
-                  quickNavSearchResults.map((res, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => {
-                        setIsSearchOpen(false);
-                        navigate(res.path);
-                      }}
-                      className="w-full p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between text-left transition-colors cursor-pointer"
-                    >
-                      <span className="font-bold text-slate-900 dark:text-white">{res.title}</span>
-                      <span className="px-2 py-0.5 rounded font-mono font-black text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                        {res.type}
-                      </span>
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* 3. Global Universal Clinical Patient Search Modal (Ctrl+K) */}
+        <GlobalPatientSearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+        />
 
         {/* 4. Dynamic Page Workspace (Outlet) */}
         <div className="flex-1 overflow-y-auto no-scrollbar relative">
