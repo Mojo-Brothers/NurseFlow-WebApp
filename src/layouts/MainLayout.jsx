@@ -50,8 +50,7 @@ const ENTERPRISE_NAV_SCHEMA = [
     items: [
       { name: 'Doctor Workspace (SOAP)', path: '/doctor-workspace', icon: 'stethoscope' },
       { name: 'Nursing Workspace & eMAR', path: '/nursing-workspace', icon: 'medication' },
-      { name: 'EMR Rawat Inap (Ranap)', path: '/emr-ri', icon: 'bed' },
-      { name: 'EMR Rawat Jalan (Rajal)', path: '/emr-rj', icon: 'personal_injury' }
+      { name: 'Patient Chart (Unified EMR)', path: '/patient-chart', icon: 'folder_shared' }
     ]
   },
   {

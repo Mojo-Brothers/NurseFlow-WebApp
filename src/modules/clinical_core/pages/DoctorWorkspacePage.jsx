@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import DoctorCommandCenter from '../components/DoctorCommandCenter.jsx';
 import DoctorSoapWorkspace from '../components/DoctorSoapWorkspace.jsx';
 
 export default function DoctorWorkspacePage() {
+  const navigate = useNavigate();
   const { patients, fetchPatients } = usePatientStore();
   const { activePatientId, liveContext } = useEncounterStore();
 
@@ -40,31 +42,42 @@ export default function DoctorWorkspacePage() {
           </div>
         </div>
 
-        {/* Tab Controls */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+        {/* Action Controls & Tab Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => setActiveTab('COMMAND_CENTER')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              activeTab === 'COMMAND_CENTER'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600'
-            }`}
+            onClick={() => navigate('/patient-chart')}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-black bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 hover:bg-blue-600 hover:text-white transition-all cursor-pointer shadow-2xs"
+            title="Buka Berkas Rekam Medis Longitudinal Pasien"
           >
-            <span className="material-symbols-outlined text-[16px]">dashboard</span>
-            <span>Antrean Pasien (Worklist)</span>
+            <span className="material-symbols-outlined text-[16px]">folder_shared</span>
+            <span>Buka Patient Chart</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('SOAP_WORKSPACE')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
-              activeTab === 'SOAP_WORKSPACE'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">edit_note</span>
-            <span>Konsultasi CPPT / SOAP</span>
-          </button>
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+            <button
+              onClick={() => setActiveTab('COMMAND_CENTER')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTab === 'COMMAND_CENTER'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">dashboard</span>
+              <span>Antrean Pasien (Worklist)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('SOAP_WORKSPACE')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
+                activeTab === 'SOAP_WORKSPACE'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-indigo-600'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">edit_note</span>
+              <span>Konsultasi CPPT / SOAP</span>
+            </button>
+          </div>
         </div>
       </div>
 

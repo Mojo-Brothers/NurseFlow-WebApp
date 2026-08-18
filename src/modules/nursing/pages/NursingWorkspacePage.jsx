@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import NursingCommandCenter from '../components/NursingCommandCenter.jsx';
@@ -8,6 +9,7 @@ import NursingAssessmentAndPlan from '../components/NursingAssessmentAndPlan.jsx
 import PatientJourneyTimeline from '../../patient/components/PatientJourneyTimeline.jsx';
 
 export default function NursingWorkspacePage() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('COMMAND_CENTER'); // 'COMMAND_CENTER' | 'EMAR' | 'FLUID_BALANCE' | 'CARE_PLAN'
   const { activePatientId } = useEncounterStore();
   const { patients } = usePatientStore();
@@ -35,8 +37,19 @@ export default function NursingWorkspacePage() {
           </div>
         </div>
 
-        {/* Workspace Tab Switcher */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-bold">
+        {/* Action Controls & Tab Controls */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => navigate('/patient-chart')}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-black bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 hover:bg-teal-600 hover:text-white transition-all cursor-pointer shadow-2xs"
+            title="Buka Berkas Rekam Medis Longitudinal Pasien"
+          >
+            <span className="material-symbols-outlined text-[16px]">folder_shared</span>
+            <span>Buka Patient Chart</span>
+          </button>
+
+          {/* Workspace Tab Switcher */}
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-bold">
           <button
             onClick={() => setActiveTab('COMMAND_CENTER')}
             className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
@@ -73,17 +86,18 @@ export default function NursingWorkspacePage() {
             <span>Balans Cairan 24 Jam</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('CARE_PLAN')}
-            className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
-              activeTab === 'CARE_PLAN'
-                ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">assignment</span>
-            <span>Pengkajian & SDKI/SIKI</span>
-          </button>
+            <button
+              onClick={() => setActiveTab('CARE_PLAN')}
+              className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 ${
+                activeTab === 'CARE_PLAN'
+                  ? 'bg-white dark:bg-slate-900 text-teal-600 dark:text-teal-400 shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[16px]">assignment</span>
+              <span>Pengkajian & SDKI/SIKI</span>
+            </button>
+          </div>
         </div>
       </div>
 
