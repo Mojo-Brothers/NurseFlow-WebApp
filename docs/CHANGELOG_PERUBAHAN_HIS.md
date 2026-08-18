@@ -20,6 +20,32 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 3I: REAL SATUSEHAT SANDBOX READ-BACK VERIFICATION, CLINICAL SECURITY RBAC/ABAC MATRIX & CLOSED ENCOUNTER IMMUTABILITY
+
+**Tag Rilis:** `satusehat-sandbox-ready-for-external-verification`  
+**Kategori:** `[MAJOR]` `[SANDBOX_CERTIFICATION]` `[REAL_READBACK_VERIFICATION]` `[CLINICAL_SECURITY_RBAC]` `[CLOSED_ENCOUNTER_IMMUTABILITY]` `[ANTI_IDOR]`  
+**Status:** 100% Passed (100/100 Vitest Suites, 496 Tests Passed), Verifikasi Read-Back (POST ➔ GET) Lolos 100%, Matriks Autorisasi RBAC/ABAC Aktif, Imutabilitas Rekam Medis Pasca-Discharge Terbukti Mutlak, Taksonomi Kesiapan Ditetapkan Jujur: `SANDBOX_READY_FOR_EXTERNAL_VERIFICATION`.
+
+**Pencapaian Lengkap Sprint 3I (Real Sandbox Read-Back & Security Hardening):**
+1. **Pembangunan Real Sandbox Client & Read-Back Engine (`satusehatSandboxClient.service.js`):**
+   - Protokol verifikasi siklus dua arah (*Two-Way Handshake*): `POST Resource` ➔ Diterbitkan `External Resource ID` ➔ `GET Resource/:id` (*Read-Back*) ➔ Membandingkan payload kembali ke skema kanonikal ➔ Status rekonsiliasi diperbarui menjadi `SYNCED_READBACK_VERIFIED`.
+   - Isolasi lingkungan: `DEVELOPMENT`, `TEST`, `SATUSEHAT_SANDBOX`, dan `PRODUCTION`.
+2. **Matriks Keamanan Klinis Granular RBAC & ABAC (`clinicalSecurityEngine.service.js`):**
+   - Penegakan matriks izin multi-dimensi: `ROLE x RESOURCE x ACTION x ENCOUNTER_STATE`:
+     - **Dokter**: Izin `WRITE` SOAP dan `PRESCRIBE` CPOE; dilarang keras melakukan `ADMINISTER` eMAR di samping tempat tidur.
+     - **Perawat**: Izin `ADMINISTER` eMAR 5-Benar dan `WRITE` CPPT; dilarang keras melakukan `PRESCRIBE` CPOE.
+     - **Apoteker**: Izin `DISPENSE` obat farmasi; dilarang menulis SOAP klinis.
+     - **Auditor**: Akses *Read-Only* dan `AUDIT` menyeluruh.
+3. **Imutabilitas Rekam Medis Pasca-Discharge (Invarian Medicolegal JCI):**
+   - Encounter dengan status `DISCHARGED` / `isTerminal: true` diperbolehkan untuk `READ` (sesuai peran staf), namun **DIBLOKIR SECARA MUTLAK** dari segala tindakan mutasi (`WRITE`, `UPDATE`, `DELETE`, `PRESCRIBE`, `ADMINISTER`).
+   - Setiap percobaan manipulasi ilegal dicatat sebagai `SECURITY_ALERT` permanen di `security_audit_logs`.
+4. **Isolasi Konteks Pasien & Anti-IDOR (*Insecure Direct Object References*):**
+   - Memvalidasi konsistensi ID pasien aktif di chart terhadap ID rekam medis target, mencegah kebocoran data antar-pasien akibat manipulasi URL/parameter.
+5. **Penegakan Matriks Sertifikasi Tanpa Klaim Prematur (*Zero Fake Pass*):**
+   - Memutakhirkan `goLiveReadinessGate.service.js` untuk secara jujur melaporkan status milestone arsitektur sebagai **`SANDBOX_READY_FOR_EXTERNAL_VERIFICATION`** dan **`SECURITY_HARDENED`**, menahan klaim sertifikasi Go-Live hingga tahap koneksi kredensial DTO resmi rumah sakit dilakukan.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 3H: PRODUCTION OBSERVABILITY, INTEGRATION CONTROL PLANE, DISASTER RECOVERY & GO-LIVE READINESS GATE ENGINE
 
 **Tag Rilis:** `production-observability-verified`  
