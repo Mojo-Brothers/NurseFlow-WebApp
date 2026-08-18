@@ -20,6 +20,36 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 31: SPRINT 3A MEDICATION LIFECYCLE PLATFORM — DOMAIN CONTRACT FREEZE, DISCRETE SCHEDULE GENERATOR, 7-RIGHTS INVARIANTS, HIGH-ALERT DUAL SIGN, AND ADVERSARIAL CONCURRENCY SUITE
+
+**Tag Rilis:** `medication-lifecycle-start`  
+**Kategori:** `[MAJOR]` `[MEDICATION_LIFECYCLE]` `[EMAR_FSM]` `[7_RIGHTS_SAFETY]` `[HIGH_ALERT_POLICY]` `[EVENT_SOURCING]` `[JCI_MMU]`  
+**Status:** 100% Passed (87/87 Vitest Suites, 405 Tests Passed), Seluruh Invariant Keselamatan Klinis & Pencegahan Double-Administration Teruji Penuh.
+
+**Pencapaian Lengkap Sprint 3A:**
+1. **Pemisahan 3 Dimensi Entitas Klinis Obat:**
+   - `MedicationOrder`: Dokumen perintah peresepan dokter (CPOE / e-Prescription).
+   - `MedicationDispense`: Alokasi stok depo farmasi lengkap dengan nomor batch, nomor lot, tanggal kedaluwarsa (FEFO), dan kuantitas dispensing.
+   - `MedicationAdministration`: Eksekusi aktual pemberian obat di samping tempat tidur pasien (*bedside*) dengan pencatatan dosis riil, rute, stempel waktu, dan identitas perawat pelaksana.
+2. **Discrete Medication Administration Schedule Generator (`generateScheduleSlots`):**
+   - Mengonversi frekuensi peresepan (QD, BID, TID, QID, Q4H, Q6H, Q8H, PRN, STAT) menjadi slot waktu diskret terstruktur (misal: `08:00`, `14:00`, `20:00`).
+   - Setiap slot waktu memiliki state independen (`SCHEDULED`, `PREPARED`, `READY_AT_BEDSIDE`, `ADMINISTERED`, `REFUSED`, `HELD`, `MISSED`, `CANCELLED`).
+3. **Safety Invariants & 7-Benar Engine (`medicationLifecycleEngine.service.js`):**
+   - **Hard Stop 1**: Penolakan keras pemberian obat jika `MedicationOrder === 'CANCELLED'`.
+   - **Hard Stop 2**: Penolakan keras pemberian obat jika pasien berada dalam status terminal (`DISCHARGED`, `DECEASED`, `CANCELLED`).
+   - **Hard Stop 3**: Validasi 7-Benar (*Right Patient MRN*, *Right Drug Code*, *Right Dose*, *Right Route*, *Right Time*, *Right Documentation*, *Right Reason*).
+4. **Kebijakan Verifikasi Ganda Obat High-Alert & LASA (JCI IPSG 3):**
+   - Menolak keras pemberian obat kategori berisiko tinggi (*Insulin*, *Narkotika/Opioid*, *Antikoagulan*, *Elektrolit Konsentrat*, *Kemoterapi*) tanpa tanda tangan ganda independen (*Co-Signature Nurse*).
+5. **Pencegahan Double-Administration & Idempotency Key Deduplication:**
+   - Kolom `version` pada setiap slot jadwal untuk Optimistic Concurrency Control (OCC).
+   - Penolakan deterministik jika dua perawat mencoba memberikan dosis pada slot yang sama secara simultan.
+   - Deduplikasi `commandId` / `idempotencyKey` pada pengulangan permintaan akibat koneksi jaringan lambat.
+6. **Automated Adversarial Test Suite (`tests/medicationLifecycleEngine.test.js`):**
+   - 5 skenario uji klinis ekstrem (Happy path TID, High-Alert Dual Sign Hard Stop, Barcode Mismatch Rejection, Refused Non-Administration with Right Reason, Concurrent Multi-Nurse Stress Test).
+   - Total Suite: **87 Test Files Passed (405 Tests)**.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 30: ENTERPRISE PATIENT JOURNEY & STATE-DRIVEN WORKSPACE REFACTORING — CANONICAL CARE STATE ENGINE, EVENT SOURCING, DYNAMIC ROLE-BASED WORKSPACE RESOLVER & 2-TAB GLOBAL SEARCH
 
 **Tag Rilis:** `architecture-baseline-v1.0`  
