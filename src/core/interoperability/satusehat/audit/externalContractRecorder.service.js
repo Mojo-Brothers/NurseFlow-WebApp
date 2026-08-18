@@ -68,34 +68,50 @@ export class ExternalContractRecorderService {
    * 1-Click Forensic Trace by Internal Clinical Entity
    */
   async getLineageByInternalEntity(internalEntityType, internalEntityId) {
-    return await persistenceAdapter.query(this.COLLECTION_NAME, (record) => 
-      record.internalEntityType === internalEntityType && record.internalEntityId === internalEntityId
-    );
+    try {
+      return await persistenceAdapter.query(this.COLLECTION_NAME, (record) => 
+        record.internalEntityType === internalEntityType && record.internalEntityId === internalEntityId
+      ) || [];
+    } catch {
+      return [];
+    }
   }
 
   /**
    * Forensic Trace by SATUSEHAT External Resource ID
    */
   async getLineageByExternalId(externalResourceId) {
-    return await persistenceAdapter.query(this.COLLECTION_NAME, (record) => 
-      record.externalResourceId === externalResourceId
-    );
+    try {
+      return await persistenceAdapter.query(this.COLLECTION_NAME, (record) => 
+        record.externalResourceId === externalResourceId
+      ) || [];
+    } catch {
+      return [];
+    }
   }
 
   /**
    * Forensic Trace by Correlation ID
    */
   async getLineageByCorrelationId(correlationId) {
-    return await persistenceAdapter.query(this.COLLECTION_NAME, (record) => 
-      record.correlationId === correlationId
-    );
+    try {
+      return await persistenceAdapter.query(this.COLLECTION_NAME, (record) => 
+        record.correlationId === correlationId
+      ) || [];
+    } catch {
+      return [];
+    }
   }
 
   /**
    * Get all lineage traces
    */
   async getAllTraces() {
-    return await persistenceAdapter.query(this.COLLECTION_NAME);
+    try {
+      return await persistenceAdapter.query(this.COLLECTION_NAME) || [];
+    } catch {
+      return [];
+    }
   }
 }
 
