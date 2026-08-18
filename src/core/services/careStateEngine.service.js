@@ -238,7 +238,7 @@ class CareStateEngine {
 
     if (bedId) {
       try {
-        adtEngine.assignPatientToBed(
+        const assignedBed = adtEngine.assignPatientToBed(
           bedId,
           encounter.patientId,
           encounter.patientName,
@@ -248,7 +248,7 @@ class CareStateEngine {
         finalLocation = {
           ...finalLocation,
           bedId,
-          bedCode: bedId.split('-').pop()
+          bedCode: location?.bedCode || assignedBed?.bedCode || bedId.split('-').pop()
         };
       } catch (err) {
         console.warn(`[CareStateEngine] ADT Bed Assignment notice: ${err.message}`);
