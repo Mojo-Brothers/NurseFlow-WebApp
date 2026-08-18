@@ -9,6 +9,7 @@ import patientsRoutes from './routes/patients.routes.js';
 import ordersRoutes from './routes/orders.routes.js';
 import billingRoutes from './routes/billing.routes.js';
 import dicomwebRoutes from './routes/dicomweb.routes.js';
+import medicationKnowledgeRoutes from './routes/medicationKnowledge.routes.js';
 
 import { observabilityMiddleware } from './middlewares/observabilityMiddleware.js';
 import { healthCheckService } from './services/healthCheck.service.js';
@@ -58,6 +59,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/patients', patientsRoutes);
 app.use('/api/v1/orders', ordersRoutes);
 app.use('/api/v1/billing', billingRoutes);
+app.use('/api/v1', medicationKnowledgeRoutes);
 app.use('/dicomweb', dicomwebRoutes);
 
 // Global 404 & Error Handler

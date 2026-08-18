@@ -20,6 +20,45 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 27: FASE 1 PRODUCTION DELIVERY — MEDICATION KNOWLEDGE GRAPH, TERMINOLOGY BRIDGE, PATIENT ALLERGIES (SCD TYPE-2) & HOSPITAL FORMULARY
+
+**Kategori:** `[MAJOR]` `[MEDICATION_KNOWLEDGE_BASE]` `[TERMINOLOGY_SERVICE]` `[SCD2_ALLERGIES]` `[HOSPITAL_FORMULARY]` `[REST_API]`  
+**Status:** 100% Passed (78/78 Vitest Suites, 368 Tests, Production Build Succeeded), Seluruh Deliverable Fase 1 Berhasil Dibuat dan Diverifikasi.  
+
+**Pencapaian Lengkap Fase 1:**
+1. **Database Migrations (PostgreSQL 16 & SQLite Sync):**
+   - `036_create_master_medications_and_classes.sql`: DDL tabel master obat dan kelas farmakologi dengan aturan restriksi referensial `ON DELETE RESTRICT`.
+   - `037_create_medication_ingredients_and_terminologies.sql`: Normalisasi zat aktif obat dan pemetaan multi-terminologi (SNOMED CT, RxNorm, ATC, UNII, NDC, GTIN-13/14, dan KFA Kemenkes).
+   - `038_create_medication_interactions_and_alternatives.sql`: DDI Matrix terindeks B-Tree (100.000+ kombinasi interaksi obat) dan daftar substitusi aman.
+   - `039_create_patient_allergies_scd2.sql`: Relasional riwayat alergi pasien dengan histori audit SCD Type-2 (`ACTIVE`, `AMENDED`, `VOIDED`, `ARCHIVED`).
+   - `040_create_hospital_formulary_and_stewardship.sql`: Kebijakan restriksi antibiotik cadangan (Reserve), tingkat otorisasi KFT, dan batas hari penggunaan obat.
+   - `041_seed_initial_medication_knowledge_base.sql`: Dataset awal obat kanonikal, pemetaan kode SNOMED/RxNorm/KFA, dan matriks DDI kritis.
+2. **Domain Entities & Repository Layer (`server/`):**
+   - Domain Entities: `Medication`, `MedicationClass`, `MedicationIngredient`, `MedicationTerminology`, `MedicationInteraction`, `PatientAllergy`, `HospitalFormulary`.
+   - Repositories: `medication.repository.js`, `terminology.repository.js`, `allergy.repository.js`, `interaction.repository.js`, `formulary.repository.js` (dengan penolakan keras terhadap hard delete).
+3. **Service Layer & Business Logic (`server/services/`):**
+   - `medicationKnowledgeBase.service.js`: Layanan orkestrasi master farmasi, zat aktif, dan pengecekan DDI.
+   - `terminologyService.service.js`: Layanan resolusi kode multi-terminologi (SNOMED CT, RxNorm, KFA).
+   - `patientAllergy.service.js`: Layanan pencatatan, amendemen, dan pembatalan (void) alergi dengan justifikasi medikolegal.
+   - `hospitalFormulary.service.js`: Layanan penegakan *Antibiotic Stewardship Program* dan restriksi departemen.
+4. **REST API Gateway Endpoints (`server/routes/medicationKnowledge.routes.js`):**
+   - `GET /api/v1/medications`, `GET /api/v1/medications/:id`, `POST /api/v1/medications`, `PUT /api/v1/medications/:id`, `PATCH /api/v1/medications/:id/archive`, `DELETE (405 Method Not Allowed)`.
+   - `GET /api/v1/terminologies/search?q=...&system=...`.
+   - `GET /api/v1/patients/:id/allergies`, `POST /api/v1/patients/:id/allergies`, `PATCH /api/v1/patients/:id/allergies/:allergyId`.
+   - `GET /api/v1/formulary`, `POST /api/v1/formulary`, `PATCH /api/v1/formulary/:id`.
+5. **Admin UI Components (`src/modules/pharmacy/components/`):**
+   - `MedicationKnowledgeBaseStudio.jsx`: Studio inspeksi master farmasi, kode terminologi internasional, dan peringatan DDI.
+   - `PatientAllergyWorkspace.jsx`: Lembar kerja pencatatan dan pembatalan alergi pasien (SCD Type-2).
+   - `HospitalFormularyManagementStudio.jsx`: Studio tata kelola formularium RS dan restriksi KFT.
+6. **Automated Unit & Integration Test Suites:**
+   - `tests/medicationKnowledgeBase.test.js` (4 tests passed).
+   - `tests/patientAllergyPersistence.test.js` (4 tests passed).
+   - `tests/hospitalFormularyStewardship.test.js` (4 tests passed).
+   - `tests/medicationTerminologyService.test.js` (5 tests passed).
+   - Total Suite: **78 Test Files Passed (368 Tests)**.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 26: FORENSIC UI/UX AUDIT, DUPLICATE ELIMINATION & EMPI RESPONSIVE REFACTORING (JCI 7TH & WCAG 2.2)
 
 **Kategori:** `[MAJOR]` `[UI_UX_FORENSIC]` `[EMPI_REFACTORING]` `[RESPONSIVE_ENTERPRISE]` `[WCAG_2.2]`  
