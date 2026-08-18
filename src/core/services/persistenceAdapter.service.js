@@ -15,7 +15,9 @@ export const DB_ENGINE_TYPES = {
 
 export const IMMUTABLE_EVENT_COLLECTIONS = new Set([
   'medication_events',
-  'patient_care_state_events'
+  'patient_care_state_events',
+  'inventory_events',
+  'controlled_substance_ledger_events'
 ]);
 
 const STORAGE_PREFIX = 'nurseflow_pa_';
