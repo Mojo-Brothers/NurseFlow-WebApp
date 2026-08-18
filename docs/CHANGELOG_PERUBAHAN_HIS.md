@@ -20,6 +20,32 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 37: UNIFIED PATIENT CHART & LONGITUDINAL CLINICAL DOSSIER PLATFORM — MIGRASI PARADIGMA DARI DEPARTMENT-CENTRIC MENUJU PATIENT-CENTRIC, KONSOLIDASI 34 FORMULIR MEDIS JCI TERPADU, ATRIBUT DATA ENCOUNTER VISIBILITY, DAN INTEGRASI WORKLIST
+
+**Tag Rilis:** `unified-patient-chart-ready`  
+**Kategori:** `[MAJOR]` `[UNIFIED_EMR]` `[PATIENT_CENTRIC]` `[JCI_STANDARDS]` `[CLINICAL_WORKFLOW]` `[LONGITUDINAL_DOSSIER]`  
+**Status:** 100% Passed (93/93 Vitest Suites, 438 Tests Passed), Seluruh 34 Dokumen Medis Dimigrasikan 100% Tanpa Hilang/Tulis Ulang Logic, Routing Kompatibel Mundur Terverifikasi di Browser.
+
+**Pencapaian Lengkap Sprint 37 (Unified Patient Chart):**
+1. **Pembangunan Single Unified Dossier (`UnifiedPatientChart.jsx`):**
+   - Membangun antarmuka terpadu berbasis template kanonikal EMR Rawat Inap (Top Context Ribbon, Sidebar Formulir JCI, Dashboard Overview, Command Action Hub, dan Berkas Sah).
+   - Mengonsolidasikan seluruh **34 formulir medis aktif** (AOP, COP, MMU, ASC, PFR/PFE, ACC) ke dalam switch-case dinamis tanpa penulisan ulang business logic (*Zero Logic Loss*).
+2. **Aturan Visibilitas Formulir Berbasis Data Encounter (*Encounter-Driven Filtering*):**
+   - Menghapus ketergantungan nama menu (`menu === 'Rajal'`). Menggantikannya dengan `encounter.type` (`INPATIENT`, `OUTPATIENT`, `EMERGENCY`) dan `careStateEngine` `primaryState`.
+   - Pasien rawat jalan secara otomatis menyaring formulir khusus ranap (Catatan Admisi, DNR, Handover, Bed Reassessment), dan sebaliknya.
+3. **Integrasi Alur Kerja (*Action Hub to Patient Chart Integration*):**
+   - Menambahkan tombol langsung `"Buka Patient Chart"` pada `DoctorWorkspacePage.jsx` dan `NursingWorkspacePage.jsx`.
+   - Mengintegrasikan `PatientJourneyTimeline.jsx` longitudinal timeline (2024 $\rightarrow$ 2026) di dalam Patient Chart.
+4. **Restrukturisasi Menu Sidebar `Pelayanan Klinis` di `MainLayout.jsx`:**
+   - Menghapus item menu `EMR Rawat Inap` dan `EMR Rawat Jalan`.
+   - Menetapkan 3 pilar klinis: `Doctor Workspace (SOAP)`, `Nursing Workspace & eMAR`, dan `Patient Chart (Unified EMR)`.
+   - Menjaga rute `/emr-ri` dan `/emr-rj` tetap kompatibel mundur (*alias redirect*) menuju `/patient-chart`.
+5. **Verifikasi Pengujian Otomatis & Visual E2E Browser:**
+   - Pembuatan test suite `tests/unifiedPatientChartArchitecture.test.js` memvalidasi 34 formulir dan aturan visibilitas encounter.
+   - 93 file pengujian (438 skenario) lulus 100%.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 36: UNIFIED GLOBAL PATIENT SEARCH & SWITCHER ARCHITECTURE (STRANGLER PATTERN MIGRATION FASE 1–3) — KONSOLIDASI SINGLE ENGINE PENCARIAN, DEDIKASI SWITCHER MODE, KEYBOARD NAVIGATION (ARROW/ENTER/ESC), DAN ELIMINASI REDUNDANSI COGNITIVE SEARCH BAR
 
 **Tag Rilis:** `search-strangler-migrated`  
