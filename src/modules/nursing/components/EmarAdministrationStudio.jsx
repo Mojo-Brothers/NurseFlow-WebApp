@@ -1,17 +1,57 @@
 import React, { useState } from 'react';
 import { emarEngineService, EMAR_STATUS } from '../../../../server/services/eMarEngine.service.js';
 import toast from 'react-hot-toast';
+import { BedsideFiveRightsScannerModal } from '../../../components/clinical/BedsideFiveRightsScannerModal.jsx';
 
 export default function EmarAdministrationStudio({ activePatient }) {
-  if (!activePatient) {
-    return (
-      <div className="p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-        Pilih pasien rawat inap terlebih dahulu untuk membuka lembar kerja administrasi obat eMAR.
-      </div>
-    );
-  }
+  const defaultSamplePatient = {
+    id: 'PAT-SAMPLE-01',
+    name: 'Subagyo Wiryono',
+    mrn: 'MRN-2026-001928',
+    ward: 'Bangsal Melati',
+    bed: 'Bed 04',
+    allergies: ['Penisilin (Ringan)'],
+    medications: [
+      {
+        id: 'MED-ORD-01',
+        code: 'MED-CEFTRIAXONE-1G',
+        name: 'Ceftriaxone 1g Vial',
+        dose: '1 g',
+        route: 'IV',
+        frequency: '1x Sehari (QD)',
+        scheduleTime: '08:00',
+        prescribedBy: 'dr. Surya Johnson, Sp.PD',
+        isHighAlert: false,
+        status: 'SCHEDULED'
+      },
+      {
+        id: 'MED-ORD-02',
+        code: 'MED-INS-NOVORAPID',
+        name: 'Novorapid Flexpen 100 IU/mL',
+        dose: '6 IU',
+        route: 'Subcutaneous',
+        frequency: '3x Sehari (TID)',
+        scheduleTime: '12:00',
+        prescribedBy: 'dr. Endokrin, Sp.PD-KEMD',
+        isHighAlert: true,
+        status: 'SCHEDULED'
+      },
+      {
+        id: 'MED-ORD-03',
+        code: 'MED-PARACETAMOL-500',
+        name: 'Paracetamol Infus 1000 mg / 100 mL',
+        dose: '1000 mg',
+        route: 'IV',
+        frequency: '3x Sehari (TID)',
+        scheduleTime: '14:00',
+        prescribedBy: 'dr. Surya Johnson, Sp.PD',
+        isHighAlert: false,
+        status: 'SCHEDULED'
+      }
+    ]
+  };
 
-  const patient = activePatient;
+  const patient = activePatient || defaultSamplePatient;
   const [medications, setMedications] = useState(patient.medications || []);
 
   // Modal State for Administration & High-Alert Check
@@ -22,6 +62,69 @@ export default function EmarAdministrationStudio({ activePatient }) {
   const [administerNotes, setAdministerNotes] = useState('Diberikan tepat waktu, tidak ada tanda efek samping');
   const [heldReason, setHeldReason] = useState('');
   const [actionType, setActionType] = useState('GIVE'); // 'GIVE' | 'HOLD' | 'REFUSE'
+
+  // Bedside 5-Rights Barcode Scanner Modal State (Sprint 3C)
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scannerOrder, setScannerOrder] = useState(null);
+  const [scannerSlot, setScannerSlot] = useState(null);
+
+  const handleOpenScanner = async (med) => {
+    const canonicalSlot = {
+      slotId: `SLOT-${med.id || '01'}-0800`,
+      scheduledTime: med.scheduleTime || '08:00',
+      targetTimestamp: new Date().toISOString(),
+      status: 'SCHEDULED',
+      version: 1
+    };
+
+    const canonicalOrder = {
+      id: med.id || `ORD-${med.code || 'MED-01'}`,
+      orderNumber: `RX-2026-${med.id || '01'}`,
+      encounterId: patient.id,
+      patientId: patient.id,
+      patientName: patient.name,
+      mrn: patient.mrn,
+      medicationCode: med.code || 'MED-AMOX-500',
+      medicationName: med.name,
+      dose: med.dose?.replace(/[^0-9.]/g, '') || 500,
+      doseUnit: med.dose?.replace(/[0-9.]/g, '').trim() || 'mg',
+      route: med.route || 'Oral',
+      frequency: med.frequency || 'TID',
+      isHighAlert: !!med.isHighAlert,
+      highAlertCategory: med.isHighAlert ? 'HIGH_ALERT_MEDICATION' : null,
+      status: 'ORDERED',
+      version: 1,
+      scheduleSlots: [canonicalSlot]
+    };
+
+    const { persistenceAdapter } = await import('../../../core/services/persistenceAdapter.service.js');
+    await persistenceAdapter.save('encounters', patient.id, {
+      id: patient.id,
+      patientId: patient.id,
+      patientName: patient.name,
+      mrn: patient.mrn,
+      primaryState: 'INPATIENT_ACTIVE',
+      currentLocation: `${patient.ward || 'Bangsal Melati'} ${patient.bed || 'Bed 04'}`
+    });
+
+    await persistenceAdapter.save('medication_orders', canonicalOrder.id, canonicalOrder);
+
+    setScannerOrder(canonicalOrder);
+    setScannerSlot(canonicalSlot);
+    setIsScannerOpen(true);
+  };
+
+  const handleScannerSuccess = (result) => {
+    if (scannerOrder) {
+      setMedications(prev => prev.map(m => m.id === scannerOrder.id || m.name === scannerOrder.medicationName ? {
+        ...m,
+        status: 'GIVEN',
+        administeredBy: 'Ners Pelaksana (Point-of-Care Verified)',
+        administeredAt: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+      } : m));
+    }
+    toast.success('Point-of-Care 5-Benar Berhasil Diverifikasi & Diadministrasikan!');
+  };
 
   const handleOpenAdministerModal = (med, type = 'GIVE') => {
     setSelectedMed(med);
@@ -204,11 +307,12 @@ export default function EmarAdministrationStudio({ activePatient }) {
                     {med.status === 'SCHEDULED' && (
                       <>
                         <button
-                          onClick={() => handleOpenAdministerModal(med, 'GIVE')}
-                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-transform active:scale-95 cursor-pointer inline-flex items-center gap-1 shadow-sm"
+                          onClick={() => handleOpenScanner(med)}
+                          className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs transition-transform active:scale-95 cursor-pointer inline-flex items-center gap-1.5 shadow-sm"
+                          title="Verifikasi Barcode Gelang Pasien & Obat (JCI 5-Rights Point-of-Care)"
                         >
-                          <span className="material-symbols-outlined text-[15px]">check_circle</span>
-                          Berikan Obat
+                          <span className="material-symbols-outlined text-[15px]">qr_code_scanner</span>
+                          Scan 5-Benar
                         </button>
                         <button
                           onClick={() => handleOpenAdministerModal(med, 'HOLD')}
@@ -341,6 +445,16 @@ export default function EmarAdministrationStudio({ activePatient }) {
             </div>
           </div>
         </div>
+      )}
+      {/* Bedside 5-Rights Point-of-Care Barcode Scanner Modal */}
+      {isScannerOpen && scannerOrder && scannerSlot && (
+        <BedsideFiveRightsScannerModal
+          isOpen={isScannerOpen}
+          onClose={() => setIsScannerOpen(false)}
+          order={scannerOrder}
+          slot={scannerSlot}
+          onAdministrationSuccess={handleScannerSuccess}
+        />
       )}
     </div>
   );

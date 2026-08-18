@@ -12,7 +12,7 @@ export default function NursingWorkspacePage() {
   const { activePatientId } = useEncounterStore();
   const { patients } = usePatientStore();
 
-  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId);
+  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || patients[0];
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col">
