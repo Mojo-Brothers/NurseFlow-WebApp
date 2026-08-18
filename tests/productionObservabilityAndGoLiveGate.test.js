@@ -206,13 +206,13 @@ describe('Sprint 3H: Production Observability, Disaster Recovery & Go-Live Readi
 
   // ─── 6. GO-LIVE READINESS GATE ENGINE ───────────────────────────
   describe('6. 12 Mandatory Go-Live Readiness Quality Gates', () => {
-    it('should evaluate all 12 quality gates and grant GO_LIVE_CERTIFIED when all passed', async () => {
+    it('should evaluate all 13 quality gates and grant SANDBOX_READY_FOR_EXTERNAL_VERIFICATION when all passed', async () => {
       const evaluation = await goLiveReadinessGate.evaluateReadiness();
-      expect(evaluation.totalGates).toBe(12);
-      expect(evaluation.passedCount).toBe(12);
+      expect(evaluation.totalGates).toBe(13);
+      expect(evaluation.passedCount).toBe(13);
       expect(evaluation.failedCount).toBe(0);
       expect(evaluation.scorePercentage).toBe(100);
-      expect(evaluation.readinessLevel).toBe(READINESS_LEVEL.GO_LIVE_CERTIFIED);
+      expect(evaluation.readinessLevel).toBe(READINESS_LEVEL.SANDBOX_READY_FOR_EXTERNAL_VERIFICATION);
     });
   });
 });
