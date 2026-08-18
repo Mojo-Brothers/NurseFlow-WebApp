@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+
+const getTodayStr = () => new Date().toISOString().slice(0, 10);
 import { useNavigate } from 'react-router-dom';
 import { usePatientStore } from '../../modules/patient/patient.store.js';
 import { useEncounterStore } from '../../modules/encounter/encounter.store.js';
@@ -55,11 +57,11 @@ export default function GlobalPatientSearchModal({
   const [filterNoRM, setFilterNoRM] = useState('');
   const [filterNoReg, setFilterNoReg] = useState('');
   const [selectedRoomId, setSelectedRoomId] = useState(initialRoomId);
-  const [filterDate, setFilterDate] = useState('');
+  const [filterDate, setFilterDate] = useState(getTodayStr); // Default: Hari Ini
   const [filterDPJP, setFilterDPJP] = useState('');
   const [filterPenjamin, setFilterPenjamin] = useState('ALL'); // 'ALL' | 'BPJS' | 'UMUM' | 'ASURANSI'
   const [filterStatus, setFilterStatus] = useState('ALL'); // 'ALL' | 'ACTIVE' | 'TRIAGE' | 'DISCHARGED'
-  const [dateRangePreset, setDateRangePreset] = useState('ALL'); // 'ALL' | 'TODAY' | 'LAST_7' | 'THIS_MONTH'
+  const [dateRangePreset, setDateRangePreset] = useState('TODAY'); // Default: Hari Ini
 
   const [selectedIndex, setSelectedIndex] = useState(0);
   const searchInputRef = useRef(null);
@@ -91,11 +93,11 @@ export default function GlobalPatientSearchModal({
     setFilterNoRM('');
     setFilterNoReg('');
     setSelectedRoomId('ALL');
-    setFilterDate('');
+    setFilterDate(getTodayStr()); // Reset kembali ke Hari Ini
     setFilterDPJP('');
     setFilterPenjamin('ALL');
     setFilterStatus('ALL');
-    setDateRangePreset('ALL');
+    setDateRangePreset('TODAY'); // Reset ke Hari Ini
     setSelectedIndex(0);
   };
 
