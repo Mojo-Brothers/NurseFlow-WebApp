@@ -20,6 +20,35 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 32: SPRINT 3B MEDICATION EVENT STORE & PROJECTIONS ENGINE — IMMUTABLE CLINICAL LEDGER, READ-MODEL PROJECTIONS (eMAR, PHARMACY, AUDIT), MACHINE-READABLE REJECTION CODES, AND DETERMINISTIC EVENT REPLAY
+
+**Kategori:** `[MAJOR]` `[MEDICATION_EVENT_STORE]` `[PROJECTION_ENGINE]` `[EMAR_PROJECTIONS]` `[MACHINE_READABLE_CODES]` `[DETERMINISTIC_REPLAY]`  
+**Status:** 100% Passed (88/88 Vitest Suites, 408 Tests Passed), Seluruh Gate 3B (Event Store, eMAR/Pharmacy/Audit Projections, Stale UI Attack Protection, Replay) Terpenuhi Penuh.
+
+**Pencapaian Lengkap Sprint 3B:**
+1. **Immutable Medication Event Store (`medication_events`):**
+   - Buku besar event klinis murni *append-only* (tanpa `UPDATE`/`DELETE`) mencatat: `eventId`, `eventVersion: '1.0'`, `aggregateId`, `aggregateVersion`, `patientId`, `encounterId`, `medicationOrderId`, `administrationSlotId`, `eventType`, `previousState`, `newState`, `occurredAt`, `recordedAt`, `performedBy`, `commandId`, `correlationId`, dan `payload`.
+2. **Medication Read-Model Projections Layer (`medicationProjectionEngine.service.js`):**
+   - `emar_projections`: Proyeksi teroptimasi untuk antarmuka bedside perawat (daftar pesanan aktif per pasien, slot due time, kuantitas administrasi, dan status penolakan).
+   - `pharmacy_projections`: Proyeksi antrean telaah resep & dispensing depo farmasi.
+   - `medication_audit_projections`: Buku besar riwayat kronologis lengkap per pesanan obat untuk rekonstruksi audit medikolegal JCI / investigasi insiden KTD.
+   - Fungsi `rebuildAllProjections()`: Mampu merekonstruksi 100% ketiga proyeksi secara deterministik dari aliran event (*event replay resilience*).
+3. **Machine-Readable Medication Error Codes (`MED_ERROR_CODES`):**
+   - `ORDER_CANCELLED`: Penolakan eksekusi resep yang telah dibatalkan dokter.
+   - `PATIENT_TERMINAL`: Penolakan pemberian obat pada pasien yang telah meninggal.
+   - `DISCHARGE_BEDSIDE_ADMIN_BLOCKED`: Penolakan pemberian obat bedside pada pasien yang telah dipulangkan, dengan tetap mengizinkan alur edukasi obat pulang (*take-home meds*).
+   - `WRONG_PATIENT` & `WRONG_DRUG`: Penolakan ketidakcocokan barcode pasien/obat.
+   - `HIGH_ALERT_DUAL_SIGN_REQUIRED`: Penolakan obat berisiko tinggi tanpa saksi perawat kedua.
+   - `SLOT_ALREADY_ADMINISTERED`: Pencegahan pemberian ganda pada slot waktu yang sama.
+   - `OCC_CONFLICT` & `COMMAND_ALREADY_PROCESSED`: Proteksi konkurensi dan idempotensi.
+4. **Proteksi Serangan UI Basi (Stale UI Attack Protection):**
+   - Jika dokter membatalkan pesanan obat saat perawat masih memegang layar aktif tanpa refresh, eksekusi bedside langsung ditolak keras oleh server dengan kode `ORDER_CANCELLED`.
+5. **Automated Verification Test Suite (`tests/medicationProjectionEngine.test.js`):**
+   - Pengujian rekonstruksi proyeksi 100% dari event ledger, proteksi Stale UI, serta diferensiasi rawat inap vs obat pulang.
+   - Total Suite: **88 Test Files Passed (408 Tests)**.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 31: SPRINT 3A MEDICATION LIFECYCLE PLATFORM — DOMAIN CONTRACT FREEZE, DISCRETE SCHEDULE GENERATOR, 7-RIGHTS INVARIANTS, HIGH-ALERT DUAL SIGN, AND ADVERSARIAL CONCURRENCY SUITE
 
 **Tag Rilis:** `medication-lifecycle-start`  
