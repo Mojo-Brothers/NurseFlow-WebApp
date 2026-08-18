@@ -252,6 +252,8 @@ class CareStateEngine {
     const isTerminal = TERMINAL_STATES.has(targetState);
     const timestamp = new Date().toISOString();
     const eventId = `EVT-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    const nextVersion = (encounter.version || 1) + 1;
+    const correlationId = metadata?.correlationId || `CORR-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
     // 3. Handle ADT Bed Synchronizations (Atomic Bed State Allocation / Release)
     let finalLocation = location || encounter.location || {
@@ -276,17 +278,22 @@ class CareStateEngine {
       } catch (err) {
         console.warn(`[CareStateEngine] ADT Bed Assignment notice: ${err.message}`);
       }
-    } else if (isTerminal && encounter.location?.bedId) {
+    }
+
+    if (targetState === CARE_STATES.DISCHARGED && (encounter.location?.bedId || bedId)) {
       try {
-        adtEngine.dischargeBed(encounter.location.bedId, actorName);
+        adtEngine.dischargeBed(encounter.location?.bedId || bedId, actorName);
       } catch (err) {
         console.warn(`[CareStateEngine] ADT Bed Release notice: ${err.message}`);
       }
     }
 
-    // 4. Create and Save Immutable Event Sourcing Record (Gate 0B & Gate 0D)
+    // 4. Create Immutable Event Record (Gate 0D)
     const careEvent = {
       id: eventId,
+      eventVersion: '1.0',
+      aggregateVersion: nextVersion,
+      correlationId,
       encounter_id: encounterId,
       patient_id: encounter.patientId,
       event_type: eventType,
@@ -302,6 +309,8 @@ class CareStateEngine {
       clinical_notes: clinicalNotes,
       metadata: {
         ...metadata,
+        commandId,
+        correlationId,
         encounterNumber: encounter.encounterNumber,
         mrn: encounter.mrn
       }
@@ -310,11 +319,12 @@ class CareStateEngine {
     await persistenceAdapter.save(this.EVENTS_COLLECTION, careEvent.id, careEvent);
 
     // 5. Update Encounter Entity (Single Source of Truth Projection)
-    encounter.version = (encounter.version || 1) + 1;
+    encounter.version = nextVersion;
     encounter.primaryState = targetState;
     encounter.status = targetState; // Backward compatibility bridge
     encounter.isTerminal = isTerminal;
     encounter.location = finalLocation;
+    encounter.lastCorrelationId = correlationId;
     if (secondaryStates) encounter.secondaryStates = secondaryStates;
     if (targetState === CARE_STATES.DISCHARGED) encounter.dischargeDate = timestamp;
     encounter.updatedAt = timestamp;

@@ -54,6 +54,12 @@ describe('Sprint 2.5 Architecture Audit & Stress Verification Suite', () => {
     // Verify all event IDs are unique and immutable
     const eventIds = new Set(stream.map(e => e.id));
     expect(eventIds.size).toBe(2);
+
+    // Verify Event Sourcing Schema Evolution Fields (Gate 0D Enhancement)
+    expect(stream[0].eventVersion).toBe('1.0');
+    expect(stream[1].eventVersion).toBe('1.0');
+    expect(stream[1].aggregateVersion).toBe(3); // Initial (1) + Trans 1 (2) + Trans 2 (3)
+    expect(stream[1].correlationId).toBeDefined();
   });
 
   // Audit 5: Race Condition Stress Test
