@@ -12,7 +12,9 @@ import toast from 'react-hot-toast';
 export default function GlobalPatientSearchModal({
   isOpen,
   onClose,
-  onSelectPatient = null
+  onSelectPatient = null,
+  title = null,
+  mode = 'GLOBAL' // 'GLOBAL' | 'SWITCHER'
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -159,6 +161,32 @@ export default function GlobalPatientSearchModal({
     onClose();
   };
 
+  // Keyboard navigation: ArrowUp, ArrowDown, Enter, Escape
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev < filteredPatients.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : 0));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (filteredPatients[selectedIndex]) {
+          handleSelect(filteredPatients[selectedIndex]);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, selectedIndex, filteredPatients]);
+
   // State-Driven Dynamic Workspace Navigation (Gate 0G / Rule 5)
   const handleOpenWorkspace = (e, patient) => {
     e.stopPropagation();
@@ -194,10 +222,10 @@ export default function GlobalPatientSearchModal({
               </div>
               <div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
-                  Pencarian Rekam Medis & Sensus Pasien Terpadu
+                  {title || 'Pencarian Rekam Medis & Sensus Pasien Terpadu'}
                 </h2>
                 <p className="text-xs text-slate-500 font-medium">
-                  Canonical State-Driven Search • Sensus Rawat Aktif & Histori Rekam Medis
+                  {mode === 'SWITCHER' ? 'Pilih pasien untuk mengganti konteks lembar kerja aktif' : 'Canonical State-Driven Search • Sensus Rawat Aktif & Histori Rekam Medis'}
                 </p>
               </div>
             </div>

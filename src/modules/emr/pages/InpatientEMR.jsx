@@ -48,6 +48,7 @@ import DigitalInformedConsent from '../components/DigitalInformedConsent.jsx';
 import PatientEducationForm from '../components/PatientEducationForm.jsx';
 import PatientSearchModal from '../components/PatientSearchModal.jsx';
 import AdvancedPatientSearchBar from '../components/AdvancedPatientSearchBar.jsx';
+import GlobalPatientSearchModal from '../../../components/common/GlobalPatientSearchModal.jsx';
 import AdmissionNoteForm from '../components/AdmissionNoteForm.jsx';
 import NursingDailyAssessmentForm from '../components/NursingDailyAssessmentForm.jsx';
 import NursingHandoverForm from '../components/NursingHandoverForm.jsx';
@@ -548,9 +549,12 @@ export default function InpatientEMR() {
               <h1 className="text-base font-black text-[var(--on-surface)] tracking-tight uppercase">NurseFlow Enterprise EMR</h1>
             </div>
           </div>
-          <div className="flex-1 max-w-xl ml-6 hidden sm:block">
-            <AdvancedPatientSearchBar compact currentPatientId={selectedPatientId} onSelectPatient={(p) => selectPatient(p.id)} />
-          </div>
+          {/* Legacy Search Bar Disabled - Unified into Top Navbar Global Omnibox (Ctrl+K) */}
+          {false && (
+            <div className="flex-1 max-w-xl ml-6 hidden sm:block">
+              <AdvancedPatientSearchBar compact currentPatientId={selectedPatientId} onSelectPatient={(p) => selectPatient(p.id)} />
+            </div>
+          )}
         </div>
 
         {/* Patient Context Ribbon Rawat Inap */}
@@ -735,10 +739,13 @@ export default function InpatientEMR() {
         </div>
       )}
 
-      <PatientSearchModal 
+      {/* ─── UNIFIED GLOBAL PATIENT SEARCH & SWITCHER MODAL ─── */}
+      <GlobalPatientSearchModal 
         isOpen={isPatientPickerOpen} 
         onClose={() => setIsPatientPickerOpen(false)} 
-        onSelect={(s) => { 
+        title="Ganti Pasien Aktif (Rawat Inap / Bangsal)"
+        mode="SWITCHER"
+        onSelectPatient={(s) => { 
           const targetId = typeof s === 'object' ? (s.patientId || s.id) : s; 
           if (targetId) selectPatient(targetId); 
           setIsPatientPickerOpen(false); 

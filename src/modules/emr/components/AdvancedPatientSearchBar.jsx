@@ -8,6 +8,7 @@ import { usePatientStore } from '../../patient/patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import PatientSearchModal from './PatientSearchModal.jsx';
+import GlobalPatientSearchModal from '../../../components/common/GlobalPatientSearchModal.jsx';
 import toast from 'react-hot-toast';
 import usePatientClipboardShortcuts from '../../../hooks/usePatientClipboardShortcuts.js';
 
@@ -210,11 +211,13 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
       <div ref={containerRef} className="w-full relative">
         {renderSearchInputAndDropdown()}
 
-        {/* FULL SEARCH MODAL LAUNCHER */}
-        <PatientSearchModal
+        {/* UNIFIED GLOBAL PATIENT SEARCH MODAL */}
+        <GlobalPatientSearchModal
           isOpen={isFullModalOpen}
           onClose={() => setIsFullModalOpen(false)}
-          onSelect={(selectedObj) => {
+          title="Pencarian Pasien Terpadu"
+          mode="SWITCHER"
+          onSelectPatient={(selectedObj) => {
             setIsFullModalOpen(false);
             const targetId = typeof selectedObj === 'object' ? (selectedObj.patientId || selectedObj.id) : selectedObj;
             const target = patients.find(p => p.id === targetId) || { id: targetId, name: selectedObj.nama || selectedObj.name || 'Pasien', mrn: selectedObj.noRM || selectedObj.mrn || '-' };
@@ -276,11 +279,13 @@ export default function AdvancedPatientSearchBar({ onSelectPatient, currentPatie
         </div>
       </div>
 
-      {/* FULL SEARCH MODAL LAUNCHER */}
-      <PatientSearchModal
+      {/* UNIFIED GLOBAL PATIENT SEARCH MODAL */}
+      <GlobalPatientSearchModal
         isOpen={isFullModalOpen}
         onClose={() => setIsFullModalOpen(false)}
-        onSelect={(selectedObj) => {
+        title="Pencarian Pasien Terpadu"
+        mode="SWITCHER"
+        onSelectPatient={(selectedObj) => {
           setIsFullModalOpen(false);
           const targetId = typeof selectedObj === 'object' ? (selectedObj.patientId || selectedObj.id) : selectedObj;
           const target = patients.find(p => p.id === targetId) || { id: targetId, name: selectedObj.nama || selectedObj.name || 'Pasien', mrn: selectedObj.noRM || selectedObj.mrn || '-' };

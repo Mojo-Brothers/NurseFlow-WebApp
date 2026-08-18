@@ -42,6 +42,7 @@ import PatientCarePanel from '../components/PatientCarePanel.jsx';
 import PatientSearchModal from '../components/PatientSearchModal.jsx';
 import AdvancedPatientSearchBar from '../components/AdvancedPatientSearchBar.jsx';
 import PillSearchBar from '../../../components/ui/PillSearchBar.jsx';
+import GlobalPatientSearchModal from '../../../components/common/GlobalPatientSearchModal.jsx';
 import DPJPAssignmentForm from '../components/DPJPAssignmentForm.jsx';
 import AnamnesisForm from '../components/AnamnesisForm.jsx';
 import PhysicalExaminationForm from '../components/PhysicalExaminationForm.jsx';
@@ -993,16 +994,18 @@ export default function OutpatientEMR() {
             </div>
           </div>
 
-          {/* Embedded Modular Pill Search Bar [COMP-UI-13] with Patient Switcher */}
-          <div className="flex-1 max-w-2xl ml-6 hidden sm:block">
-            <AdvancedPatientSearchBar
-              compact={true}
-              currentPatientId={selectedPatientId}
-              onSelectPatient={(patient) => {
-                selectPatient(patient.id);
-              }}
-            />
-          </div>
+          {/* Legacy Search Bar Disabled - Unified into Top Navbar Global Omnibox (Ctrl+K) */}
+          {false && (
+            <div className="flex-1 max-w-2xl ml-6 hidden sm:block">
+              <AdvancedPatientSearchBar
+                compact={true}
+                currentPatientId={selectedPatientId}
+                onSelectPatient={(patient) => {
+                  selectPatient(patient.id);
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Patient Context Ribbon */}
@@ -1363,12 +1366,13 @@ export default function OutpatientEMR() {
 
       </div>
 
-      {/* ─── PATIENT PICKER MODAL (ENTERPRISE MASTERPIECE) ─── */}
-      {/* ─── OFFICIAL COMMAND CENTER PATIENT SEARCH MODAL ─── */}
-      <PatientSearchModal 
+      {/* ─── UNIFIED GLOBAL PATIENT SEARCH & SWITCHER MODAL ─── */}
+      <GlobalPatientSearchModal 
         isOpen={isPatientPickerOpen} 
         onClose={() => setIsPatientPickerOpen(false)} 
-        onSelect={(selected) => {
+        title="Ganti Pasien Aktif (Rawat Jalan / Poliklinik)"
+        mode="SWITCHER"
+        onSelectPatient={(selected) => {
           const targetId = typeof selected === 'object' ? (selected.patientId || selected.id) : selected;
           if (targetId) selectPatient(targetId);
           setSelectedModule(null);
