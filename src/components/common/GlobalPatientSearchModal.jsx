@@ -239,23 +239,32 @@ export default function GlobalPatientSearchModal({
     filterStatus
   ]);
 
-  // Handle Context Selection
+  // Handle Context Selection (Stay on current page, update Live Context)
   const handleSelect = (patient) => {
     setLiveContext(patient.id || patient.mrn, patient.encounterId);
 
     if (onSelectPatient) {
       onSelectPatient(patient);
-    } else {
-      if (patient.careType === 'INPATIENT') {
-        navigate('/nursing-workspace');
-      } else if (patient.careType === 'EMERGENCY') {
-        navigate('/triage');
-      } else {
-        navigate('/doctor-workspace');
-      }
     }
 
-    toast.success(`⚡ Pasien ${patient.name} (${patient.mrn}) aktif di ruang kerja!`, { icon: '🩺' });
+    toast.success(`⚡ Pasien ${patient.name} (${patient.mrn}) aktif di lembar kerja!`, { icon: '🩺' });
+    onClose();
+  };
+
+  // Explicit Direct Navigation to EMR Workspace
+  const handleNavigateToWorkspace = (e, patient) => {
+    e.stopPropagation();
+    setLiveContext(patient.id || patient.mrn, patient.encounterId);
+
+    if (patient.careType === 'INPATIENT') {
+      navigate('/nursing-workspace');
+    } else if (patient.careType === 'EMERGENCY') {
+      navigate('/triage');
+    } else {
+      navigate('/doctor-workspace');
+    }
+
+    toast.success(`⚡ Membuka Ruang Kerja untuk ${patient.name}!`, { icon: '🩺' });
     onClose();
   };
 
@@ -647,6 +656,7 @@ export default function GlobalPatientSearchModal({
                     {/* Action Button */}
                     <button
                       type="button"
+                      onClick={(e) => handleNavigateToWorkspace(e, patient)}
                       className="px-3.5 py-1.5 rounded-xl bg-[#015C80] hover:bg-[#014966] text-white font-extrabold text-xs shadow-xs transition-transform active:scale-95 cursor-pointer flex items-center gap-1"
                     >
                       <span>Buka EMR</span>
