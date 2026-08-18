@@ -9,6 +9,8 @@ import { fhirOutbox } from '../outbox/fhirOutbox.service.js';
 import { retryPolicyFsm, OUTBOX_STATUS } from '../retry/retryPolicyFsm.service.js';
 import { fhirResourceLink } from '../reconciliation/fhirResourceLink.service.js';
 import { integrationAudit } from '../audit/integrationAudit.service.js';
+import { externalContractRecorder } from '../audit/externalContractRecorder.service.js';
+import { OperationOutcomeParser } from './operationOutcomeParser.service.js';
 import { fhirR4Validator, FhirR4ValidationError } from '../../fhir/validators/fhirR4Validator.js';
 import * as mappers from '../../fhir/mappers/index.js';
 import { domainEventEngine } from '../../../services/domainEventEngine.service.js';
@@ -19,16 +21,18 @@ export class SatusehatGatewayService {
     this.isSimulatedFailureMode = false;
     this.simulatedErrorStatus = null;
     this.simulatedErrorMessage = null;
+    this.simulatedOperationOutcome = null;
     this.isEventSubscriptionActive = false;
   }
 
   /**
    * Set simulated failure mode for fault injection / network resilience tests
    */
-  setSimulationMode({ enabled = false, httpStatus = null, errorMessage = null }) {
+  setSimulationMode({ enabled = false, httpStatus = null, errorMessage = null, operationOutcome = null }) {
     this.isSimulatedFailureMode = enabled;
     this.simulatedErrorStatus = httpStatus;
     this.simulatedErrorMessage = errorMessage;
+    this.simulatedOperationOutcome = operationOutcome;
   }
 
   /**
@@ -80,6 +84,9 @@ export class SatusehatGatewayService {
     const startTime = Date.now();
     await fhirOutbox.markProcessing(item);
 
+    const resourceType = item.fhirResourceType || item.payload?.resourceType || 'Resource';
+    const endpointUrl = `${this.baseUrl}/${resourceType}`;
+
     try {
       // 1. Schema Validation before network transmission
       fhirR4Validator.validateResource(item.payload);
@@ -88,15 +95,19 @@ export class SatusehatGatewayService {
       if (this.isSimulatedFailureMode) {
         const status = this.simulatedErrorStatus || 503;
         const msg = this.simulatedErrorMessage || 'SATUSEHAT Gateway Temporarily Unavailable';
-        throw { httpStatus: status, message: msg };
+        const outcome = this.simulatedOperationOutcome || {
+          resourceType: 'OperationOutcome',
+          issue: [{ severity: 'error', code: 'transient', diagnostics: msg }]
+        };
+        throw { httpStatus: status, message: msg, responseBody: outcome };
       }
 
       // 3. Acquire Token
       const token = await tokenManager.getAccessToken();
 
       // 4. Simulate / Execute HTTP POST to SATUSEHAT Endpoint
-      const resourceType = item.fhirResourceType || item.payload.resourceType;
       const externalId = `SAT-${resourceType.toUpperCase()}-${Date.now()}-${Math.floor(100 + Math.random() * 900)}`;
+      const responseBody = { id: externalId, resourceType, status: 'created' };
 
       // 5. Update Outbox to ACKNOWLEDGED
       await fhirOutbox.markAcknowledged(item, externalId, 201);
@@ -114,12 +125,27 @@ export class SatusehatGatewayService {
       // 7. Log Integration Audit Trail
       await integrationAudit.logTransmission({
         correlationId: item.correlationId,
-        endpoint: `${this.baseUrl}/${resourceType}`,
+        endpoint: endpointUrl,
         resourceType,
         internalEntityId: item.entityId,
         payload: item.payload,
         httpStatus: 201,
-        responseBody: { id: externalId, resourceType, status: 'created' },
+        responseBody,
+        durationMs: Date.now() - startTime,
+        status: 'SUCCESS'
+      });
+
+      // 8. Record Complete External Contract Lineage Artifact
+      await externalContractRecorder.recordTrace({
+        internalEntityType: item.entityType,
+        internalEntityId: item.entityId,
+        fhirResourceType: resourceType,
+        correlationId: item.correlationId,
+        endpointUrl,
+        requestPayload: item.payload,
+        httpStatus: 201,
+        responseBody,
+        externalResourceId: externalId,
         durationMs: Date.now() - startTime,
         status: 'SUCCESS'
       });
@@ -129,6 +155,10 @@ export class SatusehatGatewayService {
     } catch (err) {
       const httpStatus = err instanceof FhirR4ValidationError ? 400 : (err.httpStatus || 500);
       const errorMessage = err.message || String(err);
+      const responseBody = err.responseBody || {
+        resourceType: 'OperationOutcome',
+        issue: [{ severity: 'error', code: 'processing', diagnostics: errorMessage }]
+      };
 
       // If 401, invalidate token cache so next attempt refreshes
       if (httpStatus === 401) {
@@ -141,15 +171,29 @@ export class SatusehatGatewayService {
       // Log Integration Audit Trail
       await integrationAudit.logTransmission({
         correlationId: item.correlationId,
-        endpoint: `${this.baseUrl}/${item.fhirResourceType}`,
-        resourceType: item.fhirResourceType,
+        endpoint: endpointUrl,
+        resourceType,
         internalEntityId: item.entityId,
         payload: item.payload,
         httpStatus,
-        responseBody: { error: errorMessage },
+        responseBody,
         durationMs: Date.now() - startTime,
         status: 'FAILED',
         error: err
+      });
+
+      // Record Complete External Contract Lineage Artifact for Forensic Inspection
+      await externalContractRecorder.recordTrace({
+        internalEntityType: item.entityType,
+        internalEntityId: item.entityId,
+        fhirResourceType: resourceType,
+        correlationId: item.correlationId,
+        endpointUrl,
+        requestPayload: item.payload,
+        httpStatus,
+        responseBody,
+        durationMs: Date.now() - startTime,
+        status: 'FAILED'
       });
 
       return { success: false, httpStatus, errorMessage, outboxStatus: updatedItem.status };
