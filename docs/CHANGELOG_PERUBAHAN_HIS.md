@@ -20,6 +20,39 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 3H: PRODUCTION OBSERVABILITY, INTEGRATION CONTROL PLANE, DISASTER RECOVERY & GO-LIVE READINESS GATE ENGINE
+
+**Tag Rilis:** `production-observability-verified`  
+**Kategori:** `[MAJOR]` `[PRODUCTION_OBSERVABILITY]` `[INTEGRATION_CONTROL_PLANE]` `[DLQ_OPERATOR_WORKFLOW]` `[DISASTER_RECOVERY]` `[GO_LIVE_GATE]` `[ENTERPRISE_DASHBOARD]`  
+**Status:** 100% Passed (99/99 Vitest Suites, 489 Tests Passed), 12/12 Mandatory Go-Live Quality Gates Lolos 100%, UI Cockpit Go-Live Control Center Terverifikasi via Browser Subagent.
+
+**Pencapaian Lengkap Sprint 3H (Production Observability & Go-Live Control Plane):**
+1. **Integration Health Monitor & Real-Time Metrics (`integrationHealthMonitor.service.js`):**
+   - Menghitung metrik performa: Gateway status (`HEALTHY`/`DEGRADED`/`DOWN`), OAuth token health, backlog antrean (pending, processing, retrying, dead letter), rata-rata latensi (ms), dan persentase *success rate*.
+2. **Dead Letter Queue (DLQ) Operator Workflow (`dlqOperatorWorkflow.service.js`):**
+   - Panel kendali remediasi manusia (*Human-in-the-Loop*):
+     - `viewPayload`: Inspeksi muatan data FHIR yang bermasalah.
+     - `viewOperationOutcome`: Menampilkan detail diagnostik error dan lokasi elemen dari Kemenkes.
+     - `requeueItem`: Penjadwalan ulang pengiriman antrean instan.
+     - `fixAndRequeue`: Koreksi muatan skema dan *re-enqueue*.
+     - `markResolved`: Penutupan tiket antrean bermasalah.
+   - **Audit WORM Operator Mutlak**: Setiap intervensi operator dicatat di `dlq_operator_audit_logs` dengan ID operator, timestamp, status awal, dan alasan tindakan.
+3. **Integration Alert Severity Engine P0 - P3 (`integrationAlertEngine.service.js`):**
+   - `P0 Critical`: Pemadaman SATUSEHAT > 15 menit dengan penumpukan antrean masif atau kegagalan autentikasi kredensial.
+   - `P1 Degradation`: Lonjakan Dead Letter Queue (>= 5 item) atau penurunan *success rate* di bawah 85%.
+   - `P2 Recoverable`: Antrean retry transien dengan *exponential backoff*.
+   - `P3 Informational`: Pembaruan token berkala dan status nominal.
+4. **Outbox Backlog Protection & High Throughput Drainer (`outboxBacklogDrainer.service.js`):**
+   - Menguras tumpukan antrean masif (hingga 10.000 event) dalam batch terkontrol tanpa menyebabkan *Retry Storm*, *heap memory spike*, atau *API rate-limit throttling*.
+5. **Disaster Recovery (DR) & State Restoration Simulation (`disasterRecoveryEngine.service.js`):**
+   - Protokol pemulihan *cold crash*: Mendeteksi dan me-reset status event `PROCESSING` yang tertinggal saat server mati mendadak menjadi `PENDING` secara otomatis saat restart.
+   - Ekspor snapshot cadangan database dan verifikasi integritas pemulihan 100%.
+6. **Go-Live Readiness Gate Engine & Control Center UI (`goLiveReadinessGate.service.js` & `GoLiveControlCenter.jsx`):**
+   - Mengevaluasi 12 Quality Gates wajib: Domain Kanonikal, EMPI, Siklus Encounter, eMAR 5-Benar, Profil FHIR R4, Gateway Terminologi, Outbox Chaos, Keamanan Kredensial, Parser OperationOutcome, Independensi Klinis, Alur Kerja DLQ, dan *Disaster Recovery*.
+   - Halaman antarmuka interaktif di `/go-live-control` terverifikasi via Browser Subagent dengan status **`GO_LIVE_CERTIFIED`**.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 3G: SATUSEHAT SANDBOX E2E, OPERATIONOUTCOME PARSER, EXTERNAL CONTRACT LINEAGE RECORDER & CLINICAL INDEPENDENCE TORTURE ENGINE
 
 **Tag Rilis:** `satusehat-sandbox-e2e-verified`  
