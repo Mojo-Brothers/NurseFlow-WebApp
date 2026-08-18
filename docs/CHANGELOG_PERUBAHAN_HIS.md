@@ -20,6 +20,26 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — HARDENING GATE: MEDICATION EVENT STORE HARDENING GATE (PRE SPRINT 3C) — APPEND-ONLY PERSISTENCE ENFORCEMENT, IDEMPOTENT REPLAY & ADVERSARIAL SUITE
+
+**Kategori:** `[MAJOR]` `[HARDENING_GATE]` `[IMMUTABLE_EVENT_STORE]` `[PROJECTION_ISOLATION]` `[JCI_MEDICOLEGAL]`  
+**Status:** 100% Passed (89/89 Vitest Suites, 413 Tests Passed), Seluruh 20 Kriteria Audit Hardening Terpenuhi Penuh.
+
+**Pencapaian Lengkap Hardening Gate:**
+1. **Append-Only Persistence Enforcement di Adapter Layer (`persistenceAdapter.service.js`):**
+   - Mendefinisikan `IMMUTABLE_EVENT_COLLECTIONS` (`medication_events` & `patient_care_state_events`).
+   - Setiap upaya manipulasi langsung (`save` untuk event yang sudah ada atau `delete`) langsung dilempar exception `[PersistenceAdapter:IMMUTABILITY_VIOLATION]`.
+2. **Replay Idempotency (1x, 2x, 3x):**
+   - Menguji rekonstruksi proyeksi secara berulang-ulang tanpa menghasilkan duplikasi dosis atau kesalahan agregasi angka.
+3. **Strict Aggregate Version Monotonicity & Correlation Trace:**
+   - Memastikan nomor versi agregat selalu bergerak linier ($1 \rightarrow 2 \rightarrow 3$).
+   - Menelusuri rantai siklus klinis lengkap dari *Prescribe* $\rightarrow$ *Dispense* $\rightarrow$ *Administer* menggunakan satu `correlationId`.
+4. **Automated Adversarial Suite (`tests/medicationEventStoreHardening.test.js`):**
+   - 5 skenario adversarial ketat (Immutability violation blocks, 3x Idempotent Replay, Version Monotonicity + Correlation Chain, Stale UI + Deceased Hard Stop, dan Replay skema lawas v1.0).
+   - Total Suite: **89 Test Files Passed (413 Tests)**.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 32: SPRINT 3B MEDICATION EVENT STORE & PROJECTIONS ENGINE — IMMUTABLE CLINICAL LEDGER, READ-MODEL PROJECTIONS (eMAR, PHARMACY, AUDIT), MACHINE-READABLE REJECTION CODES, AND DETERMINISTIC EVENT REPLAY
 
 **Kategori:** `[MAJOR]` `[MEDICATION_EVENT_STORE]` `[PROJECTION_ENGINE]` `[EMAR_PROJECTIONS]` `[MACHINE_READABLE_CODES]` `[DETERMINISTIC_REPLAY]`  
