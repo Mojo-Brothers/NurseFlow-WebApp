@@ -228,7 +228,14 @@ class CareStateEngine {
 
     const currentState = encounter.primaryState || encounter.status || CARE_STATES.REGISTERED;
 
-    // 2. Validate Transition
+    // 2. Validate Concurrency (Optimistic Concurrency Control - OCC)
+    if (metadata?.expectedVersion !== undefined && encounter.version !== undefined && encounter.version !== metadata.expectedVersion) {
+      throw new Error(
+        `[CareStateEngine:OCC_CONFLICT] Concurrency conflict: Encounter "${encounterId}" was modified by another user (Server Version: ${encounter.version}, Client Expected: ${metadata.expectedVersion}). Please reload the latest clinical context.`
+      );
+    }
+
+    // 3. Validate Transition Matrix
     if (!this.isValidTransition(currentState, targetState)) {
       throw new Error(
         `[CareStateEngine] Illegal state transition from "${currentState}" to "${targetState}". Encounters in terminal state or invalid sequence cannot be executed.`
@@ -296,6 +303,7 @@ class CareStateEngine {
     await persistenceAdapter.save(this.EVENTS_COLLECTION, careEvent.id, careEvent);
 
     // 5. Update Encounter Entity (Single Source of Truth Projection)
+    encounter.version = (encounter.version || 1) + 1;
     encounter.primaryState = targetState;
     encounter.status = targetState; // Backward compatibility bridge
     encounter.isTerminal = isTerminal;

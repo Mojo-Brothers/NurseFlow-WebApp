@@ -6,13 +6,13 @@
  * This contract is the authoritative architectural foundation of NurseFlow.
  * DO NOT MODIFY WITHOUT FORMAL ARCHITECTURAL REVIEW.
  * 
- * Version: 1.0 (Baseline Commit: 06c6b44)
+ * Version: 1.0 (Baseline Commit: 06c6b44 / Tag: architecture-baseline-v1.0)
  * Standard: JCI Dynamic Role-Based Clinical Routing
  * ============================================================================
  * 
  * NurseFlow Enterprise HIS — Dynamic Care Workspace Resolver
  * Resolves target route, title, clinical actions, and permissions based on:
- * (careState, userRole, permissions) — Gate 0G & Non-Negotiable Rule 5.
+ * (careState, userRole, department, specialty, location) — Gate 0G & Contextual Workspace Routing.
  */
 
 import { CARE_STATES, TERMINAL_STATES } from './careStateEngine.service.js';
@@ -31,10 +31,21 @@ export const USER_ROLES = {
 
 class CareWorkspaceResolver {
   /**
-   * Resolve target workspace path and context for a patient based on care state & user role.
+   * Context-Aware Dynamic Workspace Resolver
+   * Resolves: Care State + Role + Permission + Department + Specialty + Location
    */
-  resolve({ careState, role = 'STAFF', encounterId = null, isTerminal = false }) {
+  resolve({ 
+    careState, 
+    role = 'STAFF', 
+    department = null,
+    specialty = null,
+    location = null,
+    encounterId = null, 
+    isTerminal = false 
+  }) {
     const normalizedRole = (role || '').toUpperCase();
+    const normalizedDept = (department || '').toUpperCase();
+    const normalizedSpecialty = (specialty || '').toUpperCase();
     const effectiveState = careState || CARE_STATES.REGISTERED;
     const isEncounterClosed = isTerminal || TERMINAL_STATES.has(effectiveState);
 
@@ -50,7 +61,17 @@ class CareWorkspaceResolver {
       };
     }
 
-    // 2. Role-Based Dynamic Matrix (Gate 0G)
+    // 2. Specialty & Department Contextual Overrides (e.g. ICU Nurse vs OK Nurse vs Ward Nurse)
+    if (normalizedRole.includes('NURSE')) {
+      if (normalizedDept.includes('ICU') || normalizedSpecialty.includes('ICU') || location?.wardName?.includes('ICU')) {
+        return { path: '/icu-acuity', workspaceName: 'ICU Acuity & Titrasi Obat (Intensive Care)', moduleDomain: 'EMERGENCY' };
+      }
+      if (normalizedDept.includes('IBS') || normalizedDept.includes('OK') || normalizedSpecialty.includes('SURGERY')) {
+        return { path: '/operating-theatre', workspaceName: 'Kamar Bedah (IBS Perioperatif)', moduleDomain: 'SURGERY' };
+      }
+    }
+
+    // 3. Role-Based Dynamic Matrix (Gate 0G)
     switch (effectiveState) {
       case CARE_STATES.REGISTERED:
         if (normalizedRole.includes('DOCTOR')) {

@@ -97,6 +97,17 @@ describe('Sprint 2.5 Architecture Audit & Stress Verification Suite', () => {
     // Verify encounter remains in DISCHARGE_PENDING without state collision
     const finalEnc = await persistenceAdapter.findById('encounters', 'ENC-RACE-CONDITION');
     expect(finalEnc.primaryState).toBe(CARE_STATES.DISCHARGE_PENDING);
+    expect(finalEnc.version).toBe(2);
+
+    // OCC Version Check: Stale client with expectedVersion = 1 tries to mutate
+    await expect(
+      careStateEngine.transition({
+        encounterId: 'ENC-RACE-CONDITION',
+        targetState: CARE_STATES.DISCHARGED,
+        eventType: CLINICAL_EVENTS.COMPLETE_DISCHARGE,
+        metadata: { expectedVersion: 1 } // Stale version! Current version is 2
+      })
+    ).rejects.toThrow(/OCC_CONFLICT/);
   });
 
   // Audit 6: Offline Resilience & Crash Recovery
