@@ -20,6 +20,31 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [18 AGUSTUS 2026] — SPRINT 36: UNIFIED GLOBAL PATIENT SEARCH & SWITCHER ARCHITECTURE (STRANGLER PATTERN MIGRATION FASE 1–3) — KONSOLIDASI SINGLE ENGINE PENCARIAN, DEDIKASI SWITCHER MODE, KEYBOARD NAVIGATION (ARROW/ENTER/ESC), DAN ELIMINASI REDUNDANSI COGNITIVE SEARCH BAR
+
+**Tag Rilis:** `search-strangler-migrated`  
+**Kategori:** `[ENHANCEMENT]` `[UI_CLEANUP]` `[GLOBAL_SEARCH]` `[PATIENT_SWITCHER]` `[CLINICAL_UX]` `[ACCESSIBILITY]`  
+**Status:** 100% Passed (92/92 Vitest Suites, 435 Tests Passed), Pengujian Regresi Multi-Peran (Dokter, Perawat, Kasir, Admisi) dan Multi-Tab Berhasil Tanpa Kebocoran Konteks Pasien.
+
+**Pencapaian Lengkap Sprint 36 (Fase 1–3 Strangler Migration):**
+1. **Pembedahan & Integrasi `GlobalPatientSearchModal.jsx` Mode Switcher:**
+   - Menambahkan mode operasional eksplisit: `mode="SWITCHER"` (untuk perpindahan pasien aktif di tempat tanpa forced redirect) vs `mode="GLOBAL"` (pencarian sensus rumah sakit universal).
+   - Menampilkan judul dinamis kontekstual: misal `"Ganti Pasien Aktif (Rawat Jalan / Poliklinik)"` dan `"Ganti Pasien Aktif (Rawat Inap / Bangsal)"`.
+2. **Implementasi Navigasi Keyboard Penuh (A11y & Doctor Speed):**
+   - Mendukung `Ctrl+K` untuk membuka modal.
+   - `ArrowDown` & `ArrowUp`: Navigasi baris pasien secara instan.
+   - `Enter`: Memilih pasien aktif secara langsung.
+   - `Escape`: Menutup modal dengan aman.
+3. **Penyatuan Pemicu (*Trigger Consolidation* — Fase 1):**
+   - Mengalihkan seluruh pemanggil modal: tombol avatar pasien, chevron dropdown nama pasien di context ribbon, serta launcher `AdvancedPatientSearchBar` menuju satu mesin pencarian kanonikal: `GlobalPatientSearchModal.jsx`.
+4. **Nonaktifkan Redundansi Header EMR (*UI Disabling* — Fase 2):**
+   - Menonaktifkan search bar sekunder (`AdvancedPatientSearchBar` dan `PillSearchBar`) di header `OutpatientEMR.jsx` dan `InpatientEMR.jsx` secara aman tanpa menghapus berkas fisik (*Zero Breaking Risk*).
+5. **Pengujian Regresi Komprehensif (*Regression & Context Isolation* — Fase 3):**
+   - Pembuatan test suite `tests/globalPatientSearchMigration.test.js` memvalidasi resolusi peran dokter/perawat/admisi dan isolasi multi-pasien (Pasien A $\rightarrow$ Ruang Kerja A, Pasien B $\rightarrow$ Ruang Kerja B).
+   - 92 file pengujian (435 skenario pengujian) lulus 100%.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 35: SPRINT 3D.1–3D.4 ENTERPRISE LOGISTICS SUITE & HL7 FHIR R4 INTERNAL MAPPER — ISOLATED INVENTORY EVENT STORE, BPOM ZERO-LATENCY PATIENT RECALL, WASTE MANAGEMENT, RETURN WORKFLOW, COLD-CHAIN FSM, CONTROLLED SUBSTANCES LEDGER & FHIR ADAPTERS
 
 **Tag Rilis:** `logistics-fefo-fhir-ready`  
