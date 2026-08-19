@@ -36,5 +36,12 @@ export default defineConfig({
         }
       }
     }
+  },
+  test: {
+    globals: true,
+    environment: 'node',
+    pool: 'forks',
+    fileParallelism: false,
+    testTimeout: 10000
   }
 });

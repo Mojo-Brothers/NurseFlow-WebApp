@@ -200,9 +200,13 @@ describe('🌐 SPRINT 3P.6: SATUSEHAT Live Integration & Clinical E2E Gate', () 
         resourceType: 'Patient',
         id: 'PAT-GHOST-ACK-01',
         meta: { profile: [KEMKES_PROFILES.PATIENT] },
-        identifier: [{ system: KEMKES_SYSTEMS.NIK, value: '3201333322220001' }],
+        identifier: [
+          { system: KEMKES_SYSTEMS.NIK, value: '3201333322220001' },
+          { system: KEMKES_SYSTEMS.PASIEN, value: 'MRN-GHOST-01' }
+        ],
         name: [{ text: 'Bpk. Ghost Ack' }],
-        gender: 'male'
+        gender: 'male',
+        birthDate: '1980-01-01'
       };
 
       let attempt = 0;
