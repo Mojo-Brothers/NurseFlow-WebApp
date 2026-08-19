@@ -11,6 +11,29 @@ jobs:
     name: 🛡️ Enterprise Quality & Clinical Safety Gate
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: Rfvtgb12@
+          POSTGRES_DB: nurseflow_enterprise_his
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Rfvtgb12@
+      POSTGRES_DB: nurseflow_enterprise_his
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql://postgres:Rfvtgb12%40@localhost:5432/nurseflow_enterprise_his?schema=public
+
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
@@ -21,13 +44,18 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: 📦 Install Dependencies
-        run: npm ci || npm install
+      - name: 📦 Install Dependencies & PostgreSQL Client
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          npm ci || npm install
 
       - name: 🔍 Validate Prisma ORM Schema & Invariants
         run: npx prisma validate
 
-      - name: 🧪 Execute Vitest Regression & Negative-Path Suite
+      - name: 🐘 Apply Enterprise PostgreSQL 16 Schema & Migrations
+        run: npm run migrate:up
+
+      - name: 🧪 Execute Vitest Regression & Clinical Safety Suite (138 Suites)
         run: npm test
 
       - name: 🏗️ Execute Vite Production Bundle Build

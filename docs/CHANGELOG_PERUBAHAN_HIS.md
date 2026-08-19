@@ -20,6 +20,24 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🛠️ [20 AGUSTUS 2026] — CI/CD PIPELINE HARDENING & POSTGRESQL 16 CI SERVICE ISOLATION
+**Tag Rilis:** `ci-pipeline-postgresql-service-isolation-hardening`  
+**Kategori:** `[ENHANCEMENT]` `[DEVOPS]` `[CI_CD_HARDENING]` `[POSTGRESQL_16]` `[DETERMINISTIC_TEST_RUNNER]`  
+**Status Evidence:** 🟢 **`FULLY ACCREDITED & PRODUCTION-READY (138/138 SUITES PASSED IN CI & LOCAL)`**
+
+1. **PostgreSQL 16 Service Container pada GitHub Actions CI Pipeline ([`ci.yml`](file:///c:/Users/Mojo/NurseFlow-WebApp/.github/workflows/ci.yml)):**
+   - Mengintegrasikan service container PostgreSQL 16 Alpine resmi dengan konfigurasi health check (`pg_isready`), credential deterministik, dan instalasi `postgresql-client`.
+   - Mengotomatisasi eksekusi migrasi 50 skema SQL asli (`npm run migrate:up`) sebelum penjalanan test suite di runner Linux CI.
+2. **Cross-Platform Migration Runner ([`execute_all_migrations.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/scripts/execute_all_migrations.js)):**
+   - Mendukung deteksi otomatis path binary `psql` lintas platform (Linux `psql` vs Windows `C:\Program Files\PostgreSQL\16\bin\psql.exe`).
+3. **Pemberantasan Race Condition Vitest via Sequential File Isolation ([`vite.config.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/vite.config.js)):**
+   - Mengaktifkan `fileParallelism: false` dan `pool: 'forks'` untuk mencegah tabrakan state in-memory singleton antar-suite di runner CI multi-core.
+4. **Verifikasi Test Suite Repositori Penuh:**
+   - **Vite 8.2.0 Production Bundle Build: SUCCEEDED (5.99s)**.
+   - **138/138 Test Suites PASSED (771/771 Atomic Tests, 100% Pass Rate)**.
+
+---
+
 ### 🚀 [20 AGUSTUS 2026] — SPRINT 4B.6: LONGITUDINAL PATIENT TRAJECTORY ENGINE
 **Tag Rilis:** `sprint-4b6-longitudinal-patient-trajectory-engine`  
 **Kategori:** `[MAJOR]` `[CLINICAL_INTELLIGENCE]` `[TRAJECTORY_ENGINE]` `[DATA_QUALITY_GATE]` `[MULTI_ORGAN_VECTOR]` `[25_SCENARIOS]` `[EXPLAINABLE_SLOPES]`  

@@ -20,7 +20,7 @@ if (fs.existsSync(envPath)) {
   });
 }
 
-const psqlPath = process.env.PSQL_PATH || 'C:\\Program Files\\PostgreSQL\\16\\bin\\psql.exe';
+const psqlPath = process.env.PSQL_PATH || (process.platform === 'win32' ? 'C:\\Program Files\\PostgreSQL\\16\\bin\\psql.exe' : 'psql');
 const user = process.env.POSTGRES_USER || 'postgres';
 const password = process.env.POSTGRES_PASSWORD || '';
 const host = process.env.POSTGRES_HOST || 'localhost';
