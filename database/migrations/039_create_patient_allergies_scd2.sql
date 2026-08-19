@@ -23,5 +23,16 @@ CREATE TABLE IF NOT EXISTS patient_allergies (
     updated_at BIGINT NOT NULL,
     FOREIGN KEY (parent_allergy_id) REFERENCES patient_allergies(id) ON DELETE RESTRICT
 );
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS organization_id VARCHAR(36);
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS allergen_type VARCHAR(20);
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS allergen_code VARCHAR(50);
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS allergen_name VARCHAR(100);
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS reaction_description TEXT;
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20);
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS recorded_by_practitioner_id VARCHAR(36);
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS recorded_at BIGINT;
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS record_status VARCHAR(20) DEFAULT 'ACTIVE';
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS status_reason TEXT;
+ALTER TABLE patient_allergies ADD COLUMN IF NOT EXISTS parent_allergy_id VARCHAR(36);
 
-CREATE INDEX IF NOT EXISTS idx_patient_allergies ON patient_allergies(patient_id, record_status);
+CREATE INDEX IF NOT EXISTS idx_patient_allergies ON patient_allergies(patient_id);

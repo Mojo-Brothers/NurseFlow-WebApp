@@ -11,3 +11,4 @@
 | 2026-08-10 03:37:13 | `DESKTOP-8O5OS2S` | sync(DESKTOP-8O5OS2S): Implement EpisodeOfCare, CareTeam, ClinicalTimeline, and DomainEvent Engine [2026-08-10 03:37:13] |
 | 2026-08-10 03:39:14 | `DESKTOP-8O5OS2S` | sync(DESKTOP-8O5OS2S): Enforce Domain Event Idempotency and Clinical Timeline Source Traceability [2026-08-10 03:39:14] |
 | 2026-08-19 02:34:31 | `DESKTOP-8O5OS2S` | sync(DESKTOP-8O5OS2S): docs: set Option B Native PostgreSQL Direct Migrations as primary developer directive [2026-08-19 02:34:31] |
+| 2026-08-19 02:58:36 | `DESKTOP-8O5OS2S` | sync(DESKTOP-8O5OS2S): fix(db-migrations): harmonize 50 SQL migrations for 100% clean PostgreSQL execution [2026-08-19 02:58:36] |

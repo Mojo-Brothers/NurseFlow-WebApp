@@ -101,6 +101,10 @@ INSERT INTO master_payer_types (id, code, name, category, is_active) VALUES
 ON CONFLICT (code) DO NOTHING;
 
 -- 2. Seed Spatial Roots (026)
+INSERT INTO tenant_organizations (id, tenant_code, organization_name, hospital_type, kemenkes_faskes_code, status) VALUES
+('10000000-0000-0000-0000-000000000001', 'TENANT-GRP-01', 'PT NurseFlow Medika Nusantara', 'GENERAL_HOSPITAL', '3171999', 'ACTIVE')
+ON CONFLICT (tenant_code) DO NOTHING;
+
 INSERT INTO master_tenants (id, code, name, subscription_tier, status) VALUES
 ('10000000-0000-0000-0000-000000000001', 'TENANT-GRP-01', 'PT NurseFlow Medika Nusantara', 'ENTERPRISE', 'ACTIVE')
 ON CONFLICT (code) DO NOTHING;
@@ -113,23 +117,23 @@ INSERT INTO master_facilities (id, organization_id, code, name, fhir_location_id
 ('30000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000001', 'FAC-MAIN', 'Paviliun Kartika RS NurseFlow', 'LOC-FAC-01', 'ACTIVE')
 ON CONFLICT (code) DO NOTHING;
 
-INSERT INTO master_buildings (id, facility_id, code, name, total_floors, status) VALUES
-('40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'BLD-A', 'Gedung A Paviliun Kartika', 5, 'ACTIVE')
-ON CONFLICT (code) DO NOTHING;
+INSERT INTO master_buildings (id, tenant_id, facility_id, code, building_code, name, building_name, total_floors, status) VALUES
+('40000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'BLD-A', 'BLD-A', 'Gedung A Paviliun Kartika', 'Gedung A Paviliun Kartika', 5, 'ACTIVE')
+ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO master_floors (id, building_id, floor_number, name, status) VALUES
-('50000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 1, 'Lantai 1 — IGD & Poliklinik', 'ACTIVE'),
-('50000000-0000-0000-0000-000000000002', '40000000-0000-0000-0000-000000000001', 2, 'Lantai 2 — Bangsal Rawat Inap Chrysant', 'ACTIVE'),
-('50000000-0000-0000-0000-000000000003', '40000000-0000-0000-0000-000000000001', 3, 'Lantai 3 — Bangsal Rawat Inap Orchid & VIP', 'ACTIVE'),
-('50000000-0000-0000-0000-000000000004', '40000000-0000-0000-0000-000000000001', 4, 'Lantai 4 — Intensive Care Unit (ICU/ICCU)', 'ACTIVE'),
-('50000000-0000-0000-0000-000000000005', '40000000-0000-0000-0000-000000000001', 5, 'Lantai 5 — Central Operating Theatre (IBS)', 'ACTIVE')
-ON CONFLICT (building_id, floor_number) DO NOTHING;
+INSERT INTO master_floors (id, tenant_id, building_id, floor_number, name, floor_name, status) VALUES
+('50000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 1, 'Lantai 1 — IGD & Poliklinik', 'Lantai 1 — IGD & Poliklinik', 'ACTIVE'),
+('50000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 2, 'Lantai 2 — Bangsal Rawat Inap Chrysant', 'Lantai 2 — Bangsal Rawat Inap Chrysant', 'ACTIVE'),
+('50000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 3, 'Lantai 3 — Bangsal Rawat Inap Orchid & VIP', 'Lantai 3 — Bangsal Rawat Inap Orchid & VIP', 'ACTIVE'),
+('50000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 4, 'Lantai 4 — Intensive Care Unit (ICU/ICCU)', 'Lantai 4 — Intensive Care Unit (ICU/ICCU)', 'ACTIVE'),
+('50000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000001', '40000000-0000-0000-0000-000000000001', 5, 'Lantai 5 — Central Operating Theatre (IBS)', 'Lantai 5 — Central Operating Theatre (IBS)', 'ACTIVE')
+ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO master_wards (id, floor_id, code, name, ward_class, gender_restriction, status) VALUES
-('60000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'WRD-CHRY', 'Bangsal Chrysant (Kelas 1 & 2)', 'KELAS_1', 'NONE', 'ACTIVE'),
-('60000000-0000-0000-0000-000000000002', '50000000-0000-0000-0000-000000000003', 'WRD-ORCH', 'Bangsal Orchid (VIP & VVIP)', 'VIP', 'NONE', 'ACTIVE'),
-('60000000-0000-0000-0000-000000000003', '50000000-0000-0000-0000-000000000004', 'WRD-ICU', 'Unit Perawatan Intensif (ICU)', 'ICU', 'NONE', 'ACTIVE')
-ON CONFLICT (code) DO NOTHING;
+INSERT INTO master_wards (id, tenant_id, floor_id, code, ward_code, name, ward_name, ward_class, gender_restriction, status) VALUES
+('60000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000002', 'WRD-CHRY', 'WRD-CHRY', 'Bangsal Chrysant (Kelas 1 & 2)', 'Bangsal Chrysant (Kelas 1 & 2)', 'KELAS_1', 'NONE', 'ACTIVE'),
+('60000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000003', 'WRD-ORCH', 'WRD-ORCH', 'Bangsal Orchid (VIP & VVIP)', 'Bangsal Orchid (VIP & VVIP)', 'VIP', 'NONE', 'ACTIVE'),
+('60000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000001', '50000000-0000-0000-0000-000000000004', 'WRD-ICU', 'WRD-ICU', 'Unit Perawatan Intensif (ICU)', 'Unit Perawatan Intensif (ICU)', 'ICU', 'NONE', 'ACTIVE')
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO master_room_types (id, code, name, bpjs_class_equivalent, is_active) VALUES
 ('70000000-0000-0000-0000-000000000001', 'VVIP', 'Ruang Rawat VVIP', 'NON_BPJS', TRUE),

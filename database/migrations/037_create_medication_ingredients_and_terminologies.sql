@@ -5,7 +5,7 @@
 
 CREATE TABLE IF NOT EXISTS medication_ingredients (
     id VARCHAR(36) PRIMARY KEY,
-    medication_id VARCHAR(36) NOT NULL,
+    medication_id UUID NOT NULL,
     active_ingredient_name VARCHAR(150) NOT NULL,
     strength_amount DOUBLE PRECISION NOT NULL,
     strength_unit VARCHAR(20) NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS medication_ingredients (
 
 CREATE TABLE IF NOT EXISTS medication_terminologies (
     id VARCHAR(36) PRIMARY KEY,
-    medication_id VARCHAR(36) NOT NULL,
+    medication_id UUID NOT NULL,
     terminology_system VARCHAR(30) NOT NULL CHECK (
         terminology_system IN ('SNOMED_CT', 'RXNORM', 'ATC', 'UNII', 'NDC', 'GTIN_BARCODE', 'KFA_KEMENKES')
     ),

@@ -65,9 +65,9 @@ CREATE TABLE IF NOT EXISTS master_facilities (
 -- 4. Master Buildings (Gedung Perawatan)
 CREATE TABLE IF NOT EXISTS master_buildings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    facility_id UUID NOT NULL REFERENCES master_facilities(id) ON DELETE CASCADE,
-    code VARCHAR(30) UNIQUE NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    facility_id UUID REFERENCES master_facilities(id) ON DELETE CASCADE,
+    code VARCHAR(30) UNIQUE,
+    name VARCHAR(100),
     total_floors INT NOT NULL DEFAULT 5,
     status status_enum NOT NULL DEFAULT 'ACTIVE',
     version INT NOT NULL DEFAULT 1,
@@ -79,13 +79,20 @@ CREATE TABLE IF NOT EXISTS master_buildings (
     updated_by UUID NULL,
     deleted_by UUID NULL
 );
+ALTER TABLE master_buildings ADD COLUMN IF NOT EXISTS facility_id UUID REFERENCES master_facilities(id) ON DELETE CASCADE;
+ALTER TABLE master_buildings ADD COLUMN IF NOT EXISTS code VARCHAR(30);
+ALTER TABLE master_buildings ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+ALTER TABLE master_buildings ADD COLUMN IF NOT EXISTS total_floors INT NOT NULL DEFAULT 5;
+ALTER TABLE master_buildings ADD COLUMN IF NOT EXISTS status status_enum NOT NULL DEFAULT 'ACTIVE';
+ALTER TABLE master_buildings ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 1;
+ALTER TABLE master_buildings ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- 5. Master Floors (Lantai Gedung)
 CREATE TABLE IF NOT EXISTS master_floors (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     building_id UUID NOT NULL REFERENCES master_buildings(id) ON DELETE CASCADE,
     floor_number INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(100),
     status status_enum NOT NULL DEFAULT 'ACTIVE',
     version INT NOT NULL DEFAULT 1,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
@@ -94,17 +101,20 @@ CREATE TABLE IF NOT EXISTS master_floors (
     deleted_at TIMESTAMP WITH TIME ZONE NULL,
     created_by UUID NULL,
     updated_by UUID NULL,
-    deleted_by UUID NULL,
-    CONSTRAINT uq_building_floor UNIQUE(building_id, floor_number)
+    deleted_by UUID NULL
 );
+ALTER TABLE master_floors ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+ALTER TABLE master_floors ADD COLUMN IF NOT EXISTS status status_enum NOT NULL DEFAULT 'ACTIVE';
+ALTER TABLE master_floors ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 1;
+ALTER TABLE master_floors ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- 6. Master Wards (Bangsal Rawat Inap)
 CREATE TABLE IF NOT EXISTS master_wards (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     floor_id UUID NOT NULL REFERENCES master_floors(id) ON DELETE CASCADE,
-    code VARCHAR(30) UNIQUE NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    ward_class VARCHAR(50) NOT NULL,
+    code VARCHAR(30),
+    name VARCHAR(100),
+    ward_class VARCHAR(50),
     gender_restriction VARCHAR(20) NOT NULL DEFAULT 'NONE',
     status status_enum NOT NULL DEFAULT 'ACTIVE',
     version INT NOT NULL DEFAULT 1,
@@ -116,6 +126,13 @@ CREATE TABLE IF NOT EXISTS master_wards (
     updated_by UUID NULL,
     deleted_by UUID NULL
 );
+ALTER TABLE master_wards ADD COLUMN IF NOT EXISTS code VARCHAR(30);
+ALTER TABLE master_wards ADD COLUMN IF NOT EXISTS name VARCHAR(100);
+ALTER TABLE master_wards ADD COLUMN IF NOT EXISTS ward_class VARCHAR(50);
+ALTER TABLE master_wards ADD COLUMN IF NOT EXISTS gender_restriction VARCHAR(20) NOT NULL DEFAULT 'NONE';
+ALTER TABLE master_wards ADD COLUMN IF NOT EXISTS status status_enum NOT NULL DEFAULT 'ACTIVE';
+ALTER TABLE master_wards ADD COLUMN IF NOT EXISTS version INT NOT NULL DEFAULT 1;
+ALTER TABLE master_wards ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- 7. Master Room Types (Shared Global)
 CREATE TABLE IF NOT EXISTS master_room_types (

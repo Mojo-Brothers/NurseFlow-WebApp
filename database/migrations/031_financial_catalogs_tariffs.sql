@@ -28,8 +28,13 @@ CREATE TABLE IF NOT EXISTS master_inacbg_tariffs (
     deleted_by UUID NULL,
     CONSTRAINT uq_inacbg_matrix_tariff UNIQUE(tenant_id, inacbg_code, hospital_class, region_number, severity_level, effective_date)
 );
+ALTER TABLE master_inacbg_tariffs ADD COLUMN IF NOT EXISTS region_number INT DEFAULT 1;
+ALTER TABLE master_inacbg_tariffs ADD COLUMN IF NOT EXISTS effective_date DATE DEFAULT CURRENT_DATE;
+ALTER TABLE master_inacbg_tariffs ADD COLUMN IF NOT EXISTS expired_date DATE DEFAULT (CURRENT_DATE + INTERVAL '10 years');
+ALTER TABLE master_inacbg_tariffs ADD COLUMN IF NOT EXISTS tariff_amount DECIMAL(14,2) DEFAULT 0.00;
+ALTER TABLE master_inacbg_tariffs ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
 
-CREATE INDEX IF NOT EXISTS idx_inacbg_search ON master_inacbg_tariffs(inacbg_code, hospital_class, region_number, severity_level, effective_date);
+CREATE INDEX IF NOT EXISTS idx_inacbg_search ON master_inacbg_tariffs(inacbg_code, hospital_class);
 
 -- 2. Master Insurances (Penjamin & Asuransi Kesehatan RS)
 CREATE TABLE IF NOT EXISTS master_insurances (

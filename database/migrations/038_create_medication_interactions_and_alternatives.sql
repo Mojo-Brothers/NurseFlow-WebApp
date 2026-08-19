@@ -5,8 +5,8 @@
 
 CREATE TABLE IF NOT EXISTS medication_interactions (
     id VARCHAR(36) PRIMARY KEY,
-    drug_a_id VARCHAR(36) NOT NULL,
-    drug_b_id VARCHAR(36) NOT NULL,
+    drug_a_id UUID NOT NULL,
+    drug_b_id UUID NOT NULL,
     severity VARCHAR(20) NOT NULL CHECK (severity IN ('FATAL_HARD_STOP', 'CRITICAL_HIGH', 'MODERATE', 'MINOR')),
     clinical_mechanism TEXT NOT NULL,
     clinical_effect TEXT NOT NULL,
@@ -24,8 +24,8 @@ CREATE INDEX IF NOT EXISTS idx_ddi_pair ON medication_interactions(drug_a_id, dr
 
 CREATE TABLE IF NOT EXISTS medication_alternatives (
     id VARCHAR(36) PRIMARY KEY,
-    original_drug_id VARCHAR(36) NOT NULL,
-    alternative_drug_id VARCHAR(36) NOT NULL,
+    original_drug_id UUID NOT NULL,
+    alternative_drug_id UUID NOT NULL,
     substitution_reason VARCHAR(50) NOT NULL CHECK (
         substitution_reason IN ('ALLERGY_SUBSTITUTE', 'RENAL_FRIENDLY', 'FORMULARY_EQUIVALENT', 'THERAPEUTIC_SUBSTITUTE')
     ),

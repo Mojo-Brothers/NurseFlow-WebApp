@@ -6,7 +6,7 @@
 CREATE TABLE IF NOT EXISTS hospital_formulary (
     id VARCHAR(36) PRIMARY KEY,
     organization_id VARCHAR(36) NOT NULL,
-    drug_id VARCHAR(36) NOT NULL,
+    drug_id UUID NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     formulary_tier VARCHAR(30) NOT NULL CHECK (
         formulary_tier IN ('GENERIK_NASIONAL', 'FORMULARIUM_RS', 'RESTRICTED_ANTIBIOTIC', 'NON_FORMULARIUM')
