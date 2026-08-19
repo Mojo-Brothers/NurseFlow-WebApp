@@ -32,7 +32,10 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
    - Mendukung deteksi otomatis path binary `psql` lintas platform (Linux `psql` vs Windows `C:\Program Files\PostgreSQL\16\bin\psql.exe`).
 3. **Pemberantasan Race Condition Vitest via Sequential File Isolation ([`vite.config.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/vite.config.js)):**
    - Mengaktifkan `fileParallelism: false` dan `pool: 'forks'` untuk mencegah tabrakan state in-memory singleton antar-suite di runner CI multi-core.
-4. **Verifikasi Test Suite Repositori Penuh:**
+4. **Mandatory Fixture Seeding Hardening (Zero CI Flakiness):**
+   - [`sprint3N6ProductionSecurityHardening.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/sprint3N6ProductionSecurityHardening.test.js): Menyisipkan seed organisasi `TENANT_A` dan `TENANT_B` pada hook `beforeAll` untuk memenuhi foreign key `master_patients_tenant_id_fkey`.
+   - [`sprint3P6SatusehatLiveIntegration.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/sprint3P6SatusehatLiveIntegration.test.js) & [`sprint3P7SatusehatExternalTransport.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/sprint3P7SatusehatExternalTransport.test.js): Menyisipkan seed tenant credentials pada `satusehat_credentials` di `beforeAll` sehingga mandiri (*self-contained*) pada database CI yang baru diinisialisasi.
+5. **Verifikasi Test Suite Repositori Penuh:**
    - **Vite 8.2.0 Production Bundle Build: SUCCEEDED (5.99s)**.
    - **138/138 Test Suites PASSED (771/771 Atomic Tests, 100% Pass Rate)**.
 

@@ -5,7 +5,7 @@
  * 401 Auto-Recovery, Remote-Success Reconciliation, Full 8-Step Clinical Journey.
  */
 
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { satusehatLiveGatewayService } from '../src/core/interoperability/satusehat/gateway/satusehatLiveGateway.service.js';
 import { secureTokenVaultService } from '../src/core/interoperability/satusehat/auth/secureTokenVault.service.js';
 import { postgresPoolService, pool } from '../server/db/postgresPool.js';
@@ -13,6 +13,21 @@ import { KEMKES_PROFILES, KEMKES_SYSTEMS } from '../src/core/interoperability/fh
 
 describe('🌐 SPRINT 3P.6: SATUSEHAT Live Integration & Clinical E2E Gate', () => {
   const testTenantId = '00000000-0000-0000-0000-000000000001';
+
+  beforeAll(async () => {
+    await pool.query(`
+      INSERT INTO tenant_organizations (id, tenant_code, organization_name, hospital_type, status)
+      VALUES ('${testTenantId}', 'RS-DEMO-01', 'RSUD NurseFlow Pusat', 'GENERAL_HOSPITAL', 'ACTIVE')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+
+    await secureTokenVaultService.storeTenantCredentials({
+      tenantId: testTenantId,
+      organizationId: '1000001',
+      clientId: 'SATUSEHAT_TEST_CLIENT_ID',
+      clientSecret: 'SATUSEHAT_TEST_CLIENT_SECRET_KEY_12345678'
+    });
+  });
 
   beforeEach(async () => {
     satusehatLiveGatewayService.resetState();

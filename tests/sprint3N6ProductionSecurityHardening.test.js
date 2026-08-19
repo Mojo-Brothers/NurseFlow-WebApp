@@ -26,6 +26,15 @@ describe('🔐 SPRINT 3N.6: Production Security Verification & Evidence Hardenin
   const nikB = `3201${Date.now().toString().slice(-6)}22`;
 
   beforeAll(async () => {
+    // Ensure tenant organizations exist to satisfy foreign keys
+    await pool.query(`
+      INSERT INTO tenant_organizations (id, tenant_code, organization_name, hospital_type, status)
+      VALUES 
+        ('${TENANT_A}', 'RS-DEMO-01', 'RSUD NurseFlow Pusat', 'GENERAL_HOSPITAL', 'ACTIVE'),
+        ('${TENANT_B}', 'RS-DEMO-02', 'RSUD NurseFlow Cabang', 'GENERAL_HOSPITAL', 'ACTIVE')
+      ON CONFLICT (id) DO NOTHING;
+    `);
+
     // Seed Patients in Tenant A and Tenant B
     await pool.query(`
       INSERT INTO master_patients (id, tenant_id, mrn, nik, full_name, gender, birth_date, phone_number, address_line, bpjs_card_number)
