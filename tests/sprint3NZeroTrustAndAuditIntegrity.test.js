@@ -19,8 +19,8 @@ describe('🔐 SPRINT 3N: Zero-Trust Security, Identity & Cryptographic Audit In
     // Seed Tenant B if not present
     await pool.query(`
       INSERT INTO tenant_organizations (id, tenant_code, organization_name, hospital_type, status)
-      VALUES ($1, 'TENANT-HOSPITAL-B', 'RS Daerah Mitra Sehat B', 'REGIONAL_HOSPITAL', 'ACTIVE')
-      ON CONFLICT (tenant_code) DO NOTHING;
+      VALUES ($1, 'TENANT-HOSPITAL-02', 'RS Daerah Mitra Sehat B', 'REGIONAL_HOSPITAL', 'ACTIVE')
+      ON CONFLICT (id) DO NOTHING;
     `, [TENANT_B]);
   });
 

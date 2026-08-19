@@ -17,7 +17,7 @@ describe('🌐 SPRINT 3P.7: SATUSEHAT External Transport & Sandbox Acceptance Ga
   beforeAll(async () => {
     await pool.query(`
       INSERT INTO tenant_organizations (id, tenant_code, organization_name, hospital_type, status)
-      VALUES ('${testTenantId}', 'RS-DEMO-01', 'RSUD NurseFlow Pusat', 'GENERAL_HOSPITAL', 'ACTIVE')
+      VALUES ('${testTenantId}', 'TENANT-HOSPITAL-01', 'RSUD NurseFlow Pusat', 'GENERAL_HOSPITAL', 'ACTIVE')
       ON CONFLICT (id) DO NOTHING;
     `);
 

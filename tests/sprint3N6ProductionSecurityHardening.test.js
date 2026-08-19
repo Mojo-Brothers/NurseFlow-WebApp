@@ -30,8 +30,8 @@ describe('🔐 SPRINT 3N.6: Production Security Verification & Evidence Hardenin
     await pool.query(`
       INSERT INTO tenant_organizations (id, tenant_code, organization_name, hospital_type, status)
       VALUES 
-        ('${TENANT_A}', 'RS-DEMO-01', 'RSUD NurseFlow Pusat', 'GENERAL_HOSPITAL', 'ACTIVE'),
-        ('${TENANT_B}', 'RS-DEMO-02', 'RSUD NurseFlow Cabang', 'GENERAL_HOSPITAL', 'ACTIVE')
+        ('${TENANT_A}', 'TENANT-HOSPITAL-01', 'RSUD NurseFlow Pusat', 'GENERAL_HOSPITAL', 'ACTIVE'),
+        ('${TENANT_B}', 'TENANT-HOSPITAL-02', 'RSUD NurseFlow Cabang', 'GENERAL_HOSPITAL', 'ACTIVE')
       ON CONFLICT (id) DO NOTHING;
     `);
 
