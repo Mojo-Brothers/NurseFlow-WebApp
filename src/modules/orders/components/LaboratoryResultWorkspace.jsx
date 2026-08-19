@@ -1,4 +1,5 @@
 import React from 'react';
+import toast from 'react-hot-toast';
 import { useOrdersStore } from '../store/orders.store.js';
 
 export default function LaboratoryResultWorkspace() {
@@ -10,9 +11,9 @@ export default function LaboratoryResultWorkspace() {
         labOrderId: labId,
         validatorName: 'dr. Sp.PK (Dokter Patologi Klinik)'
       });
-      alert(`Hasil Laboratorium Berhasil Divalidasi & Dirilis!\nInstrumen: ${res.analyzer_instrument}\nTagihan otomatis masuk ke Billing Ledger.`);
+      toast.success(`🧪 Hasil Laboratorium Berhasil Divalidasi & Dirilis!\nInstrumen: ${res.analyzer_instrument}\nTagihan otomatis masuk ke Billing Ledger.`, { duration: 4000 });
     } catch (err) {
-      alert(`Gagal Merilis Hasil: ${err.message}`);
+      toast.error(`Gagal Merilis Hasil: ${err.message}`);
     }
   };
 

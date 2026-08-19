@@ -1,4 +1,5 @@
 import React from 'react';
+import toast from 'react-hot-toast';
 import { useOrdersStore } from '../store/orders.store.js';
 
 export default function PharmacyWorkspace() {
@@ -10,9 +11,9 @@ export default function PharmacyWorkspace() {
         orderId,
         pharmacistName: 'apt. Dimas Anggara, S.Farm'
       });
-      alert('Obat Berhasil Didispensasi & Diserahkan! Tagihan otomatis tercatat di Billing Ledger via Canonical Event.');
+      toast.success('💊 Obat Berhasil Didispensasi & Diserahkan! Tagihan otomatis tercatat di Billing Ledger.', { duration: 4000 });
     } catch (err) {
-      alert(`Gagal Melakukan Dispensing: ${err.message}`);
+      toast.error(`Gagal Melakukan Dispensing: ${err.message}`);
     }
   };
 

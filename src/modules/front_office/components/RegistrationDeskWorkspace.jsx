@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { useFrontOfficeStore } from '../store/frontOffice.store.js';
 import MultiQueueDisplayBoard from './MultiQueueDisplayBoard.jsx';
 import BpjsBridgingControlModal from './BpjsBridgingControlModal.jsx';
@@ -47,11 +48,11 @@ export default function RegistrationDeskWorkspace() {
   const handleRegisterNew = async (e) => {
     e.preventDefault();
     if (!fullName || !nik) {
-      alert('Nama lengkap dan NIK wajib diisi.');
+      toast.error('Nama lengkap dan NIK wajib diisi.');
       return;
     }
     if (!generalConsentSigned) {
-      alert('General Consent wajib ditandatangani sebelum Episode of Care dapat diterbitkan.');
+      toast.error('General Consent wajib ditandatangani sebelum Episode of Care dapat diterbitkan.');
       return;
     }
 
@@ -77,12 +78,12 @@ export default function RegistrationDeskWorkspace() {
         signerRelationship: 'SELF'
       });
 
-      alert(`Registrasi Berhasil!\nMRN: ${res.registration.mrn}\nTiket: ${res.registration.ticket_number}\nEpisode: ${res.episode.episode_number}\nEvent distaged via Transactional Outbox.`);
+      toast.success(`✅ Registrasi Berhasil!\nMRN: ${res.registration.mrn} • Tiket: ${res.registration.ticket_number}\nEpisode: ${res.episode.episode_number}`, { duration: 5000 });
       setFullName('');
       setNik('');
       setActiveWristbandPatient(res.registration);
     } catch (err) {
-      alert(`Gagal Registrasi: ${err.message}`);
+      toast.error(`Gagal Registrasi: ${err.message}`);
     }
   };
 

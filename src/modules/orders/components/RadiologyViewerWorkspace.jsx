@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useOrdersStore } from '../store/orders.store.js';
 
 export default function RadiologyViewerWorkspace() {
@@ -15,9 +16,9 @@ export default function RadiologyViewerWorkspace() {
         reportText: reportNotes || undefined,
         radiologistName: 'dr. Sp.Rad (Spesialis Radiologi)'
       });
-      alert('Ekspertise Radiologi Berhasil Dirilis & Disahkan! Tagihan otomatis tercatat di Billing Ledger.');
+      toast.success('☢️ Ekspertise Radiologi Berhasil Dirilis & Disahkan! Tagihan otomatis tercatat di Billing Ledger.', { duration: 4000 });
     } catch (err) {
-      alert(`Gagal Merilis Ekspertise: ${err.message}`);
+      toast.error(`Gagal Merilis Ekspertise: ${err.message}`);
     }
   };
 

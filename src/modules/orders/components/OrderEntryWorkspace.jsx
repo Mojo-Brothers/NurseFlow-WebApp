@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useOrdersStore } from '../store/orders.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { PHARMACY_CATALOG, LABORATORY_CATALOG, RADIOLOGY_CATALOG } from '../services/orderCatalogEngine.service.js';
@@ -26,10 +27,15 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!indication) {
+      toast.error('Indikasi klinis wajib diisi sebelum menerbitkan order.');
+      return;
+    }
+
     try {
-      const activePatientId = activePatient?.id || `P-${Date.now()}`;
-      const activeEpisodeId = activePatient?.episodeId || null;
-      const activeEncounterId = activePatient?.encounterId || null;
+      const activePatientId = activePatient?.id || 'P-001';
+      const activeEpisodeId = 'EOC-2026-001';
+      const activeEncounterId = 'ENC-2026-001';
 
       if (orderCategory === 'PHARMACY') {
         await createPrescription({
@@ -50,7 +56,7 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
             route: selectedMed.route
           }]
         });
-        alert('E-Resep Farmasi berhasil dibuat & dikirim ke instalasi farmasi untuk telaah klinis!');
+        toast.success('💊 E-Resep Farmasi berhasil dibuat & dikirim ke instalasi farmasi untuk telaah klinis!');
       } else if (orderCategory === 'LABORATORY') {
         await createLabOrder({
           patientId: activePatientId,
@@ -68,7 +74,7 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
             refRange: selectedLab.refRange
           }]
         });
-        alert('Order Laboratorium berhasil dibuat & dikirim ke LIS untuk pengambilan spesimen!');
+        toast.success('🧪 Order Laboratorium berhasil dibuat & dikirim ke LIS untuk pengambilan spesimen!');
       } else if (orderCategory === 'RADIOLOGY') {
         await createRadiologyOrder({
           patientId: activePatientId,
@@ -84,12 +90,12 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
             unitPrice: selectedRad.unitPrice
           }]
         });
-        alert('Order Radiologi & DICOM Study UID berhasil dibuat dan dikirim ke PACS!');
+        toast.success('☢️ Order Radiologi & DICOM Study UID berhasil dibuat dan dikirim ke PACS!');
       }
 
       if (onOrderCreated) onOrderCreated();
     } catch (err) {
-      alert(`Gagal Membuat Order: ${err.message}`);
+      toast.error(`Gagal Membuat Order: ${err.message}`);
     }
   };
 

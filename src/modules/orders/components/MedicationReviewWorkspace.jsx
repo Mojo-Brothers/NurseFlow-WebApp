@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useOrdersStore } from '../store/orders.store.js';
 
 export default function MedicationReviewWorkspace({ onReviewed }) {
@@ -21,10 +22,10 @@ export default function MedicationReviewWorkspace({ onReviewed }) {
         reviewVerdict: verdict,
         clinicalNotes: verdict === 'APPROVED' ? 'Telaah resep farmasi disetujui, siap dispensing.' : 'Peringatan klinis di-override oleh farmasis.'
       });
-      alert(`Telaah Resep untuk ${medOrder.medication_name} Berhasil Disimpan: ${verdict}`);
+      toast.success(`💊 Telaah Resep untuk ${medOrder.medication_name} Berhasil Disimpan: ${verdict}`);
       if (onReviewed) onReviewed();
     } catch (err) {
-      alert(`Gagal Menyimpan Telaah: ${err.message}`);
+      toast.error(`Gagal Menyimpan Telaah: ${err.message}`);
     }
   };
 

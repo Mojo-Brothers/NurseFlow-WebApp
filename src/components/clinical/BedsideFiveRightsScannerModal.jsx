@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { 
   ShieldCheck, 
   QrCode, 
@@ -32,6 +33,11 @@ export function BedsideFiveRightsScannerModal({
   const [isVerifying, setIsVerifying] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  // Manual Fallback Override Mode (Gap 4: Hardware / Scanner Failure)
+  const [isManualFallback, setIsManualFallback] = useState(false);
+  const [manualFallbackReason, setManualFallbackReason] = useState('GELANG_PASIEN_RUSAK');
+  const [manualFallbackNotes, setManualFallbackNotes] = useState('');
 
   // Dual-Signature inputs for High-Alert
   const [coSignatureNurseId, setCoSignatureNurseId] = useState('');
@@ -234,6 +240,50 @@ export function BedsideFiveRightsScannerModal({
                     Simulasikan
                   </button>
                 </div>
+              </div>
+
+              {/* Hardware Failure Fallback Toggle */}
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsManualFallback(prev => !prev)}
+                  className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span>{isManualFallback ? 'Tutup Opsi Input Manual' : 'Gelang Rusak / Scanner Offline? Gunakan Verifikasi Manual'}</span>
+                </button>
+
+                {isManualFallback && (
+                  <div className="mt-2 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 rounded-xl space-y-2 text-xs">
+                    <span className="font-bold text-amber-900 dark:text-amber-200">Justifikasi Verifikasi Manual (JCI IPSG 1):</span>
+                    <select
+                      value={manualFallbackReason}
+                      onChange={e => setManualFallbackReason(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"
+                    >
+                      <option value="GELANG_PASIEN_RUSAK">Gelang Pasien Rusak / Terlepas</option>
+                      <option value="SCANNER_BLUETOOTH_OFFLINE">Scanner Barcode / Bluetooth Offline</option>
+                      <option value="PASIEN_ISOLASI_DARURAT">Pasien Isolasi / Darurat Bedah</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Catatan verifikasi identitas fisik bedside..."
+                      value={manualFallbackNotes}
+                      onChange={e => setManualFallbackNotes(e.target.value)}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPatientBarcodeInput(order.mrn);
+                        toast.success('Identitas pasien diverifikasi manual.');
+                      }}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs"
+                    >
+                      Konfirmasi Identitas Pasien Manual
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Target Patient Card */}

@@ -3,6 +3,7 @@
  * Didesain untuk perawat: cepat, satu-klik update status.
  */
 import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { getShiftTasks, updateTaskStatus, createTask } from '../services/worklist.service.js';
 import { usePatientStore } from '../../patient/patient.store.js';
@@ -71,7 +72,8 @@ export default function WorklistPage() {
     try {
       await updateTaskStatus(taskId, newStatus, currentUser.email);
       setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
-    } catch (e) { alert(e.message); }
+      toast.success(`Status tugas berhasil diubah menjadi ${newStatus}`);
+    } catch (e) { toast.error(e.message); }
     setUpdatingId(null);
   };
 
@@ -82,7 +84,8 @@ export default function WorklistPage() {
       setIsModalOpen(false);
       setNewTask({ patientId: '', taskType: 'VITAL_CHECK', description: '', dueTime: '' });
       loadTasks();
-    } catch (e) { alert(e.message); }
+      toast.success('Tugas asuhan keperawatan berhasil dibuat.');
+    } catch (e) { toast.error(e.message); }
   };
 
 

@@ -34,14 +34,73 @@ export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
 
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [hasSavedDraft, setHasSavedDraft] = useState(false);
 
-  if (!patient) {
-    return (
-      <div className="p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
-        Pilih pasien terlebih dahulu dari antrean untuk membuka Doctor Consultation Workspace.
-      </div>
-    );
-  }
+  // Auto-Save Draft to Local Storage (Crash & F5 Protection)
+  const DRAFT_KEY = patient ? `nurseflow_soap_draft_${patient.id}` : null;
+
+  useEffect(() => {
+    if (!DRAFT_KEY) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        setHasSavedDraft(true);
+      }
+    } catch (e) {
+      console.warn('Failed to check SOAP draft:', e);
+    }
+  }, [DRAFT_KEY]);
+
+  // Persist draft on every change
+  useEffect(() => {
+    if (!DRAFT_KEY) return;
+    try {
+      const draftPayload = {
+        subjective,
+        objectiveVitals,
+        physicalExam,
+        primaryIcd10,
+        primaryIcd10Name,
+        secondaryDiagnoses,
+        plan,
+        disposition,
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draftPayload));
+    } catch (e) {
+      console.warn('Failed to auto-save SOAP draft:', e);
+    }
+  }, [DRAFT_KEY, subjective, objectiveVitals, physicalExam, primaryIcd10, primaryIcd10Name, secondaryDiagnoses, plan, disposition]);
+
+  const handleRestoreDraft = () => {
+    if (!DRAFT_KEY) return;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.subjective) setSubjective(parsed.subjective);
+        if (parsed.objectiveVitals) setObjectiveVitals(parsed.objectiveVitals);
+        if (parsed.physicalExam) setPhysicalExam(parsed.physicalExam);
+        if (parsed.primaryIcd10) setPrimaryIcd10(parsed.primaryIcd10);
+        if (parsed.primaryIcd10Name) setPrimaryIcd10Name(parsed.primaryIcd10Name);
+        if (parsed.secondaryDiagnoses) setSecondaryDiagnoses(parsed.secondaryDiagnoses);
+        if (parsed.plan) setPlan(parsed.plan);
+        if (parsed.disposition) setDisposition(parsed.disposition);
+        toast.success('Draf SOAP berhasil dipulihkan dari sesi sebelum crash/reload!');
+        setHasSavedDraft(false);
+      }
+    } catch (e) {
+      toast.error('Gagal memulihkan draf SOAP.');
+    }
+  };
+
+  const handleDiscardDraft = () => {
+    if (DRAFT_KEY) {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+    setHasSavedDraft(false);
+    toast('Draf SOAP dibersihkan.', { icon: '🗑️' });
+  };
 
   const handleSaveSoap = async (e) => {
     e.preventDefault();
@@ -65,6 +124,10 @@ export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
       });
 
       toast.success('✅ Rekam Medis Elektronik CPPT / SOAP berhasil disimpan & ditandatangani secara digital!');
+      if (DRAFT_KEY) {
+        localStorage.removeItem(DRAFT_KEY);
+      }
+      setHasSavedDraft(false);
       if (onSaved) onSaved(record);
     } catch (err) {
       toast.error(`Gagal menyimpan CPPT: ${err.message}`);
@@ -82,6 +145,35 @@ export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-300">
       {/* Left 8 Cols: SOAP Workspace */}
       <div className="lg:col-span-8 flex flex-col gap-5">
+        {/* Crash & Reload Auto-Save Recovery Alert Banner */}
+        {hasSavedDraft && (
+          <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 flex items-center justify-between gap-3 animate-in slide-in-from-top duration-200">
+            <div className="flex items-center gap-2.5">
+              <span className="material-symbols-outlined text-amber-500 text-[20px]">restore_page</span>
+              <div>
+                <span className="text-xs font-black">Draf Catatan SOAP Belum Tersimpan Ditemukan</span>
+                <p className="text-[10px] text-amber-800/80 dark:text-amber-300/80">Tersedia draf lokal dari sesi sebelum browser di-reload/crash.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleRestoreDraft}
+                className="px-3 py-1 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs transition-all cursor-pointer shadow-xs"
+              >
+                Pulihkan Draf
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                className="px-2.5 py-1 rounded-xl bg-transparent hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-xs transition-all cursor-pointer"
+              >
+                Abaikan
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Patient Identity Banner */}
         <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-900 to-indigo-900 text-white flex flex-wrap items-center justify-between gap-3 shadow-md">
           <div className="flex items-center gap-3">
