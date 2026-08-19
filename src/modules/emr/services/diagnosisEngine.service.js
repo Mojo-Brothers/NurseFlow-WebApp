@@ -20,22 +20,29 @@ export const ICD10_CATALOG = [
 
 const DIAGNOSES_STORAGE_KEY = 'nurseflow_clinical_diagnoses';
 
+let memoryDiagnoses = [];
+
 const getStoredDiagnoses = () => {
   try {
-    const raw = localStorage.getItem(DIAGNOSES_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const raw = localStorage.getItem(DIAGNOSES_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    }
   } catch (e) {
-    console.warn('[DiagnosisEngine] Failed to load diagnoses:', e);
+    // silent memory fallback
   }
-  return [];
+  return memoryDiagnoses;
 };
 
 const saveStoredDiagnoses = (list) => {
   try {
-    localStorage.setItem(DIAGNOSES_STORAGE_KEY, JSON.stringify(list));
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(DIAGNOSES_STORAGE_KEY, JSON.stringify(list));
+    }
   } catch (e) {
-    console.warn('[DiagnosisEngine] Failed to save diagnoses:', e);
+    // silent memory fallback
   }
+  memoryDiagnoses = list;
 };
 
 export const diagnosisEngineService = {

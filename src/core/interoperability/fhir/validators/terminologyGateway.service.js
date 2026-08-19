@@ -123,6 +123,25 @@ export const terminologyGateway = {
       throw new TerminologyValidationError(`Invalid KFA Code format: "${code}". Expected 9-digit Kemenkes Farmasi code (e.g. 93000101)`, 'KFA', code);
     }
     return { valid: true, code: cleanCode, system: TERMINOLOGY_SYSTEMS.KFA };
+  },
+
+  /**
+   * Validate Unified Code for Units of Measure (UCUM)
+   */
+  validateUCUM(unit) {
+    if (!unit || typeof unit !== 'string') {
+      throw new TerminologyValidationError('UCUM unit code must be a non-empty string', 'UCUM', unit);
+    }
+    const cleanUnit = unit.trim();
+    const VALID_UCUM_UNITS = new Set([
+      'mm[Hg]', 'mmHg', 'Cel', 'degC', 'degrees C', '/min', 'min', 'kg', 'g', 'mg', 'mcg',
+      '%', 'mL', 'L', '{score}', 'beats/minute', 'breaths/minute', 'unit', 'Vial', 'Ampul', 'Tablet'
+    ]);
+
+    if (!VALID_UCUM_UNITS.has(cleanUnit) && !cleanUnit.startsWith('{')) {
+      throw new TerminologyValidationError(`Invalid or unstandardized UCUM unit: "${unit}"`, 'UCUM', unit);
+    }
+    return { valid: true, unit: cleanUnit, system: 'http://unitsofmeasure.org' };
   }
 };
 

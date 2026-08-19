@@ -491,7 +491,7 @@ class MedicationLifecycleEngine {
       );
     }
 
-    // 5. 7-Rights Validation
+    // 5. 7-Rights Validation (Patient, Drug, Dose, Route, Time)
     if (scannedPatientMrn && scannedPatientMrn !== order.mrn) {
       throw new MedicationSafetyException(
         MED_ERROR_CODES.WRONG_PATIENT,
@@ -502,6 +502,18 @@ class MedicationLifecycleEngine {
       throw new MedicationSafetyException(
         MED_ERROR_CODES.WRONG_DRUG,
         `Barcode mismatch! Scanned Drug Code "${scannedMedicationCode}" does NOT match ordered code "${order.medicationCode}" (${order.medicationName})`
+      );
+    }
+    if (actualDose && String(actualDose).trim().toLowerCase() !== String(order.dose).trim().toLowerCase()) {
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.WRONG_DOSE,
+        `Dose mismatch! Administered dose "${actualDose}" does NOT match prescribed dose "${order.dose}" (${order.medicationName})`
+      );
+    }
+    if (actualRoute && String(actualRoute).trim().toLowerCase() !== String(order.route).trim().toLowerCase()) {
+      throw new MedicationSafetyException(
+        MED_ERROR_CODES.WRONG_ROUTE,
+        `Route mismatch! Administered route "${actualRoute}" does NOT match prescribed route "${order.route}" (${order.medicationName})`
       );
     }
 
@@ -656,6 +668,31 @@ class MedicationLifecycleEngine {
     const response = { success: true, order, slot, event };
     if (commandId) this.processedCommandIds.set(commandId, response);
     return response;
+  }
+
+  /**
+   * 7. Forensic Audit Lineage Replay Engine (ISO 27799 WORM Audit)
+   */
+  async getAuditLineage(orderId) {
+    const order = await persistenceAdapter.findById(this.ORDERS_COLLECTION, orderId);
+    if (!order) throw new Error(`[MedicationLifecycle] Order "${orderId}" not found`);
+
+    const allEvents = await persistenceAdapter.query(this.EVENTS_COLLECTION);
+    const orderEvents = allEvents
+      .filter(e => e.medicationOrderId === orderId || e.aggregateId === orderId)
+      .sort((a, b) => new Date(a.occurredAt) - new Date(b.occurredAt));
+
+    return {
+      orderId,
+      orderNumber: order.orderNumber,
+      medicationName: order.medicationName,
+      dose: `${order.dose} ${order.doseUnit}`,
+      route: order.route,
+      prescriber: { id: order.prescriberId, name: order.prescriberName },
+      currentStatus: order.status,
+      eventStreamCount: orderEvents.length,
+      events: orderEvents
+    };
   }
 }
 

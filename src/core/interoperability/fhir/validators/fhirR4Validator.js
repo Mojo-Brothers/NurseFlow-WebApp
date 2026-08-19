@@ -137,6 +137,18 @@ export const fhirR4Validator = {
         }
         break;
 
+      case 'DiagnosticReport':
+        if (!resource.status) {
+          errors.push('DiagnosticReport must specify "status"');
+        }
+        if (!resource.code || !resource.code.coding) {
+          errors.push('DiagnosticReport must specify "code.coding"');
+        }
+        if (!resource.subject || !resource.subject.reference) {
+          errors.push('DiagnosticReport must specify "subject.reference"');
+        }
+        break;
+
       default:
         break;
     }

@@ -1,7 +1,7 @@
 /**
  * NurseFlow Enterprise HIS 2026 — Clinical Decision Support System (CDSS) Engine
- * Sprint 4: Drug-Allergy Cross Sensitivity, Renal Dosing, DDI & Duplicate Therapy Guard
- * Standar Kepatuhan: JCI 7th Edition (MMU Medication Safety) & KARS 2024.
+ * Sprint 4 & Sprint 4B.3: Drug-Allergy, Renal Dosing, Pediatric Weight Guard, LASA & DDI
+ * Standar Kepatuhan: JCI 7th Edition (MMU Medication Safety), ISMP LASA, Permenkes 24/2022.
  */
 
 import { allergyEngineService } from './allergyEngine.service.js';
@@ -34,6 +34,16 @@ const saveStoredAlerts = (alerts) => {
   }
 };
 
+// ISMP Canonical LASA Pairs with Tall-Man Lettering
+export const LASA_PAIRS = [
+  { pair: ['DOPamine', 'DOBUTamine'], pattern: /dopamine|dobutamine/i },
+  { pair: ['hydrALAZINE', 'hydrOXYzine'], pattern: /hydralazine|hydroxyzine/i },
+  { pair: ['predniSONE', 'prednisoLONE'], pattern: /prednisone|prednisolone/i },
+  { pair: ['EpiNEPHrine', 'NorEpiNEPHrine'], pattern: /epinephrine|norepinephrine/i },
+  { pair: ['ceFAZolin', 'cefTRIAXone'], pattern: /cefazolin|ceftriaxone/i },
+  { pair: ['chlorproMAZINE', 'cloMIPRAMINE'], pattern: /chlorpromazine|clomipramine/i }
+];
+
 export const cdssEngineService = {
   /**
    * Run Comprehensive CDSS Clinical Screening for a Prescription Order
@@ -43,12 +53,16 @@ export const cdssEngineService = {
     patientId,
     prescribedDrugName,
     prescribedDrugCode,
+    prescribedDoseMg = null,
     patientEgfr = 45, // ml/min/1.73m2
+    patientAgeYears = 35,
+    patientWeightKg = null,
     activeMedications = []
   }) => {
     const alerts = [];
+    const drugLower = (prescribedDrugName || '').toLowerCase();
 
-    // 1. Drug-Allergy Cross-Reactivity Check
+    // 1. Drug-Allergy Cross-Reactivity Check (JCI IPSG 3)
     const allergyCheck = allergyEngineService.checkDrugAllergyConflict(patientId, prescribedDrugName);
     if (allergyCheck.hasConflict) {
       alerts.push({
@@ -66,23 +80,80 @@ export const cdssEngineService = {
     }
 
     // 2. Renal Impairment Dosage Guard (eGFR Assessment)
-    const drugLower = (prescribedDrugName || '').toLowerCase();
-    if (patientEgfr < 30 && (drugLower.includes('metformin') || drugLower.includes('glibenclamide'))) {
-      alerts.push({
-        id: `CDSS-RENAL-${Date.now()}`,
-        encounter_id: encounterId,
-        patient_id: patientId,
-        alert_type: 'RENAL_DOSAGE_ADJUSTMENT',
-        severity: 'CRITICAL_BLOCK',
-        title: '⛔ KONTRAINDIKASI GINJAL BERAT (eGFR < 30 ml/menit)',
-        message: `Pasien memiliki estimasi GFR ${patientEgfr} ml/menit. Pemberian ${prescribedDrugName} dikontraindikasikan karena risiko Asidosis Laktat Akut!`,
-        recommendation: 'Ganti dengan Insulin reguler atau DPP-4 Inhibitor yang aman untuk gangguan ginjal.',
-        is_acknowledged: false,
-        created_at: new Date().toISOString()
-      });
+    if (patientEgfr < 30) {
+      if (drugLower.includes('metformin') || drugLower.includes('glibenclamide')) {
+        alerts.push({
+          id: `CDSS-RENAL-${Date.now()}`,
+          encounter_id: encounterId,
+          patient_id: patientId,
+          alert_type: 'RENAL_DOSAGE_ADJUSTMENT',
+          severity: 'CRITICAL_BLOCK',
+          title: '⛔ KONTRAINDIKASI GINJAL BERAT (eGFR < 30 ml/menit)',
+          message: `Pasien memiliki estimasi GFR ${patientEgfr} ml/menit. Pemberian ${prescribedDrugName} dikontraindikasikan karena risiko Asidosis Laktat Akut!`,
+          recommendation: 'Ganti dengan Insulin reguler atau DPP-4 Inhibitor yang aman untuk gangguan ginjal.',
+          is_acknowledged: false,
+          created_at: new Date().toISOString()
+        });
+      } else if (drugLower.includes('ceftriaxone') || drugLower.includes('meropenem') || drugLower.includes('ciprofloxacin')) {
+        alerts.push({
+          id: `CDSS-RENAL-ADJ-${Date.now()}`,
+          encounter_id: encounterId,
+          patient_id: patientId,
+          alert_type: 'RENAL_DOSAGE_ADJUSTMENT',
+          severity: 'WARNING_OVERRIDE_REQUIRED',
+          title: `⚠️ PENYESUAIAN DOSIS GINJAL DIPERLUKAN (eGFR: ${patientEgfr} ml/min)`,
+          message: `Klirens ginjal menurun signifikan pada eGFR ${patientEgfr}. Dibutuhkan penyesuaian dosis atau pemanjangan interval dosis untuk ${prescribedDrugName}.`,
+          recommendation: 'Turunkan dosis 50% atau perpanjang interval pemberian menjadi q12h/q24h.',
+          is_acknowledged: false,
+          created_at: new Date().toISOString()
+        });
+      }
     }
 
-    // 3. Drug-Drug Major Interactions
+    // 3. Pediatric Weight-Based Dosing Guard (Anak < 12 Tahun / BB spesifik)
+    if (patientAgeYears < 12 && patientWeightKg) {
+      let maxMgPerKgSingle = 15; // default general guideline
+      if (drugLower.includes('paracetamol') || drugLower.includes('acetaminophen')) maxMgPerKgSingle = 15;
+      if (drugLower.includes('amoxicillin')) maxMgPerKgSingle = 30;
+      if (drugLower.includes('ceftriaxone')) maxMgPerKgSingle = 75;
+
+      const maxSafeDose = patientWeightKg * maxMgPerKgSingle;
+      if (prescribedDoseMg && prescribedDoseMg > maxSafeDose) {
+        alerts.push({
+          id: `CDSS-PED-DOSE-${Date.now()}`,
+          encounter_id: encounterId,
+          patient_id: patientId,
+          alert_type: 'PEDIATRIC_OVERDOSE_WARNING',
+          severity: 'CRITICAL_BLOCK',
+          title: `⛔ PERINGATAN OVERDOSIS PEDIATRIK (BB: ${patientWeightKg} kg)`,
+          message: `Dosis ${prescribedDoseMg} mg melebihi batas aman maksimal untuk anak berat ${patientWeightKg} kg (Maksimal: ${maxSafeDose} mg / ${maxMgPerKgSingle} mg/kgBB)!`,
+          recommendation: `Sesuaikan dosis ke rentang aman: ${(patientWeightKg * 10).toFixed(0)} - ${maxSafeDose.toFixed(0)} mg per kali pemberian.`,
+          is_acknowledged: false,
+          created_at: new Date().toISOString()
+        });
+      }
+    }
+
+    // 4. LASA (Look-Alike Sound-Alike) & Tall-Man Warning
+    for (const item of LASA_PAIRS) {
+      if (item.pattern.test(prescribedDrugName)) {
+        alerts.push({
+          id: `CDSS-LASA-${Date.now()}`,
+          encounter_id: encounterId,
+          patient_id: patientId,
+          alert_type: 'LASA_PROTECTION',
+          severity: 'WARNING_OVERRIDE_REQUIRED',
+          title: `⚠️ PERINGATAN OBAT LASA / NORUM (${item.pair.join(' vs ')})`,
+          message: `Obat ini termasuk dalam daftar Kewaspadaan Tinggi LASA. Pastikan tidak tertukar dengan pasangan mirip: ${item.pair.join(' ⟷ ')}.`,
+          recommendation: 'Gunakan penulisan Tall-Man Lettering dan verifikasi ganda saat telaah resep & dispensing.',
+          is_acknowledged: false,
+          created_at: new Date().toISOString()
+        });
+        break;
+      }
+    }
+
+    // 5. Drug-Drug Major Interactions
     if (drugLower.includes('simvastatin') && activeMedications.some(m => m.toLowerCase().includes('amlodipine'))) {
       alerts.push({
         id: `CDSS-DDI-${Date.now()}`,
@@ -98,7 +169,7 @@ export const cdssEngineService = {
       });
     }
 
-    // 4. Duplicate Therapy Alert
+    // 6. Duplicate Therapy Alert
     if (activeMedications.some(m => m.toLowerCase().includes(drugLower) || drugLower.includes(m.toLowerCase()))) {
       alerts.push({
         id: `CDSS-DUP-${Date.now()}`,

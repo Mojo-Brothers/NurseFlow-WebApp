@@ -31,6 +31,30 @@ CREATE TABLE IF NOT EXISTS radiology_orders (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Schema Evolution & Harmonization for Existing Deployments
+DO $$ BEGIN
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS order_number VARCHAR(50);
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS accession_number VARCHAR(50);
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS patient_mrn VARCHAR(30);
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS patient_name VARCHAR(150);
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS encounter_id VARCHAR(50);
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS examination_code VARCHAR(50);
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'ROUTINE';
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS ordering_physician_id VARCHAR(50);
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS ordering_physician_name VARCHAR(150);
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS clinical_indication TEXT;
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'ORDERED';
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS scheduled_at TIMESTAMPTZ;
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS patient_arrived_at TIMESTAMPTZ;
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS procedure_started_at TIMESTAMPTZ;
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS image_acquired_at TIMESTAMPTZ;
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS report_finalized_at TIMESTAMPTZ;
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS billing_status VARCHAR(20) DEFAULT 'PENDING';
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+    ALTER TABLE radiology_orders ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
+END $$;
+
 -- 2. Table: radiology_audit_log (Immutable Forensic Event Ledger)
 CREATE TABLE IF NOT EXISTS radiology_audit_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

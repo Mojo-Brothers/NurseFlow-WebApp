@@ -62,17 +62,18 @@ export const universalOrderEngineService = {
     estimatedAmount = 0,
     actorEmail = 'admin@nurseflow.id'
   }) => {
-    const randomSeq = Math.floor(100 + Math.random() * 900);
-    const orderNumber = `ORD-2026-${new Date().toISOString().slice(5, 10).replace('-', '')}-${randomSeq}`;
+    const randomSeq = Math.floor(1000 + Math.random() * 9000);
     const now = new Date().toISOString();
+    const orderNumber = `ORD-${now.slice(0, 10).replace(/-/g, '')}-${randomSeq}`;
 
     const calculatedCount = items.length > 0 ? items.length : itemsCount;
     const calculatedAmount = items.length > 0
       ? items.reduce((sum, it) => sum + (it.totalPrice || it.price || 0), 0)
       : estimatedAmount;
 
+    const entropy = Math.random().toString(36).slice(2, 8).toUpperCase();
     const newOrder = {
-      id: `ORD-${Date.now()}`,
+      id: `ORD-${Date.now()}-${entropy}`,
       order_number: orderNumber,
       patient_id: patientId,
       patient_name: patientName,
@@ -156,16 +157,18 @@ export const universalOrderEngineService = {
     return order;
   },
 
-  /**
-   * Get Orders by Filters
-   */
   getOrders: (filters = {}) => {
     let list = getStoredOrders();
     if (filters.category && filters.category !== 'ALL') {
       list = list.filter(o => o.order_category === filters.category);
     }
-    if (filters.patientId) {
-      list = list.filter(o => o.patient_id === filters.patientId);
+    const ptId = filters.patientId || filters.patient_id;
+    if (ptId) {
+      list = list.filter(o => o.patient_id === ptId);
+    }
+    const encId = filters.encounterId || filters.encounter_id;
+    if (encId) {
+      list = list.filter(o => o.encounter_id === encId);
     }
     if (filters.status && filters.status !== 'ALL') {
       list = list.filter(o => o.status === filters.status);

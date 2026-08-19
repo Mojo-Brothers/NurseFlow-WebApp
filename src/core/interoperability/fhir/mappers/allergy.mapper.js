@@ -52,50 +52,6 @@ export function mapAllergyIntolerance(allergy) {
   };
 }
 
-export function mapDiagnosticReport(report) {
-  if (!report) return null;
-
-  return {
-    resourceType: 'DiagnosticReport',
-    id: report.id || `RPT-${Date.now()}`,
-    meta: {
-      profile: [KEMKES_PROFILES.DIAGNOSTIC_REPORT]
-    },
-    status: report.status === 'FINAL' ? 'final' : 'preliminary',
-    category: [
-      {
-        coding: [
-          {
-            system: 'http://terminology.hl7.org/CodeSystem/v2-0074',
-            code: report.category === 'RADIOLOGY' ? 'RAD' : 'LAB',
-            display: report.category === 'RADIOLOGY' ? 'Radiology' : 'Laboratory'
-          }
-        ]
-      }
-    ],
-    code: {
-      coding: [
-        {
-          system: KEMKES_SYSTEMS.LOINC,
-          code: report.loincCode || '24323-8',
-          display: report.testName || 'Comprehensive metabolic 1998 panel'
-        }
-      ],
-      text: report.testName || 'Pemeriksaan Diagnostik'
-    },
-    subject: {
-      reference: `Patient/${report.patientId}`,
-      display: report.patientName || 'Pasien'
-    },
-    encounter: report.encounterId ? {
-      reference: `Encounter/${report.encounterId}`
-    } : undefined,
-    effectiveDateTime: report.performedAt || new Date().toISOString(),
-    issued: report.issuedAt || new Date().toISOString(),
-    conclusion: report.conclusion || report.impression || 'Hasil dalam batas normal'
-  };
-}
-
 export function mapDocumentReference(doc) {
   if (!doc) return null;
 

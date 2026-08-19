@@ -9,3 +9,4 @@ export * from './observation.mapper.js';
 export * from './procedure.mapper.js';
 export * from './medication.mapper.js';
 export * from './allergy.mapper.js';
+export * from './diagnosticReport.mapper.js';
