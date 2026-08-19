@@ -10,3 +10,4 @@
 | 2026-08-10 03:32:05 | `DESKTOP-8O5OS2S` | sync(DESKTOP-8O5OS2S): Complete Master Architecture Audit and Golden Patient Journey Integration [2026-08-10 03:32:05] |
 | 2026-08-10 03:37:13 | `DESKTOP-8O5OS2S` | sync(DESKTOP-8O5OS2S): Implement EpisodeOfCare, CareTeam, ClinicalTimeline, and DomainEvent Engine [2026-08-10 03:37:13] |
 | 2026-08-10 03:39:14 | `DESKTOP-8O5OS2S` | sync(DESKTOP-8O5OS2S): Enforce Domain Event Idempotency and Clinical Timeline Source Traceability [2026-08-10 03:39:14] |
+| 2026-08-19 02:34:31 | `DESKTOP-8O5OS2S` | sync(DESKTOP-8O5OS2S): docs: set Option B Native PostgreSQL Direct Migrations as primary developer directive [2026-08-19 02:34:31] |

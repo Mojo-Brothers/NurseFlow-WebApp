@@ -55,15 +55,29 @@ npm run dev
 
 ---
 
-## 🐳 4. Menjalankan Database PostgreSQL & Redis Lokal (Docker Compose)
+## 🐘 4. Menjalankan Database PostgreSQL (Pengaturan Lingkungan Pengembang)
 
-Jika Anda ingin menjalankan database dan cache lokal:
+### 📌 Standar Utama Pengembang: PostgreSQL Native / Server (Opsi B — UTAMA)
+Pengembang secara standar menggunakan **PostgreSQL Instance Native / Server Direct** pada peranti kerja:
+1. Buat database: `nurseflow_enterprise_his`.
+2. Jalankan 50 file migrasi di folder [`database/migrations/`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/database/migrations) secara berurutan (`001_...sql` s/d `050_...sql`) via pgAdmin / psql / DBeaver.
+3. Konfigurasi kredensial koneksi di `.env.local`:
+   ```env
+   POSTGRES_DB=nurseflow_enterprise_his
+   POSTGRES_USER=his_admin
+   POSTGRES_PASSWORD=your_local_postgres_password
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+   DATABASE_URL=postgresql://his_admin:your_local_postgres_password@localhost:5432/nurseflow_enterprise_his?schema=public
+   ```
 
+### 🐳 Alternatif: Docker Compose (Opsi A)
+Bagi lingkungan terisolasi dengan Docker:
 ```bash
 docker compose up -d postgres-db redis-cache
 ```
+Database PostgreSQL akan berjalan di port `5432` dan Redis di port `6379`.
 
-Database PostgreSQL akan berjalan di port `5432` dan Redis di port `6379` dengan volume persisten terisolasi pada device Anda.
 
 ---
 

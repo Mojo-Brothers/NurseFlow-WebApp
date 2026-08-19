@@ -20,6 +20,19 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🟢 [19 AGUSTUS 2026] — STANDARISASI SETUP DATABASE PENGEMBANG: NATIVE POSTGRESQL DIRECT MIGRATIONS (OPSI B)
+
+**Kategori:** `[DOCS]` `[INFRASTRUCTURE_DIRECTIVE]` `[MULTI_DEVICE_WORKFLOW]`  
+**Status:** Ditetapkan sebagai standar utama pengembang across all devices.
+
+**Detail Pembaruan:**
+1. **Penetapan Opsi B sebagai Standar Utama Workflow Database**:
+   - Dokumentasi [`docs/DEVELOPMENT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/DEVELOPMENT.md) diperbarui untuk menetapkan **PostgreSQL Native Instance / Direct Server (Opsi B)** sebagai metode baku pengembang saat bekerja di berbagai peranti.
+   - Menggunakan eksekusi 50 file migrasi SQL kanonikal di [`database/migrations/`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/database/migrations) (`001_...sql` s/d `050_...sql`) via pgAdmin, psql, atau DBeaver.
+   - Memastikan pengaturan kredensial database lokal di `.env.local` selalu tersinkron secara konsisten di setiap peranti kerja.
+
+---
+
 ### 🟢 [18 AGUSTUS 2026] — SPRINT 3I: REAL SATUSEHAT SANDBOX READ-BACK VERIFICATION, CLINICAL SECURITY RBAC/ABAC MATRIX & CLOSED ENCOUNTER IMMUTABILITY
 
 **Tag Rilis:** `satusehat-sandbox-ready-for-external-verification`  
