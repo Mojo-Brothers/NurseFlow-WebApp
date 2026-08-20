@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { bloodBankEnterpriseEngineService, REACTION_TYPES } from '../../../../server/services/bloodBankEnterpriseEngine.service.js';
+import { REACTION_TYPES } from '../constants/bloodBank.constants.js';
+import { apiClient } from '../../../core/apiClient.js';
 import toast from 'react-hot-toast';
 
 export default function BedsideTransfusionVerificationStudio() {

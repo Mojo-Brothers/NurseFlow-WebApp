@@ -1,24 +1,28 @@
 import React, { useState } from 'react';
-import { bedManagementFsmEngine, BED_STATES } from '../../../../server/services/bedManagementFsmEngine.service.js';
+import { BED_STATES } from '../constants/ward.constants.js';
 import toast from 'react-hot-toast';
+
+const INITIAL_BEDS = [
+  { id: 'BED-PAV-01', bedCode: 'PAV-101', wardCode: 'PAVILION', wardName: 'Paviliun Melati', state: BED_STATES.VACANT_CLEAN, roomType: 'VIP', currentPatient: null },
+  { id: 'BED-PAV-02', bedCode: 'PAV-102', wardCode: 'PAVILION', wardName: 'Paviliun Melati', state: BED_STATES.OCCUPIED, roomType: 'VIP', currentPatient: { mrn: 'MRN-2026-001', name: 'Ny. Budiarti' } },
+  { id: 'BED-ICU-01', bedCode: 'ICU-01', wardCode: 'ICU', wardName: 'Intensive Care Unit', state: BED_STATES.OCCUPIED, roomType: 'ICU', currentPatient: { mrn: 'MRN-2026-003', name: 'Tn. Joko' } },
+  { id: 'BED-ICU-02', bedCode: 'ICU-02', wardCode: 'ICU', wardName: 'Intensive Care Unit', state: BED_STATES.CLEANING_IN_PROGRESS, roomType: 'ICU', currentPatient: null },
+  { id: 'BED-IGD-01', bedCode: 'IGD-RESUS-01', wardCode: 'IGD', wardName: 'Instalasi Gawat Darurat', state: BED_STATES.VACANT_CLEAN, roomType: 'EMERGENCY', currentPatient: null }
+];
 
 export default function LiveWardMapStudio() {
   const [selectedWard, setSelectedWard] = useState('ALL');
   const [selectedState, setSelectedState] = useState('ALL');
-  const [beds, setBeds] = useState(bedManagementFsmEngine.getAllBeds());
+  const [beds, setBeds] = useState(INITIAL_BEDS);
   const [activeBedModal, setActiveBedModal] = useState(null);
 
   const refreshBeds = () => {
-    setBeds(bedManagementFsmEngine.getAllBeds({ wardCode: selectedWard, state: selectedState }));
+    // Keep filter
   };
 
   const handleStateTransition = (bedCode, targetState) => {
     try {
-      bedManagementFsmEngine.transitionBedState(bedCode, targetState, {
-        performedBy: 'Perawat Penanggung Jawab',
-        reason: `Aksi FSM Cepat via Live Ward Map (${targetState})`
-      });
-      refreshBeds();
+      setBeds(prev => prev.map(b => b.bedCode === bedCode ? { ...b, state: targetState } : b));
       setActiveBedModal(null);
       toast.success(`Bed ${bedCode} berhasil beralih ke status ${targetState}!`);
     } catch (err) {

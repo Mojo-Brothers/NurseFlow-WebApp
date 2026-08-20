@@ -25,10 +25,19 @@ export const useAuthStore = create((set, get) => ({
 
   // ─── Actions ─────────────────────────────
   setUser: (user, role, authorizedRoles = null) => {
-    const roles = authorizedRoles || user?.authorizedRoles || (role ? [role] : ['DOCTOR', 'NURSE', 'PHARMACIST', 'ADMIN', 'LAB_TECH']);
+    if (!user) {
+      set({
+        currentUser: null,
+        role: null,
+        authorizedRoles: [],
+        isLoading: false
+      });
+      return;
+    }
+    const roles = authorizedRoles || user?.authorizedRoles || (role ? [role] : []);
     set({
       currentUser: user,
-      role: role || (roles.length > 0 ? roles[0] : 'DOCTOR'),
+      role: role || (roles.length > 0 ? roles[0] : null),
       authorizedRoles: roles,
       isLoading: false
     });

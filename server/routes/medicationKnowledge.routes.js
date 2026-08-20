@@ -8,8 +8,10 @@ import { medicationKnowledgeBaseService } from '../services/medicationKnowledgeB
 import { terminologyService } from '../services/terminologyService.service.js';
 import { patientAllergyService } from '../services/patientAllergy.service.js';
 import { hospitalFormularyService } from '../services/hospitalFormulary.service.js';
+import { authenticateJwt } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+router.use(authenticateJwt);
 
 // ─── 1. Master Medications Endpoints ───
 router.get('/medications', async (req, res, next) => {

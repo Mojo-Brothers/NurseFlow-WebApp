@@ -27,12 +27,17 @@ const EnterprisePharmacyWorkspacePage = lazy(() => import('../modules/pharmacy/p
 
 export const clinicalRoutes = (Wrap, AuthRedirector) => [
   {
-    path: "/dashboard",
-    element: (
-      <AuthRedirector>
-        <Wrap><Dashboard /></Wrap>
-      </AuthRedirector>
-    )
+    element: <ProtectedRoute />,
+    children: [
+      {
+        path: "/dashboard",
+        element: (
+          <AuthRedirector>
+            <Wrap><Dashboard /></Wrap>
+          </AuthRedirector>
+        )
+      }
+    ]
   },
   {
     element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR', 'DOCTOR', 'NURSE', 'FRONT_DESK', 'CASHIER', 'PHARMACIST', 'LAB_ANALYST', 'RADIOLOGIST']} />,

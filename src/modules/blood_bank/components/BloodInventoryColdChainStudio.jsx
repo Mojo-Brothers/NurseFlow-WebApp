@@ -1,12 +1,23 @@
-import React, { useState } from 'react';
-import { bloodBankService, BLOOD_PRODUCTS } from '../../../../server/services/bloodBank.service.js';
+import React, { useState, useEffect } from 'react';
+import { BLOOD_PRODUCTS } from '../constants/bloodBank.constants.js';
+import { apiClient } from '../../../core/apiClient.js';
 import toast from 'react-hot-toast';
 
 export default function BloodInventoryColdChainStudio() {
-  const [units, setUnits] = useState(() => Array.from(bloodBankService.units.values()));
+  const [units, setUnits] = useState([]);
   const [refrigeratorTemp, setRefrigeratorTemp] = useState(4.2);
   const [freezerTemp, setFreezerTemp] = useState(-22.0);
   const [agitatorTemp, setAgitatorTemp] = useState(22.4);
+
+  useEffect(() => {
+    async function loadUnits() {
+      const res = await apiClient.bloodBank.getUnits();
+      if (res.ok && res.data?.data) {
+        setUnits(res.data.data);
+      }
+    }
+    loadUnits();
+  }, []);
 
   const getStatusBadge = (status) => {
     switch (status) {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { bloodBankService } from '../../../../server/services/bloodBank.service.js';
+import { apiClient } from '../../../core/apiClient.js';
 import { generateSha256Digest } from '../../radiology/services/pacsDicomEngine.service.js';
 import toast from 'react-hot-toast';
 

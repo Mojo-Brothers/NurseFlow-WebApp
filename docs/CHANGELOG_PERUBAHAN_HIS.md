@@ -20,7 +20,36 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🏆 [21 AGUSTUS 2026] — MILESTONE: SYSTEM-WIDE HORIZONTAL RECONCILIATION, 7-DOMAIN REST API WIRING & PRODUCTION PERSONA HARDENING COMPLETED
+### 🛡️ [21 AGUSTUS 2026] — GATE 0A: ZERO-TRUST RBAC PURGE, NEGATIVE/POSITIVE SECURITY SUITE & INDEPENDENT FORENSIC RE-SCAN COMPLETED
+**Tag Rilis:** `gate-0a-zero-trust-hardened-v1.0`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[ARCHITECTURE]` `[HARDENING]`  
+**Status Evidence:** 🟢 **`168/168 TEST SUITES PASS (1.686/1.686 TESTS 100% PASS), 19/19 GATE 0A SCENARIOS PASS, VITE PRODUCTION BUILD CLEAN (5.36s), ZERO REGRESSION. STATIC FORENSIC RE-SCAN: 4/4 CHECKS PASS (0 DEMO BYPASS, 0 UNPROTECTED ROUTES, 27/27 SECURED BACKEND ROUTE FILES).`**
+
+1. **Pemusnahan Total Demo Admin Fallback & Silent Privilege Escalation (0A.2):**
+   - Mengeliminasi kode `currentUser || { uid: 'usr-demo-admin', email: 'admin@nurseflow.id' }` dan `ADMIN_WHITELIST` pada `src/components/ProtectedRoute.jsx`.
+   - Mengeliminasi fallback `role || (roles.length > 0 ? roles[0] : 'DOCTOR')` saat `user === null` pada `src/modules/auth/auth.store.js`.
+   - Menegakkan Zero-Trust: Permintaan anonim (`!currentUser`) wajib di-redirect langsung ke `/login`.
+   - Permintaan terotentikasi dengan role di luar `allowedRoles` wajib di-redirect ke `/dashboard`.
+2. **Pengamanan Ketat Rute EMR & Rute Sensitif Frontend (0A.3):**
+   - Membungkus seluruh rute pada `src/routes/emr.routes.jsx` (`/emr`, `/patient-chart`, `/emr-rj`, `/emr-ri`, `/surgery`, `/go-live-control`) dan `/dashboard` pada `src/routes/clinical.routes.jsx` dengan `ProtectedRoute` dan batasan peran eksplisit (`allowedRoles`).
+3. **Pengamanan Seluruh Endpoint Express REST API (0A.4):**
+   - Memasang middleware `authenticateJwt` dan `requireRole` pada seluruh 27 file rute domain di `server/routes/` termasuk `cdss.routes.js`, `dicomweb.routes.js`, dan `medicationKnowledge.routes.js`.
+4. **Pembangunan API Client Kanonikal & Pengurangan Direct Server Imports (0A.5):**
+   - Membangun `src/core/apiClient.js` berbasis HTTP JWT Bearer token untuk 23 modul domain.
+   - Mengalihkan konsumsi `server/services/` pada komponen frontend (`BloodInventoryColdChainStudio`, `DigitalCrossmatchStudio`, `BedsideTransfusionVerificationStudio`, `StaffPrivilegingWorkspacePage`, `BedManagementCenterPage`, `BarberJohnsonAnalyticsStudio`, dll.) ke shared constants dan API client kanonikal.
+5. **Pembangunan Test Suite Keamanan Negatif & Positif Gate 0A (0A.6 & 0A.7):**
+   - Membuat `tests/zeroTrustSecurityGate0A.test.js` dengan 19 skenario komprehensif menguji:
+     - 4 skenario negatif anonim (No JWT -> 401, Invalid JWT -> 401, No silent admin escalation).
+     - 4 skenario negatif batas role (Dokter coba Bank Darah -> 403, Kasir coba OK Bedah -> 403, Perawat coba ubah Tarif -> 403, Farmasis coba kredensial -> 403).
+     - 4 skenario otorisasi positif API (Admin -> Alerts 200, BDRS Officer -> ISBT-128 201, Farmasis -> FEFO 201, Direktur Medik -> STR 201).
+     - 7 skenario evaluasi rute React Router `ProtectedRoute` (Anonim -> /login, Role tidak sah -> /dashboard, Role sah -> Render).
+6. **Eksekusi Pemindaian Forensik Independen Pasca-Implementasi (0A.9):**
+   - Menjalankan `node scripts/gate0a_forensic_rescan.mjs` yang memvalidasi repository: 0 bypass keyword, 0 rute terbuka, dan 27/27 rute backend terproteksi.
+7. **Regresi Penuh & Produksi Build (0A.8):**
+   - Seluruh 168 berkas suite pengujian vitest (1.686 pengujian) lulus 100% tanpa modifikasi logika bisnis VS-01 sampai VS-13.
+   - Build produksi Vite selesai dalam 5.36 detik tanpa error.
+
+---
 **Tag Rilis:** `horizontal-reconciliation-production-wired-v1.0`  
 **Kategori:** `[MAJOR]` `[FEATURE]` `[ENHANCEMENT]` `[FIX]` `[SECURITY]` `[SYSTEM_WIRING]`  
 **Status Evidence:** 🟢 **`167/167 TEST SUITES PASS (1.667/1.667 TESTS PASS), 25/25 RECONCILIATION SCENARIOS PASS, VITE PRODUCTION BUILD CLEAN (5.29s), ZERO REGRESSION. ALL 27 REST DOMAINS WIRED & SECURED WITH STRICT JWT + RBAC GUARDS.`**

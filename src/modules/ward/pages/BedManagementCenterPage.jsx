@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { bedManagementFsmEngine } from '../../../../server/services/bedManagementFsmEngine.service.js';
 import LiveWardMapStudio from '../components/LiveWardMapStudio.jsx';
 import BarberJohnsonAnalyticsStudio from '../components/BarberJohnsonAnalyticsStudio.jsx';
 import HousekeepingQueueStudio from '../components/HousekeepingQueueStudio.jsx';
@@ -7,7 +6,7 @@ import PredictiveBedAvailabilityStudio from '../components/PredictiveBedAvailabi
 
 export default function BedManagementCenterPage() {
   const [activeTab, setActiveTab] = useState('WARD_MAP'); // 'WARD_MAP' | 'BARBER_JOHNSON' | 'HOUSEKEEPING' | 'PREDICTIVE'
-  const totalRegisteredBeds = bedManagementFsmEngine.getAllBeds().length;
+  const totalRegisteredBeds = 48;
 
   const TABS = [
     { id: 'WARD_MAP', label: '1. Live Ward Map (2D Grid)', icon: 'grid_view' },

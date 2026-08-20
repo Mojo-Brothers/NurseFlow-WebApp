@@ -7,8 +7,10 @@ import express from 'express';
 import { pacsDicomEngineService } from '../../src/modules/radiology/services/pacsDicomEngine.service.js';
 import { radiologyWorkflowEngineService } from '../services/radiologyWorkflowEngine.service.js';
 import { eventBusService, DOMAIN_EVENTS } from '../realtime/eventBus.service.js';
+import { authenticateJwt } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+router.use(authenticateJwt);
 
 /**
  * 0. DICOM Modality Worklist (MWL)

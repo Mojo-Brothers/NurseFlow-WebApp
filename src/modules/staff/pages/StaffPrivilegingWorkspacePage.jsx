@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
-import { staffSchedulingService, STAFF_CATEGORIES, PRIVILEGE_LEVELS } from '../../../../server/services/staffScheduling.service.js';
+import React, { useState, useEffect } from 'react';
+import { STAFF_CATEGORIES, PRIVILEGE_LEVELS } from '../constants/staff.constants.js';
+import { apiClient } from '../../../core/apiClient.js';
 import toast from 'react-hot-toast';
 
 export default function StaffPrivilegingWorkspacePage() {
-  const [staffList, setStaffList] = useState(() => Array.from(staffSchedulingService.staffProfiles.values()));
-  const [credentials, setCredentials] = useState(() => Array.from(staffSchedulingService.credentials.values()));
-  const [privileges, setPrivileges] = useState(() => Array.from(staffSchedulingService.privileges.values()));
-  const [shifts, setShifts] = useState(() => Array.from(staffSchedulingService.shiftAssignments.values()));
+  const [staffList, setStaffList] = useState([]);
+  const [credentials, setCredentials] = useState([]);
+  const [privileges, setPrivileges] = useState([]);
+  const [shifts, setShifts] = useState([]);
   const [activeTab, setActiveTab] = useState('DIRECTORY'); // 'DIRECTORY' | 'CREDENTIALS' | 'PRIVILEGES' | 'ROSTER' | 'AUTHORIZER'
+
+  useEffect(() => {
+    async function loadData() {
+      const res = await apiClient.staffPrivileges.getStaff();
+      if (res.ok && res.data?.data) {
+        setStaffList(res.data.data);
+      }
+    }
+    loadData();
+  }, []);
 
   // Evaluation Form State
   const [evalStaffId, setEvalStaffId] = useState('');

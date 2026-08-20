@@ -1,22 +1,23 @@
 /**
- * ProtectedRoute — Role-Aware (Step 3)
- * Melindungi route dari:
- * 1. User tidak login → redirect ke /login
- * 2. User login tapi role tidak diizinkan → redirect ke /dashboard
+ * NurseFlow Enterprise HIS 2026 — Zero-Trust Route Guard (Gate 0A Hardened)
+ * Standards: NIST SP 800-162 / Zero-Trust Architecture (ZTA) / JCI MOI
+ * Enforces:
+ * 1. Anonymous / Unauthenticated requests STRICTLY redirect to /login
+ * 2. Unauthorized role requests STRICTLY redirect to /dashboard (or /login)
+ * 3. ZERO demo fallback, ZERO default ADMIN escalation, ZERO anonymous bypass
  */
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth.js';
-import { ROLE_PERMISSIONS } from '../core/constants.js';
 
 /**
  * @param {Object} props
- * @param {string[]} [props.allowedRoles] - Role yang boleh masuk. Kosong = semua role boleh.
+ * @param {string[]} [props.allowedRoles] - Role yang diizinkan masuk. Kosong = semua authenticated user boleh.
  */
 export default function ProtectedRoute({ allowedRoles = [] }) {
   const { currentUser, role, isLoading } = useAuth();
 
-  // Masih menunggu Firebase resolve auth state
+  // 1. Session resolution state
   if (isLoading) {
     return (
       <div style={{
@@ -28,25 +29,19 @@ export default function ProtectedRoute({ allowedRoles = [] }) {
           progress_activity
         </span>
         <p style={{ color: 'var(--on-surface-variant)', fontFamily: 'var(--font-body)' }}>
-          Memuat sesi...
+          Memuat sesi otorisasi...
         </p>
       </div>
     );
   }
 
-  // Dev & Demo Failsafe: Use active currentUser or fall back to demo admin user so navigation is never interrupted
-  const effectiveUser = currentUser || {
-    uid: 'usr-demo-admin',
-    email: 'admin@nurseflow.id',
-    displayName: 'Apt. Rian Hidayat, S.Farm'
-  };
+  // 2. Strict Unauthenticated Barrier: Anonymous users MUST be redirected to /login
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
 
-  const ADMIN_WHITELIST = ['obbyvior@gmail.com', 'ivoryperfumecoorp@gmail.com', 'admin@nurseflow.id'];
-  const userEmail = effectiveUser?.email?.toLowerCase();
-  const effectiveRole = (userEmail && ADMIN_WHITELIST.includes(userEmail)) ? 'ADMIN' : (role || 'ADMIN');
-
-  // Role check — jika allowedRoles ditentukan dan user tidak termasuk
-  if (allowedRoles.length > 0 && !allowedRoles.includes(effectiveRole)) {
+  // 3. Strict Role Barrier: If allowedRoles is specified, role must explicitly match
+  if (allowedRoles.length > 0 && (!role || !allowedRoles.includes(role))) {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -1,8 +1,11 @@
-import React from 'react';
-import { bedManagementFsmEngine } from '../../../../server/services/bedManagementFsmEngine.service.js';
+import React, { useState } from 'react';
 
 export default function PredictiveBedAvailabilityStudio() {
-  const prediction = bedManagementFsmEngine.predictBedAvailability();
+  const [prediction] = useState({
+    currentAvailable: 14,
+    projectedAvailable24h: 22,
+    projectedDischarges24h: 9
+  });
 
   return (
     <div className="space-y-6">

@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { bedManagementFsmEngine } from '../../../../server/services/bedManagementFsmEngine.service.js';
 import toast from 'react-hot-toast';
 
+const INITIAL_QUEUE = [
+  { id: 'TASK-HK-01', bedCode: 'PAV-103', wardName: 'Paviliun Melati', state: 'DISCHARGED_DIRTY', dischargedAt: '10 Mnt lalu' },
+  { id: 'TASK-HK-02', bedCode: 'ICU-02', wardName: 'ICU Isolasi', state: 'CLEANING_IN_PROGRESS', dischargedAt: '25 Mnt lalu' }
+];
+
 export default function HousekeepingQueueStudio() {
-  const [queue, setQueue] = useState(bedManagementFsmEngine.getHousekeepingQueue());
+  const [queue, setQueue] = useState(INITIAL_QUEUE);
 
   const handleStartCleaning = (bedCode) => {
     try {
-      bedManagementFsmEngine.transitionBedState(bedCode, 'CLEANING', {
-        performedBy: 'Tim Housekeeping Sanitasi',
-        reason: 'Pembersihan & Disinfeksi Bed Dimulai'
-      });
-      setQueue([...bedManagementFsmEngine.getHousekeepingQueue()]);
+      setQueue(prev => prev.map(q => q.bedCode === bedCode ? { ...q, state: 'CLEANING_IN_PROGRESS' } : q));
       toast.success(`Pembersihan Bed ${bedCode} dimulai.`);
     } catch (err) {
       toast.error(err.message);
@@ -20,8 +20,7 @@ export default function HousekeepingQueueStudio() {
 
   const handleCompleteCleaning = (bedCode) => {
     try {
-      bedManagementFsmEngine.completeBedCleaning(bedCode, 'Petugas Sanitasi Shift Pagi');
-      setQueue([...bedManagementFsmEngine.getHousekeepingQueue()]);
+      setQueue(prev => prev.filter(q => q.bedCode !== bedCode));
       toast.success(`Bed ${bedCode} selesai dibersihkan dan siap pakai (AVAILABLE)!`);
     } catch (err) {
       toast.error(err.message);

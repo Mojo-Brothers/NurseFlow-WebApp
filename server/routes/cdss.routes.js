@@ -6,8 +6,10 @@
 import express from 'express';
 import { dynamicCdssEngineService } from '../services/dynamicCdssEngine.service.js';
 import { cdssReplayEngineService } from '../services/cdssReplayEngine.service.js';
+import { authenticateJwt } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
+router.use(authenticateJwt);
 
 // 1. Evaluate Proposed Prescription
 router.post('/cdss/evaluate', async (req, res, next) => {

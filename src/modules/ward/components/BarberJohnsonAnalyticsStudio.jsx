@@ -1,5 +1,22 @@
 import React, { useState } from 'react';
-import { bedManagementFsmEngine } from '../../../../server/services/bedManagementFsmEngine.service.js';
+
+function calculateBarberJohnsonIndicators({ totalBeds, periodDays, patientDays, totalDischarges }) {
+  const bor = totalBeds && periodDays ? ((patientDays / (totalBeds * periodDays)) * 100).toFixed(1) : '0';
+  const alos = totalDischarges ? (patientDays / totalDischarges).toFixed(1) : '0';
+  const toi = totalDischarges ? (((totalBeds * periodDays) - patientDays) / totalDischarges).toFixed(1) : '0';
+  const bto = totalBeds ? (totalDischarges / totalBeds).toFixed(1) : '0';
+
+  return {
+    bor: Number(bor),
+    alos: Number(alos),
+    toi: Number(toi),
+    bto: Number(bto),
+    borStatus: bor >= 60 && bor <= 85 ? 'OPTIMAL' : 'DEVIATED',
+    alosStatus: alos >= 3 && alos <= 9 ? 'OPTIMAL' : 'DEVIATED',
+    toiStatus: toi >= 1 && toi <= 3 ? 'OPTIMAL' : 'DEVIATED',
+    btoStatus: bto >= 40 && bto <= 50 ? 'OPTIMAL' : 'DEVIATED'
+  };
+}
 
 export default function BarberJohnsonAnalyticsStudio() {
   const [totalBeds, setTotalBeds] = useState(120);
@@ -7,7 +24,7 @@ export default function BarberJohnsonAnalyticsStudio() {
   const [patientDays, setPatientDays] = useState(2700);
   const [totalDischarges, setTotalDischarges] = useState(450);
 
-  const metrics = bedManagementFsmEngine.calculateBarberJohnsonIndicators({
+  const metrics = calculateBarberJohnsonIndicators({
     totalBeds,
     periodDays,
     patientDays,
