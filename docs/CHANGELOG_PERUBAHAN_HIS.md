@@ -20,6 +20,239 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🚀 [20 AGUSTUS 2026] — WAVE 2 / VERTICAL SLICE #005: DOCTOR SOAP NOTES & CPPT ➔ POSTGRESQL DURABILITY & MEDICOLEGAL INTEGRITY
+**Tag Rilis:** `vs05-soap-cppt-postgresql-durability-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_05]` `[WAVE_2_EMERGENCY_CORE]` `[SOAP_NOTES]` `[CPPT_INTERPROFESSIONAL]` `[MEDICOLEGAL_IMMUTABILITY]` `[AMENDMENT_PROVENANCE]` `[POSTGRESQL_TRANSACTION]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`CLINICAL DURABILITY & MEDICOLEGAL INTEGRITY PROOF #005 VERIFIED — 154/154 TEST SUITES PASS, 1.341/1.341 ATOMIC TESTS PASS (15/15 VS-05 SUITE, 48/48 CUMULATIVE VERTICAL SLICE SUITES), VITE PRODUCTION BUILD 0 ERROR`**
+
+1. **Pembangunan Layanan Aplikasi Dokumentasi Klinis Server ([`server/services/clinicalNotesApplication.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/clinicalNotesApplication.service.js)):**
+   - Menegakkan Identitas Author Berbasis Server: `authorId`, `authorName`, dan profesi diekstrak langsung dari *Principal JWT* yang terotentikasi, bukan dari payload request klien.
+   - Integritas Rekam Medis & Immutability: Dokumen SOAP yang telah ditandatangani (`is_signed = true`) dilarang dimutasi secara langsung.
+   - Mekanisme Amandemen Berbasis Silsilah (*Amendment Provenance*): Amandemen menghasilkan versi baru di `soap_notes` yang merujuk pada `originalSoapId` dengan alasan amandemen wajib dan jejak audit SHA-256.
+   - CPPT Terintegrasi Multidisiplin & Verifikasi 24 Jam DPJP: Catatan dari profesi PPA non-dokter (perawat, apoteker) dapat diverifikasi oleh Dokter DPJP melalui endpoint verifikasi resmi.
+   - Unit of Work Transaksi Atomik:
+     ```sql
+     BEGIN ISOLATION LEVEL READ COMMITTED;
+     INSERT INTO soap_notes (...) RETURNING *;
+     INSERT INTO universal_audit_logs (..., signature_hash, ...);
+     COMMIT;
+     ```
+2. **Pembangunan Controller & Router Dokumentasi Klinis Backend ([`server/controllers/clinicalNotes.controller.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/controllers/clinicalNotes.controller.js) & [`server/routes/clinicalNotes.routes.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/routes/clinicalNotes.routes.js)):**
+   - Menghubungkan endpoint `POST /api/v1/clinical-notes/soap`, `POST /api/v1/clinical-notes/soap/:id/amend`, `GET /api/v1/clinical-notes/soap/encounter/:encounterId`, `POST /api/v1/clinical-notes/cppt`, `PATCH /api/v1/clinical-notes/cppt/:id/verify`, dan `GET /api/v1/clinical-notes/cppt/encounter/:encounterId` ke PostgreSQL 16.
+   - Menjamin RBAC guard (`EMR_WRITE_SOAP`, `CPPT_WRITE`, `CPPT_VERIFY`, `EMR_READ`) dan otentikasi JWT aktif.
+3. **Verifikasi Durabilitas & Integritas Medis (Clinical Durability Proof #005 — [`tests/verticalSlice05SoapCpptDurability.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/verticalSlice05SoapCpptDurability.test.js)):**
+   - **15/15 Test Skenario Durabilitas & Integritas PASS (34ms):**
+     - TC-01: Valid SOAP ➔ PostgreSQL.
+     - TC-02: Valid CPPT ➔ PostgreSQL.
+     - TC-03: Invalid encounter rejection (404 Not Found) + Rollback.
+     - TC-04: Unauthorized author (Unauthenticated) rejection (403 Forbidden).
+     - TC-05: Invalid role rejection (e.g. ROLE_CASHIER) saat mencoba mencatat SOAP dokter.
+     - TC-06: Final document immutability protection.
+     - TC-07: Amendment preserves original document & links parent provenance.
+     - TC-08: Authoritative server timestamp (ignoring client clock drift).
+     - TC-09: Cryptographic SHA-256 audit signature validation (64 hex characters).
+     - TC-10: **`localStorage.clear()` Immunity Test**: Data SOAP dan CPPT tetap utuh dari PostgreSQL.
+     - TC-11: DPJP 24h CPPT Verification.
+     - TC-12: Non-DPJP CPPT Verification Rejection.
+     - TC-13: Express API Gateway SOAP endpoint response envelope check.
+     - TC-14: Express API Gateway CPPT endpoint response envelope check.
+     - TC-15: Database connection partition failure triggers clean rollback with 0 orphan rows.
+   - **Kumulatif Vertical Slice Suites:** **48/48 Tests PASS (146ms)** across VS-01, VS-02, VS-03, VS-04, VS-05.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — WAVE 2 / VERTICAL SLICE #004: TRIAGE ASSESSMENT & SLA TIMERS ➔ POSTGRESQL DURABILITY (FULL PROOF)
+**Tag Rilis:** `vs04-triage-sla-postgresql-durability-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_04]` `[WAVE_2_EMERGENCY_CORE]` `[TRIAGE_ATS_ESI]` `[SLA_TIMERS]` `[POSTGRESQL_TRANSACTION]` `[IMMUTABLE_AUDIT_TRAIL]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`CLINICAL DURABILITY PROOF #004 VERIFIED — 153/153 TEST SUITES PASS, 1.326/1.326 ATOMIC TESTS PASS (8/8 VS-04 SUITE, 33/33 CUMULATIVE VERTICAL SLICE SUITES), VITE PRODUCTION BUILD 0 ERROR`**
+
+1. **Pembangunan Layanan Aplikasi Triase Sisi Server ([`server/services/triageApplication.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/triageApplication.service.js)):**
+   - Mengimplementasikan evaluasi otomatis Australasian Triage Scale (ATS) & Emergency Severity Index (ESI v4).
+   - Override otomatis *Red Flag Clinical Safety* (obstruksi jalan nafas, henti jantung, SpO2 < 85%) seketika meningkatkan level ke `ATS_1_RESUSCITATION` dengan SLA 0 Menit.
+   - Unit of Work Transaksi Atomik:
+     ```sql
+     BEGIN ISOLATION LEVEL READ COMMITTED;
+     INSERT INTO triage_assessments (...) RETURNING *;
+     INSERT INTO triage_sla_timers (...) RETURNING *;
+     UPDATE encounters SET status = 'TRIAGED', updated_at = ... WHERE id = ...;
+     INSERT INTO universal_audit_logs (..., signature_hash, ...);
+     COMMIT;
+     ```
+   - Metode `recordFirstPhysicianContact` untuk menghentikan timer SLA saat dokter pertama tiba, menghitung `elapsed_seconds`, dan mengevaluasi status keterlambatan (`is_overdue`).
+2. **Pembangunan Controller & Router Triase Backend ([`server/controllers/triage.controller.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/controllers/triage.controller.js) & [`server/routes/triage.routes.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/routes/triage.routes.js)):**
+   - Menghubungkan endpoint `POST /api/v1/triage/assessments`, `POST /api/v1/triage/first-physician-contact`, dan `GET /api/v1/triage/encounter/:encounterId` langsung ke PostgreSQL 16.
+   - Menjamin RBAC guard (`TRIAGE_WRITE`, `TRIAGE_READ`) dan otentikasi JWT aktif.
+3. **Verifikasi Durabilitas Klinis Penuh (Clinical Durability Proof #004 — [`tests/verticalSlice04TriageDurability.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/verticalSlice04TriageDurability.test.js)):**
+   - **8/8 Test Skenario Durabilitas PASS (23ms):**
+     - TC-01: ATS/ESI Level Calculation & SLA Target Determination (ATS 1: 0m s.d. ATS 5: 120m).
+     - TC-02: Red Flag Override (Airway Obstructed / SpO2 < 85% ➔ ATS 1 Resuscitation).
+     - TC-03: ACID Transaction insert `triage_assessments` + `triage_sla_timers` + update `encounters` ➔ `TRIAGED` + immutable audit log SHA-256 hash.
+     - TC-04: Non-existent encounter rejection (404 Not Found) + Rollback.
+     - TC-05: Empty chief complaint rejection (400 Bad Request).
+     - TC-06: First Physician Contact SLA Timer Stop & overdue calculation.
+     - TC-07: **`localStorage.clear()` Immunity Test**: Data triase dan timer SLA tetap utuh diambil langsung dari PostgreSQL.
+     - TC-08: Express API Gateway `POST /api/v1/triage/assessments` response envelope check.
+   - **Kumulatif Vertical Slice Suites:** **33/33 Tests PASS (117ms)** across VS-01, VS-02, VS-03, VS-04.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — VERTICAL SLICE #003: INPATIENT BED ADT ➔ POSTGRESQL DURABILITY & WAVE 1 COMPLETION
+**Tag Rilis:** `vs03-bed-management-wave1-complete-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_03]` `[WAVE_1_COMPLETE]` `[BED_ADT_MUTEX]` `[POSTGRESQL_TRANSACTION]` `[IMMUTABLE_AUDIT_TRAIL]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`WAVE 1 (PATIENT IDENTITY, ENCOUNTER FSM, BED ADT) FULLY VERIFIED & PROVEN IN POSTGRESQL (152/152 TEST SUITES PASS, 1.318/1.318 ATOMIC TESTS PASS, 25/25 WAVE 1 SUITES)`**
+
+1. **Pembangunan Layanan Aplikasi Bed Management Sisi Server ([`server/services/bedManagementApplication.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/bedManagementApplication.service.js)):**
+   - Menegakkan Integritas Mutex Bed: `1 Bed = 1 Active Occupancy` & `1 Encounter = 1 Active Bed` menggunakan *row-level locking* (`FOR UPDATE`).
+   - Skenario ADT (Admission, Discharge, Transfer) Berbasis Transaksi Atomik:
+     ```sql
+     BEGIN ISOLATION LEVEL READ COMMITTED;
+     UPDATE master_beds SET bed_status = 'OCCUPIED' WHERE id = ...;
+     INSERT INTO bed_occupancies (...) RETURNING *;
+     INSERT INTO bed_transfers (...) RETURNING *;
+     INSERT INTO universal_audit_logs (..., signature_hash, ...);
+     COMMIT;
+     ```
+   - Penanganan otomatis status transisi tempat tidur (`AVAILABLE` $\rightarrow$ `OCCUPIED` $\rightarrow$ `CLEANING` $\rightarrow$ `AVAILABLE`).
+2. **Pembangunan Controller & Router Bed Management Backend ([`server/controllers/bedManagement.controller.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/controllers/bedManagement.controller.js) & [`server/routes/beds.routes.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/routes/beds.routes.js)):**
+   - Menghubungkan endpoint `GET /api/v1/beds`, `POST /api/v1/beds/assign`, `POST /api/v1/beds/transfer`, dan `POST /api/v1/beds/discharge` ke PostgreSQL 16.
+3. **Verifikasi Durabilitas Klinis Penuh (Clinical Durability Proof #003 — [`tests/verticalSlice03BedManagementDurability.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/verticalSlice03BedManagementDurability.test.js)):**
+   - **7/7 Test Skenario Durabilitas PASS (26ms):**
+     - TC-01: Assign Available Bed (Admission ADT) + Audit Trail.
+     - TC-02: Mutex Protection Rejection on Occupied Bed (409 Conflict) + 0 orphan rows.
+     - TC-03: Bed Transfer ADT (Atomic fromBed -> toBed) + Immutable transfer log.
+     - TC-04: Same Bed Transfer Rejection (400 Bad Request).
+     - TC-05: Bed Discharge ADT (Transition to `CLEANING`).
+     - TC-06: **`localStorage.clear()` Immunity Test**: Hierarki bed dan status okupansi tetap ada di PostgreSQL.
+     - TC-07: Express API Gateway `POST /api/v1/beds/assign` response envelope.
+4. **Penyelesaian Penuh Wave 1 Foundation (Patient Identity & Encounter Layer):**
+   - **VS-01 (Register Patient):** 🟢 PROVEN (10/10 Tests PASS)
+   - **VS-02 (Create Encounter & FSM):** 🟢 PROVEN (8/8 Tests PASS)
+   - **VS-03 (Bed Admission & ADT):** 🟢 PROVEN (7/7 Tests PASS)
+   - **Total Verifikasi Wave 1:** **25/25 Tests PASS (85ms)**.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — VERTICAL SLICE #002: CREATE ENCOUNTER & FSM STATE MACHINE ➔ POSTGRESQL DURABILITY (FULL IMPLEMENTATION & PROOF)
+**Tag Rilis:** `vs02-encounter-postgresql-durability-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_02]` `[CLINICAL_DURABILITY_PROVEN]` `[ENCOUNTER_FSM]` `[POSTGRESQL_TRANSACTION]` `[IMMUTABLE_AUDIT_TRAIL]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`CLINICAL DURABILITY PROOF #002 VERIFIED — 151/151 TEST SUITES PASS, 1.311/1.311 ATOMIC TESTS PASS (8/8 VS-02 SUITE), VITE PRODUCTION BUILD 0 ERROR`**
+
+1. **Pembangunan Layanan Aplikasi Encounter Sisi Server ([`server/services/encounterApplication.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/encounterApplication.service.js)):**
+   - Mengimplementasikan penomoran otomatis `EPC-YYYY-XXXXX` (Episode of Care) dan `ENC-YYYY-XXXXX` (Encounter) secara berurutan di sisi server dengan *row-level locking*.
+   - Mesin Keadaan Terbatas (Clinical FSM) Enforced: Memvalidasi jalur transisi legal (`PLANNED` $\rightarrow$ `ARRIVED` $\rightarrow$ `IN_PROGRESS` $\rightarrow$ `DISCHARGED` $\rightarrow$ `CLOSED`) dan menolak transisi ilegal dengan 400 Bad Request.
+   - Unit of Work Transaksi Atomik:
+     ```sql
+     BEGIN ISOLATION LEVEL READ COMMITTED;
+     INSERT INTO episodes_of_care (...) RETURNING *;
+     INSERT INTO encounters (...) RETURNING *;
+     INSERT INTO universal_audit_logs (..., signature_hash, ...);
+     COMMIT;
+     ```
+   - Rollback seketika jika pasien tidak ditemukan atau terjadi anomali integritas data.
+2. **Pembangunan Controller & Router Encounter Backend ([`server/controllers/encounter.controller.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/controllers/encounter.controller.js) & [`server/routes/encounters.routes.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/routes/encounters.routes.js)):**
+   - Menghubungkan endpoint `POST /api/v1/encounters`, `PATCH /api/v1/encounters/:id/status`, `GET /api/v1/encounters`, dan `GET /api/v1/encounters/:id` langsung ke PostgreSQL.
+   - Menjamin RBAC guard (`ENCOUNTER_CREATE`, `ENCOUNTER_UPDATE`) dan otentikasi JWT aktif.
+3. **Verifikasi Durabilitas Klinis Penuh (Clinical Durability Proof #002 — [`tests/verticalSlice02EncounterDurability.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/verticalSlice02EncounterDurability.test.js)):**
+   - **8/8 Test Skenario Durabilitas PASS (29ms):**
+     - TC-01: Server-Side Sequential Episode & Encounter number generation.
+     - TC-02: ACID Transaction insert Episode + Encounter + universal audit log SHA-256 hash.
+     - TC-03: Invalid patient ID rejection (404 Not Found) + Rollback.
+     - TC-04: Legal FSM State Transition (`ARRIVED` $\rightarrow$ `IN_PROGRESS` $\rightarrow$ `DISCHARGED`) dengan audit trail status lama & baru.
+     - TC-05: Illegal FSM State Transition rejection (400 Bad Request) mencegah *phantom jump*.
+     - TC-06: **`localStorage.clear()` Immunity Test**: Data encounter dan riwayat FSM tetap utuh diambil dari PostgreSQL.
+     - TC-07: Express API Gateway `POST /api/v1/encounters` response envelope check.
+     - TC-08: Express API Gateway `PATCH /api/v1/encounters/:id/status` execution dengan role DPJP.
+   - **Regresi Nol di Seluruh Repositori:** **151/151 Test Suites PASS (100%)**, **1.311/1.311 Atomic Tests PASS (100%)**.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — VERTICAL SLICE #001: REGISTER PATIENT ➔ POSTGRESQL DURABILITY (FULL IMPLEMENTATION & PROOF)
+**Tag Rilis:** `vs01-patient-postgresql-durability-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_01]` `[CLINICAL_DURABILITY_PROVEN]` `[CENTRALIZED_HTTP_CLIENT]` `[POSTGRESQL_TRANSACTION]` `[IMMUTABLE_AUDIT_TRAIL]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`CLINICAL DURABILITY PROOF #001 VERIFIED — 150/150 TEST SUITES PASS, 1.303/1.303 ATOMIC TESTS PASS (10/10 VS-01 SUITE), VITE PRODUCTION BUILD 0 ERROR (7.95s)`**
+
+1. **Pembangunan Klien HTTP Terpusat Produksi ([`src/core/api/httpClient.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/core/api/httpClient.js)):**
+   - Menginjeksi otomatis `Authorization: Bearer <token>`, `X-Correlation-ID`, `X-Request-ID`, dan `X-Tenant-ID`.
+   - Mengelola envelope respons kanonikal (`data`, `error`, `meta`) dan menerjemahkan kesalahan ke `ApiError`.
+2. **Pembangunan Layanan Aplikasi Pasien Sisi Server ([`server/services/patientApplication.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/patientApplication.service.js)):**
+   - Mengimplementasikan kebijakan penomoran MRN berurutan di sisi server (`MRN-YYYY-XXXXX`) dengan proteksi konkurensi baris database.
+   - Validasi Master Patient Index (MPI): Pencegahan duplikasi NIK 16-digit dan Nomor Kartu BPJS.
+   - Unit of Work Transaksi Atomik:
+     ```sql
+     BEGIN ISOLATION LEVEL READ COMMITTED;
+     INSERT INTO master_patients (...) RETURNING *;
+     INSERT INTO universal_audit_logs (..., signature_hash, ...);
+     COMMIT;
+     ```
+   - Rollback atomik seketika jika terjadi kegagalan validasi atau audit.
+3. **Penyambungan Controller & Route Backend ke PostgreSQL ([`server/controllers/patient.controller.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/controllers/patient.controller.js)):**
+   - Menghubungkan endpoint `POST /api/v1/patients`, `GET /api/v1/patients`, dan `GET /api/v1/patients/:id` langsung ke PostgreSQL 16 `postgresPoolService`.
+   - Menjamin RBAC guard (`requirePermission('PATIENT_REGISTER')`) dan otentikasi JWT aktif.
+4. **Penyambungan Front Office UI & Service ([`src/modules/front_office/services/frontOfficeApi.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/front_office/services/frontOfficeApi.service.js)):**
+   - Mengalihkan `registerNewPatient` agar memanggil `httpClient.post('/patients', payload)`.
+   - Menghapus `localStorage` sebagai *system of record* untuk data identitas pasien.
+5. **Verifikasi Durabilitas Klinis Penuh (Clinical Durability Proof #001 — [`tests/verticalSlice01PatientDurability.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/verticalSlice01PatientDurability.test.js)):**
+   - **10/10 Test Skenario Durabilitas PASS (31ms):**
+     - TC-01: Server-Side Sequential MRN generation.
+     - TC-02: ACID Transaction insert patient + universal audit log SHA-256 hash.
+     - TC-03: Duplicate NIK rejection (409 Conflict) + Rollback + 0 orphan rows.
+     - TC-04: Invariant validation pre-transaction guard.
+     - TC-05: **`localStorage.clear()` Immunity Test**: Pasien tetap ada dan diambil 100% dari PostgreSQL.
+     - TC-06: Direct persistent database search by NIK/MRN.
+     - TC-07: Cryptographic SHA-256 signature validation.
+     - TC-08: HTTP Express Gateway execution with Bearer Token & Correlation-ID.
+     - TC-09: HTTP Error envelope format consistency.
+     - TC-10: HTTP MPI Query endpoint listing.
+   - **Regresi Nol di Seluruh Repositori:** **150/150 Test Suites PASS (100%)**, **1.303/1.303 Atomic Tests PASS (100% dalam 96.08s)**, **Vite v8.0.4 Production Build Berhasil (7.95s, 0 Error)**.
+
+---
+
+### 🏛️ [20 AGUSTUS 2026] — FASE 5C.1: BACKEND AUTHORITY MODEL, CANONICAL API CONTRACT & TRANSACTION OWNERSHIP
+**Tag Rilis:** `fase-5c1-backend-authority-architecture-v1.0`  
+**Kategori:** `[MAJOR]` `[BACKEND_AUTHORITY]` `[CANONICAL_API_CONTRACT]` `[TRANSACTION_OWNERSHIP]` `[ANTI_DUAL_BRAIN]` `[VERTICAL_SLICE_01_SPEC]`  
+**Status Evidence:** 🟢 **`FASE 5C.1 SPECIFICATION APPROVED — VERTICAL SLICE #001 (REGISTER PATIENT ➔ POSTGRESQL) OPENED`**
+
+1. **Penyelarasan Kontrak Durabilitas Klinis (CTO Epistemic Correction):**
+   - *Read Commands:* `HTTP 200` $\iff$ Authorized $\land$ Query Sukses $\land$ Consistent Read (tanpa outbox event noise).
+   - *Clinical Write Commands:* `HTTP Success` $\iff$ Authorized $\land$ Invariant Valid $\land$ PostgreSQL Mutation $\land$ Audit Log SHA-256 $\land$ Outbox Event* $\land$ Atomic Commit.
+   - *Jaminan Rollback Mutlak:* Jika salah satu bagian gagal, seluruh transaksi di-`ROLLBACK` seketika untuk mencegah *phantom success*.
+2. **Penetapan Backend Authority Model (Anti-Dual Brain — [`docs/FASE5C_1_BACKEND_AUTHORITY_DAN_UNIFIKASI_ARSITEKTUR.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/FASE5C_1_BACKEND_AUTHORITY_DAN_UNIFIKASI_ARSITEKTUR.md)):**
+   - Frontend hanya berwenang untuk: Optimistic form validation, display guard, preview saran CDSS, dan offline queue (IndexedDB).
+   - Backend memegang **Otoritas Tunggal Mutlak** untuk: Clinical invariants enforcement, FSM state transition validation, nomor MRN/UUID generation, audit trail generation, SQL table mutations, dan transactional outbox publishing.
+3. **Standarisasi Canonical API Contract & Envelope Respon:**
+   - Envelope Sukses Standar: `{ success: true, data: {...}, meta: { requestId, correlationId, timestamp } }`.
+   - Envelope Error Standar: `{ success: false, error: { code, message, details }, meta: { requestId, correlationId, timestamp } }`.
+4. **Pembukaan Fokus Tunggal: Vertical Slice #001 (`VS-01 — REGISTER PATIENT ➔ POSTGRESQL DURABILITY`):**
+   - Membatasi pengerjaan awal pada 1 pipa klinis tunggal: `RegistrationDeskWorkspace` $\rightarrow$ `POST /api/v1/patients` $\rightarrow$ `master_patients` SQL Table + `universal_audit_logs` di dalam blok `BEGIN ... COMMIT` PostgreSQL 16.
+   - Menguji durabilitas data melalui 10 langkah verifikasi pembuktian (termasuk restart backend & multi-device login).
+
+---
+
+### 🔬 [20 AGUSTUS 2026] — FASE 5C.0: BACKEND EXECUTION PATH FORENSIC BASELINE (COMMAND-BY-COMMAND AUDIT COMPLETED)
+**Tag Rilis:** `fase-5c0-backend-forensic-baseline-v1.0`  
+**Kategori:** `[MAJOR]` `[FORENSIC_AUDIT]` `[EXECUTION_PATH_INVENTORY]` `[DURABILITY_GAP_MAPPING]` `[UNIFICATION_BLUEPRINT]` `[GO_LIVE_BLOCKED]`  
+**Status Evidence:** 🟡 **`FASE 5C.0 BASELINE ESTABLISHED — FORENSIC REALITY AUDITED (25+ CLINICAL COMMANDS MAPPED)`**
+
+1. **Penetapan Prinsip Durabilitas Klinis Mutlak (CTO Invariant):**
+   - 🔒 **Prinsip 1:** *"Browser storage is not the system of record."*
+   - 🔒 **Prinsip 2:** *"PostgreSQL is the Source of Truth."*
+   - 🔒 **Prinsip 3:** *"Feature expansion is a distraction. No new CDSS, no new dashboards, no vanity test chasing."*
+   - 🔒 **Prinsip 4:** *"Setiap clinical command harus memiliki jalur tunggal yang dapat ditelusuri dari aksi manusia sampai durable state PostgreSQL."*
+2. **Hasil Audit Forensik Command-by-Command ([`docs/FASE5C_0_BACKEND_EXECUTION_PATH_FORENSIC_BASELINE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/FASE5C_0_BACKEND_EXECUTION_PATH_FORENSIC_BASELINE.md)):**
+   - **Status Forensik Saat Ini:** Seluruh 25+ *clinical commands* di 6 Wave (Pendaftaran Pasien, Triase IGD, SOAP Dokter, CPOE Order, eMAR 5-Benar, FEFO Dispense, LIS Lab, PACS Radiologi, Billing, SATUSEHAT/BPJS) teridentifikasi berstatus 🔴 **`GAP`**.
+   - UI memanggil service lokal yang mengeksekusi mutasi pada `localStorage` atau in-memory maps, tanpa mengirimkan panggilan HTTP API request ke Express Server maupun mengeksekusi transaksi ACID pada tabel fisik PostgreSQL 16.
+3. **Peta Jalan Eksekusi 6 Wave Terstruktur Menuju Durabilitas Nyata:**
+   - **Wave 1 — Patient Identity & Encounter:** Unifikasi Pasien, Encounter, dan Admisi Rawat Inap ke `POST /api/v1/patients` & `POST /api/v1/encounters`.
+   - **Wave 2 — Emergency Clinical Core:** Unifikasi Triase ESI/ATS, Tanda Vital, SOAP CPPT ke `POST /api/v1/emergency/triage` & `POST /api/v1/emr/soap`.
+   - **Wave 3 — Clinical Orders:** Unifikasi CPOE Order FSM ke `POST /api/v1/orders`.
+   - **Wave 4 — Closed-Loop Medication:** Unifikasi Telaah MMU.4, FEFO Stock Dispensing, dan eMAR 5-Benar ke `POST /api/v1/pharmacy/dispense` & `POST /api/v1/nursing/emar`.
+   - **Wave 5 — Diagnostic Services:** Unifikasi LIS Specimen/Hasil Lab & PACS DICOM ke `POST /api/v1/lab/results` & `/dicomweb`.
+   - **Wave 6 — Revenue & External Gateways:** Unifikasi Billing Charge Capture, Ina-CBG Casemix, BPJS SEP, dan SATUSEHAT Outbox.
+4. **Penerapan Clinical Durability Gate Contract:**
+   - Kontrak mutlak: Status `HTTP 200 OK` hanya sah jika data klinis, audit log SHA-256, dan outbox event berhasil di-`COMMIT` dalam satu transaksi ACID PostgreSQL 16. Jika ada komponen gagal, seluruh transaksi wajib di-`ROLLBACK`.
+
+---
+
 ### 🔬 [20 AGUSTUS 2026] — PHASE 5A & 5B: BACKEND REALITY, EXECUTION PATH & MOCK GRAVITY AUDIT (COMPLETE CODE INVESTIGATION)
 **Tag Rilis:** `phase-5ab-backend-reality-audit-v1.0`  
 **Kategori:** `[MAJOR]` `[BACKEND_REALITY_AUDIT]` `[EXECUTION_PATH_TRACING]` `[MOCK_GRAVITY_AUDIT]` `[EVIDENCE_CHAIN_OF_CUSTODY]` `[GO_LIVE_BLOCKED]`  

@@ -8,6 +8,7 @@ import { queueManagementEngineService } from './queueManagementEngine.service.js
 import { bpjsVClaimBridgeService } from './bpjsVClaimBridge.service.js';
 import { bpjsAntreanBridgeService } from './bpjsAntreanBridge.service.js';
 import { outboxPublisherService } from './outboxPublisher.service.js';
+import { httpClient } from '../../../core/api/httpClient.js';
 
 export const frontOfficeApiService = {
   // ─── 1. PATIENT REGISTRATION & CONSENT ───
@@ -16,7 +17,38 @@ export const frontOfficeApiService = {
   },
 
   registerNewPatient: async (payload) => {
-    return registrationEngineService.registerNewPatient(payload);
+    // 1. Call Real Backend API to establish Durable PostgreSQL Entity (ACID Transaction)
+    const apiRes = await httpClient.post('/patients', {
+      fullName: payload.fullName,
+      nik: payload.nik,
+      birthDate: payload.birthDate,
+      birthPlace: payload.birthPlace || 'Jakarta',
+      gender: payload.gender,
+      bloodType: payload.bloodType || 'UNKNOWN',
+      maritalStatus: payload.maritalStatus || 'SINGLE',
+      religion: payload.religion || 'ISLAM',
+      education: payload.education || 'SMA',
+      occupation: payload.occupation || 'KARYAWAN',
+      phoneNumber: payload.phoneNumber,
+      email: payload.email || '',
+      address: payload.address || 'Jl. Rawamangun No. 1, Jakarta',
+      guarantorType: payload.guarantorId === 'GRN-BPJS' ? 'BPJS' : 'UMUM',
+      bpjsCardNumber: payload.insuranceCardNumber || null
+    });
+
+    const serverPatient = apiRes.data;
+
+    // 2. Wire the server-generated durable patient entity into local workflows
+    const registrationRecord = await registrationEngineService.registerNewPatient({
+      ...payload,
+      serverPatient
+    });
+
+    return {
+      ...registrationRecord,
+      serverPatient,
+      meta: apiRes.meta
+    };
   },
 
   registerExistingPatient: async (payload) => {

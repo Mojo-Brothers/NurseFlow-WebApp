@@ -82,8 +82,8 @@ export const registrationEngineService = {
     }
 
     const now = new Date().toISOString();
-    const patientId = `P-${Date.now()}`;
-    const generatedMrn = `MRN-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
+    const patientId = serverPatient?.id || `P-${Date.now()}`;
+    const generatedMrn = serverPatient?.mrn || `MRN-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
     const regNumber = `REG-${new Date().getFullYear()}-${Date.now().toString().slice(-6)}`;
 
     // 1. Audit Check: Create General Consent Record

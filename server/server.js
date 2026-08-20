@@ -6,6 +6,10 @@
 import express from 'express';
 import authRoutes from './routes/auth.routes.js';
 import patientsRoutes from './routes/patients.routes.js';
+import encountersRoutes from './routes/encounters.routes.js';
+import bedsRoutes from './routes/beds.routes.js';
+import triageRoutes from './routes/triage.routes.js';
+import clinicalNotesRoutes from './routes/clinicalNotes.routes.js';
 import ordersRoutes from './routes/orders.routes.js';
 import billingRoutes from './routes/billing.routes.js';
 import dicomwebRoutes from './routes/dicomweb.routes.js';
@@ -58,6 +62,10 @@ app.get('/docs', (req, res) => {
 // ─── REST API v1 Routes ───
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/patients', patientsRoutes);
+app.use('/api/v1/encounters', encountersRoutes);
+app.use('/api/v1/beds', bedsRoutes);
+app.use('/api/v1/triage', triageRoutes);
+app.use('/api/v1/clinical-notes', clinicalNotesRoutes);
 app.use('/api/v1/orders', ordersRoutes);
 app.use('/api/v1/billing', billingRoutes);
 app.use('/api/v1', medicationKnowledgeRoutes);
