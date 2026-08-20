@@ -24,6 +24,13 @@ import careCoordinationAndTimelineRoutes from './routes/careCoordinationAndTimel
 import perioperativeClosedLoopRoutes from './routes/perioperativeClosedLoop.routes.js';
 import clinicalCodingAndCasemixRoutes from './routes/clinicalCodingAndCasemix.routes.js';
 import patientFinancialAndRevenueCycleRoutes from './routes/patientFinancialAndRevenueCycle.routes.js';
+import bloodBankRoutes from './routes/bloodBank.routes.js';
+import staffPrivilegingRoutes from './routes/staffPrivileging.routes.js';
+import masterDataHubRoutes from './routes/masterDataHub.routes.js';
+import appointmentRoutes from './routes/appointment.routes.js';
+import enterpriseInventoryRoutes from './routes/enterpriseInventory.routes.js';
+import satusehatStudioRoutes from './routes/satusehatStudio.routes.js';
+import commandCenterRoutes from './routes/commandCenter.routes.js';
 
 import { observabilityMiddleware } from './middlewares/observabilityMiddleware.js';
 import { healthCheckService } from './services/healthCheck.service.js';
@@ -86,6 +93,13 @@ app.use('/api/v1/coordination', careCoordinationAndTimelineRoutes);
 app.use('/api/v1/perioperative', perioperativeClosedLoopRoutes);
 app.use('/api/v1/casemix', clinicalCodingAndCasemixRoutes);
 app.use('/api/v1/patient-financial', patientFinancialAndRevenueCycleRoutes);
+app.use('/api/v1/blood-bank', bloodBankRoutes);
+app.use('/api/v1/staff-privileges', staffPrivilegingRoutes);
+app.use('/api/v1/master-data', masterDataHubRoutes);
+app.use('/api/v1/appointments', appointmentRoutes);
+app.use('/api/v1/inventory', enterpriseInventoryRoutes);
+app.use('/api/v1/satusehat', satusehatStudioRoutes);
+app.use('/api/v1/command-center', commandCenterRoutes);
 app.use('/api/v1', medicationKnowledgeRoutes);
 app.use('/api/v1', cdssRoutes);
 app.use('/dicomweb', dicomwebRoutes);

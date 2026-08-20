@@ -20,6 +20,56 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🏆 [21 AGUSTUS 2026] — MILESTONE: SYSTEM-WIDE HORIZONTAL RECONCILIATION, 7-DOMAIN REST API WIRING & PRODUCTION PERSONA HARDENING COMPLETED
+**Tag Rilis:** `horizontal-reconciliation-production-wired-v1.0`  
+**Kategori:** `[MAJOR]` `[FEATURE]` `[ENHANCEMENT]` `[FIX]` `[SECURITY]` `[SYSTEM_WIRING]`  
+**Status Evidence:** 🟢 **`167/167 TEST SUITES PASS (1.667/1.667 TESTS PASS), 25/25 RECONCILIATION SCENARIOS PASS, VITE PRODUCTION BUILD CLEAN (5.29s), ZERO REGRESSION. ALL 27 REST DOMAINS WIRED & SECURED WITH STRICT JWT + RBAC GUARDS.`**
+
+1. **Horizontal REST API Wiring (7 Unwired Domains Closed):**
+   - **Domain 16 (BDRS / Blood Bank):** Controller `bloodBank.controller.js` & Routes `bloodBank.routes.js` terpasang di `/api/v1/blood-bank` (Stock, ISBT-128 Intake, Digital Crossmatch, Bedside Dual-Nurse Check).
+   - **Domain 17 (Staff Privileging & Credentialing):** Controller `staffPrivileging.controller.js` & Routes `staffPrivileging.routes.js` terpasang di `/api/v1/staff-privileges` (Staff Profiles, STR/SIP Credentialing, SPK/RKK Privileges, Multi-Factor Authorization).
+   - **Domain 18 (Master Data Governance Hub):** Controller `masterDataHub.controller.js` & Routes `masterDataHub.routes.js` terpasang di `/api/v1/master-data` (Organizations, Locations, Beds, Wards, ICD-10, ICD-9-CM, KFA, LOINC).
+   - **Domain 23 (Appointment & Queue Scheduling):** Controller `appointment.controller.js` & Routes `appointment.routes.js` terpasang di `/api/v1/appointments` (Booking, Check-in, Queue Ticket Generation, Cancellation).
+   - **Domain 20 (Enterprise Inventory & FEFO Logistics):** Controller `enterpriseInventory.controller.js` & Routes `enterpriseInventory.routes.js` terpasang di `/api/v1/inventory` (Stock Inbound, FEFO Dispensing, Inter-Depot Transfer, Ledger Movements).
+   - **Domain 21 (SATUSEHAT FHIR R4 Interoperability Studio):** Controller `satusehatStudio.controller.js` & Routes `satusehatStudio.routes.js` terpasang di `/api/v1/satusehat` (OAuth2 Tokens, FHIR Resource Validator, Transaction Bundle Builder, Gateway Transmission Logs).
+   - **Domain 22 (Hospital Central Command Center):** Controller `commandCenter.controller.js` & Routes `commandCenter.routes.js` terpasang di `/api/v1/command-center` (BOR Capacity, Emergency KPIs, Revenue Cycle / BPJS Clean Claim Rate, Clinical Safety, Heuristic Alerts).
+2. **P0 Security & RBAC Route Guard Hardening:**
+   - Seluruh 61 rute React Router klinis, finansial, dan tata kelola telah dilindungi dengan komponen `ProtectedRoute` berbasis token session dan matriks `allowedRoles`.
+   - Menghubungkan seluruh 27 endpoint backend Express dengan middleware `authenticateJwt` dan otorisasi terpusat.
+3. **P2 Navigation Sidebar Integration:**
+   - Mendaftarkan seluruh modul yang sebelumnya yatim (*orphaned routes*) ke dalam `ENTERPRISE_NAV_SCHEMA` pada `src/layouts/MainLayout.jsx`.
+4. **Pembersihan Dead Code Terverifikasi:**
+   - Menghapus aman `server/services/atomicTransaction.service.js` (terbukti 0 caller/consumer) setelah memastikan semua alur menggunakan ACID PostgreSQL pool query.
+5. **Verifikasi Durabilitas & Kesiapan Produksi:**
+   - Pembuatan test suite `tests/systemWideForensicReconciliation.test.js` dengan 25 skenario end-to-end melintasi 7 domain REST baru.
+   - Hasil regresi penuh: **167 test files lulus 100%, 1.667 tests lulus 100%, build frontend produksi sukses tanpa error.**
+
+---
+
+
+
+### 🏛️ [21 AGUSTUS 2026] — MILESTONE: NURSEFLOW SYSTEM-WIDE FORENSIC RECONCILIATION & MASTER GAP REGISTER (PRE-VS14 COMPREHENSIVE REPOSITORY AUDIT)
+**Tag Rilis:** `audit-forensic-system-wide-v1.0`  
+**Kategori:** `[DOCS]` `[MAJOR]` `[FORENSIC_AUDIT]` `[SYSTEM_WIRING_RECONCILIATION]` `[GAP_REGISTER]` `[ZERO_PREMATURE_DELETION]`  
+**Status Evidence:** 🟢 **`EXHAUSTIVE REPOSITORY INVENTORY COMPLETED — 70 SQL MIGRATIONS, 209 DB TABLES, 77 SERVER SERVICES, 48 CORE SERVICES, 20 EXPRESS ROUTES, 61 REACT ROUTES, 33 NAV ENTRIES, 102 CLIENT STORES, 166 TEST SUITES (1.642 TESTS PASS). VS-14 ON HOLD FOR SYSTEM WIRING.`**
+
+1. **Eksekusi Audit Forensik Menyeluruh (System-Wide Forensic Audit):**
+   - Melakukan penelusuran dependensi aktual pada seluruh lapisan sistem: Database SQL, Backend Services, Express Controllers, REST Routes, Frontend Stores, React Components, Router, Navigation Sidebar, dan RBAC Guards.
+   - Mengidentifikasi 6 Gap Kritis Arsitektural: (1) UI Shell mengimpor service in-memory langsung, (2) 7 domain backend belum memiliki REST Controller, (3) Duplikasi service arsitektur (Master Data, Bank Darah, Audit), (4) 36 rute React Router terputus dari navigasi sidebar, (5) Celah RBAC pada rute klinis/tata kelola, (6) Documentation drift pada `README.md`.
+2. **Penerbitan 8 Dokumen Registri Forensik Resmi:**
+   - [`docs/MASTER_FEATURE_TRUTH_MATRIX_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/MASTER_FEATURE_TRUTH_MATRIX_2026.md): Matriks kebenaran 23 domain rumah sakit dari database hingga E2E flow.
+   - [`docs/FORENSIC_REPOSITORY_GAP_REGISTER_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/FORENSIC_REPOSITORY_GAP_REGISTER_2026.md): Registri 15 temuan gap forensik terperinci (P0, P1, P2, P3).
+   - [`docs/CANONICAL_SERVICE_AND_ENGINE_REGISTER_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/CANONICAL_SERVICE_AND_ENGINE_REGISTER_2026.md): Resolusi canonical untuk seluruh service ganda dan shadow.
+   - [`docs/UI_UX_FUNCTIONAL_COMPLETENESS_REGISTER_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/UI_UX_FUNCTIONAL_COMPLETENESS_REGISTER_2026.md): Audit realitas operasional UI/UX 19 workspace rumah sakit.
+   - [`docs/DEAD_CODE_AND_LEGACY_REGISTER_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/DEAD_CODE_AND_LEGACY_REGISTER_2026.md): Klasifikasi kode mati murni, rute orphan, dan zombie features.
+   - [`docs/API_WIRING_MATRIX_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/API_WIRING_MATRIX_2026.md): Peta status wiring 23 domain REST API Express.
+   - [`docs/RBAC_FORENSIC_REGISTER_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/RBAC_FORENSIC_REGISTER_2026.md): Evaluasi perlindungan hak akses pada 61 rute dan endpoint.
+   - [`docs/PRODUCTION_WORKFLOW_READINESS_MATRIX_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/PRODUCTION_WORKFLOW_READINESS_MATRIX_2026.md): Uji kesiapan alur kerja 14 persona staf rumah sakit fisik.
+3. **Penetapan Protokol Anti-Penghapusan Dini (Zero Premature Deletion Protocol):**
+   - Menjaga integritas seluruh kode eksisting selama fase discovery. Penghapusan kode shadow hanya diizinkan setelah migrasi consumer dan pengujian regresi 100% lulus.
+
+---
+
 ### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 10: VERTICAL SLICE #13: PATIENT FINANCIAL & REVENUE CYCLE CLOSED LOOP ➔ MULTI-PAYER SPLIT INVOICING, PATIENT DEPOSIT LEDGER & RETENTION, CASHIER MULTI-PAYMENT (CASH/QRIS/EDC/VA/GL), CREDIT & DEBIT NOTES, DEPOSIT REFUND, CASHIER SHIFT RECONCILIATION & ACCOUNTS RECEIVABLE (AR) AGING LIFECYCLE
 **Tag Rilis:** `vs13-patient-financial-revenue-cycle-v1.0`  
 **Kategori:** `[MAJOR]` `[VERTICAL_SLICE_13]` `[PATIENT_FINANCIAL_MANAGEMENT]` `[REVENUE_CYCLE_CLOSED_LOOP]` `[MULTI_PAYER_SPLIT_INVOICING]` `[PATIENT_DEPOSIT_LEDGER]` `[CASHIER_MULTI_PAYMENT]` `[CREDIT_DEBIT_NOTES]` `[DEPOSIT_REFUND]` `[CASHIER_SHIFT_RECONCILIATION]` `[AR_AGING_LIFECYCLE]` `[SOVEREIGN_CLINICAL_STATE_INVARIANT]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  

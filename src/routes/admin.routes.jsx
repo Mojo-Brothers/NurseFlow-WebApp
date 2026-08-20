@@ -14,21 +14,26 @@ const AuditTrailDashboardPage = lazy(() => import('../modules/admin/pages/AuditT
 const HospitalCentralCommandCenterPage = lazy(() => import('../modules/dashboard/pages/HospitalCentralCommandCenterPage'));
 
 export const adminRoutes = (Wrap) => [
-  { path: "/admin/services", element: <Wrap><MasterServicePage /></Wrap> },
-  { path: "/master-data", element: <Wrap><MasterDataWorkspacePage /></Wrap> },
-  { path: "/master-data/:entity", element: <Wrap><MasterDataWorkspacePage /></Wrap> },
-  { path: "/command-center", element: <Wrap><HospitalCentralCommandCenterPage /></Wrap> },
-  { path: "/executive-cockpit", element: <Wrap><HospitalCentralCommandCenterPage /></Wrap> },
   {
-    element: <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR']} />,
+    element: <ProtectedRoute allowedRoles={['ADMIN', 'DOCTOR', 'CASHIER', 'CASEMIX_CODER', 'FINANCE', 'SUPERVISOR']} />,
     children: [
       { path: "/billing", element: <Wrap><Billing /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR', 'HOSPITAL_DIRECTOR', 'EXECUTIVE']} />,
+    children: [
+      { path: "/command-center", element: <Wrap><HospitalCentralCommandCenterPage /></Wrap> },
+      { path: "/executive-cockpit", element: <Wrap><HospitalCentralCommandCenterPage /></Wrap> }
     ]
   },
   {
     element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR']} />,
     children: [
       { path: "/admin", element: <Wrap><AdminHub /></Wrap> },
+      { path: "/admin/services", element: <Wrap><MasterServicePage /></Wrap> },
+      { path: "/master-data", element: <Wrap><MasterDataWorkspacePage /></Wrap> },
+      { path: "/master-data/:entity", element: <Wrap><MasterDataWorkspacePage /></Wrap> },
       { path: "/admin/staff-access", element: <Wrap><StaffManagementPage /></Wrap> },
       { path: "/audit-trail", element: <Wrap><AuditTrailDashboardPage /></Wrap> },
       { path: "/admin/master-hub", element: <Wrap><MasterDataHub /></Wrap> },

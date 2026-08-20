@@ -208,12 +208,64 @@ class InventoryManagementService {
    */
   getStockLevel(warehouseId, itemCode, tenantId = '00000000-0000-0000-0000-000000000001') {
     return Array.from(this.batches.values())
-      .filter(b => b.tenantId === tenantId && b.warehouseId === warehouseId && b.itemCode === itemCode)
+      .filter(b => b.tenantId === tenantId && b.warehouseId === warehouseId && (!itemCode || b.itemCode === itemCode))
       .reduce((sum, b) => sum + b.availableQuantity, 0);
   }
 
   /**
-   * 4. Audit Reconciliation: Verify Batch Balance Matches Sum of Ledger Movements
+   * 4. Query All Warehouse Batches / Stock
+   */
+  getWarehouseStock(warehouseId, itemCode, tenantId = '00000000-0000-0000-0000-000000000001') {
+    return Array.from(this.batches.values())
+      .filter(b => b.tenantId === tenantId && b.warehouseId === warehouseId && (!itemCode || b.itemCode === itemCode));
+  }
+
+  /**
+   * 5. Inter-Depot Stock Transfer
+   */
+  transferStock({
+    sourceWarehouseId,
+    targetWarehouseId,
+    itemCode,
+    quantity,
+    notes = '',
+    performedBy = 'LOGISTICS_OFFICER',
+    tenantId = '00000000-0000-0000-0000-000000000001'
+  }) {
+    // Deduct from source warehouse using FEFO
+    const allocResult = this.dispenseStockFefo({
+      warehouseId: sourceWarehouseId,
+      itemCode,
+      quantityNeeded: quantity,
+      performedBy,
+      tenantId
+    });
+
+    // Add to target warehouse
+    const targetBatch = this.receiveStock({
+      warehouseId: targetWarehouseId,
+      itemCode,
+      itemName: allocResult.allocatedBatches[0]?.itemName || itemCode,
+      batchNumber: allocResult.allocatedBatches[0]?.batchNumber || `TRF-${Date.now()}`,
+      expiryDate: allocResult.allocatedBatches[0]?.expiryDate || '2028-12-31',
+      quantity,
+      performedBy,
+      tenantId
+    });
+
+    return {
+      success: true,
+      sourceWarehouseId,
+      targetWarehouseId,
+      itemCode,
+      transferredQuantity: quantity,
+      targetBatch: targetBatch.batch,
+      notes
+    };
+  }
+
+  /**
+   * 6. Audit Reconciliation: Verify Batch Balance Matches Sum of Ledger Movements
    */
   reconcileBatchLedger(batchId) {
     const batch = this.batches.get(batchId);

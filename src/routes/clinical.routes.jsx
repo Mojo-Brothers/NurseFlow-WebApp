@@ -34,34 +34,84 @@ export const clinicalRoutes = (Wrap, AuthRedirector) => [
       </AuthRedirector>
     )
   },
-  { path: "/patients", element: <Wrap><PatientCommandCenterPage /></Wrap> },
-  { path: "/appointments", element: <Wrap><AppointmentPage /></Wrap> },
-  { path: "/encounters", element: <Wrap><Encounters /></Wrap> },
-  { path: "/triage", element: <Wrap><Triage /></Wrap> },
-  { path: "/front-office", element: <Wrap><RegistrationDeskWorkspace /></Wrap> },
-  { path: "/emergency", element: <Wrap><EmergencyWorkspace /></Wrap> },
-  { path: "/clinical-core", element: <Wrap><DoctorWorkspacePage /></Wrap> },
-  { path: "/doctor-workspace", element: <Wrap><DoctorWorkspacePage /></Wrap> },
-  { path: "/nursing-workspace", element: <Wrap><NursingWorkspacePage /></Wrap> },
-  { path: "/nursing", element: <Wrap><NursingWorkspacePage /></Wrap> },
-  { path: "/emar", element: <Wrap><NursingWorkspacePage /></Wrap> },
-  { path: "/fluid-balance", element: <Wrap><NursingWorkspacePage /></Wrap> },
-  { path: "/orders", element: <Wrap><OrdersWorkspace /></Wrap> },
-  { path: "/radiology", element: <Wrap><RadiologyWorkspacePage /></Wrap> },
-  { path: "/pacs", element: <Wrap><RadiologyWorkspacePage /></Wrap> },
-  { path: "/pacs-viewer", element: <Wrap><RadiologyWorkspacePage /></Wrap> },
-  { path: "/operating-theatre", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> },
-  { path: "/ibs", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> },
-  { path: "/surgery-board", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> },
-  { path: "/pharmacy-enterprise", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
-  { path: "/farmasi-fefo", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
-  { path: "/fefo-dispensing", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
-  { path: "/blood-bank", element: <Wrap><BloodBankWorkspacePage /></Wrap> },
-  { path: "/icu-acuity", element: <Wrap><IcuAcuityWorkspacePage /></Wrap> },
-  { path: "/staff-privileges", element: <Wrap><StaffPrivilegingWorkspacePage /></Wrap> },
-  { path: "/worklist", element: <Wrap><Worklist /></Wrap> },
-  { path: "/lab", element: <Wrap><LabPage /></Wrap> },
-  { path: "/ward-monitor", element: <Wrap><WardMonitor /></Wrap> },
+  {
+    element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR', 'DOCTOR', 'NURSE', 'FRONT_DESK', 'CASHIER', 'PHARMACIST', 'LAB_ANALYST', 'RADIOLOGIST']} />,
+    children: [
+      { path: "/patients", element: <Wrap><PatientCommandCenterPage /></Wrap> },
+      { path: "/appointments", element: <Wrap><AppointmentPage /></Wrap> },
+      { path: "/encounters", element: <Wrap><Encounters /></Wrap> },
+      { path: "/front-office", element: <Wrap><RegistrationDeskWorkspace /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/triage", element: <Wrap><Triage /></Wrap> },
+      { path: "/emergency", element: <Wrap><EmergencyWorkspace /></Wrap> },
+      { path: "/nursing-workspace", element: <Wrap><NursingWorkspacePage /></Wrap> },
+      { path: "/nursing", element: <Wrap><NursingWorkspacePage /></Wrap> },
+      { path: "/emar", element: <Wrap><NursingWorkspacePage /></Wrap> },
+      { path: "/fluid-balance", element: <Wrap><NursingWorkspacePage /></Wrap> },
+      { path: "/ward-monitor", element: <Wrap><WardMonitor /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['DOCTOR', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/clinical-core", element: <Wrap><DoctorWorkspacePage /></Wrap> },
+      { path: "/doctor-workspace", element: <Wrap><DoctorWorkspacePage /></Wrap> },
+      { path: "/orders", element: <Wrap><OrdersWorkspace /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['RADIOLOGIST', 'DOCTOR', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/radiology", element: <Wrap><RadiologyWorkspacePage /></Wrap> },
+      { path: "/pacs", element: <Wrap><RadiologyWorkspacePage /></Wrap> },
+      { path: "/pacs-viewer", element: <Wrap><RadiologyWorkspacePage /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['LAB_ANALYST', 'DOCTOR', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/lab", element: <Wrap><LabPage /></Wrap> },
+      { path: "/worklist", element: <Wrap><Worklist /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['SURGEON', 'ANESTHESIOLOGIST', 'OR_NURSE', 'DOCTOR', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/operating-theatre", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> },
+      { path: "/ibs", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> },
+      { path: "/surgery-board", element: <Wrap><OperatingTheatreWorkspacePage /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['PHARMACIST', 'DOCTOR', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/pharmacy-enterprise", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
+      { path: "/farmasi-fefo", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> },
+      { path: "/fefo-dispensing", element: <Wrap><EnterprisePharmacyWorkspacePage /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['BLOOD_BANK_OFFICER', 'LAB_ANALYST', 'DOCTOR', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/blood-bank", element: <Wrap><BloodBankWorkspacePage /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['ICU_NURSE', 'NURSE', 'DOCTOR', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/icu-acuity", element: <Wrap><IcuAcuityWorkspacePage /></Wrap> }
+    ]
+  },
+  {
+    element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR', 'CLINICAL_DIRECTOR']} />,
+    children: [
+      { path: "/staff-privileges", element: <Wrap><StaffPrivilegingWorkspacePage /></Wrap> }
+    ]
+  },
   {
     element: <ProtectedRoute allowedRoles={['NURSE', 'DOCTOR', 'SUPERVISOR', 'ADMIN']} />,
     children: [

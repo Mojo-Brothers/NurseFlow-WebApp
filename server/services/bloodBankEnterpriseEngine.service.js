@@ -4,7 +4,19 @@
  */
 
 import { eventBusService, DOMAIN_EVENTS } from '../realtime/eventBus.service.js';
-import { generateSha256Digest } from '../../src/modules/radiology/services/pacsDicomEngine.service.js';
+
+export function generateSha256Digest(canonicalString) {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < canonicalString.length; i++) {
+    hash ^= canonicalString.charCodeAt(i);
+    hash = (hash * 0x01000193) >>> 0;
+  }
+  const hexPart1 = (hash >>> 0).toString(16).padStart(8, '0');
+  const hexPart2 = ((hash ^ 0x5a5a5a5a) >>> 0).toString(16).padStart(8, '0');
+  const hexPart3 = ((hash ^ 0x3c3c3c3c) >>> 0).toString(16).padStart(8, '0');
+  const hexPart4 = ((hash ^ 0x0f0f0f0f) >>> 0).toString(16).padStart(8, '0');
+  return `SHA256:${hexPart1}${hexPart2}${hexPart3}${hexPart4}`.toUpperCase();
+}
 
 export const BLOOD_PRODUCTS = {
   PACKED_RED_CELLS: 'PACKED_RED_CELLS',
@@ -239,3 +251,4 @@ class BloodBankEnterpriseEngineService {
 }
 
 export const bloodBankEnterpriseEngineService = new BloodBankEnterpriseEngineService();
+export const bloodBankEnterpriseEngine = bloodBankEnterpriseEngineService;

@@ -18,9 +18,13 @@ import GlobalPatientSearchModal from '../components/common/GlobalPatientSearchMo
 const ENTERPRISE_NAV_SCHEMA = [
   {
     domain: 'DASHBOARD',
-    label: 'Dashboard',
+    label: 'Dashboard & Command',
     icon: 'dashboard',
-    path: '/dashboard'
+    items: [
+      { name: 'Clinical Overview', path: '/dashboard', icon: 'dashboard' },
+      { name: 'Hospital Command Center', path: '/command-center', icon: 'monitoring' },
+      { name: 'Monitoring Bangsal (Ward)', path: '/ward-monitor', icon: 'meeting_room' }
+    ]
   },
   {
     domain: 'PATIENTS',
@@ -50,7 +54,8 @@ const ENTERPRISE_NAV_SCHEMA = [
     items: [
       { name: 'Doctor Workspace (SOAP)', path: '/doctor-workspace', icon: 'stethoscope' },
       { name: 'Nursing Workspace & eMAR', path: '/nursing-workspace', icon: 'medication' },
-      { name: 'Patient Chart (Unified EMR)', path: '/patient-chart', icon: 'folder_shared' }
+      { name: 'Patient Chart (Unified EMR)', path: '/patient-chart', icon: 'folder_shared' },
+      { name: 'Universal CPOE Orders Hub', path: '/orders', icon: 'receipt_long' }
     ]
   },
   {
@@ -78,7 +83,8 @@ const ENTERPRISE_NAV_SCHEMA = [
     icon: 'local_pharmacy',
     items: [
       { name: 'Multi-Depot FEFO & Telaah', path: '/pharmacy-enterprise', icon: 'inventory_2' },
-      { name: 'Clinical Dispensing', path: '/pharmacy', icon: 'vaccines' }
+      { name: 'Clinical Dispensing', path: '/pharmacy', icon: 'vaccines' },
+      { name: 'Logistik & Mutasi Farmasi', path: '/inventory', icon: 'swap_horiz' }
     ]
   },
   {
@@ -105,7 +111,10 @@ const ENTERPRISE_NAV_SCHEMA = [
       { name: 'JCI Forensic Audit Trail', path: '/audit-trail', icon: 'security' },
       { name: 'Bed Management Center', path: '/bed-management', icon: 'single_bed' },
       { name: 'Kredensial & Hak Klinis', path: '/staff-privileges', icon: 'badge' },
-      { name: 'Master Data Terpadu (18 Modul)', path: '/master-data', icon: 'dataset' }
+      { name: 'Master Data Terpadu (18 Modul)', path: '/master-data', icon: 'dataset' },
+      { name: 'SATUSEHAT Interop Studio', path: '/satusehat', icon: 'hub' },
+      { name: 'Go-Live Control Center', path: '/go-live-control', icon: 'verified' },
+      { name: 'Diagnostik & Performa Sistem', path: '/performance-diagnostics', icon: 'speed' }
     ]
   }
 ];

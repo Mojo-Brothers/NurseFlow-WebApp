@@ -7,7 +7,12 @@ const EnterpriseInventoryPage = lazy(() => import('../modules/inventory/pages/En
 
 export const pharmacyRoutes = (Wrap) => [
   { path: "/inventory", element: <Navigate to="/inventory/material-request" replace /> },
-  { path: "/inventory/*", element: <Wrap><EnterpriseInventoryPage /></Wrap> },
+  {
+    element: <ProtectedRoute allowedRoles={['PHARMACIST', 'LOGISTICS_OFFICER', 'ADMIN', 'SUPERVISOR']} />,
+    children: [
+      { path: "/inventory/*", element: <Wrap><EnterpriseInventoryPage /></Wrap> }
+    ]
+  },
   {
     element: <ProtectedRoute allowedRoles={['PHARMACIST', 'ADMIN', 'DOCTOR']} />,
     children: [
