@@ -30,14 +30,14 @@ describe('🏥 SPRINT 3L.2: Sustained Clinical Load & Clinical Workload Mix', ()
       const pId = crypto.randomUUID();
       const epId = crypto.randomUUID();
       const encId = crypto.randomUUID();
-      const mrn = `MRN-MIX-${Date.now().toString().slice(-5)}-${i}`;
-      const nik = `3201${Date.now().toString().slice(-7)}${String(i).padStart(4, '0')}`;
+      const mrn = `MRN-${crypto.randomUUID().slice(0, 8)}-${i}`;
+      const nik = `32${crypto.randomUUID().replace(/\D/g, '').slice(0, 14).padEnd(14, '0')}`;
       const name = `Pasien Sustained Mix ${i}`;
 
       await pool.query(`
         INSERT INTO master_patients (id, tenant_id, mrn, nik, full_name, gender, birth_date, phone_number, address_line)
         VALUES ($1, $2, $3, $4, $5, 'MALE', '1985-05-15', '081234567890', 'Jl. Sustained No. 1')
-        ON CONFLICT DO NOTHING;
+        ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name;
       `, [pId, testTenantId, mrn, nik, name]);
 
       await pool.query(`
