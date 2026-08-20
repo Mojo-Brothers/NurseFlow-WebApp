@@ -20,6 +20,314 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 10: VERTICAL SLICE #13: PATIENT FINANCIAL & REVENUE CYCLE CLOSED LOOP ➔ MULTI-PAYER SPLIT INVOICING, PATIENT DEPOSIT LEDGER & RETENTION, CASHIER MULTI-PAYMENT (CASH/QRIS/EDC/VA/GL), CREDIT & DEBIT NOTES, DEPOSIT REFUND, CASHIER SHIFT RECONCILIATION & ACCOUNTS RECEIVABLE (AR) AGING LIFECYCLE
+**Tag Rilis:** `vs13-patient-financial-revenue-cycle-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_13]` `[PATIENT_FINANCIAL_MANAGEMENT]` `[REVENUE_CYCLE_CLOSED_LOOP]` `[MULTI_PAYER_SPLIT_INVOICING]` `[PATIENT_DEPOSIT_LEDGER]` `[CASHIER_MULTI_PAYMENT]` `[CREDIT_DEBIT_NOTES]` `[DEPOSIT_REFUND]` `[CASHIER_SHIFT_RECONCILIATION]` `[AR_AGING_LIFECYCLE]` `[SOVEREIGN_CLINICAL_STATE_INVARIANT]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`PATIENT FINANCIAL & REVENUE CYCLE VERTICAL SLICE QUALIFIED — 25/25 VS-13 CHAOS SUITE PASS, 349/349 CUMULATIVE VERTICAL SLICE TESTS PASS, 166/166 CODEBASE SUITES PASS (1.642 ATOMIC TESTS), 70 MIGRATIONS / 209 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Patient Financial & Revenue Cycle Service ([`server/services/patientFinancialAndRevenueCycle.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/patientFinancialAndRevenueCycle.service.js)):**
+   - Buku Besar Deposit Pasien (*Patient Deposit Ledger*): Penerimaan uang muka rawat inap (*admission deposit*) dan tindakan operasi (*surgical prepayment*) dengan pencatatan metode bayar (Cash/Transfer/QRIS/EDC) dan tanda tangan digital SHA-256.
+   - Multi-Payer Split Invoicing Engine: Menghitung pembagian tagihan bruto, diskon, tanggungan penjamin (BPJS/Asuransi Swasta/Perusahaan), dan porsi bayar pasien (*co-pay, deductible, excess*). Pemotongan deposit aktif secara otomatis (*auto-deposit deduction*) serta transisi otomatis ke status `PAID` apabila deposit mencukupi seluruh porsi pasien.
+   - Cashier Multi-Payment Processing: Pembayaran kasir tunai (*Cash dengan perhitungan uang kembalian otomatis*), QRIS Dinamis, Kartu Debit/Kredit EDC dengan kode otorisasi bank, Virtual Account (VA), dan Surat Jaminan Asuransi/Perusahaan (GL).
+   - Financial Adjustment & Refund Engine: Penerbitan *Credit Note* untuk koreksi tagihan, *Debit Note* untuk penagihan susulan BHP/tindakan medis, dan *Deposit Refund* untuk pengembalian sisa deposit saat pasien pulang.
+   - End-of-Day Shift Close & Cashier Financial Reconciliation: Rekonsiliasi fisik uang kas di laci kasir terhadap total sistem, pendeteksian selisih (*variance*), agregasi transaksi non-tunai (QRIS, EDC, VA), dan segel shift kasir (`CLOSED_BALANCED` / `CLOSED_WITH_VARIANCE`).
+   - Accounts Receivable (AR) Aging Lifecycle: Pengakuan piutang penjamin asuransi/perusahaan ke dalam bucket aging (*`CURRENT_0_30`, `AGING_31_60`, `AGING_61_90`, `AGING_OVER_90`*) dan pelacakan pelunasan parsial.
+   - Sovereign Clinical State Invariant: Piutang yang menunggak atau sengketa pembayaran pasien terbukti 100% terisolasi dari status pelayanan klinis dan encounter pasien.
+2. **Skema Database & Migrasi SQL 065 ([`database/migrations/065_patient_financial_and_revenue_cycle_closed_loop.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/065_patient_financial_and_revenue_cycle_closed_loop.sql)):**
+   - Membuat tabel: `patient_deposit_ledgers`, `patient_split_invoices`, `cashier_payment_transactions`, `financial_adjustments_and_refunds`, `cashier_shift_reconciliations`, dan `accounts_receivable_aging_ledgers`. Total 209 tabel publik terverifikasi di PostgreSQL 16.
+3. **Pembangunan Controller & Routing REST Financial ([`server/controllers/patientFinancialAndRevenueCycle.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/patientFinancialAndRevenueCycle.controller.js) & [`server/routes/patientFinancialAndRevenueCycle.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/patientFinancialAndRevenueCycle.routes.js)):**
+   - Menyediakan endpoint lengkap: `POST /api/v1/patient-financial/deposits`, `/invoices`, `/payments`, `/adjustments`, `/shifts/reconcile`, `/ar`.
+4. **Verifikasi Durabilitas & 25 Skenario Financial Chaos Gate ([`tests/verticalSlice13PatientFinancialRevenueCycleDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice13PatientFinancialRevenueCycleDurability.test.js)):**
+   - **25/25 Tests PASS** (44ms): Deposit rawat inap, tagihan split multipayer, potongan deposit otomatis, kasir multi-metode (Cash, QRIS, EDC, VA), Credit/Debit Notes, pengembalian deposit, rekonsiliasi shift tutup kasir, lifecycle AR aging, dan rekonsiliasi E2E 0 discrepancy.
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 9B: VERTICAL SLICE #12: CLINICAL CODING, CASEMIX & REVENUE INTEGRITY CLOSED LOOP ➔ REGULATORY & CASEMIX HARDENING (VS-12A)
+**Tag Rilis:** `vs12a-casemix-regulatory-hardening-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_12A]` `[CASEMIX_REGULATORY_HARDENING]` `[DYNAMIC_RULESETS]` `[HISTORICAL_REPRODUCIBILITY]` `[MASTER_TERMINOLOGY_GOVERNANCE]` `[ANTI_LEADING_CDI]` `[MULTI_PAYER_ABSTRACTION]` `[REVENUE_INTEGRITY_FALSE_POSITIVE_CONTROL]` `[SOVEREIGN_CLINICAL_STATE]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🔒 **`CASEMIX & CODING REGULATORY HARDENING QUALIFIED — 25/25 VS-12A REGULATORY HARDENING TESTS PASS (50/50 TOTAL VS-12 TESTS PASS), 324/324 CUMULATIVE VERTICAL SLICE TESTS PASS, 69 MIGRATIONS / 203 TABLES VERIFIED, ZERO TARIFF DRIFT`**
+
+1. **Dynamic Versioned Rulesets & Historical Reproducibility ([`database/migrations/064_casemix_and_coding_regulatory_hardening.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/064_casemix_and_coding_regulatory_hardening.sql)):**
+   - Menambahkan tabel `casemix_rulesets` untuk versi Permenkes 3/2023 (INA-CBG 6.0) dan Permenkes 26/2021 (INA-CBG 5.2). Multiplier severity dimuat dinamis dari database tanpa hardcoded logic.
+   - Reproduksibilitas Historis: Kasus tahun 2021/2022 yang di-grouping ulang secara deterministik menghasilkan tarif dan kode INA-CBG Permenkes 26/2021 (*Zero Tariff Drift*).
+2. **Master Terminology Governance Service ([`server/services/terminologyGovernance.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/terminologyGovernance.service.js)):**
+   - Validasi format ICD-10 & ICD-9-CM, deteksi kode usang/deprecated dengan rekomendasi pengganti (`A41.8` $\rightarrow$ `A41.9`), dan deduplikasi diagnosis utama vs sekunder.
+3. **Anti-Leading & Evidence-Based CDI Query Integrity:**
+   - Pertanyaan mengarahkan (*leading query*) untuk menaikkan tarif klaim ditolak keras (**HTTP 422 `LEADING_QUERY_REJECTED`**). Mewajibkan penyertaan array bukti klinis (*TTV, Lab, Radiologi, Terapi*) pada setiap query dokter DPJP.
+4. **False-Positive Controls & Multi-Payer Abstraction:**
+   - Menekan alarm palsu kebocoran tagihan melalui klasifikasi `BUNDLED_PROCEDURE`, `NOT_BILLABLE_ASSESSMENT`, `CANCELLED_SURGERY`, `PAYER_EXEMPT`. Mendukung adapter multipayer (`BPJS_VCLAIM`, `PRIVATE_INSURANCE_ADMEDIKA`, `CORPORATE_DIRECT`, `SELF_PAY_MANDIRI`) dan pelacakan selisih iur (*copay balance*).
+5. **Verifikasi Regulatory Hardening Gate ([`tests/verticalSlice12CasemixRegulatoryHardening.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice12CasemixRegulatoryHardening.test.js)):**
+   - **25/25 Tests PASS** (44ms): Dynamic rulesets, historical reproducibility, terminology validation, anti-leading query protection, dan multipayer claim settlement.
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 9: VERTICAL SLICE #12: CLINICAL CODING, CASEMIX & REVENUE INTEGRITY CLOSED LOOP ➔ MULTI-VERSION SCD2 CLINICAL CODING, CDI PHYSICIAN-CODER QUERY LOOP, PERMENKES 3/2023 INA-CBG GROUPING, REVENUE LEAKAGE CROSS-AUDIT & ELECTRONIC CLAIM SUBMISSION FSM
+**Tag Rilis:** `vs12-clinical-coding-casemix-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_12]` `[CLINICAL_CODING]` `[CASEMIX_INACBG]` `[PERMENKES_3_2023]` `[CLINICAL_DOCUMENTATION_IMPROVEMENT]` `[PHYSICIAN_QUERY_LOOP]` `[REVENUE_INTEGRITY_AUDIT]` `[BPJS_VCLAIM_FSM]` `[SCD2_VERSIONING]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`CLINICAL CODING, CASEMIX & REVENUE INTEGRITY VERTICAL SLICE QUALIFIED — 25/25 VS-12 CHAOS SUITE PASS, 299/299 CUMULATIVE VERTICAL SLICE TESTS PASS, 68 MIGRATIONS / 202 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Clinical Coding & Casemix Application Service ([`server/services/clinicalCodingAndCasemix.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/clinicalCodingAndCasemix.service.js)):**
+   - Koding Klinis Multi-Versi SCD2: Diagnosis utama (Principal ICD-10), diagnosis sekunder dengan penanda komplikasi/komorbiditas (`is_cc`, `is_mcc`), Present On Admission (`POA` Y/N/U/W), dan koding tindakan ICD-9-CM dengan tanda tangan digital SHA-256.
+   - Clinical Documentation Improvement (CDI) & Physician-Coder Clarification Query Loop: Alur interaksi terstruktur antara perekam medis dan dokter DPJP untuk klarifikasi spesifisitas diagnosis atau konfirmasi komplikasi tanpa mengubah catatan medis asli dokter.
+   - Permenkes 3/2023 INA-CBG Grouping Engine: Pemetaan MDC, perhitungan tingkat keparahan (Severity Level I, II 1.25x, III 1.5x), penyesuaian hierarki tindakan bedah vs non-bedah, dan penambahan top-up prosedur/implan/obat khusus.
+   - Analisis Varians Biaya & Margin Rumah Sakit: Menghitung selisih efisiensi biaya riil rumah sakit terhadap paket tarif klaim INA-CBG (`cost_variance_idr = final_claim_tariff_idr - real_hospital_cost_idr`).
+   - Revenue Integrity Cross-Domain Audit: Deteksi kebocoran tagihan (*Revenue Leakage Protection*), memverifikasi apakah tindakan bedah/implan yang terpasang sudah dikoding dan ditagihkan (`UNCODED_CLINICAL_EVENT` / `CLEAN_NO_LEAKAGE`).
+   - Electronic Claim Submission Lifecycle FSM: Pengajuan klaim elektronik BPJS (nomor SEP, kartu BPJS, status *DRAFT ➔ VALIDATED ➔ GROUPED ➔ SUBMITTED ➔ PAID / DISPUTED ➔ RESUBMITTED*), dengan invarian decoupling kedaulatan status pelayanan klinis.
+2. **Skema Database & Migrasi SQL 063 ([`database/migrations/063_clinical_coding_casemix_and_revenue_integrity.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/063_clinical_coding_casemix_and_revenue_integrity.sql)):**
+   - Membuat tabel: `clinical_coding_records`, `clinical_documentation_queries`, `casemix_grouping_audits`, `revenue_integrity_cross_audits`, dan `electronic_claim_submissions`. Total 202 tabel publik terverifikasi di PostgreSQL 16.
+3. **Pembangunan Controller & Routing REST Casemix ([`server/controllers/clinicalCodingAndCasemix.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/clinicalCodingAndCasemix.controller.js) & [`server/routes/clinicalCodingAndCasemix.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/clinicalCodingAndCasemix.routes.js)):**
+   - Menyediakan endpoint lengkap: `POST /api/v1/casemix/coding-records`, `/queries`, `/queries/:id/respond`, `/encounters/:id/grouping`, `/encounters/:id/cross-audit`, `/claims`.
+4. **Verifikasi Durabilitas & 25 Skenario Chaos Gate ([`tests/verticalSlice12ClinicalCodingCasemixDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice12ClinicalCodingCasemixDurability.test.js)):**
+   - **25/25 Tests PASS** (46ms): Koding klinis SCD2, CDI physician query, grouping INA-CBG Permenkes 3/2023 severity I/II/III, audit kebocoran pendapatan tindakan bedah, alur klaim elektronik BPJS, dan rekonsiliasi E2E 0 discrepancy.
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 8: VERTICAL SLICE #11: SURGICAL SUITE, OPERATING THEATRE & PERIOPERATIVE CLOSED LOOP ➔ PRE-OP ANESTHESIA EVALUATION, JCI IPSG 4 WHO 3-PHASE SAFE SURGERY CHECKLIST, INTRAOPERATIVE UDI IMPLANT TRACEABILITY, PACU ALDRETE RECOVERY & SURGICAL CHARGE CAPTURE
+**Tag Rilis:** `vs11-perioperative-closed-loop-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_11]` `[WAVE_1_TRANSACTION_BACKBONE]` `[PATIENT_SAFETY_CORE]` `[SURGICAL_SUITE_OPERATING_THEATRE]` `[JCI_IPSG4_SAFE_SURGERY]` `[WHO_SURGICAL_SAFETY_CHECKLIST]` `[ZERO_COUNT_DISCREPANCY_RULE]` `[UDI_MEDICAL_DEVICE_TRACEABILITY]` `[PACU_MODIFIED_ALDRETE_SCORING]` `[EXACTLY_ONCE_SURGICAL_BILLING]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`SURGICAL SUITE & PERIOPERATIVE CLOSED LOOP VERTICAL SLICE QUALIFIED — 25/25 VS-11 CHAOS SUITE PASS, 259/259 CUMULATIVE VERTICAL SLICE TESTS PASS, 66 MIGRATIONS / 194 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Perioperative Closed Loop Application Service ([`server/services/perioperativeClosedLoop.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/perioperativeClosedLoop.service.js)):**
+   - Asesmen Pra-Anestesi Komprehensif: Klasifikasi ASA (I-VI/E), skor Mallampati (1-4), evaluasi jalan nafas sulit, jam puasa NPO, klirens kardiopulmoner, dan verifikasi informed consent bedah.
+   - JCI IPSG 4 WHO 3-Phase Safe Surgery Checklist: Eksekusi sekuensial ketat (Fase 1: *Sign-In* sebelum induksi anestesi, Fase 2: *Time-Out* jeda verbal seluruh tim sebelum insisi kulit, Fase 3: *Sign-Out* sebelum pasien keluar kamar bedah).
+   - Invarian Keselamatan Kritis Rekonsiliasi Hitungan Kassa & Instrumen (*Zero Count Discrepancy Rule*): Hitungan yang tidak klop (*discrepant count*) memblokir keras sign-out sampai dilakukan rekonsiliasi atau foto rontgen konfirmasi.
+   - Pelacakan Implan Medis Permanen UDI (*Unique Device Identifier*): Merekam barcode UDI, nomor seri/lot, produsen, masa kedaluwarsa, dan sisi anatomi pemasangan implan ortopedi/mesh/katup dengan tanda tangan digital SHA-256.
+   - Asesmen Pemulihan PACU (*Modified Aldrete Score*): Menilai kesadaran, aktivitas motorik, respirasi, stabilitas sirkulasi, dan saturasi O2 (0-10), mewajibkan skor minimal $\ge 9$ untuk transfer aman ke ruang rawat inap.
+   - Finalisasi Operasi & *Exactly-Once Charge Capture*: Menghitung rincian sewa OK, jasa bedah, jasa anestesi, BHP, implan, memetakan ke paket klaim INA-CBG, dan mentransisikan kamar operasi ke status `CLEANING_STERILIZATION`.
+2. **Skema Database & Migrasi SQL 061 ([`database/migrations/061_operating_theatre_and_perioperative_closed_loop.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/061_operating_theatre_and_perioperative_closed_loop.sql)):**
+   - Membuat tabel: `perioperative_anesthesia_evaluations`, `who_safety_checklist_executions`, `pacu_recovery_records`, dan `intraoperative_implant_ledgers`.
+3. **Pembangunan Controller & Routing REST Perioperatif ([`server/controllers/perioperativeClosedLoop.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/perioperativeClosedLoop.controller.js) & [`server/routes/perioperativeClosedLoop.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/perioperativeClosedLoop.routes.js)):**
+   - Menyediakan endpoint lengkap: `POST /api/v1/perioperative/preop-evaluations`, `/who-checklist`, `/implants`, `/pacu-records`, `/cases/:id/finalize`.
+4. **Verifikasi Durabilitas & 25 Skenario Chaos Gate ([`tests/verticalSlice11PerioperativeClosedLoopDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice11PerioperativeClosedLoopDurability.test.js)):**
+   - **25/25 Tests PASS** (24ms): Asesmen pra-anestesi, WHO 3-phase checklist, proteksi hitungan kassa/jarum tidak klop, implan UDI, Aldrete $\ge 9$ guard, finalisasi tagihan bedah, dan rekonsiliasi E2E 0 discrepancy.
+   - Kumulatif Vertical Slice Suites: **259/259 Tests PASS** across VS-01 s.d. VS-11.
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 7: VERTICAL SLICE #10: CLINICAL CARE COORDINATION & LONGITUDINAL PATIENT TIMELINE CLOSED LOOP ➔ UNIFIED TIMELINE RECONSTRUCTION, CAUSAL EVENT LINEAGE, INTER-DISCIPLINARY CARE PLAN (ICP), SBAR SHIFT HANDOVER & JCI DISCHARGE RESUME
+**Tag Rilis:** `vs10-care-coordination-and-timeline-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_10]` `[WAVE_1_TRANSACTION_BACKBONE]` `[PATIENT_SAFETY_CORE]` `[LONGITUDINAL_TIMELINE_GRAPH]` `[CAUSAL_LINEAGE_PROVENANCE]` `[INTER_DISCIPLINARY_CARE_PLAN]` `[SBAR_SHIFT_HANDOVER_DUAL_SIGNOFF]` `[JCI_MEDICAL_DISCHARGE_RESUME]` `[MEDICATION_RECONCILIATION]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`CLINICAL CARE COORDINATION & LONGITUDINAL TIMELINE VERTICAL SLICE QUALIFIED — 25/25 VS-10 CHAOS SUITE PASS, 234/234 CUMULATIVE VERTICAL SLICE TESTS PASS, 65 MIGRATIONS / 190 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Care Coordination & Longitudinal Timeline Application Service ([`server/services/careCoordinationAndTimeline.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/careCoordinationAndTimeline.service.js)):**
+   - Rekonstruksi Timeline Klinis Longitudinal Terpadu (*Unified Longitudinal Timeline*): Mengagregasi seluruh event domain dari admisi, triage, CPPT/SOAP, CPOE, LIS, RIS, eMAR, NEWS2, ISBAR, dan rilis resume pulang menjadi pohon urutan kronologis deterministik (*Lossless Provenance*).
+   - *Causal Event Lineage Graph*: Setiap event klinis terhubung ke event hulu induknya via `parent_event_id` (misal: *CPOE Order ➔ Specimen Collection ➔ Lab Result ➔ Panic Value Alert ➔ TBAK Read-Back ➔ Interpretation ➔ Secondary Medication CPOE ➔ Bedside eMAR ➔ NEWS2 Score ➔ Shift Handover ➔ Discharge Summary*).
+   - Rencana Asuhan Terpadu Multi-Disiplin (*Inter-Disciplinary Care Plan / ICP*): Tim asuhan (Dokter DPJP, Perawat, Apoteker Klinis, Dietisien) menyusun daftar masalah aktif, target luaran terukur, dan intervensi kolaboratif dengan versioning temporal SCD2 (`v1` ➔ `v2`).
+   - Operan Jaga Terstruktur SBAR & *Dual Sign-Off Transfer of Care*: Perawat pengirim mencatat Situation, Background, Assessment, Recommendation, tanda vital snapshot, pasien risiko jatuh, dan pesanan lab tertunda, disahkan oleh tanda tangan digital ganda perawat penerima shift (`PENDING_ACKNOWLEDGMENT` ➔ `COMPLETED`).
+   - Ringkasan Pulang Medis JCI (*Medical Discharge Resume*): DPJP mengesahkan diagnosis masuk/keluar (ICD-10), tindakan/operasi (ICD-9-CM), ringkasan riwayat perawatan, rekonsiliasi obat pulang, tanggal kontrol poliklinik, dan tanda bahaya darurat (*Emergency Warning Signs*).
+   - Otomasi Penguncian Status Encounter: Pengesahan resume medis secara otomatis mentransisikan encounter menjadi `DISCHARGED` dengan disposisi akhir dan tanda tangan kriptografi SHA-256.
+2. **Skema Database & Migrasi SQL 060 ([`database/migrations/060_clinical_care_coordination_and_timeline.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/060_clinical_care_coordination_and_timeline.sql)):**
+   - Membuat tabel: `longitudinal_care_plans`, `clinical_handovers`, `clinical_discharge_summaries`, dan `longitudinal_timeline_events`.
+3. **Pembangunan Controller & Routing REST Koordinasi Klinis ([`server/controllers/careCoordinationAndTimeline.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/careCoordinationAndTimeline.controller.js) & [`server/routes/careCoordinationAndTimeline.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/careCoordinationAndTimeline.routes.js)):**
+   - Menyediakan endpoint lengkap: `GET /api/v1/coordination/encounters/:encounterId/timeline`, `POST /care-plans`, `POST /handovers`, `POST /handovers/:id/acknowledge`, `POST /discharge-summaries`.
+4. **Verifikasi Durabilitas & 25 Skenario Chaos Gate ([`tests/verticalSlice10CareCoordinationDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice10CareCoordinationDurability.test.js)):**
+   - **25/25 Tests PASS** (26ms): Rekonstruksi timeline multi-kategori, pelacakan dependensi kausalitas, versioning care plan, SBAR dual sign-off, resume pulang medis JCI, rekonsiliasi obat pulang, tanda bahaya darurat, dan rekonsiliasi E2E 0 discrepancy.
+   - Kumulatif Vertical Slice Suites: **234/234 Tests PASS** across VS-01 s.d. VS-10.
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 6: VERTICAL SLICE #09: CLINICAL RESULTS & DIAGNOSTIC INTERPRETATION CLOSED LOOP ➔ LIS/RIS RESULT DISTRIBUTION, JCI IPSG 2 CRITICAL PANIC ALERTS (TBAK), PHYSICIAN SYNTHESIS, DELTA CHECKS & SECONDARY CPOE ACTION
+**Tag Rilis:** `vs09-diagnostic-interpretation-closed-loop-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_09]` `[WAVE_1_TRANSACTION_BACKBONE]` `[PATIENT_SAFETY_CORE]` `[DIAGNOSTIC_INTELLIGENCE]` `[JCI_IPSG2_CRITICAL_PANIC]` `[TBAK_CLOSED_LOOP_READBACK]` `[PHYSICIAN_INTERPRETATION]` `[LONGITUDINAL_DELTA_CHECKS]` `[DOWNSTREAM_CPOE_EXECUTION]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`CLINICAL RESULTS & DIAGNOSTIC INTERPRETATION VERTICAL SLICE QUALIFIED — 25/25 VS-09 CHAOS SUITE PASS, 209/209 CUMULATIVE VERTICAL SLICE TESTS PASS, 64 MIGRATIONS / 186 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Diagnostic Interpretation & Secondary Action Service ([`server/services/diagnosticInterpretation.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/diagnosticInterpretation.service.js)):**
+   - Distribusi Notifikasi Diagnostik Terpadu (Lab LIS & Radiologi RIS/PACS): Menerbitkan notifikasi hasil dengan auto-routing prioritas (`ROUTINE` In-Chart Inbox, `URGENT_STAT` Hospital Page, `EMERGENCY_PANIC` Critical Popup Alert).
+   - JCI IPSG 2 Mandatory Closed-Loop Read-Back (TBAK: Tulis, Baca, Konfirmasi): Konfirmasi nilai kritis (*Panic Value*) wajib menyertakan verifikasi read-back lisan (`readBackConfirmed = true`), identitas perawat/analis, dan timestamp.
+   - Buku Besar Interpretasi Klinis Dokter (*Physician Diagnostic Synthesis*): Dokter DPJP mencatat impresi klinis, korelasi diagnostik dengan gejala/EKG, dan dampak terhadap care plan, dilindungi tanda tangan digital SHA-256.
+   - Longitudinal Delta Check Engine: Menghitung persentase perubahan dari nilai baseline sebelumnya secara deterministik (misal lonjakan Kreatinin 1.2 ➔ 3.8 mg/dL = 216% `SIGNIFICANT_RISE`, penurunan Hb 14.0 ➔ 6.8 g/dL = 51% `SIGNIFICANT_DROP`).
+   - Eksekusi Downstream Secondary CPOE Action: Menghubungkan interpretasi dokter secara langsung ke pembuatan order CPOE tindak lanjut (peresepan obat darurat Ca Glukonat + Insulin-Dekstrosa, follow-up lab 2 jam, tindakan hemodialisa darurat, konsultasi nefrologi CITO).
+   - State Transition Lengkap: `PENDING_ACKNOWLEDGMENT` $\rightarrow$ `ACKNOWLEDGED` $\rightarrow$ `INTERPRETED` $\rightarrow$ `ACTION_TAKEN`.
+2. **Skema Database & Migrasi SQL 059 ([`database/migrations/059_clinical_results_and_diagnostic_interpretation.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/059_clinical_results_and_diagnostic_interpretation.sql)):**
+   - Membuat tabel: `diagnostic_result_notifications`, `physician_diagnostic_interpretations`, `diagnostic_secondary_actions`, dan `longitudinal_delta_checks`.
+3. **Pembangunan Controller & Routing REST Diagnostik ([`server/controllers/diagnosticInterpretation.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/diagnosticInterpretation.controller.js) & [`server/routes/diagnosticInterpretation.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/diagnosticInterpretation.routes.js)):**
+   - Menyediakan endpoint lengkap: `POST /api/v1/diagnostics/notifications`, `/notifications/:id/acknowledge`, `/notifications/:id/interpret`, `/interpretations/:id/actions`.
+4. **Verifikasi Durabilitas & 25 Skenario Chaos Gate ([`tests/verticalSlice09DiagnosticInterpretationDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice09DiagnosticInterpretationDurability.test.js)):**
+   - **25/25 Tests PASS** (25ms): Notifikasi rutin/urgent/panic, JCI IPSG 2 TBAK read-back, interpretasi klinis DPJP, delta check kreatinin & hemoglobin, downstream CPOE orders, radiologi tension pneumothorax, mikrobiologi kultur darah gram-negatif, dan 100% E2E reconciliation.
+   - Kumulatif Vertical Slice Suites: **209/209 Tests PASS** across VS-01 s.d. VS-09.
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 5: VERTICAL SLICE #08: CLINICAL MONITORING, EWS & PATIENT DETERIORATION RESPONSE ➔ NEWS2, ISBAR ESCALATION, RAPID RESPONSE / CODE BLUE & CLOSED-LOOP REASSESSMENT
+**Tag Rilis:** `vs08-clinical-monitoring-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_08]` `[WAVE_1_TRANSACTION_BACKBONE]` `[PATIENT_SAFETY_CORE]` `[NEWS2_EWS_ENGINE]` `[SINGLE_EXTREME_SCORE_3]` `[ISBAR_ESCALATION]` `[JCI_IPSG2_TBAK_READBACK]` `[RAPID_RESPONSE_TEAM]` `[CODE_BLUE_RESUSCITATION]` `[CLOSED_LOOP_REASSESSMENT]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`CLINICAL MONITORING & DETERIORATION RESPONSE VERTICAL SLICE QUALIFIED — 25/25 VS-08 CHAOS SUITE PASS, 184/184 CUMULATIVE VERTICAL SLICE TESTS PASS, 63 MIGRATIONS / 182 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Clinical Monitoring & Deterioration Response Application Service ([`server/services/clinicalMonitoring.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/clinicalMonitoring.service.js)):**
+   - Scoring Engine NEWS2 (Royal College of Physicians 2017): Menghitung skor parameter vital signs lengkap (Respiratory Rate, SpO2 Scale 1 & Scale 2 PPOK, Supplemental Oxygen, Systolic BP, Heart Rate, AVPU / New Confusion, Temperature).
+   - Single Extreme Parameter Score of 3 Guard: Jika satu parameter bernilai ekstrim (misal TD Sistolik $\le 90$ mmHg), status otomatis naik ke resiko `MEDIUM` dan mewajibkan eskalasi ke perawat penanggung jawab & DPJP.
+   - ISBAR Structured Deterioration Escalation: Mendokumentasikan eskalasi terstruktur (Identity, Situation, Background, Assessment, Recommendation) dengan batas waktu respon target (Code Blue 0 min, RRT 15 min, DPJP 30 min).
+   - JCI IPSG 2 Mandatory Closed-Loop Read-Back (TBAK: Tulis, Baca, Konfirmasi): Konfirmasi dokter wajib menyertakan instruksi klinis ($\ge 5$ karakter) dan `readBackConfirmed = true`.
+   - Rapid Response Team (RRT) & Code Blue Resuscitation Ledger (AHA ACLS 2025): Merekam kedatangan tim, kepemimpinan dokter spesialis, irama awal (VF/VT Shockable, Asystole, PEA), intervensi (CPR, Defibrilasi 200J, Epinefrin, Amiodaron), dan hasil stabilisasi/ROSC.
+   - Mandatory Closed-Loop Reassessment: Evaluasi ulang pasca intervensi menghitung penurunan skor EWS (score delta), menentukan trajektori pemulihan (`IMPROVING` / `STABLE` / `DETERIORATING`), dan mentransisikan status eskalasi awal menjadi `RESOLVED`.
+   - Exactly-Once Charge Capture: Penerbitan tagihan resusitasi darurat atomik via outbox billing.
+2. **Skema Database & Migrasi SQL 058 ([`database/migrations/058_clinical_monitoring_and_deterioration_response.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/058_clinical_monitoring_and_deterioration_response.sql)):**
+   - Membuat tabel: `clinical_vital_sign_observations`, `clinical_deterioration_escalations`, `rapid_response_code_blue_events`, dan `clinical_reassessments`.
+3. **Pembangunan Controller & Routing REST Monitoring ([`server/controllers/clinicalMonitoring.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/clinicalMonitoring.controller.js) & [`server/routes/clinicalMonitoring.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/clinicalMonitoring.routes.js)):**
+   - Menyediakan endpoint lengkap: `POST /api/v1/monitoring/observations`, `/observations/:id/escalate`, `/escalations/:id/acknowledge`, `/rapid-response`, `/observations/:id/reassess`.
+4. **Verifikasi Durabilitas & 25 Skenario Chaos Gate ([`tests/verticalSlice08ClinicalMonitoringDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice08ClinicalMonitoringDurability.test.js)):**
+   - **25/25 Tests PASS** (26ms): NEWS2 scoring, SpO2 scale 2, single extreme 3, out-of-bounds rejection, ISBAR escalation, closed-loop TBAK read-back, RRT & Code Blue ACLS, charge capture, closed-loop reassessment, dan 100% E2E reconciliation.
+   - Kumulatif Vertical Slice Suites: **184/184 Tests PASS** across VS-01 s.d. VS-08.
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 4: VERTICAL SLICE #07: MEDICATION CLOSED-LOOP ➔ PATIENT SAFETY CORE, CDSS GATES, PHARMACIST MMU.4, FEFO STOCK, BEDSIDE 6-RIGHTS, INFUSION SAFETY & RECONCILIATION HARDENED
+**Tag Rilis:** `vs07-medication-closed-loop-v1.1-hardened`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_07]` `[WAVE_1_TRANSACTION_BACKBONE]` `[PATIENT_SAFETY_CORE]` `[CROSS_REACTIVITY_ALLERGY]` `[DYNAMIC_DDI_REGIMEN_RE_EVALUATION]` `[CUMULATIVE_WEIGHT_DOSING]` `[PHARMACIST_MMU4]` `[FEFO_OCC_CONCURRENCY]` `[BEDSIDE_6_RIGHTS]` `[INFUSION_SAFETY]` `[MEDICATION_RECONCILIATION]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`MEDICATION CLOSED-LOOP VERTICAL SLICE FULLY HARDENED & QUALIFIED — 45/45 VS-07 CHAOS SUITE PASS, 159/159 CUMULATIVE VERTICAL SLICE TESTS PASS, 62 MIGRATIONS / 178 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Medication Closed-Loop Application Service ([`server/services/medicationClosedLoop.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/medicationClosedLoop.service.js)):**
+   - Domain Consumer CPOE Farmasi: Mengonsumsi item `cpoe_order_items` ber-tipe `PHARMACY` / `MEDICATION` tanpa menduplikasi engine order.
+   - Cross-Reactivity & Drug-Class Allergy Engine: Skrining berbasis kelas molekuler (`master_drug_class_cross_reactivities`), serta pemisahan tegas antara *true lethal allergy* (`ALLERGY_HARD_STOP`) dan *non-anaphylactic intolerance* (`INTOLERANCE_WARNING`).
+   - Dynamic DDI & Regimen Re-Evaluation: Skrining interaksi obat kontraindikasi absolut (`SEVERE_DDI_HARD_STOP`), pencatatan alasan override DPJP di audit log, dan evaluasi ulang CDSS secara dinamis saat obat baru ditambahkan ke regimen aktif pasien.
+   - Multi-Parameter Dosing Engine: Validasi dosis kumulatif harian (`CUMULATIVE_DAILY_DOSE_VIOLATION`) dan dosis berbasis berat badan (`WEIGHT_BASED_DOSE_VIOLATION` mg/kg).
+   - Medication Scheduling Engine: Mendukung STAT, NOW, ONCE, BID, TID, QID, q4h, PRN, CONTINUOUS dengan proteksi anti-duplicate administration berbasis nominal window.
+   - Continuous IV Infusion Safety & Independent Double-Check: Verifikasi independen dosis, konsentrasi (mg/mL), volume (mL), kecepatan tetesan pompa infus (mL/jam), serta penolakan *infusion rate mismatch*.
+   - Telaah Klinis Apoteker MMU.4 (*Mandatory Barrier*): Dispensing diblokir keras jika resep belum berstatus `APPROVED` oleh apoteker berwenang (`DISPENSE_WITHOUT_PHARMACIST_APPROVAL_REJECTED`).
+   - Alokasi Stok FEFO & Anti-Negative OCC: Memilih batch dengan tanggal kedaluwarsa terdekat, menolak obat kedaluwarsa (`EXPIRED_MEDICATION_REJECTED`), memvalidasi konkurensi stok (OCC conflict), dan mencatat mutasi stok pada `inventory_stock_movements`.
+   - Verifikasi 6-Rights Bedside eMAR: Memvalidasi kecocokan Barcode Gelang Pasien (`WRONG_PATIENT_BARCODE`), Barcode Obat Dispense (`WRONG_MEDICATION_BARCODE`), Kuantitas Dosis (`WRONG_DOSE_ADMINISTRATION`), Rute Pemberian (`WRONG_ROUTE_ADMINISTRATION`), Waktu Pemberian, dan Alasan Klinis (*Clinical Indication*).
+   - Dual-Signoff Obat High-Alert / Narkotika (JCI IPSG 3): Wajib menyertakan identitas dan tanda tangan perawat saksi (*witness nurse*).
+   - Medication Reconciliation Lifecycle: Layanan rekonsiliasi obat saat masuk (*Admission Reconciliation: Home Meds*) dan saat pulang (*Discharge Reconciliation: Inpatient Meds ➔ Take-Home Rx + Patient Instructions*).
+   - Exactly-Once Charge Capture & Tanda Tangan Digital SHA-256: Administrasi bedside otomatis menerbitkan tagihan billing atomik via event outbox.
+   - FSM Penyelesaian CPOE Bertahap: 0/2 `ORDERED` $\rightarrow$ 1/2 `PARTIALLY_COMPLETED` $\rightarrow$ 2/2 `COMPLETED`.
+2. **Skema Database & Migrasi SQL 056 & 057 ([`database/migrations/056_medication_closed_loop_durability.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/056_medication_closed_loop_durability.sql) & [`057_medication_clinical_integrity_hardening.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/057_medication_clinical_integrity_hardening.sql)):**
+   - Menghubungkan `medication_orders` ke CPOE Universal Backbone.
+   - Membuat tabel `medication_dispense_allocations`, `medication_emar_administrations`, `master_medication_dose_ranges`, `master_drug_class_cross_reactivities`, dan `medication_reconciliations`.
+3. **Pembangunan Controller & Routing REST Farmasi, eMAR & Rekonsiliasi ([`server/controllers/medicationClosedLoop.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/medicationClosedLoop.controller.js) & [`server/routes/medicationClosedLoop.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/medicationClosedLoop.routes.js)):**
+   - Menyediakan endpoint lengkap: `/api/v1/medications/prescribe`, `/pharmacist-review`, `/dispense`, `/administer`, `/reconciliation/admission`, `/reconciliation/discharge`, `/administrations/:id/adverse-reaction`, `/cancel`.
+4. **Verifikasi Durabilitas & 45 Skenario Chaos Gate ([`tests/verticalSlice07MedicationDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice07MedicationDurability.test.js)):**
+   - **45/45 Tests PASS** (45ms): e-prescribing, cross-reactivity allergy, dynamic DDI, cumulative daily dose, weight-based dose, scheduling engine, STAT timing, continuous infusion safety, high-alert double-check, OCC concurrency, admission & discharge reconciliation, dan 100% end-to-end reconciliation.
+   - Kumulatif Vertical Slice Suites: **159/159 Tests PASS** across VS-01 s.d. VS-07.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 3: VERTICAL SLICE #06C: RADIOLOGY ORDER VERTICAL SLICE ➔ RIS MWL, PACS DICOMWEB & CLINICAL INTEGRITY HARDENING
+**Tag Rilis:** `vs06c-radiology-order-pacs-v1.1-hardened`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_06C]` `[WAVE_1_TRANSACTION_BACKBONE]` `[RIS_RADIOLOGY]` `[PACS_DICOMWEB]` `[MULTI_ATTRIBUTE_DEMOGRAPHIC_SAFEGUARD]` `[DICOM_UID_HIERARCHY]` `[IMMUTABLE_REPORT_HISTORY]` `[CRITICAL_FINDINGS_PROVENANCE]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`RADIOLOGY ORDER VERTICAL SLICE FULLY HARDENED & QUALIFIED — 25/25 VS-06C CHAOS SUITE PASS, 114/114 CUMULATIVE VERTICAL SLICE TESTS PASS, 60 MIGRATIONS / 173 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan & Hardening Master Radiology Application Service ([`server/services/radiologyApplication.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/radiologyApplication.service.js)):**
+   - Multi-Attribute Demographic Patient Identity Safeguard: Lineage verifikasi mencocokkan `patient_id`, `patient_name`, dan `patient_mrn`. Ketidakcocokan memicu `DEMOGRAPHIC_IDENTITY_MISMATCH` (Quarantine).
+   - DICOM UID Hierarchy & Uniqueness: Memvalidasi keunikan `StudyInstanceUID` (409), `SeriesInstanceUID` (409), dan `SOPInstanceUID` (409).
+   - Modality Worklist (MWL) Generator: Menghasilkan Modality Worklist deterministik `ACC-RAD-YYYYMMDD-XXXX` (modalitas DX, CT, MR, US).
+   - Immutable Report History Preservation: Finalisasi laporan mengarsipkan snapshot $v_1$ ke `radiology_report_versions`. Pembetulan medikolegal menerbitkan $v_2$ tanpa menghapus $v_1$ (SHA-256 digital signature).
+   - Critical Finding Communication Provenance (JCI IPSG 2): Pencatatan lengkap `notification_method`, `notified_to_name`, `severity`, serta validasi konfirmasi *closed-loop read-back* dari dokter DPJP.
+   - FSM Penyelesaian CPOE Bertahap: Mengatur transisi akurat: 0/2 `ORDERED` $\rightarrow$ 1/2 **`PARTIALLY_COMPLETED`** $\rightarrow$ 2/2 **`COMPLETED`**.
+2. **Skema Database & Migrasi SQL 054 & 055 ([`database/migrations/054_ris_pacs_radiology_workflow_durability.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/054_ris_pacs_radiology_workflow_durability.sql) & [`055_ris_pacs_clinical_integrity_hardening.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/055_ris_pacs_clinical_integrity_hardening.sql)):**
+   - Menghubungkan modul radiologi ke CPOE Universal Backbone (`clinical_orders` / `cpoe_order_items`).
+   - Membuat tabel snapshot `radiology_report_versions` dan kolom demografis multi-atribut serta rute komunikasi temuan kritis.
+3. **Pembangunan Controller & Routing REST RIS/PACS ([`server/controllers/radiology.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/radiology.controller.js) & [`server/routes/radiology.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/radiology.routes.js)):**
+   - Menyediakan endpoint lengkap: `/api/v1/radiology/worklist/generate`, `/studies/acquire`, `/studies/:id/reports`, `/reports/:id/amend`, `/critical-alerts/:id/acknowledge`, `/critical-alerts/:id/escalate`, `/orders/:orderId/studies`.
+4. **Verifikasi Durabilitas & 25 Skenario Chaos Gate ([`tests/verticalSlice06CRadiologyDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice06CRadiologyDurability.test.js)):**
+   - **25/25 Tests PASS** (34ms): MWL generation, duplikasi Study/Series/SOP UID, demographic safeguard, snapshot $v_1/v_2$, provenance notifikasi kritis, closed-loop read-back, OCC 409, FSM 0/2 $\rightarrow$ 1/2 $\rightarrow$ 2/2 completion, dan 100% end-to-end reconciliation.
+   - Kumulatif Vertical Slice Suites: **114/114 Tests PASS** across VS-01 s.d. VS-06C.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 2: VERTICAL SLICE #06B: LABORATORY ORDER VERTICAL SLICE ➔ SPECIMEN CHAIN OF CUSTODY & PANIC VALUES
+**Tag Rilis:** `vs06b-laboratory-order-lis-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_06B]` `[WAVE_1_TRANSACTION_BACKBONE]` `[LIS_LABORATORY]` `[SPECIMEN_LINEAGE]` `[CRITICAL_PANIC_VALUES]` `[CLOSED_LOOP_COMMUNICATION]` `[POSTGRESQL_ACID]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`LABORATORY ORDER VERTICAL SLICE QUALIFIED — 20/20 VS-06B CHAOS SUITE PASS, 84/84 CUMULATIVE VERTICAL SLICE TESTS PASS, 57 MIGRATIONS / 171 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Laboratory Application Service ([`server/services/laboratoryApplication.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/laboratoryApplication.service.js)):**
+   - Domain Consumer CPOE Universal: Mengonsumsi item `cpoe_order_items` ber-tipe `LABORATORY` tanpa menduplikasi engine order.
+   - Deterministic Barcode Lineage: Menghasilkan barcode spesimen berformat `SPEC-<Encounter>-<ItemCode>-<Idx>` yang mengikat pasien, encounter, dan item order secara matematis.
+   - Rantai Pengawasan Spesimen (*Specimen Chain of Custody*): Siklus hidup `ORDERED` $\rightarrow$ `COLLECTED` $\rightarrow$ `RECEIVED_IN_LAB` $\rightarrow$ `ANALYZING` $\rightarrow$ `RESULT_AVAILABLE` $\rightarrow$ `COMPLETED` dengan pencatatan waktu dan aktor phlebotomist serta analis lab.
+   - Deteksi Nilai Kritis (*Versioned Panic Thresholds*): Evaluasi otomatis terhadap tabel `master_lab_critical_thresholds` (misal Kalium $\ge 6.2$ mEq/L atau $\le 2.8$ mEq/L memicu alert letal).
+   - Komunikasi Nilai Kritis Closed-Loop (JCI IPSG 2): Siklus alert `REPORTED_TO_UNIT` $\rightarrow$ konfirmasi lisan dan read-back oleh DPJP/perawat `ACKNOWLEDGED_READ_BACK` $\rightarrow$ eskalasi darurat `ESCALATED_DPJP` jika terjadi timeout respon bangsal.
+   - Pemisahan Verifikasi Hasil: Hasil analyzer berstatus `VALIDATED` wajib diverifikasi oleh Sp.PK / analis berwenang sebelum berstatus `RELEASED` ke rekam medis dan billing.
+2. **Skema Database & Migrasi SQL 052 ([`database/migrations/052_lis_laboratory_workflow_durability.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/052_lis_laboratory_workflow_durability.sql)):**
+   - Menambahkan kolom `accession_number UNIQUE`, `cpoe_item_id`, `version`, `specimen_quality_flag`, `validation_status` pada `laboratory_specimens` dan `laboratory_test_results`.
+   - Membuat tabel master `master_lab_critical_thresholds` dan menyuntikkan data standar nilai kritis (Kalium, Troponin I, Hemoglobin, Trombosit, GDS, Laktat).
+3. **Pembangunan Controller & Routing REST LIS ([`server/controllers/laboratory.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/laboratory.controller.js) & [`server/routes/laboratory.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/laboratory.routes.js)):**
+   - Menyediakan endpoint lengkap: `/api/v1/laboratory/specimens/generate` (POST), `/specimens/:id/collect` (POST), `/specimens/:id/accession` (POST), `/specimens/:id/results` (POST), `/results/:id/release` (POST), `/panic-alerts/:id/acknowledge` (POST), `/panic-alerts/:id/escalate` (POST), `/orders/:orderId/specimens` (GET).
+4. **Verifikasi Durabilitas & 20 Skenario Chaos Gate ([`tests/verticalSlice06BLaboratoryDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice06BLaboratoryDurability.test.js)):**
+   - **20/20 Tests PASS** (28ms): Barcode lineage deterministik, idempotensi duplicate event, blokir accession tanpa collection, deteksi panic values, closed-loop read-back, timeout escalation, RBAC 403 authorization guard, double-release protection, rollback atomik saat failure, optimistic concurrency 409 conflict, propagasi pembatalan CPOE, dan 100% end-to-end state reconciliation.
+   - Kumulatif Vertical Slice Suites: **84/84 Tests PASS** across VS-01 s.d. VS-06B.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — SPRINT 5A / STEP 1: VERTICAL SLICE #06A: UNIVERSAL CPOE TRANSACTION CORE ➔ POSTGRESQL DURABILITY & OUTBOX
+**Tag Rilis:** `vs06a-universal-cpoe-durability-v1.0`  
+**Kategori:** `[MAJOR]` `[VERTICAL_SLICE_06A]` `[WAVE_1_TRANSACTION_BACKBONE]` `[CPOE_UNIVERSAL]` `[POSTGRESQL_ACID]` `[IDEMPOTENCY_GUARD]` `[TRANSACTIONAL_OUTBOX]` `[ZERO_REGRESSION]`  
+**Status Evidence:** 🟢 **`UNIVERSAL CPOE TRANSACTION CORE QUALIFIED — 16/16 VS-06A CHAOS SUITE PASS, 64/64 CUMULATIVE VERTICAL SLICE TESTS PASS, 155/155 FULL SUITES PASS (1,357 TESTS), 56 MIGRATIONS / 170 TABLES VERIFIED, VITE BUILD 0 ERROR`**
+
+1. **Pembangunan Master Universal CPOE Application Service ([`server/services/cpoeApplication.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/cpoeApplication.service.js)):**
+   - Unit of Work Transaksi Atomik PostgreSQL 16:
+     ```sql
+     BEGIN ISOLATION LEVEL READ COMMITTED;
+     INSERT INTO clinical_orders (...) RETURNING *;
+     INSERT INTO cpoe_order_items (...) [Loop Items];
+     INSERT INTO universal_audit_logs (..., signature_hash, ...);
+     INSERT INTO clinical_domain_outbox (...);
+     COMMIT;
+     ```
+   - Penegakan Identitas Author dari JWT (bukan payload request): `requester_id`, `requester_name`, dan `requester_role` (`ROLE_DOCTOR_DPJP`, `ROLE_DOCTOR_EMERGENCY`).
+   - Idempotency Protection: Pengecekan `idempotency_key` pada `clinical_orders` mencegah order terduplikasi akibat double click atau network retry.
+   - Guard Status Encounter: Memblokir penerbitan order pada encounter berstatus terminal (`DISCHARGED`, `CANCELLED`, `CLOSED`).
+   - Optimistic Concurrency Control: Pengecekan `expectedVersion` pada `cancelOrder` memblokir modifikasi bersamaan dengan HTTP 409 `CONCURRENCY_CONFLICT`.
+   - Pembatalan Order Medicolegal: Endpoint pembatalan mewajibkan alasan klinis minimal 5 karakter, meng-update status item, dan menaikkan versi (`version + 1`).
+2. **Skema Database & Migrasi SQL 051 ([`database/migrations/051_universal_cpoe_transaction_core.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/051_universal_cpoe_transaction_core.sql)):**
+   - Menambahkan kolom `idempotency_key UNIQUE`, `version`, `requester_id`, `requester_name`, `requester_role`, `cancelled_by`, `cancelled_at`, `cancellation_reason`, `target_performer_dept`, `correlation_id` pada tabel `clinical_orders`.
+   - Membuat tabel baru `cpoe_order_items` dan `clinical_domain_outbox` dengan constraint integritas referensial dan index performa tinggi.
+3. **Pembangunan Controller & Routing REST Gateway ([`server/controllers/cpoe.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/cpoe.controller.js) & [`server/routes/orders.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/orders.routes.js)):**
+   - Menyediakan endpoint `/api/v1/orders/cpoe` (POST), `/api/v1/orders/cpoe/:id/cancel` (POST), `/api/v1/orders/cpoe/:id` (GET), dan `/api/v1/orders/cpoe/encounter/:encounterId` (GET) dengan envelope `{ success, data, meta }` serta proteksi RBAC (`CPOE_ORDER_CREATE`, `CPOE_ORDER_READ`, `CPOE_ORDER_CANCEL`).
+4. **Verifikasi Durabilitas & Evidence Reconciliation 16 Test Cases ([`tests/verticalSlice06AUniversalCpoeDurability.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/verticalSlice06AUniversalCpoeDurability.test.js)):**
+   - 16/16 skenario durabilitas PASS (36ms): Idempotency guard, rapid double-click rejection, `localStorage.clear()` immunity, terminal encounter lock, unauthorized role 403 rejection, atomic rollback saat disk failure, cryptographic SHA-256 audit signature, transactional outbox atomicity, optimistic concurrency conflict 409 rejection, dan 100% database state reconciliation.
+   - Kumulatif Vertical Slice Suites: **64/64 Tests PASS** across VS-01 s.d. VS-06A.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — CTO STRATEGIC DIRECTIVE: REALITY-CHECK RE-ALIGNMENT & VERTICAL PATIENT JOURNEY PROTOCOL
+**Tag Rilis:** `his-cto-reality-check-realigned-v1.0`  
+**Kategori:** `[DOCS]` `[MAJOR]` `[ARCHITECTURE]` `[REALITY_CHECK]` `[CRITICAL_PATH]` `[VERTICAL_PATIENT_JOURNEY]`  
+**Status Evidence:** 🟢 **`ROADMAP REALIGNED TO VERTICAL PATIENT JOURNEYS — STRICT POLICY: STOP ADDING NEW DOMAINS, ACCELERATE WAVE 1 TRANSACTION BACKBONE (VS-06 CPOE, VS-07 eMAR, VS-08 LIS, VS-09 PACS)`**
+
+1. **Penyelarasan Realitas Arsitektur ([`docs/AUDIT_DAN_ROADMAP_PENGEMBANGAN_HIS_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/AUDIT_DAN_ROADMAP_PENGEMBANGAN_HIS_2026.md)):**
+   - Mengoreksi persepsi kesiapan: Memisahkan *Software Architecture Maturity (92%)* dari *Real Production Operational Readiness*.
+   - Menetapkan kebijakan keras: **STOP MENAMBAH DOMAIN BARU**. 35 domain telah lengkap secara spesifikasi, skema relasional, dan logika bisnis.
+   - Mengubah definisi milestone dari *"Module Completed"* menjadi **"Vertical Patient Journey Completed Under Chaos"**.
+2. **Restrukturisasi Urutan Eksekusi Fase 5A (Critical Patient Journey):**
+   - **Wave 1 (Clinical Transaction Backbone):** VS-06 CPOE Universal Orders $\rightarrow$ VS-07 eMAR & Farmasi FEFO $\rightarrow$ VS-08 LIS Specimen & Panic Values $\rightarrow$ VS-09 RIS & PACS DICOM.
+   - **Wave 2 (Revenue Closure):** VS-10 Billing & Automated Charge Capture $\rightarrow$ INA-CBG E-Klaim Grouper Settlement.
+   - **Wave 3 (External Reality & Operational Hardening):** Live SATUSEHAT credentials $\rightarrow$ Live BPJS TrustMark $\rightarrow$ Physical Orthanc PACS $\rightarrow$ Hardware Fault Injection.
+   - **Wave 4 (Formal Unaided UAT & Pilot Ward):** Sesi UAT mandiri 10 peran RS $\rightarrow$ Pilot bangsal perdana.
+
+---
+
+### 🚀 [20 AGUSTUS 2026] — ENTERPRISE HIS 2026: 35 KLINIS & OPERASIONAL DOMAIN ROADMAP & MILESTONE REORGANIZATION
+**Tag Rilis:** `his-35-domain-enterprise-roadmap-v1.0`  
+**Kategori:** `[DOCS]` `[MAJOR]` `[ARCHITECTURE]` `[ROADMAP_2026]` `[35_DOMAINS]` `[JCI_STARKES_COMPLIANCE]`  
+**Status Evidence:** 🟢 **`ENTERPRISE 35 DOMAIN MILESTONE MATRIX SYNCHRONIZED — 154/154 TEST SUITES PASS, 1.341/1.341 ATOMIC TESTS PASS, 55 MIGRATIONS / 168 TABLES READY, VITE BUILD 0 ERROR`**
+
+1. **Pemetaan & Dokumentasi 35 Domain Klinis & Operasional Enterprise ([`docs/AUDIT_DAN_ROADMAP_PENGEMBANGAN_HIS_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/AUDIT_DAN_ROADMAP_PENGEMBANGAN_HIS_2026.md)):**
+   - Mendokumentasikan 35 modul dan kapabilitas inti HIS berstandar JCI/STARKES:
+     - 1. Patient & Master Data (MPI, Demografi, Penjamin, BPJS, Consent, Merge/Unmerge)
+     - 2. Front Office / Patient Access (Appointment, Antrean, Check-in, SEP Validation)
+     - 3. IGD / Emergency Department (Triage ESI, Trauma, Code Blue/Stroke/STEMI/Sepsis)
+     - 4. Ambulatory / Rawat Jalan (Doctor Workspace, SOAP CPPT, ICD-10/ICD-9-CM)
+     - 5. Inpatient / Rawat Inap (Bed Management, Ward, Braden/Morse, Fluid Balance)
+     - 6. Pharmacy & Medication Management (Formulary MMU.4, FEFO Multi-Depot, eMAR 5-Benar)
+     - 7. Laboratory Information System (LIS, Specimen Tracking, Panic Values, Accession)
+     - 8. Radiology / RIS / PACS (MWL, DICOM C-STORE, DICOMweb Viewer, Structured Reporting)
+     - 9. Operating Theatre (WHO Surgical Safety Checklist, Anesthesia, PACU Aldrete)
+     - 10. ICU / Critical Care (Ventilator, Infusion Titration, SOFA Score, Sepsis Protocol)
+     - 11. Maternal & Child Health (Partograph, APGAR, NICU, Pediatric Dosing Rules)
+     - 12. Specialty Clinical Modules (Cardiology STEMI, Neuro Stroke, Hemodialisa, Onkologi)
+     - 13. CDSS — Clinical Decision Support (DDI Graphs, Renal Adjustment, NEWS2/MEWS)
+     - 14. Nursing Information System (SDKI/SIKI/SLKI, Bedside Vitals, SBAR Handover)
+     - 15. Billing & Revenue Cycle Management (Charge Capture, Invoice, Deposit, AR Ledger)
+     - 16. BPJS / INA-CBG (Eligibility, SEP, E-Klaim Bridging, Grouper)
+     - 17. Inventory & Supply Chain (Multi-Depot Stock Balance, Stock Opname, Batch/Lot)
+     - 18. Procurement & Vendor Management (PR, RFQ, PO, 3-Way Matching)
+     - 19. Blood Bank / BDRS (ABO/Rh, Crossmatch, Hemovigilance, MTP)
+     - 20. Medical Device / Asset Management (UDI, Calibration Expiry, Maintenance Schedule)
+     - 21. HR & Healthcare Workforce (Credentialing, Clinical Privileges SPK/RKK, STR/SIP)
+     - 22. Central Scheduling Engine (Doctor/Nurse Roster, OR Slot Booking, Conflict Detection)
+     - 23. Business Intelligence / Hospital Dashboard (BOR, ALOS, TOI, Barber-Johnson, KPI)
+     - 24. Quality, Patient Safety & Accreditation (IKP Sentinel/KTD/KNC, RCA, CAPA, JCI)
+     - 25. Security, Zero-Trust & Governance (RBAC/ABAC, MFA, Break-Glass, RLS, PKI)
+     - 26. Document & Consent Management (RME Permenkes 24/2022, BSrE Digital Signature)
+     - 27. Interoperability & Integration Engine (HL7 v2.x, FHIR R4, DICOMweb, Outbox/DLQ)
+     - 28. SATUSEHAT Kemenkes Platform (18+ Resource Mappings, Secure Token Vault)
+     - 29. AI & Clinical Automation Layer (Risk Stratification, Deterioration Prediction)
+     - 30. Patient Engagement & Portal (Mobile App, Online Queue, Telemedicine)
+     - 31. Communication & Critical Alert Notification (MET Escalation, Panic Paging)
+     - 32. Hospital Administration & Tenant (Multi-Tenant, Dynamic Form Builder)
+     - 33. Clinical Workflow & State Machine Engine (FSM Encounter/Triage/Orders/Bed)
+     - 34. Clinical Data Platform & EHR 360 (Longitudinal Timeline, Decision Replay)
+     - 35. Forensic Audit & Medicolegal Traceability (Immutable SHA-256 Merkle Chain)
+2. **Kesesuaian Baseline Metrik:**
+   - Memutakhirkan metrik audit: **154 test suites pass, 1.341 atomic tests pass, 55 file SQL migration terverifikasi dengan 168 tabel publik aktif di PostgreSQL 16**.
+
+---
+
 ### 🚀 [20 AGUSTUS 2026] — WAVE 2 / VERTICAL SLICE #005: DOCTOR SOAP NOTES & CPPT ➔ POSTGRESQL DURABILITY & MEDICOLEGAL INTEGRITY
 **Tag Rilis:** `vs05-soap-cppt-postgresql-durability-v1.0`  
 **Kategori:** `[MAJOR]` `[VERTICAL_SLICE_05]` `[WAVE_2_EMERGENCY_CORE]` `[SOAP_NOTES]` `[CPPT_INTERPROFESSIONAL]` `[MEDICOLEGAL_IMMUTABILITY]` `[AMENDMENT_PROVENANCE]` `[POSTGRESQL_TRANSACTION]` `[ZERO_REGRESSION]`  
