@@ -32,14 +32,14 @@ export function AuthProvider({ children }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
-        // 🧪 DEV GUARD: Don't overwrite mock session with null if we have a .local user
-        const isMock = currentUser?.email?.endsWith('.local');
-        if (isMock && !user) return; 
+        // 🧪 PERSISTENCE GUARD: Don't overwrite rehydrated session if Firebase has no active user
+        const activeStoreUser = useAuthStore.getState().currentUser;
+        if (activeStoreUser && !user) return; 
 
         if (user) {
           const userRole = await getUserRole(user);
           setUser(user, userRole);
-        } else {
+        } else if (!activeStoreUser) {
           setUser(null, null);
         }
       } catch (err) {

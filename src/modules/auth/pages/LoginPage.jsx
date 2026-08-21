@@ -29,17 +29,37 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, []);
 
+  const PERSONA_ROLES = [
+    { id: 'DOCTOR', label: 'Dokter DPJP', icon: 'stethoscope' },
+    { id: 'NURSE', label: 'Perawat', icon: 'medical_services' },
+    { id: 'PHARMACIST', label: 'Apoteker', icon: 'local_pharmacy' },
+    { id: 'ADMIN', label: 'Admin HIS', icon: 'admin_panel_settings' },
+    { id: 'CASHIER', label: 'Kasir', icon: 'payments' },
+    { id: 'CASEMIX_CODER', label: 'Casemix Coder', icon: 'receipt_long' },
+    { id: 'LAB_ANALYST', label: 'Analis Lab', icon: 'science' },
+    { id: 'RADIOLOGIST', label: 'Radiolog', icon: 'radiology' },
+    { id: 'BLOOD_BANK_OFFICER', label: 'Bank Darah', icon: 'bloodtype' },
+    { id: 'SURGEON', label: 'Dokter Bedah', icon: 'operating_room' },
+    { id: 'ANESTHESIOLOGIST', label: 'Anestesiolog', icon: 'airline_seat_recline_extra' },
+    { id: 'OR_NURSE', label: 'Perawat Bedah', icon: 'fact_check' },
+    { id: 'ICU_NURSE', label: 'Perawat ICU', icon: 'monitor_heart' },
+    { id: 'CLINICAL_DIRECTOR', label: 'Direktur Medis', icon: 'monitoring' }
+  ];
+
   function handleKredensialLogin(e) {
     if (e) e.preventDefault();
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      useAuthStore.getState().setUser(
-        { email: 'admin@nurseflow.id', displayName: 'dr. Alexander, Sp.JP' },
-        activeRole
-      );
+      const personaUser = {
+        email: `${activeRole.toLowerCase()}@hospital.id`,
+        displayName: `${activeRole.replace(/_/g, ' ')} Specialist`,
+        role: activeRole,
+        authorizedRoles: [activeRole]
+      };
+      useAuthStore.getState().setUser(personaUser, activeRole, [activeRole]);
       navigate('/dashboard');
-    }, 1000);
+    }, 400);
   }
 
   async function handleGoogleLogin() {
@@ -49,10 +69,13 @@ export default function LoginPage() {
       await loginWithGoogle();
       navigate('/dashboard');
     } catch (err) {
-      useAuthStore.getState().setUser(
-        { email: 'admin@nurseflow.id', displayName: 'dr. Alexander, Sp.JP' },
-        activeRole
-      );
+      const personaUser = {
+        email: `${activeRole.toLowerCase()}@hospital.id`,
+        displayName: `${activeRole.replace(/_/g, ' ')} Specialist`,
+        role: activeRole,
+        authorizedRoles: [activeRole]
+      };
+      useAuthStore.getState().setUser(personaUser, activeRole, [activeRole]);
       navigate('/dashboard');
     }
   }
@@ -189,25 +212,20 @@ export default function LoginPage() {
                 {/* Role Selection Pills */}
                 <div className="space-y-1">
                   <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Peran Medis</label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[
-                      { id: 'DOCTOR', label: 'Dokter DPJP', icon: 'stethoscope' },
-                      { id: 'NURSE', label: 'Perawat', icon: 'medical_services' },
-                      { id: 'PHARMACIST', label: 'Apoteker', icon: 'local_pharmacy' },
-                      { id: 'ADMIN', label: 'Admin HIS', icon: 'admin_panel_settings' },
-                    ].map((r) => (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 max-h-48 overflow-y-auto p-1 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+                    {PERSONA_ROLES.map((r) => (
                       <button
                         key={r.id}
                         type="button"
                         onClick={() => setActiveRole(r.id)}
-                        className={`py-2 px-1 rounded-xl text-[11px] font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${
+                        className={`py-2 px-1 rounded-xl text-[10px] font-bold transition-all flex flex-col items-center gap-1 cursor-pointer ${
                           activeRole === r.id
-                            ? 'bg-emerald-600 text-white shadow-[3px_3px_6px_#94a3b8] dark:shadow-none'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shadow-[3px_3px_6px_#cbd5e1,-3px_-3px_6px_#ffffff] dark:shadow-none border border-white dark:border-slate-700'
+                            ? 'bg-emerald-600 text-white shadow-md'
+                            : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
                         }`}
                       >
                         <span className="material-symbols-outlined text-sm">{r.icon}</span>
-                        <span className="text-[9px]">{r.label}</span>
+                        <span className="text-[9px] truncate max-w-full px-1">{r.label}</span>
                       </button>
                     ))}
                   </div>

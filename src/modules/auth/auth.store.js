@@ -7,12 +7,34 @@ import { create } from 'zustand';
 import { loginWithGoogle, logoutUser, getUserRole } from './services/auth.service.js';
 import { logAudit } from '../../core/services/audit.service.js';
 
+const getInitialAuthSession = () => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return { currentUser: null, role: null, authorizedRoles: [], isLoading: false };
+  }
+  try {
+    const raw = localStorage.getItem('nurseflow_auth_session');
+    if (!raw) return { currentUser: null, role: null, authorizedRoles: [], isLoading: false };
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.currentUser && parsed.role) {
+      return {
+        currentUser: parsed.currentUser,
+        role: parsed.role,
+        authorizedRoles: parsed.authorizedRoles || [parsed.role],
+        isLoading: false
+      };
+    }
+  } catch (_) {}
+  return { currentUser: null, role: null, authorizedRoles: [], isLoading: false };
+};
+
+const initialSession = getInitialAuthSession();
+
 export const useAuthStore = create((set, get) => ({
   // ─── State ───────────────────────────────
-  currentUser:  null,
-  role:         null,       // 'DOCTOR' | 'NURSE' | 'ADMIN' | 'PHARMACIST' | 'LAB_TECH'
-  authorizedRoles: [],      // Array of officially assigned roles (Custom Claims / DB)
-  isLoading:    true,
+  currentUser:  initialSession.currentUser,
+  role:         initialSession.role,       // 'DOCTOR' | 'NURSE' | 'ADMIN' | 'PHARMACIST' | 'LAB_TECH'
+  authorizedRoles: initialSession.authorizedRoles, // Array of officially assigned roles (Custom Claims / DB)
+  isLoading:    initialSession.isLoading,
   isLoggingIn:  false,
   error:        null,
 
@@ -26,6 +48,9 @@ export const useAuthStore = create((set, get) => ({
   // ─── Actions ─────────────────────────────
   setUser: (user, role, authorizedRoles = null) => {
     if (!user) {
+      try {
+        if (typeof localStorage !== 'undefined') localStorage.removeItem('nurseflow_auth_session');
+      } catch (_) {}
       set({
         currentUser: null,
         role: null,
@@ -35,9 +60,19 @@ export const useAuthStore = create((set, get) => ({
       return;
     }
     const roles = authorizedRoles || user?.authorizedRoles || (role ? [role] : []);
+    const resolvedRole = role || (roles.length > 0 ? roles[0] : null);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('nurseflow_auth_session', JSON.stringify({
+          currentUser: user,
+          role: resolvedRole,
+          authorizedRoles: roles
+        }));
+      }
+    } catch (_) {}
     set({
       currentUser: user,
-      role: role || (roles.length > 0 ? roles[0] : null),
+      role: resolvedRole,
       authorizedRoles: roles,
       isLoading: false
     });
@@ -50,6 +85,15 @@ export const useAuthStore = create((set, get) => ({
     try {
       const { user, role } = await loginWithGoogle();
       const roles = user?.authorizedRoles || (role ? [role] : ['DOCTOR', 'NURSE', 'PHARMACIST', 'ADMIN', 'LAB_TECH']);
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('nurseflow_auth_session', JSON.stringify({
+            currentUser: user,
+            role,
+            authorizedRoles: roles
+          }));
+        }
+      } catch (_) {}
       set({ currentUser: user, role, authorizedRoles: roles, isLoggingIn: false });
       return { user, role };
     } catch (err) {
@@ -60,6 +104,9 @@ export const useAuthStore = create((set, get) => ({
 
   logout: async () => {
     const { currentUser } = get();
+    try {
+      if (typeof localStorage !== 'undefined') localStorage.removeItem('nurseflow_auth_session');
+    } catch (_) {}
     await logoutUser(currentUser?.email || 'unknown');
     set({ currentUser: null, role: null, authorizedRoles: [] });
   },

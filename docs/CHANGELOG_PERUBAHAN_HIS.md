@@ -20,6 +20,71 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🏥 [21 AGUSTUS 2026] — GATE 0C: 14 PERSONA OPERATIONAL REALITY, CROSS-PERSONA CLINICAL HANDOFF & FAIL-CLOSED CIRCUIT BREAKER COMPLETED
+**Tag Rilis:** `gate-0c-14-persona-reality-and-fail-closed-v1.0`  
+**Kategori:** `[MAJOR]` `[FEATURE]` `[SECURITY]` `[ARCHITECTURE]` `[CLINICAL-WORKFLOW]`  
+**Status Evidence:** 🟢 **`175/175 TEST SUITES PASS (1.727/1.727 TESTS 100% PASS), 24/24 GATE 0C SCENARIOS PASS (14/14 PERSONAS REALITY PASS, 6/6 CROSS-PERSONA HANDOFF PASS, 4/4 FAIL-CLOSED DISCONNECT PASS), ZERO REGRESSION ACROSS VS-01 S/D VS-13.`**
+
+1. **Penegakan Fail-Closed Circuit Breaker (Anti-Silent In-Memory Fallback):**
+   - Menguji pemutusan koneksi PostgreSQL secara paksa dan memverifikasi seluruh modul klinis mengembalikan `HTTP 503 / 500 / Controlled Failure` tanpa *silent fallback* ke memori local map (`tests/gate0cFailClosedGuard.test.js`).
+   - Mencegah ilusi transaksi berhasil (*phantom data*) saat basis data offline demi keselamatan pasien (*patient safety*).
+2. **Validasi Realitas Operasional 14 Persona Rumah Sakit (`tests/gate0cPersonaReality.test.js`):**
+   - Menguji dan meluluskan 14 persona rumah sakit nyata yang melakukan mutasi data klinis pada PostgreSQL 16:
+     1. `ADMIN`: Spatial Ward Master & Staff Provisioning (`HTTP 201 Created`).
+     2. `DOCTOR`: SOAP Clinical Note & CPOE Multi-Order Rx/Lab (`HTTP 201 Created`).
+     3. `NURSE`: Emergency Triage & Vital Signs Monitoring (`HTTP 201 Created`).
+     4. `CASHIER`: Patient Prepayment Deposit Settlement (`HTTP 201 Created`).
+     5. `PHARMACIST`: CPOE Prescription Review & Clinical Screening (`HTTP 200 OK`).
+     6. `LAB_ANALYST`: Specimen Generation & Lab Accession (`HTTP 201 Created`).
+     7. `RADIOLOGIST`: Diagnostic PACS Study Interpretation & Authorized Report (`HTTP 201 Created`).
+     8. `BLOOD_BANK_OFFICER`: ISBT-128 Donor Unit Intake & Cold Chain Storage (`HTTP 201 Created`).
+     9. `SURGEON`: Pre-Op Surgical Planning & Risk Evaluation (`HTTP 201 Created`).
+     10. `ANESTHESIOLOGIST`: Pre-Anesthesia ASA IV Scoring & Airway Evaluation (`HTTP 201 Created`).
+     11. `OR_NURSE`: WHO 3-Phase Surgical Safety Checklist Sign-In (`HTTP 200 OK`).
+     12. `ICU_NURSE`: ICU Acuity & NEWS2 High Deterioration Charting (`HTTP 201 Created`).
+     13. `CASEMIX_CODER`: ICD-10 / ICD-9-CM Coding & INA-CBG Grouping (`HTTP 201 Created`).
+     14. `CLINICAL_DIRECTOR`: Hospital Executive Command Center Telemetry (`HTTP 200 OK`).
+3. **Validasi Cross-Persona Closed-Loop Clinical Handoff Journey (`tests/gate0cCrossPersonaHandoff.test.js`):**
+   - Menguji siklus klinis berkesinambungan 6 tahap:
+     - `DOCTOR (DPJP)` menerbitkan resep CPOE Ceftriaxone 1g IV CITO.
+     - `PHARMACIST` melakukan telaah klinis CDSS dan dispensing FEFO batch terdekat kadaluarsa.
+     - `NURSE` melakukan verifikasi 5-Benar eMAR barcode di ranjang pasien.
+     - `CASEMIX CODER` melakukan koding multi-sumber ICD-10/ICD-9-CM dan grouping INA-CBG.
+     - `CASHIER` memproses rekonsiliasi deposit dan pelunasan billing final.
+     - `CLINICAL DIRECTOR` memonitor telemetri real-time dan integritas audit WORM.
+4. **Penyusunan Laporan Forensik Resmi Gate 0C:**
+   - Menyusun berkas `docs/GATE_0C_BROWSER_REALITY_TEST_REPORT_2026.md` sebagai bukti resmi persetujuan operasional.
+
+---
+
+### 🏛️ [21 AGUSTUS 2026] — GATE 0B: API ↔ POSTGRESQL ACID PERSISTENCE PROOF, REFERENTIAL INTEGRITY, IDEMPOTENCY & TRANSACTIONAL AUDIT COMPLETED
+**Tag Rilis:** `gate-0b-postgresql-persistence-hardened-v1.0`  
+**Kategori:** `[MAJOR]` `[DATABASE]` `[ARCHITECTURE]` `[PERSISTENCE]` `[FORENSIC]`  
+**Status Evidence:** 🟢 **`172/172 TEST SUITES PASS (1.722/1.722 TESTS 100% PASS), 17/17 GATE 0B SUITES PASS, 19/19 GATE 0A SUITES PASS, 25/25 RECONCILIATION SCENARIOS PASS, ZERO REGRESSION. ALL 7 TARGETED DOMAINS PROVEN AGAINST POSTGRESQL ACID PERSISTENT TRUTH.`**
+
+1. **Implementasi Full PostgreSQL 16 ACID Persistence pada 7 Domain Kritis (0B.1):**
+   - **Blood Bank (BDRS):** Menghubungkan controller `bloodBank.controller.js` langsung ke tabel relasional `blood_donor_units`, `blood_crossmatch_tests`, `blood_transfusion_records`, dan `blood_bedside_verifications` dengan transaksi ACID (`BEGIN`/`COMMIT`/`ROLLBACK`), dual-nurse signature check, dan signed audit trail `universal_audit_logs`.
+   - **Staff Privileging & Credentialing:** Menghubungkan controller `staffPrivileging.controller.js` ke `clinical_staff_profiles`, `staff_credentials`, dan `clinical_privileges` dengan penegakan trigger prerequisite STR/SIP aktif berstatus `ACTIVE_VERIFIED`.
+   - **Master Data Governance Hub:** Menghubungkan `masterDataHub.controller.js` ke tabel-tabel master PostgreSQL seperti `master_wards`, `master_rooms`, `master_beds`, `master_tariffs`, dan `medication_catalog`.
+   - **Appointment & Queue Scheduling:** Menghubungkan `appointment.controller.js` ke `appointments`, mutex slot dokter, sekuens antrean harian `queue_sequences`, serta deduplikasi `Idempotency-Key`.
+   - **Enterprise Multi-Depot Inventory:** Menghubungkan `enterpriseInventory.controller.js` ke `inventory_batches` dengan penegakan constraint anti-negative stock (`available_quantity >= 0`), double-entry ledger `inventory_stock_movements`, dan algoritma seleksi FEFO (*First-Expired, First-Out*).
+   - **SATUSEHAT FHIR Interop:** Menghubungkan `satusehatStudio.controller.js` ke `fhir_delivery_outbox` dengan transisi state machine terjamin `PENDING -> PROCESSING -> DELIVERED` dan proteksi idempotensi bundle.
+   - **Command Center & Executive Analytics:** Menghubungkan `commandCenter.controller.js` sebagai agregasi SQL murni *strictly read-only* tanpa mutasi data klinis, membaca langsung metrik BOR, antrean, omzet finansial, dan audit logs.
+2. **Penyusunan 4 Test Suite Forensik Gate 0B (0B.2):**
+   - `tests/gate0bPersistence.test.js`: 7/7 skenario membuktikan write-then-read roundtrip langsung ke tabel PostgreSQL.
+   - `tests/gate0bTransactionIntegrity.test.js`: 3/3 skenario membuktikan atomisitas transaksi, automatic rollback saat kegagalan, dan pencegahan *dirty reads*.
+   - `tests/gate0bIdempotency.test.js`: 3/3 skenario membuktikan isolasi request ganda dengan header `Idempotency-Key` dan zero-duplicate outbox SATUSEHAT.
+   - `tests/gate0bReferentialIntegrity.test.js`: 4/4 skenario membuktikan integritas foreign key, proteksi trigger penolakan privilij tanpa STR/SIP, dan trigger imutabilitas hasil uji silang serasi (Crossmatch).
+3. **Dokumentasi Lengkap 3 Berkas Forensik Gate 0B (0B.3):**
+   - `docs/GATE_0B_POSTGRESQL_PERSISTENCE_AUDIT_2026.md`: Laporan audit forensik 7 domain API ↔ PostgreSQL.
+   - `docs/GATE_0B_PERSISTENCE_TRUTH_MATRIX_2026.md`: Matriks relasi endpoint REST, controller, tabel PostgreSQL, transaksi ACID, dan bukti persisten.
+   - `docs/GATE_0B_FAILURE_AND_ROLLBACK_REGISTER_2026.md`: Register kegagalan, skenario pengujian rollback, dan mitigasi risiko konkurensi.
+4. **Regresi Penuh & Perlindungan Arsitektur VS-01 s/d VS-13:**
+   - Menjaga seluruh 13 core engine modular (VS-01 hingga VS-13) tetap locked tanpa perubahan logika bisnis.
+   - Mengonfirmasi Gate 0A tetap 100% lolos (19/19 tests) dan sistem siap melangkah ke Gate 0C (Browser 14 Persona Reality Test).
+
+---
+
 ### 🛡️ [21 AGUSTUS 2026] — GATE 0A: ZERO-TRUST RBAC PURGE, NEGATIVE/POSITIVE SECURITY SUITE & INDEPENDENT FORENSIC RE-SCAN COMPLETED
 **Tag Rilis:** `gate-0a-zero-trust-hardened-v1.0`  
 **Kategori:** `[MAJOR]` `[SECURITY]` `[ARCHITECTURE]` `[HARDENING]`  

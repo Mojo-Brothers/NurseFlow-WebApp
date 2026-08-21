@@ -104,25 +104,28 @@ describe('VS-05 — Doctor SOAP & CPPT ➔ PostgreSQL Durability & Medicolegal R
         }
 
         if (normalized.startsWith('INSERT INTO SOAP_NOTES')) {
+          const hasTenant = params.length >= 19;
+          const shift = hasTenant ? 1 : 0;
           const newSoap = {
             id: params[0],
-            episode_id: params[1],
-            encounter_id: params[2],
-            patient_id: params[3],
-            subjective: params[4],
-            objective: params[5],
-            assessment: params[6],
-            plan: params[7],
-            primary_icd10: params[8],
-            primary_icd10_name: params[9],
-            secondary_diagnoses: params[10],
-            procedures_icd9: params[11],
-            physician_id: params[12],
-            physician_name: params[13],
-            is_signed: params[14],
-            signature_timestamp: params[15],
-            created_at: params[16],
-            updated_at: params[17]
+            tenant_id: hasTenant ? params[1] : undefined,
+            episode_id: params[1 + shift],
+            encounter_id: params[2 + shift],
+            patient_id: params[3 + shift],
+            subjective: params[4 + shift],
+            objective: params[5 + shift],
+            assessment: params[6 + shift],
+            plan: params[7 + shift],
+            primary_icd10: params[8 + shift],
+            primary_icd10_name: params[9 + shift],
+            secondary_diagnoses: params[10 + shift],
+            procedures_icd9: params[11 + shift],
+            physician_id: params[12 + shift],
+            physician_name: params[13 + shift],
+            is_signed: params[14 + shift],
+            signature_timestamp: params[15 + shift],
+            created_at: params[16 + shift],
+            updated_at: params[17 + shift]
           };
           if (activeTransactionState) {
             activeTransactionState.stagedSoap.push(newSoap);
@@ -133,24 +136,27 @@ describe('VS-05 — Doctor SOAP & CPPT ➔ PostgreSQL Durability & Medicolegal R
         }
 
         if (normalized.startsWith('INSERT INTO CPPT_NOTES')) {
+          const hasTenant = params.length >= 18;
+          const shift = hasTenant ? 1 : 0;
           const newCppt = {
             id: params[0],
-            episode_id: params[1],
-            encounter_id: params[2],
-            patient_id: params[3],
-            professional_type: params[4],
-            author_id: params[5],
-            author_name: params[6],
-            sbar_situation: params[7],
-            sbar_background: params[8],
-            sbar_assessment: params[9],
-            sbar_recommendation: params[10],
-            soap_notes: params[11],
-            instruction_notes: params[12],
-            dpjp_verified: params[13],
-            dpjp_verifier_name: params[14],
-            dpjp_verified_at: params[15],
-            created_at: params[16]
+            tenant_id: hasTenant ? params[1] : undefined,
+            episode_id: params[1 + shift],
+            encounter_id: params[2 + shift],
+            patient_id: params[3 + shift],
+            professional_type: params[4 + shift],
+            author_id: params[5 + shift],
+            author_name: params[6 + shift],
+            sbar_situation: params[7 + shift],
+            sbar_background: params[8 + shift],
+            sbar_assessment: params[9 + shift],
+            sbar_recommendation: params[10 + shift],
+            soap_notes: params[11 + shift],
+            instruction_notes: params[12 + shift],
+            dpjp_verified: params[13 + shift],
+            dpjp_verifier_name: params[14 + shift],
+            dpjp_verified_at: params[15 + shift],
+            created_at: params[16 + shift]
           };
           if (activeTransactionState) {
             activeTransactionState.stagedCppt.push(newCppt);

@@ -162,6 +162,7 @@ export const cpoeApplicationService = {
 
       const targetPatientId = patientId || encounter.patient_id;
       const targetEpisodeId = episodeId || encounter.episode_id;
+      const targetTenantId = encounter.tenant_id || actor.tenantId || '00000000-0000-0000-0000-000000000001';
 
       // 5. Generate Server-Authoritative Identifiers
       const serverTimestamp = new Date();
@@ -180,10 +181,13 @@ export const cpoeApplicationService = {
         const totalPrice = quantity * unitPrice;
         totalEstimatedAmount += totalPrice;
 
+        const rawType = (itm.itemType || orderCategory).toUpperCase();
+        const itemType = rawType === 'PHARMACY' ? 'MEDICATION' : rawType;
+
         return {
           id: itemId,
           orderId,
-          itemType: (itm.itemType || orderCategory).toUpperCase(),
+          itemType,
           catalogCode: itm.catalogCode,
           itemName: itm.itemName,
           itemSpecifications: itm.itemSpecifications || itm.specifications || {},
@@ -200,22 +204,23 @@ export const cpoeApplicationService = {
       // 7. Insert Order Header into clinical_orders
       const insertOrderSql = `
         INSERT INTO clinical_orders (
-          id, order_number, patient_id, episode_id, encounter_id,
+          id, tenant_id, order_number, patient_id, episode_id, encounter_id,
           ordered_by, order_category, priority, clinical_indication,
           status, is_cito, order_items_count, total_estimated_amount,
           idempotency_key, version, requester_id, requester_name, requester_role,
           target_performer_dept, correlation_id, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4, $5,
-          $6, $7, $8, $9,
-          $10, $11, $12, $13,
-          $14, $15, $16, $17, $18,
-          $19, $20, $21, $22
+          $1, $2, $3, $4, $5, $6,
+          $7, $8, $9, $10,
+          $11, $12, $13, $14,
+          $15, $16, $17, $18, $19,
+          $20, $21, $22, $23
         ) RETURNING *;
       `;
 
       const orderResult = await client.query(insertOrderSql, [
         orderId,
+        targetTenantId,
         orderNumber,
         targetPatientId,
         targetEpisodeId,

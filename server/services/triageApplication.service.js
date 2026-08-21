@@ -157,26 +157,28 @@ export const triageApplicationService = {
       const now = new Date();
       const triageId = crypto.randomUUID();
       const slaTimerId = crypto.randomUUID();
+      const targetTenantId = encounter.tenant_id || actor.tenantId || '00000000-0000-0000-0000-000000000001';
 
       // 3. Insert into triage_assessments
       const insertTriageSql = `
         INSERT INTO triage_assessments (
-          id, episode_id, encounter_id, patient_id, triage_method,
+          id, tenant_id, episode_id, encounter_id, patient_id, triage_method,
           triage_level, ats_level, esi_level, chief_complaint,
           airway_status, breathing_status, circulation_status, disability_status,
           exposure_notes, vitals_payload, is_trauma, is_cito,
           target_response_minutes, assessed_at, assessed_by
         ) VALUES (
-          $1, $2, $3, $4, $5,
-          $6, $7, $8, $9,
-          $10, $11, $12, $13,
-          $14, $15, $16, $17,
-          $18, $19, $20
+          $1, $2, $3, $4, $5, $6,
+          $7, $8, $9, $10,
+          $11, $12, $13, $14,
+          $15, $16, $17, $18,
+          $19, $20, $21
         ) RETURNING *;
       `;
 
       const triageResult = await client.query(insertTriageSql, [
         triageId,
+        targetTenantId,
         targetEpisodeId,
         encounterId,
         targetPatientId,
@@ -203,16 +205,17 @@ export const triageApplicationService = {
       // 4. Insert into triage_sla_timers
       const insertSlaSql = `
         INSERT INTO triage_sla_timers (
-          id, encounter_id, triage_level, target_response_minutes,
+          id, tenant_id, encounter_id, triage_level, target_response_minutes,
           started_at, status
         ) VALUES (
-          $1, $2, $3, $4,
-          $5, $6
+          $1, $2, $3, $4, $5,
+          $6, $7
         ) RETURNING *;
       `;
 
       const slaResult = await client.query(insertSlaSql, [
         slaTimerId,
+        targetTenantId,
         encounterId,
         evalResult.triageLevel,
         evalResult.targetMinutes,

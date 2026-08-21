@@ -95,27 +95,30 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
         }
 
         if (normalized.startsWith('INSERT INTO TRIAGE_ASSESSMENTS')) {
+          const hasTenant = params.length >= 21;
+          const shift = hasTenant ? 1 : 0;
           const newTriage = {
             id: params[0],
-            episode_id: params[1],
-            encounter_id: params[2],
-            patient_id: params[3],
-            triage_method: params[4],
-            triage_level: params[5],
-            ats_level: params[6],
-            esi_level: params[7],
-            chief_complaint: params[8],
-            airway_status: params[9],
-            breathing_status: params[10],
-            circulation_status: params[11],
-            disability_status: params[12],
-            exposure_notes: params[13],
-            vitals_payload: params[14],
-            is_trauma: params[15],
-            is_cito: params[16],
-            target_response_minutes: params[17],
-            assessed_at: params[18],
-            assessed_by: params[19]
+            tenant_id: hasTenant ? params[1] : undefined,
+            episode_id: params[1 + shift],
+            encounter_id: params[2 + shift],
+            patient_id: params[3 + shift],
+            triage_method: params[4 + shift],
+            triage_level: params[5 + shift],
+            ats_level: params[6 + shift],
+            esi_level: params[7 + shift],
+            chief_complaint: params[8 + shift],
+            airway_status: params[9 + shift],
+            breathing_status: params[10 + shift],
+            circulation_status: params[11 + shift],
+            disability_status: params[12 + shift],
+            exposure_notes: params[13 + shift],
+            vitals_payload: params[14 + shift],
+            is_trauma: params[15 + shift],
+            is_cito: params[16 + shift],
+            target_response_minutes: params[17 + shift],
+            assessed_at: params[18 + shift],
+            assessed_by: params[19 + shift]
           };
           if (activeTransactionState) {
             activeTransactionState.stagedTriage.push(newTriage);
@@ -126,13 +129,16 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
         }
 
         if (normalized.startsWith('INSERT INTO TRIAGE_SLA_TIMERS')) {
+          const hasTenant = params.length >= 7;
+          const shift = hasTenant ? 1 : 0;
           const newTimer = {
             id: params[0],
-            encounter_id: params[1],
-            triage_level: params[2],
-            target_response_minutes: params[3],
-            started_at: params[4],
-            status: params[5]
+            tenant_id: hasTenant ? params[1] : undefined,
+            encounter_id: params[1 + shift],
+            triage_level: params[2 + shift],
+            target_response_minutes: params[3 + shift],
+            started_at: params[4 + shift],
+            status: params[5 + shift]
           };
           if (activeTransactionState) {
             activeTransactionState.stagedTimers.push(newTimer);

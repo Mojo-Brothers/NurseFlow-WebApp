@@ -314,7 +314,7 @@ describe('VS-11 Hardening ➔ Perioperative Clinical Integrity & Emergency Durab
         // INSERT INTO clinical_domain_outbox
         if (normalized.startsWith('INSERT INTO CLINICAL_DOMAIN_OUTBOX')) {
           let eventType = 'UNKNOWN';
-          const match = sql.match(/'([A-Z0-9_]+)',\s*\$[0-9],\s*'PENDING_PUBLISH'/);
+          const match = sql.match(/'([A-Z0-9_]+)',\s*\$[0-9],\s*'PENDING'/);
           if (match) {
             eventType = match[1];
           }

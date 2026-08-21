@@ -26,7 +26,7 @@ export const requirePermission = (requiredPermission) => {
       });
     }
 
-    next();
+    return next();
   };
 };
 
@@ -63,7 +63,6 @@ export const requireRole = (allowedRoles = []) => {
       });
     }
 
-    next();
+    return next();
   };
 };
-

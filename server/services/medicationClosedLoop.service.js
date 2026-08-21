@@ -125,7 +125,7 @@ export const medicationClosedLoopService = {
 
       // 3. Fetch Active Patient Allergies & Cross-Reactivity Rules
       const allergyRes = await client.query(
-        'SELECT * FROM patient_allergies WHERE patient_id = $1 AND is_active = TRUE;',
+        'SELECT * FROM patient_allergies WHERE patient_id = $1;',
         [order.patient_id]
       );
       const patientAllergies = allergyRes.rows;
@@ -170,13 +170,13 @@ export const medicationClosedLoopService = {
 
         // ─── CDSS GATE 1: ENHANCED ALLERGY & CROSS-REACTIVITY SCREEN ───
         for (const allergy of patientAllergies) {
-          const allergenName = (allergy.allergen_name || '').toLowerCase();
+          const allergenName = (allergy.allergen || allergy.allergen_name || '').toLowerCase();
           const allergenClass = (allergy.drug_class_code || '').toUpperCase();
           const reaction = (allergy.reaction || '').toLowerCase();
           const isTrueAllergy = TRUE_ALLERGY_REACTIONS.some(r => reaction.includes(r)) || allergy.severity === 'SEVERE_LETHAL';
 
           // Direct Drug/Ingredient match
-          const directMatch = item.item_name.toLowerCase().includes(allergenName) || item.catalog_code.toLowerCase().includes(allergy.allergen_code?.toLowerCase() || '___');
+          const directMatch = allergenName ? (item.item_name.toLowerCase().includes(allergenName) || item.catalog_code.toLowerCase().includes(allergy.allergen_code?.toLowerCase() || '___')) : false;
 
           // Drug-Class & Cross-reactivity match
           const classMatch = allergenClass && (item.catalog_code.includes(allergenClass) || specs.drugClassCode === allergenClass);
@@ -329,9 +329,10 @@ export const medicationClosedLoopService = {
 
         // Insert medication_orders
         const medOrderId = crypto.randomUUID();
+        const targetTenantId = order.tenant_id || actor.tenantId || '00000000-0000-0000-0000-000000000001';
         const insertMedSql = `
           INSERT INTO medication_orders (
-            id, order_id, medication_code, medication_name, dosage,
+            id, tenant_id, order_id, medication_code, medication_name, dosage,
             route, frequency, duration, quantity, unit_price,
             total_price, is_cito, high_alert, lasa_flag, is_antibiotic,
             review_status, status, cpoe_order_id, cpoe_item_id, encounter_id,
@@ -341,20 +342,21 @@ export const medicationClosedLoopService = {
             infusion_rate_ml_hr, infusion_volume_ml, timing_type, clinical_indication_notes,
             created_at, updated_at
           ) VALUES (
-            $1, $2, $3, $4, $5,
-            $6, $7, $8, $9, $10,
-            $11, $12, $13, $14, $15,
-            $16, $17, $18, $19, $20,
-            $21, $22, $23, $24, $25,
-            $26, $27, $28, $29,
-            $30, $31, $32, $33,
-            $34, $35, $36, $37,
-            $38, $39
+            $1, $2, $3, $4, $5, $6,
+            $7, $8, $9, $10, $11,
+            $12, $13, $14, $15, $16,
+            $17, $18, $19, $20, $21,
+            $22, $23, $24, $25, $26,
+            $27, $28, $29, $30,
+            $31, $32, $33, $34,
+            $35, $36, $37, $38,
+            $39, $40
           ) RETURNING *;
         `;
 
         const medRes = await client.query(insertMedSql, [
           medOrderId,
+          targetTenantId,
           orderId,
           item.catalog_code,
           item.item_name,
@@ -362,7 +364,7 @@ export const medicationClosedLoopService = {
           route,
           frequency,
           specs.duration || '3 hari',
-          item.quantity || 1,
+          Math.round(Number(item.quantity || 1)),
           item.unit_price || 0.00,
           item.total_price || 0.00,
           order.is_cito || false,

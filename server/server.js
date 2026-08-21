@@ -114,4 +114,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, error: 'INTERNAL_SERVER_ERROR', message: err.message });
 });
 
+if (process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1].includes('server'))) {
+  app.listen(PORT, () => {
+    console.log(`[NurseFlow API Gateway] Listening on http://localhost:${PORT}`);
+  });
+}
+
 export default app;

@@ -91,7 +91,7 @@ export const patientFinancialAndRevenueCycleService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'FINANCIAL', $2, 'PATIENT_DEPOSIT_RECORDED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'FINANCIAL', $2, 'PATIENT_DEPOSIT_RECORDED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), depositRecord.id, JSON.stringify({ depositId: depositRecord.id, amountIdr, depositType }), corrId]);
 
       await client.query('COMMIT');
@@ -217,7 +217,7 @@ export const patientFinancialAndRevenueCycleService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'FINANCIAL', $2, 'PATIENT_INVOICE_ISSUED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'FINANCIAL', $2, 'PATIENT_INVOICE_ISSUED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), invoiceRecord.id, JSON.stringify({ invoiceId: invoiceRecord.id, invoiceNumber, netPatientPayable, invoiceStatus }), corrId]);
 
       await client.query('COMMIT');
@@ -330,7 +330,7 @@ export const patientFinancialAndRevenueCycleService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'FINANCIAL', $2, 'CASHIER_PAYMENT_PROCESSED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'FINANCIAL', $2, 'CASHIER_PAYMENT_PROCESSED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), paymentRecord.id, JSON.stringify({ transactionId: paymentRecord.id, invoiceId, paidAmount: paid, changeAmount, invoiceStatus: newInvoiceStatus }), corrId]);
 
       await client.query('COMMIT');
@@ -429,7 +429,7 @@ export const patientFinancialAndRevenueCycleService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'FINANCIAL', $2, 'FINANCIAL_ADJUSTMENT_EXECUTED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'FINANCIAL', $2, 'FINANCIAL_ADJUSTMENT_EXECUTED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), adjRecord.id, JSON.stringify({ adjustmentId: adjRecord.id, adjustmentType, amountIdr, reasonCategory }), corrId]);
 
       await client.query('COMMIT');
@@ -511,7 +511,7 @@ export const patientFinancialAndRevenueCycleService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'FINANCIAL', $2, 'CASHIER_SHIFT_RECONCILED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'FINANCIAL', $2, 'CASHIER_SHIFT_RECONCILED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), shiftRecord.id, JSON.stringify({ shiftId: shiftRecord.id, shiftNumber, shiftStatus, cashVariance: variance }), corrId]);
 
       await client.query('COMMIT');
@@ -584,7 +584,7 @@ export const patientFinancialAndRevenueCycleService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'FINANCIAL', $2, 'ACCOUNTS_RECEIVABLE_UPDATED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'FINANCIAL', $2, 'ACCOUNTS_RECEIVABLE_UPDATED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), arRecord.id, JSON.stringify({ arId: arRecord.id, payerName, currentBalance: current, agingBucket, arStatus }), corrId]);
 
       await client.query('COMMIT');

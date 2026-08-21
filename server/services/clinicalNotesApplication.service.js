@@ -93,26 +93,28 @@ export const clinicalNotesApplicationService = {
       // 4. Server-Authoritative Clock & Unique ID
       const serverTimestamp = new Date();
       const soapId = crypto.randomUUID();
+      const targetTenantId = encounter.tenant_id || actor.tenantId || '00000000-0000-0000-0000-000000000001';
 
       // 5. Insert Record into soap_notes
       const insertSql = `
         INSERT INTO soap_notes (
-          id, episode_id, encounter_id, patient_id,
+          id, tenant_id, episode_id, encounter_id, patient_id,
           subjective, objective, assessment, plan,
           primary_icd10, primary_icd10_name, secondary_diagnoses, procedures_icd9,
           physician_id, physician_name, is_signed,
           signature_timestamp, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4,
-          $5, $6, $7, $8,
-          $9, $10, $11, $12,
-          $13, $14, $15,
-          $16, $17, $18
+          $1, $2, $3, $4, $5,
+          $6, $7, $8, $9,
+          $10, $11, $12, $13,
+          $14, $15, $16,
+          $17, $18, $19
         ) RETURNING *;
       `;
 
       const insertRes = await client.query(insertSql, [
         soapId,
+        targetTenantId,
         targetEpisodeId,
         encounterId,
         targetPatientId,
@@ -230,25 +232,27 @@ export const clinicalNotesApplicationService = {
       const amendedId = crypto.randomUUID();
       const physicianId = actor.userId || original.physician_id;
       const physicianName = actor.username || actor.fullName || original.physician_name;
+      const targetTenantId = original.tenant_id || actor.tenantId || '00000000-0000-0000-0000-000000000001';
 
       const insertSql = `
         INSERT INTO soap_notes (
-          id, episode_id, encounter_id, patient_id,
+          id, tenant_id, episode_id, encounter_id, patient_id,
           subjective, objective, assessment, plan,
           primary_icd10, primary_icd10_name, secondary_diagnoses, procedures_icd9,
           physician_id, physician_name, is_signed,
           signature_timestamp, created_at, updated_at
         ) VALUES (
-          $1, $2, $3, $4,
-          $5, $6, $7, $8,
-          $9, $10, $11, $12,
-          $13, $14, $15,
-          $16, $17, $18
+          $1, $2, $3, $4, $5,
+          $6, $7, $8, $9,
+          $10, $11, $12, $13,
+          $14, $15, $16,
+          $17, $18, $19
         ) RETURNING *;
       `;
 
       const insertRes = await client.query(insertSql, [
         amendedId,
+        targetTenantId,
         original.episode_id,
         original.encounter_id,
         original.patient_id,
@@ -258,8 +262,8 @@ export const clinicalNotesApplicationService = {
         plan || original.plan,
         primaryIcd10 || original.primary_icd10,
         primaryIcd10Name || original.primary_icd10_name,
-        original.secondary_diagnoses,
-        original.procedures_icd9,
+        JSON.stringify(original.secondary_diagnoses || []),
+        JSON.stringify(original.procedures_icd9 || []),
         physicianId,
         physicianName,
         true,
@@ -366,24 +370,27 @@ export const clinicalNotesApplicationService = {
       const authorName = actor.username || actor.fullName || 'Tenaga Kesehatan (PPA)';
       const isDoctor = ['ROLE_DOCTOR_DPJP', 'ROLE_DOCTOR_EMERGENCY'].includes(authorRole);
 
+      const targetTenantId = encounter.tenant_id || actor.tenantId || '00000000-0000-0000-0000-000000000001';
+
       const insertSql = `
         INSERT INTO cppt_notes (
-          id, episode_id, encounter_id, patient_id,
+          id, tenant_id, episode_id, encounter_id, patient_id,
           professional_type, author_id, author_name,
           sbar_situation, sbar_background, sbar_assessment, sbar_recommendation,
           soap_notes, instruction_notes, dpjp_verified,
           dpjp_verifier_name, dpjp_verified_at, created_at
         ) VALUES (
-          $1, $2, $3, $4,
-          $5, $6, $7,
-          $8, $9, $10, $11,
-          $12, $13, $14,
-          $15, $16, $17
+          $1, $2, $3, $4, $5,
+          $6, $7, $8,
+          $9, $10, $11, $12,
+          $13, $14, $15,
+          $16, $17, $18
         ) RETURNING *;
       `;
 
       const insertRes = await client.query(insertSql, [
         cpptId,
+        targetTenantId,
         episodeId || encounter.episode_id,
         encounterId,
         patientId || encounter.patient_id,

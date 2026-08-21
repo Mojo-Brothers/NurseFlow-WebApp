@@ -268,7 +268,7 @@ export const careCoordinationAndTimelineService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'CARE_PLAN', $2, 'CARE_PLAN_SYNCHRONIZED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'CARE_PLAN', $2, 'CARE_PLAN_SYNCHRONIZED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), carePlanRecord.id, JSON.stringify({ carePlanId: carePlanRecord.id, version, title }), corrId]);
 
       await client.query('COMMIT');
@@ -368,7 +368,7 @@ export const careCoordinationAndTimelineService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'HANDOVER', $2, 'SHIFT_HANDOVER_RECORDED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'HANDOVER', $2, 'SHIFT_HANDOVER_RECORDED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), handoverRecord.id, JSON.stringify({ handoverId: handoverRecord.id, shiftName, incomingPractitionerId }), corrId]);
 
       await client.query('COMMIT');
@@ -436,7 +436,7 @@ export const careCoordinationAndTimelineService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'HANDOVER', $2, 'SHIFT_HANDOVER_COMPLETED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'HANDOVER', $2, 'SHIFT_HANDOVER_COMPLETED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), updated.id, JSON.stringify({ handoverId: updated.id, acknowledgedBy: incomingName }), corrId]);
 
       await client.query('COMMIT');
@@ -576,7 +576,7 @@ export const careCoordinationAndTimelineService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'DISCHARGE_SUMMARY', $2, 'DISCHARGE_SUMMARY_FINALIZED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'DISCHARGE_SUMMARY', $2, 'DISCHARGE_SUMMARY_FINALIZED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), summaryRecord.id, JSON.stringify({ summaryId: summaryRecord.id, encounterId, dischargeCondition }), corrId]);
 
       await client.query('COMMIT');

@@ -39,5 +39,5 @@ export const authenticateJwt = (req, res, next) => {
   }
 
   req.user = verification.payload;
-  next();
+  return next();
 };

@@ -122,7 +122,7 @@ export const perioperativeClosedLoopService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'PERIOPERATIVE', $2, 'PREOP_EVALUATION_COMPLETED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'PERIOPERATIVE', $2, 'PREOP_EVALUATION_COMPLETED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), evalRecord.id, JSON.stringify({ evalId: evalRecord.id, asaClass, anesthesiaPlan }), corrId]);
 
       await client.query('COMMIT');
@@ -201,8 +201,9 @@ export const perioperativeClosedLoopService = {
               sign_in_patient_identity_confirmed, sign_in_site_marked, sign_in_consent_verified,
               sign_in_oximeter_functioning, sign_in_allergy_checked, sign_in_airway_risk_prepared,
               sign_in_blood_loss_prepared, sign_in_completed_at, sign_in_verifier_id, sign_in_verifier_name,
+              sign_out_postop_recovery_plan,
               status, digital_signature_hash, correlation_id, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'SIGN_IN_DONE', $16, $17, NOW(), NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'PACU_RECOVERY_PENDING', 'SIGN_IN_DONE', $16, $17, NOW(), NOW())
             RETURNING *;
           `;
           const res = await client.query(insertSql, [
@@ -338,7 +339,7 @@ export const perioperativeClosedLoopService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'PERIOPERATIVE', $2, 'WHO_CHECKLIST_PHASE_COMPLETED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'PERIOPERATIVE', $2, 'WHO_CHECKLIST_PHASE_COMPLETED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), checklistRecord.id, JSON.stringify({ checklistId: checklistRecord.id, phase, status: checklistRecord.status }), corrId]);
 
       await client.query('COMMIT');
@@ -429,7 +430,7 @@ export const perioperativeClosedLoopService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'PERIOPERATIVE', $2, 'IMPLANT_DEPLOYED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'PERIOPERATIVE', $2, 'IMPLANT_DEPLOYED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), implantRecord.id, JSON.stringify({ implantId: implantRecord.id, udiBarcode, implantName }), corrId]);
 
       await client.query('COMMIT');
@@ -562,7 +563,7 @@ export const perioperativeClosedLoopService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'PERIOPERATIVE', $2, 'PACU_ASSESSMENT_RECORDED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'PERIOPERATIVE', $2, 'PACU_ASSESSMENT_RECORDED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), pacuRecord.id, JSON.stringify({ pacuRecordId: pacuRecord.id, totalAldreteScore, dischargeReadinessStatus }), corrId]);
 
       await client.query('COMMIT');
@@ -672,7 +673,7 @@ export const perioperativeClosedLoopService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'PERIOPERATIVE', $2, 'SURGERY_ABORTED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'PERIOPERATIVE', $2, 'SURGERY_ABORTED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), abortRecord.id, JSON.stringify({ abortId: abortRecord.id, abortReasonCategory, billingDisposition }), corrId]);
 
       await client.query('COMMIT');
@@ -760,7 +761,7 @@ export const perioperativeClosedLoopService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'PERIOPERATIVE', $2, 'INTRAOPERATIVE_EMERGENCY_TRIGGERED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'PERIOPERATIVE', $2, 'INTRAOPERATIVE_EMERGENCY_TRIGGERED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), emergencyRecord.id, JSON.stringify({ emergencyId: emergencyRecord.id, eventType, outcome }), corrId]);
 
       await client.query('COMMIT');
@@ -852,7 +853,7 @@ export const perioperativeClosedLoopService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'PERIOPERATIVE', $2, 'SURGICAL_SPECIMEN_COLLECTED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'PERIOPERATIVE', $2, 'SURGICAL_SPECIMEN_COLLECTED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), specimenRecord.id, JSON.stringify({ specimenId: specimenRecord.id, specimenContainerBarcode, urgencyLevel }), corrId]);
 
       await client.query('COMMIT');
@@ -951,7 +952,7 @@ export const perioperativeClosedLoopService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'PERIOPERATIVE', $2, 'SURGERY_CLOSED_LOOP_FINALIZED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'PERIOPERATIVE', $2, 'SURGERY_CLOSED_LOOP_FINALIZED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), surgicalCaseId, JSON.stringify({ surgicalCaseId, totalHospitalCost, inacbgCode }), corrId]);
 
       await client.query('COMMIT');

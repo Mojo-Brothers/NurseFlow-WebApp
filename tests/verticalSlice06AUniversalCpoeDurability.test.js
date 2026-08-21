@@ -147,29 +147,32 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
 
         // 9. INSERT INTO clinical_orders
         if (normalized.startsWith('INSERT INTO CLINICAL_ORDERS')) {
+          const hasTenant = params.length >= 23;
+          const shift = hasTenant ? 1 : 0;
           const newOrder = {
             id: params[0],
-            order_number: params[1],
-            patient_id: params[2],
-            episode_id: params[3],
-            encounter_id: params[4],
-            ordered_by: params[5],
-            order_category: params[6],
-            priority: params[7],
-            clinical_indication: params[8],
-            status: params[9],
-            is_cito: params[10],
-            order_items_count: params[11],
-            total_estimated_amount: params[12],
-            idempotency_key: params[13],
-            version: params[14],
-            requester_id: params[15],
-            requester_name: params[16],
-            requester_role: params[17],
-            target_performer_dept: params[18],
-            correlation_id: params[19],
-            created_at: params[20],
-            updated_at: params[21]
+            tenant_id: hasTenant ? params[1] : undefined,
+            order_number: params[1 + shift],
+            patient_id: params[2 + shift],
+            episode_id: params[3 + shift],
+            encounter_id: params[4 + shift],
+            ordered_by: params[5 + shift],
+            order_category: params[6 + shift],
+            priority: params[7 + shift],
+            clinical_indication: params[8 + shift],
+            status: params[9 + shift],
+            is_cito: params[10 + shift],
+            order_items_count: params[11 + shift],
+            total_estimated_amount: params[12 + shift],
+            idempotency_key: params[13 + shift],
+            version: params[14 + shift],
+            requester_id: params[15 + shift],
+            requester_name: params[16 + shift],
+            requester_role: params[17 + shift],
+            target_performer_dept: params[18 + shift],
+            correlation_id: params[19 + shift],
+            created_at: params[20 + shift],
+            updated_at: params[21 + shift]
           };
 
           if (activeTransactionState) {

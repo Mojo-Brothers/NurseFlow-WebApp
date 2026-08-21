@@ -144,7 +144,7 @@ export const clinicalCodingAndCasemixService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'CASEMIX', $2, 'CLINICAL_CODING_RECORDED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'CASEMIX', $2, 'CLINICAL_CODING_RECORDED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), codingRecord.id, JSON.stringify({ codingId: codingRecord.id, version: nextVersion, principalIcd10Code: deduped.principalCode }), corrId]);
 
       await client.query('COMMIT');
@@ -243,7 +243,7 @@ export const clinicalCodingAndCasemixService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'CASEMIX', $2, 'CDI_PHYSICIAN_QUERY_OPENED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'CASEMIX', $2, 'CDI_PHYSICIAN_QUERY_OPENED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), queryRecord.id, JSON.stringify({ queryId: queryRecord.id, queryType, targetPhysicianId }), corrId]);
 
       await client.query('COMMIT');
@@ -335,7 +335,7 @@ export const clinicalCodingAndCasemixService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'CASEMIX', $2, 'CDI_PHYSICIAN_QUERY_ANSWERED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'CASEMIX', $2, 'CDI_PHYSICIAN_QUERY_ANSWERED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), queryId, JSON.stringify({ queryId, status: 'ANSWERED' }), corrId]);
 
       await client.query('COMMIT');
@@ -508,7 +508,7 @@ export const clinicalCodingAndCasemixService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'CASEMIX', $2, 'CASEMIX_GROUPING_COMPLETED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'CASEMIX', $2, 'CASEMIX_GROUPING_COMPLETED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), groupingAudit.id, JSON.stringify({ groupingId: groupingAudit.id, cbgCode, finalClaimTariffIdr, regulation: activeRuleset.regulation_version }), corrId]);
 
       await client.query('COMMIT');
@@ -635,7 +635,7 @@ export const clinicalCodingAndCasemixService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'REVENUE_INTEGRITY', $2, 'REVENUE_INTEGRITY_AUDIT_COMPLETED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'REVENUE_INTEGRITY', $2, 'REVENUE_INTEGRITY_AUDIT_COMPLETED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), auditRecord.id, JSON.stringify({ auditId: auditRecord.id, auditStatus, leakageCount: identifiedLeakages.length }), corrId]);
 
       await client.query('COMMIT');
@@ -731,7 +731,7 @@ export const clinicalCodingAndCasemixService = {
       await client.query(`
         INSERT INTO clinical_domain_outbox (
           id, aggregate_type, aggregate_id, event_type, event_payload, status, correlation_id, created_at
-        ) VALUES ($1, 'CLAIM', $2, 'ELECTRONIC_CLAIM_SUBMITTED', $3, 'PENDING_PUBLISH', $4, NOW());
+        ) VALUES ($1, 'CLAIM', $2, 'ELECTRONIC_CLAIM_SUBMITTED', $3, 'PENDING', $4, NOW());
       `, [crypto.randomUUID(), claimRecord.id, JSON.stringify({ claimId: claimRecord.id, sepNumber, claimStatus, claimedAmountIdr, approvedAmount: finalApproved }), corrId]);
 
       await client.query('COMMIT');
