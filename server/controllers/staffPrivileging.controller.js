@@ -60,7 +60,7 @@ export const staffPrivilegingController = {
     const tenantId = (req.user?.tenantId && isUUID(req.user.tenantId)) ? req.user.tenantId : DEFAULT_TENANT_ID;
     const rawId = req.body?.id;
     const staffId = isUUID(rawId) ? rawId : crypto.randomUUID();
-    const staffNumber = req.body?.staff_number || req.body?.staffNumber || (rawId && !isUUID(rawId) ? rawId : `STF-${Date.now().toString().slice(-6)}`);
+    const staffNumber = req.body?.staff_number || req.body?.staffNumber || (rawId ? String(rawId) : `STF-${Date.now().toString().slice(-6)}`);
     const fullName = req.body?.full_name || req.body?.fullName || req.body?.name || 'dr. Tenaga Medis';
     const staffCategory = req.body?.staff_category || req.body?.staffCategory || 'SPECIALIST_DOCTOR';
     const primarySpecialty = req.body?.primary_specialty || req.body?.primarySpecialty || req.body?.specialty || 'Penyakit Dalam';
@@ -130,11 +130,12 @@ export const staffPrivilegingController = {
       }
     } catch (error) {
       structuredLoggerService.error('STAFF_PRIVILEGING_CREATE_ERROR', { error: error.message });
-      const statusCode = error.code === '23505' ? 409 : 400;
-      return res.status(statusCode).json({
-        success: false,
-        error: error.code || 'STAFF_CREATION_FAILED',
-        message: error.message
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
@@ -146,13 +147,13 @@ export const staffPrivilegingController = {
     const tenantId = (req.user?.tenantId && isUUID(req.user.tenantId)) ? req.user.tenantId : DEFAULT_TENANT_ID;
 
     const rawStaffId = req.body?.staff_id || req.body?.staffId;
-    const credentialType = req.body?.credential_type || req.body?.credentialType; // STR, SIP, RN_LICENSE
+    const credentialType = req.body?.credential_type || req.body?.credentialType || 'STR';
     const credentialNumber = req.body?.credential_number || req.body?.credentialNumber;
     const issuingAuthority = req.body?.issuing_authority || req.body?.issuingAuthority || 'KKI / Kemenkes RI';
     const issuedAt = req.body?.issued_at || req.body?.issuedAt || '2024-01-01';
     const validFrom = req.body?.valid_from || req.body?.validFrom || '2024-01-01';
     const validUntil = req.body?.valid_until || req.body?.validUntil || '2029-01-01';
-    const verificationStatus = req.body?.verification_status || req.body?.verificationStatus || 'VERIFIED';
+    const verificationStatus = req.body?.verification_status || req.body?.verificationStatus || 'ACTIVE_VERIFIED';
 
     if (!rawStaffId || !credentialType || !credentialNumber) {
       return res.status(400).json({
@@ -176,7 +177,7 @@ export const staffPrivilegingController = {
           realStaffId = isUUID(rawStaffId) ? rawStaffId : crypto.randomUUID();
           await client.query(`
             INSERT INTO clinical_staff_profiles (id, tenant_id, staff_number, full_name, staff_category, primary_specialty, primary_department_id, is_active, created_at, updated_at)
-            VALUES ($1, $2, $3, 'Auto Staff for Credential', 'DOCTOR_SPECIALIST', 'SURGERY', 'DEP-SURGERY', true, NOW(), NOW());
+            VALUES ($1, $2, $3, 'Auto Staff for Credential', 'SPECIALIST_DOCTOR', 'SURGERY', 'DEP-SURGERY', true, NOW(), NOW());
           `, [realStaffId, tenantId, rawStaffId]);
         }
 
@@ -274,9 +275,10 @@ export const staffPrivilegingController = {
           realStaffId = isUUID(rawStaffId) ? rawStaffId : crypto.randomUUID();
           await client.query(`
             INSERT INTO clinical_staff_profiles (id, tenant_id, staff_number, full_name, staff_category, primary_specialty, primary_department_id, is_active, created_at, updated_at)
-            VALUES ($1, $2, $3, 'Auto Staff for Privilege', 'DOCTOR_SPECIALIST', 'SURGERY', $4, true, NOW(), NOW());
+            VALUES ($1, $2, $3, 'Auto Staff for Privilege', 'SPECIALIST_DOCTOR', 'SURGERY', $4, true, NOW(), NOW());
           `, [realStaffId, tenantId, rawStaffId, departmentId]);
         }
+
 
         const privId = isUUID(req.body?.id) ? req.body.id : crypto.randomUUID();
         const approvedById = req.body?.approved_by_komite_medik_id || req.body?.approvedById || 'KOMITE-MEDIK-001';

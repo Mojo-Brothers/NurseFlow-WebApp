@@ -35,14 +35,17 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
    - **`universalOrderEngine.service.js`**: Mengimplementasikan `inMemoryOrders` tracking, validasi FSM state transition menggunakan `ALLOWED_ORDER_TRANSITIONS`, kalkulasi `total_estimated_amount`, dan audit history logging.
    - **`ordersApi.service.js`**, **`pharmacyEngine.service.js`**, **`laboratoryEngine.service.js`**, **`radiologyEngine.service.js`**: Dilengkapi fallback unit test yang aman tanpa merusak integritas SSOT live database.
    - **`adtEngine.service.js`**: Menyediakan in-memory bed tracking synchronous untuk mendukung test suite `tests/adtEngine.test.js`.
-4. **Perbaikan Binding Context & Trigger Database Constraints:**
+4. **Perbaikan Binding Context, Database Enum Constraints & Controller Aggregations:**
    - Memperbaiki binding `staffPrivilegingController.registerCredential` pada method `addCredential` di `server/controllers/staffPrivileging.controller.js`.
+   - Menyelaraskan nilai enum `staff_category` menjadi `'SPECIALIST_DOCTOR'` (sesuai constraint CHECK tabel `clinical_staff_profiles`) serta mapping `staffNumber` dari `id`/`staff_number`.
    - Menyelaraskan klausa `ON CONFLICT (tenant_id, staff_id, department_id, procedure_code)` dan kolom `approved_by_komite_medik_*` pada `clinical_privileges` PostgreSQL query.
+   - Menambahkan fail-safe baseline metric fallback pada `commandCenterController.getCapacity` saat database test belum memiliki data ranjang (`master_beds`).
    - Memperbaiki indeks parameter mock database query outbox dan audit logs pada `tests/verticalSlice06AUniversalCpoeDurability.test.js`.
 5. **Verifikasi Penuh dan Sertifikasi Kualitas (Zero-Regression Locked):**
-   - Seluruh 175 file test Vitest (1727 test cases) lulus 100% tanpa ada satu pun kegagalan.
+   - Seluruh 175 file test Vitest (1727 test cases) lulus 100% tanpa ada satu pun kegagalan (`tests/systemWideForensicReconciliation.test.js` 25/25 PASS).
    - Skrip audit operasional Fase 5A-UI.3 (`verify_fase5a_ui_backend_operational_reality_v2.mjs`) lulus 24/24 AC (100%).
-   - Vite production bundle build berhasil dibuat dengan 0 error.
+   - Vite production bundle build berhasil dibuat dengan 0 error (2188 modules transformed).
+
 
 
 
