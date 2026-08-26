@@ -167,14 +167,18 @@ export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
       if (DRAFT_KEY) {
         localStorage.removeItem(DRAFT_KEY);
       }
-      setHasSavedDraft(false);
       if (onSaved) onSaved(record);
     } catch (err) {
-      toast.error(`Gagal menyimpan CPPT: ${err.message}`);
+      if (err.isConcurrentConflict || err.code === 'CONCURRENT_MODIFICATION') {
+        toast.error('⚠️ Konflik Konkurensi (409): Catatan medis telah diubah oleh pengguna lain. Silakan muat ulang data terbaru.', { duration: 6000 });
+      } else {
+        toast.error(`Gagal menyimpan CPPT: ${err.message}`);
+      }
     } finally {
       setIsSaving(false);
     }
   };
+
 
   const handleApplyCdss = (orders) => {
     toast.success(`💡 ${orders.length} order protokol CDSS otomatis ditambahkan ke rencana terapi!`);

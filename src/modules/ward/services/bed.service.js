@@ -1,113 +1,97 @@
 /**
- * Bed Domain — Service Layer
- * Visual Ward Management & ADT (Admission, Discharge, Transfer) Logic.
+ * Bed Domain — Service Layer (PostgreSQL 16 Authoritative)
+ * Visual Ward Management & Inpatient ADT Logic (Admission, Discharge, Transfer).
+ * Standards: Joint Commission International (JCI), OCC Versioning, ACID Transactions
  */
-import { 
-  collection, doc, getDocs, query, where, orderBy, 
-  serverTimestamp, runTransaction 
-} from 'firebase/firestore';
-import { db } from '../../../core/firebase.js';
-import { COLLECTIONS, AUDIT_ACTIONS, SYNC_PRIORITIES } from '../../../core/constants.js';
+
+import { apiClient, requestApi } from '../../../core/apiClient.js';
 
 /**
- * Mengambil daftar seluruh tempat tidur di bangsal.
+ * Mengambil daftar seluruh tempat tidur di bangsal langsung dari PostgreSQL 16.
  */
-export const getAllBeds = async () => {
+export const getAllBeds = async (filters = {}) => {
   try {
-    const q = query(collection(db, COLLECTIONS.BEDS), orderBy('bed_name', 'asc'));
-    const snap = await getDocs(q);
-    const firestoreBeds = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (firestoreBeds.length > 0) return firestoreBeds;
+    const res = await apiClient.beds.list(filters);
+    if (res.ok && res.data) {
+      const beds = Array.isArray(res.data) ? res.data : (res.data.data || []);
+      return beds.map(b => ({
+        id: b.id,
+        bed_name: b.bed_number || b.bed_name || `Bed ${b.id}`,
+        ward: b.ward_name || b.ward || 'Bangsal Umum',
+        is_occupied: b.status === 'OCCUPIED' || b.is_occupied === true,
+        status: b.status || (b.is_occupied ? 'OCCUPIED' : 'AVAILABLE'),
+        patient_name: b.patient_name || null,
+        mrn: b.mrn || null,
+        gender: b.gender || null,
+        dpjp: b.dpjp_name || b.dpjp || null,
+        version: b.version || 1
+      }));
+    }
+    return [];
   } catch (err) {
-    console.warn('[BedService] Firestore query error:', err);
+    console.error('[BedService] Failed to fetch beds from PostgreSQL:', err);
+    return [];
   }
-
-  // Master Bed Hierarchy (Clean Initial State - All Vacant)
-  const defaultMasterBeds = [
-    { id: 'bed-101', bed_name: 'Bed M-101 (Bangsal Melati VVIP)', ward: 'Melati VVIP', is_occupied: false, patient_name: null, mrn: null, gender: null, dpjp: null },
-    { id: 'bed-102', bed_name: 'Bed M-102 (Bangsal Melati VVIP)', ward: 'Melati VVIP', is_occupied: false, patient_name: null, mrn: null, gender: null, dpjp: null },
-    { id: 'bed-201', bed_name: 'Bed ICU-01 (Intensive Care Unit)', ward: 'ICU', is_occupied: false, patient_name: null, mrn: null, gender: null, dpjp: null },
-    { id: 'bed-202', bed_name: 'Bed ICU-02 (Intensive Care Unit)', ward: 'ICU', is_occupied: false, patient_name: null, mrn: null, gender: null, dpjp: null },
-    { id: 'bed-301', bed_name: 'Bed IGD-RED-01 (Zona Merah)', ward: 'IGD Darurat', is_occupied: false, patient_name: null, mrn: null, gender: null, dpjp: null },
-    { id: 'bed-302', bed_name: 'Bed IGD-YELLOW-02 (Zona Kuning)', ward: 'IGD Darurat', is_occupied: false, patient_name: null, mrn: null, gender: null, dpjp: null }
-  ];
-
-  return defaultMasterBeds;
 };
 
 /**
  * Menempatkan pasien ke Bed tertentu (ADT Assignment).
  */
-export const assignBed = async (bedId, encounterId, patientId, userEmail) => {
-  const bedRef = doc(db, COLLECTIONS.BEDS, bedId);
-  const timestamp = serverTimestamp();
+export const assignBed = async (bedId, encounterId, patientId, userEmail = 'Petugas Admisi') => {
+  const payload = {
+    bedId,
+    encounterId,
+    patientId,
+    assignedBy: userEmail
+  };
 
-  try {
-    await runTransaction(db, async (transaction) => {
-      const bedSnap = await transaction.get(bedRef);
-      if (!bedSnap.exists()) throw new Error('Bed tidak ditemukan.');
-      if (bedSnap.data().is_occupied) throw new Error('Bed sudah terisi oleh pasien lain.');
-
-      transaction.update(bedRef, {
-        is_occupied:  true,
-        encounter_id: encounterId,
-        patient_id:   patientId,
-        assigned_at:  timestamp,
-        assigned_by:  userEmail
-      });
-
-      // Audit V5
-      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
-      transaction.set(auditRef, {
-        timestamp,
-        user:          userEmail,
-        action:        AUDIT_ACTIONS.UPDATE,
-        resource_type: COLLECTIONS.BEDS,
-        resource_id:   bedId,
-        reason:        'PATIENT_BED_ASSIGNMENT',
-        source:        'WEB_APP',
-        sync_priority: SYNC_PRIORITIES.HIGH,
-        delta:         { encounter_id: encounterId, is_occupied: true }
-      });
-    });
-  } catch (err) {
-    console.error('[BedService] Assign failed:', err);
-    throw err;
+  const res = await apiClient.beds.admit(payload);
+  if (!res.ok) {
+    if (res.isConcurrentConflict || res.status === 409) {
+      const conflictErr = new Error('Konflik ADT (409): Ranjang telah ditempati oleh pasien lain.');
+      conflictErr.isConcurrentConflict = true;
+      throw conflictErr;
+    }
+    throw new Error(res.error || 'Gagal menempatkan pasien ke ranjang di PostgreSQL');
   }
+
+  return res.data;
 };
 
 /**
- * Melepaskan Bed (Discharge/Transfer).
+ * Memindahkan pasien ke Bed lain (ADT Transfer).
  */
-export const releaseBed = async (bedId, userEmail) => {
-  const bedRef = doc(db, COLLECTIONS.BEDS, bedId);
-  const timestamp = serverTimestamp();
+export const transferBed = async ({ sourceBedId, targetBedId, encounterId, reason, userEmail }) => {
+  const payload = {
+    sourceBedId,
+    targetBedId,
+    encounterId,
+    transferReason: reason || 'Transfer antar bangsal',
+    transferredBy: userEmail
+  };
 
-  try {
-    await runTransaction(db, async (transaction) => {
-      transaction.update(bedRef, {
-        is_occupied:  false,
-        encounter_id: null,
-        patient_id:   null,
-        released_at:  timestamp
-      });
-
-      // Audit V5
-      const auditRef = doc(collection(db, COLLECTIONS.AUDIT_LOGS));
-      transaction.set(auditRef, {
-        timestamp,
-        user:          userEmail,
-        action:        AUDIT_ACTIONS.UPDATE,
-        resource_type: COLLECTIONS.BEDS,
-        resource_id:   bedId,
-        reason:        'PATIENT_BED_RELEASE',
-        source:        'WEB_APP',
-        sync_priority: SYNC_PRIORITIES.HIGH,
-        delta:         { is_occupied: false }
-      });
-    });
-  } catch (err) {
-    console.error('[BedService] Release failed:', err);
-    throw err;
+  const res = await apiClient.beds.transfer(payload);
+  if (!res.ok) {
+    throw new Error(res.error || 'Gagal memindahkan pasien antar ranjang di PostgreSQL');
   }
+
+  return res.data;
+};
+
+/**
+ * Melepaskan Bed (Discharge ADT).
+ */
+export const releaseBed = async (bedId, userEmail = 'Petugas Admisi') => {
+  const payload = {
+    bedId,
+    dischargeReason: 'Discharge resmi pasien',
+    dischargedBy: userEmail
+  };
+
+  const res = await apiClient.beds.discharge(payload);
+  if (!res.ok) {
+    throw new Error(res.error || 'Gagal melepaskan ranjang di PostgreSQL');
+  }
+
+  return res.data;
 };

@@ -36,9 +36,6 @@ router.get('/cpoe/encounter/:encounterId', authenticateJwt, requirePermission('C
 // GET /api/v1/orders — List all orders directly from PostgreSQL
 router.get('/', authenticateJwt, cpoeController.listOrders);
 
-    next(err);
-  }
-});
 
 // POST /api/v1/orders/prescription
 router.post('/prescription', authenticateJwt, requirePermission('ORDER_CREATE_PHARMACY'), async (req, res, next) => {

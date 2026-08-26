@@ -274,8 +274,11 @@ export const apiClient = {
   patientFinancial: {
     getDeposits: (params = '') => apiClient.get(`/api/v1/patient-financial/deposits${params ? `?${params}` : ''}`),
     createDeposit: (payload) => apiClient.post('/api/v1/patient-financial/deposits', payload),
-    debitDeposit: (payload) => apiClient.post('/api/v1/patient-financial/deposits/debit', payload)
+    debitDeposit: (payload) => apiClient.post('/api/v1/patient-financial/deposits/debit', payload),
+    generateSplitInvoice: (payload) => apiClient.post('/api/v1/patient-financial/invoices', payload),
+    recordPayment: (payload) => apiClient.post('/api/v1/patient-financial/payments', payload)
   },
+
 
   // ─── 13. Blood Bank (BDRS / ISBT-128) ───
   bloodBank: {

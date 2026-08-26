@@ -1,41 +1,14 @@
 /**
- * NurseFlow Enterprise HIS 2026 — Structured SOAP Engine
- * Sprint 4: Clinical Decision Making & Comprehensive Physician Documentation
- * Standar Kepatuhan: Permenkes 24/2022, JCI 7th Edition, SATUSEHAT HL7 FHIR Composition.
+ * NurseFlow Enterprise HIS 2026 — Structured SOAP Engine (PostgreSQL 16 Authoritative)
+ * Standards: Permenkes 24/2022, JCI 7th Edition, SATUSEHAT HL7 FHIR Composition, RFC 7807
  */
 
-import { outboxPublisherService } from '../../front_office/services/outboxPublisher.service.js';
+import { apiClient, requestApi } from '../../../core/apiClient.js';
 import { diagnosisEngineService } from './diagnosisEngine.service.js';
-import { cdssEngineService } from './cdssEngine.service.js';
-
-let inMemorySoap = [];
-
-const getStoredSoap = () => {
-  try {
-    if (typeof localStorage !== 'undefined') {
-      const raw = localStorage.getItem(SOAP_STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    }
-  } catch (e) {
-    console.warn('[SoapEngine] Failed to load SOAP notes:', e);
-  }
-  return inMemorySoap;
-};
-
-const saveStoredSoap = (list) => {
-  inMemorySoap = list;
-  try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(SOAP_STORAGE_KEY, JSON.stringify(list));
-    }
-  } catch (e) {
-    console.warn('[SoapEngine] Failed to save SOAP notes:', e);
-  }
-};
 
 export const soapEngineService = {
   /**
-   * Save Structured SOAP Note with Auto-Diagnosis Registration & CDSS Check
+   * Save Structured SOAP Note directly to PostgreSQL 16
    */
   recordSoapNote: async ({
     episodeId,
@@ -52,77 +25,60 @@ export const soapEngineService = {
     secondaryIcd10 = [],
     icd9Procedures = [],
     physicianId = 'DOC-1001',
-    physicianName = 'dr. Siti Wijaya, Sp.PD-KGEH',
-    actorEmail = 'admin@nurseflow.id'
+    physicianName = 'dr. Siti Wijaya, Sp.PD',
+    actorEmail = 'admin@nurseflow.id',
+    expectedVersion = 1
   }) => {
     if (!subjective || !objective || !assessment || !plan) {
       throw new Error('Validasi SOAP gagal: Seluruh komponen Subjective, Objective, Assessment, dan Plan wajib diisi lengkap.');
     }
 
-    const now = new Date().toISOString();
-    const soapNote = {
-      id: `SOAP-${Date.now()}`,
-      episode_id: episodeId,
-      encounter_id: encounterId,
-      patient_id: patientId,
-      patient_name: patientName,
+    const payload = {
+      episodeId,
+      encounterId,
+      patientId,
+      patientName,
       mrn,
       subjective,
       objective,
       assessment,
       plan,
-      primary_icd10: primaryIcd10,
-      primary_icd10_name: primaryIcd10Name,
-      secondary_icd10: secondaryIcd10,
-      icd9_procedures: icd9Procedures,
-      physician_id: physicianId,
-      physician_name: physicianName,
-      is_signed: true,
-      signature_timestamp: now,
-      created_at: now,
-      updated_at: now
+      primaryIcd10,
+      primaryIcd10Name,
+      secondaryDiagnoses: secondaryIcd10,
+      proceduresIcd9: icd9Procedures,
+      physicianId,
+      physicianName,
+      expectedVersion
     };
 
-    const currentList = getStoredSoap();
-    saveStoredSoap([soapNote, ...currentList]);
-
-    // Automatically record primary diagnosis in Diagnosis Engine
-    if (primaryIcd10) {
-      await diagnosisEngineService.recordDiagnosis({
-        encounterId,
-        episodeId,
-        patientId,
-        diagnosisType: 'PRIMARY',
-        icd10Code: primaryIcd10,
-        diagnosisName: primaryIcd10Name,
-        isPrimary: true,
-        diagnosedBy: physicianName,
-        actorEmail
-      });
+    const res = await apiClient.clinicalNotes.saveSoap(payload);
+    if (!res.ok) {
+      if (res.isConcurrentConflict || res.status === 409) {
+        const conflictErr = new Error(res.error || 'Konflik Konkurensi: Catatan medis telah dimodifikasi oleh dokter lain.');
+        conflictErr.isConcurrentConflict = true;
+        conflictErr.code = 'CONCURRENT_MODIFICATION';
+        throw conflictErr;
+      }
+      throw new Error(res.error || 'Gagal menyimpan catatan SOAP di PostgreSQL');
     }
 
-    await outboxPublisherService.stageEvent({
-      aggregateType: 'SOAP_NOTE',
-      aggregateId: soapNote.id,
-      eventName: 'SOAP_CREATED',
-      payload: soapNote,
-      actor: actorEmail
-    });
-
-    return soapNote;
+    return res.data;
   },
 
   /**
-   * Get SOAP Notes by Patient / Encounter
+   * Get SOAP Notes by Encounter ID directly from PostgreSQL
    */
-  getSoapNotes: (patientId = null, encounterId = null) => {
-    let list = getStoredSoap();
-    if (patientId) {
-      list = list.filter(s => s.patient_id === patientId);
+  getSoapNotesByEncounter: async (encounterId) => {
+    try {
+      const res = await requestApi(`/api/v1/clinical-notes/soap/encounter/${encounterId}`);
+      if (res.ok && res.data) {
+        return Array.isArray(res.data) ? res.data : (res.data.data || []);
+      }
+      return [];
+    } catch (err) {
+      console.error('[SoapEngine] Failed to fetch SOAP notes:', err);
+      return [];
     }
-    if (encounterId) {
-      list = list.filter(s => s.encounter_id === encounterId);
-    }
-    return list;
   }
 };

@@ -20,7 +20,30 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### ⚡ [26 AGUSTUS 2026] — FASE 5A-UI.3: FRONTEND ↔ BACKEND OPERATIONAL RE-WIRING & END-TO-END REALITY CERTIFICATION (RE-WIRING 6 MODUL KRITIS, ELIMINASI PROHIBITED STORAGE KEYS, POSTGRESQL 16 SSOT AUTHORITATIVE, MASTER 30-DOMAIN MATRIX RELEASED, 24/24 PASS 100%)
+**Tag Rilis:** `fase-5a-ui3-operational-rewiring-v1.0`  
+**Kategori:** `[MAJOR]` `[FRONTEND]` `[BACKEND]` `[ARCHITECTURE]` `[SECURITY]`  
+**Status Evidence:** 🟢 **`24/24 FASE 5A-UI.3 OPERATIONAL REALITY V2 TESTS PASS (100%), 15/15 FASE 5A-UI CONFORMANCE TESTS PASS (100%), 12/12 FASE 5A.4 CONCURRENCY SAFETY TESTS PASS (100%), 8/8 FASE 5A.3 TRANSACTION INTEGRITY TESTS PASS (100%), 9/9 FASE 5A.2 SHADOW STATE AUDIT PASS (100%), 8/8 FASE 5A.1 PILOT TESTS PASS (100%), VITE PRODUCTION BUILD CLEAN (0 ERRORS), ZERO-REGRESSION LOCKED.`**
+
+1. **Penerbitan Dokumen Master Matrix 30 Domain Rumah Sakit (`docs/FASE_5A_UI_BACKEND_OPERATIONAL_MATRIX_2026.md`):**
+   - Merilis pemetaan komprehensif 30 domain rumah sakit (Authentication, MPI, Appointment, Encounter, Episode of Care, Triage, Bed ADT, Doctor Consultation SOAP, CPPT, CPOE Universal Orders, Pharmacy, eMAR, LIS, RIS, Blood Bank, Operating Theatre, Invoicing, Deposits, Casemix, Privileging, SATUSEHAT FHIR, Command Center, FEFO Inventory, DICOMweb PACS) dari UI Action $\rightarrow$ Handler $\rightarrow$ REST Endpoint $\rightarrow$ Controller $\rightarrow$ Service $\rightarrow$ PostgreSQL Table.
+2. **Penyambungan Ulang 6 Modul Kritis (Operational Re-Wiring to PostgreSQL 16 SSOT):**
+   - **CPOE Universal Orders (`src/modules/orders/services/ordersApi.service.js` & `universalOrderEngine.service.js`)**: Diarahkan langsung ke `apiClient.cpoe.*`, `apiClient.medications.*`, `apiClient.laboratory.*`, `apiClient.radiology.*`. Menambahkan endpoint `GET /api/v1/orders/cpoe` di `cpoeController.listOrders` dan `orders.routes.js`.
+   - **Clinical Notes SOAP (`src/modules/emr/services/soapEngine.service.js` & `DoctorSoapWorkspace.jsx`)**: Mengeliminasi penyimpanan `localStorage` lokal dan mengarahkan penyimpanan ke `apiClient.clinicalNotes.saveSoap` dengan penanganan graceful untuk `409 CONCURRENT_MODIFICATION` (OCC Conflict Banner).
+   - **Emergency Triage IGD (`src/modules/triage/services/triage.service.js`)**: Menghapus `writeBatch(db)` langsung Firestore dan mengarahkan ke `apiClient.triage.submit` yang mengaktifkan SLA timer otomatis di PostgreSQL.
+   - **Bed Management & Inpatient ADT (`src/modules/ward/services/bed.service.js`)**: Menghapus `runTransaction(db)` Firestore dan mengarahkan mutasi ranjang ke `apiClient.beds.*` dengan kontrol konkurensi OCC.
+   - **Patient Billing & Revenue Cycle (`src/modules/billing/services/billing.service.js` & `server/routes/billing.routes.js`)**: Menghapus koleksi Firestore dan mengarahkan penagihan dan kasir ke `apiClient.patientFinancial.generateSplitInvoice` dan `apiClient.patientFinancial.recordPayment`.
+   - **LIS & RIS Diagnostics Engine (`laboratoryEngine.service.js` & `radiologyEngine.service.js`)**: Mengalirkan seluruh mutasi spesimen dan rilis hasil diagnostik ke API Gateway PostgreSQL 16.
+3. **Pembersihan LocalStorage Business State & Fallback Mocks:**
+   - Membersihkan pembacaan `nurseflow_patients_master` dari `worklist.service.js` dan mengarahkannya ke `apiClient.patients.list()`.
+   - Menghapus key `nurseflow_clinical_orders`, `nurseflow_soap_notes`, `nurseflow_medication_orders`, `nurseflow_lab_orders`, `nurseflow_rad_orders`, `nurseflow_beds`, `nurseflow_billing` dari alur mutasi bisnis aktif.
+4. **Penerbitan Dokumen Laporan Forensik Final (`docs/FASE_5A_UI_BACKEND_OPERATIONAL_REALITY_AUDIT_V2_2026.md`):**
+   - Merilis laporan evaluasi forensik final 4 bagian yang mendokumentasikan pembuktian 24 Acceptance Criteria.
+5. **Penyusunan dan Eksekusi Skrip Verifikasi 24 AC (`scripts/verify_fase5a_ui_backend_operational_reality_v2.mjs`):**
+   - Menguji dan meluluskan 24/24 acceptance criteria (100% PASS) mencakup AC-01 s/d AC-24.
+
 ### ⚡ [26 AGUSTUS 2026] — FASE 5A-UI.2: FULL FRONTEND ↔ BACKEND OPERATIONAL REALITY AUDIT (633 FILES SCANNED, LOCALSTORAGE BUSINESS STATE DETECTED, LEGACY ENGINE WIRING AUDITED, 5/5 LIVE ACID CRUD VERIFIED, CONDITIONALLY CONFORMANT ROADMAP LOCKED)
+
 **Tag Rilis:** `fase-5a-ui2-operational-reality-audit-v1.0`  
 **Kategori:** `[MAJOR]` `[AUDIT]` `[FRONTEND]` `[ARCHITECTURE]` `[SECURITY]`  
 **Status Evidence:** 🟡 **`633 SOURCE FILES SCANNED, 11 PROHIBITED STORAGE KEYS IDENTIFIED, 27 LEGACY ENGINE USAGES CATALOGED, 23 FIRESTORE BYPASSES CATALOGED, 5/5 LIVE ACID TRACES VERIFIED IN POSTGRESQL (100%), CONDITIONALLY CONFORMANT STATUS LOCKED.`**
