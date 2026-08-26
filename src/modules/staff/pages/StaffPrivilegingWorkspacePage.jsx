@@ -13,12 +13,13 @@ export default function StaffPrivilegingWorkspacePage() {
   useEffect(() => {
     async function loadData() {
       const res = await apiClient.staffPrivileges.getStaff();
-      if (res.ok && res.data?.data) {
-        setStaffList(res.data.data);
+      if (res.ok && res.data) {
+        setStaffList(Array.isArray(res.data) ? res.data : (res.data.data || []));
       }
     }
     loadData();
   }, []);
+
 
   // Evaluation Form State
   const [evalStaffId, setEvalStaffId] = useState('');

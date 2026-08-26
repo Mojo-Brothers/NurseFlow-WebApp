@@ -36,10 +36,10 @@ export const commandCenterController = {
         return res.status(200).json({
           success: true,
           data: {
-            totalBeds: total || 185,
-            occupiedBeds: occupied || 142,
-            availableBeds: parseInt(stats.available_beds || '38', 10),
-            cleaningBeds: parseInt(stats.cleaning_beds || '5', 10),
+            totalBeds: total,
+            occupiedBeds: occupied,
+            availableBeds: parseInt(stats.available_beds || '0', 10),
+            cleaningBeds: parseInt(stats.cleaning_beds || '0', 10),
             borPercentage: bor,
             bor: bor,
             status: bor > 85 ? 'HIGH_CAPACITY' : 'NORMAL'
@@ -47,18 +47,17 @@ export const commandCenterController = {
           source: 'POSTGRESQL_PERSISTENT_TRUTH'
         });
       } finally {
+
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('COMMAND_CENTER_CAPACITY_FALLBACK', { error: error.message });
-      const data = executiveCommandCenterService.getCapacityMetrics();
-      return res.status(200).json({
-        success: true,
-        data: {
-          ...data,
-          bor: data.bor || data.borPercentage || 76.8
-        },
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('COMMAND_CENTER_CAPACITY_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
@@ -87,9 +86,9 @@ export const commandCenterController = {
         return res.status(200).json({
           success: true,
           data: {
-            activeEmergencyCount: parseInt(row.total_active_emergency || '12', 10),
-            waitingTriageCount: parseInt(row.waiting_triage || '3', 10),
-            inProgressCount: parseInt(row.in_resus_or_exam || '7', 10),
+            activeEmergencyCount: parseInt(row.total_active_emergency || '0', 10),
+            waitingTriageCount: parseInt(row.waiting_triage || '0', 10),
+            inProgressCount: parseInt(row.in_resus_or_exam || '0', 10),
             averageWaitTimeMinutes: 14.5,
             avgWaitingTimeMinutes: 14.5,
             status: 'OPERATIONAL'
@@ -100,15 +99,13 @@ export const commandCenterController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('COMMAND_CENTER_EMERGENCY_FALLBACK', { error: error.message });
-      const data = executiveCommandCenterService.getEmergencyMetrics();
-      return res.status(200).json({
-        success: true,
-        data: {
-          ...data,
-          avgWaitingTimeMinutes: data.avgWaitingTimeMinutes || 14.5
-        },
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('COMMAND_CENTER_EMERGENCY_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
@@ -136,8 +133,8 @@ export const commandCenterController = {
         return res.status(200).json({
           success: true,
           data: {
-            totalBilledRevenue: parseFloat(row.total_billed_revenue || '145000000'),
-            totalCollectedRevenue: parseFloat(row.total_collected_revenue || '132000000'),
+            totalBilledRevenue: parseFloat(row.total_billed_revenue || '0'),
+            totalCollectedRevenue: parseFloat(row.total_collected_revenue || '0'),
             cleanClaimRate: 98.4,
             pendingClaimsCount: 14
           },
@@ -147,16 +144,13 @@ export const commandCenterController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('COMMAND_CENTER_FINANCIAL_FALLBACK', { error: error.message });
-      const data = executiveCommandCenterService.getFinancialMetrics();
-      return res.status(200).json({
-        success: true,
-        data: {
-          ...data,
-          totalBilledRevenue: data.totalBilled || 145000000,
-          cleanClaimRate: data.inaCbgGroupingEfficiency || 98.2
-        },
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('COMMAND_CENTER_FINANCIAL_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
@@ -184,9 +178,9 @@ export const commandCenterController = {
         return res.status(200).json({
           success: true,
           data: {
-            totalAuditEntries24h: parseInt(row.total_audit_entries || '1540', 10),
+            totalAuditEntries24h: parseInt(row.total_audit_entries || '0', 10),
             securityAlerts24h: parseInt(row.security_alerts || '0', 10),
-            criticalEscalations24h: parseInt(row.critical_escalations || '2', 10),
+            criticalEscalations24h: parseInt(row.critical_escalations || '0', 10),
             safetyStatus: 'CLEAR'
           },
           source: 'POSTGRESQL_PERSISTENT_TRUTH'
@@ -195,9 +189,14 @@ export const commandCenterController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('COMMAND_CENTER_SAFETY_FALLBACK', { error: error.message });
-      const data = executiveCommandCenterService.getClinicalSafetyMetrics();
-      return res.status(200).json({ success: true, data, source: 'IN_MEMORY_FALLBACK' });
+      structuredLoggerService.error('COMMAND_CENTER_SAFETY_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
+      });
     }
   },
 
@@ -215,7 +214,14 @@ export const commandCenterController = {
       });
     } catch (error) {
       structuredLoggerService.error('COMMAND_CENTER_ALERTS_ERROR', { error: error.message });
-      return res.status(500).json({ success: false, message: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Internal Server Error',
+        status: 500,
+        detail: error.message,
+        code: 'INTERNAL_ERROR'
+      });
     }
   }
 };
+

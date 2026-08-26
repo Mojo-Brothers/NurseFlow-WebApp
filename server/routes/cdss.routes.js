@@ -9,10 +9,9 @@ import { cdssReplayEngineService } from '../services/cdssReplayEngine.service.js
 import { authenticateJwt } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
-router.use(authenticateJwt);
 
 // 1. Evaluate Proposed Prescription
-router.post('/cdss/evaluate', async (req, res, next) => {
+router.post('/cdss/evaluate', authenticateJwt, async (req, res, next) => {
   try {
     const evaluation = await dynamicCdssEngineService.evaluatePrescription(req.body);
     res.json({ success: true, data: evaluation });
@@ -22,7 +21,7 @@ router.post('/cdss/evaluate', async (req, res, next) => {
 });
 
 // 2. Commit CDSS Execution Snapshot
-router.post('/cdss/executions/record', async (req, res, next) => {
+router.post('/cdss/executions/record', authenticateJwt, async (req, res, next) => {
   try {
     const recorded = await dynamicCdssEngineService.commitExecutionSnapshot(req.body);
     res.status(201).json({ success: true, data: recorded, message: 'Snapshot evaluasi CDSS berhasil direkam.' });
@@ -32,7 +31,7 @@ router.post('/cdss/executions/record', async (req, res, next) => {
 });
 
 // 3. Get CDSS Audit Trail for Encounter
-router.get('/cdss/executions/:encounterId', async (req, res, next) => {
+router.get('/cdss/executions/:encounterId', authenticateJwt, async (req, res, next) => {
   try {
     const records = await cdssReplayEngineService.getAuditTrailForEncounter(req.params.encounterId);
     res.json({ success: true, total: records.length, data: records });
@@ -42,7 +41,7 @@ router.get('/cdss/executions/:encounterId', async (req, res, next) => {
 });
 
 // 4. Replay Historical CDSS Execution
-router.post('/cdss/replay/:executionId', async (req, res, next) => {
+router.post('/cdss/replay/:executionId', authenticateJwt, async (req, res, next) => {
   try {
     const replayReport = await cdssReplayEngineService.replayExecution(req.params.executionId);
     res.json({ success: true, data: replayReport });

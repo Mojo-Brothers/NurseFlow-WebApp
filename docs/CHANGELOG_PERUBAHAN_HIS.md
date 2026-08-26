@@ -20,7 +20,231 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
-### 🏥 [21 AGUSTUS 2026] — GATE 0C: 14 PERSONA OPERATIONAL REALITY, CROSS-PERSONA CLINICAL HANDOFF & FAIL-CLOSED CIRCUIT BREAKER COMPLETED
+### ⚡ [26 AGUSTUS 2026] — FASE 5A-UI.2: FULL FRONTEND ↔ BACKEND OPERATIONAL REALITY AUDIT (633 FILES SCANNED, LOCALSTORAGE BUSINESS STATE DETECTED, LEGACY ENGINE WIRING AUDITED, 5/5 LIVE ACID CRUD VERIFIED, CONDITIONALLY CONFORMANT ROADMAP LOCKED)
+**Tag Rilis:** `fase-5a-ui2-operational-reality-audit-v1.0`  
+**Kategori:** `[MAJOR]` `[AUDIT]` `[FRONTEND]` `[ARCHITECTURE]` `[SECURITY]`  
+**Status Evidence:** 🟡 **`633 SOURCE FILES SCANNED, 11 PROHIBITED STORAGE KEYS IDENTIFIED, 27 LEGACY ENGINE USAGES CATALOGED, 23 FIRESTORE BYPASSES CATALOGED, 5/5 LIVE ACID TRACES VERIFIED IN POSTGRESQL (100%), CONDITIONALLY CONFORMANT STATUS LOCKED.`**
+
+1. **Penerbitan Dokumen Laporan Forensik Realitas Operasional 26 Bagian (`docs/FASE_5A_UI_BACKEND_OPERATIONAL_REALITY_AUDIT_2026.md`):**
+   - Merilis evaluasi komprehensif atas disparitas antara *API Contract Conformance* dan *UI Operational Reality*, mengklasifikasikan 6 modul kritis yang memerlukan penyambungan ulang (*re-wiring*) ke `apiClient.js`.
+2. **Pemindaian Kode Forensik Statis (Static AST & Codebase Scan across 633 Source Files):**
+   - Mengidentifikasi 11 lokasi kunci `localStorage` terlarang (`nurseflow_clinical_orders`, `nurseflow_soap_notes`, `nurseflow_encounters`, `nurseflow_episodes_of_care`, `nurseflow_medication_orders`, `nurseflow_lab_orders`, `nurseflow_rad_orders`, `nurseflow_patients_master`, `nurseflow_beds`, `nurseflow_billing`, `nurseflow_ro_list`).
+   - Mengidentifikasi 27 komponen dan service yang masih mengimpor client-side engines lama (`universalOrderEngine`, `soapEngine`, `pharmacyEngine`, `laboratoryEngine`, `radiologyEngine`, `episodeOfCareEngine`, `encounterEngine`, `mpiEngine`).
+   - Mengidentifikasi 23 berkas dengan mutasi langsung Firestore SDK yang belum dialihkan ke REST API PostgreSQL.
+3. **Penyusunan Skrip Otomasi Audit Realitas Operasional (`scripts/verify_fase5a_ui_backend_operational_reality.mjs`):**
+   - Mengotomasi verifikasi penelusuran end-to-end: UI Action $\rightarrow$ API Gateway $\rightarrow$ Controller $\rightarrow$ Service $\rightarrow$ Transaction $\rightarrow$ PostgreSQL $\rightarrow$ WORM Audit $\rightarrow$ Outbox $\rightarrow$ Response.
+   - Membuktikan 5 live CRUD flow berjalan 100% ACID compliant ketika melewati canonical `apiClient.js`.
+4. **Penguncian Rencana Aksi Remediasi (6 Modul Kritis):**
+   - Menjadwalkan pengalihan jalur (*re-wiring*) untuk `OrderEntryWorkspace`, `DoctorSoapWorkspace`, `TriagePage`, `BedManagementCenterPage`, `BillingPage`, dan `LIS/RIS Studios` sebelum membuka Fase 5A.5.
+
+### ⚡ [26 AGUSTUS 2026] — FASE 5A-UI AUDIT: FRONTEND ↔ BACKEND CONTRACT & BEHAVIORAL CONFORMANCE AUDIT LOCKED (CANONICAL ENVELOPE UNWRAPPING, STRICT 204 ZERO-BODY, RFC 7807 ERROR NORMALIZATION, X-CORRELATION-ID, IDEMPOTENCY KEY INJECTION, FAIL-CLOSED SAFETY & 15/15 AC VERIFIED)
+
+**Tag Rilis:** `fase-5a-ui-conformance-audit-v1.0`  
+**Kategori:** `[MAJOR]` `[FRONTEND]` `[ARCHITECTURE]` `[SECURITY]` `[ENHANCEMENT]`  
+**Status Evidence:** 🟢 **`15/15 FASE 5A-UI CONFORMANCE TESTS PASS (100%), 12/12 FASE 5A.4 CONCURRENCY SAFETY TESTS PASS (100%), 8/8 FASE 5A.3 TRANSACTION INTEGRITY TESTS PASS (100%), 9/9 FASE 5A.2 SHADOW STATE AUDIT PASS (100%), 8/8 FASE 5A.1 PILOT TESTS PASS (100%), 14/14 GATE 0C PERSONA REALITY TESTS PASS (100%), 4/4 NEGATIVE RBAC PROOF PASS (100%), GATE 0B POSTGRESQL 16 PERSISTENCE AUDIT PASS (100%), VITE PRODUCTION BUILD (0 ERRORS), ZERO-REGRESSION LOCKED.`**
+
+1. **Penerbitan Dokumen Laporan Forensik Lengkap (`docs/FASE_5A_UI_BACKEND_CONFORMANCE_AUDIT_2026.md`):**
+   - Merilis laporan investigasi mendalam 21 bagian mencakup Executive Summary, Baseline Arsitektur, Evaluasi HTTP 204 Zero-Body, RFC 7807 Error Normalization, X-Correlation-ID End-to-End Tracing, Idempotency Replay Defense, Fail-Closed Security, Anti-Mock Leaks, OCC Versioning, dan 24 Domain REST Mapping.
+2. **Modernisasi Menyeluruh HTTP API Client Kanonikal (`src/core/apiClient.js`):**
+   - **Canonical Envelope Auto-Unwrapping**: Mengekstrak langsung `{ data, meta }` ke `response.data` dan `response.meta` dengan preserve raw payload di `response.raw`.
+   - **Strict HTTP 204 Zero-Body Discipline**: Mencegah pemanggilan `.json()` pada status 204 untuk mengeliminasi `Unexpected end of JSON input`, mengembalikan `data: null`.
+   - **RFC 7807 Problem Details Normalization**: Menormalisasi format error `application/problem+json` ke `response.problem`, `response.error`, `response.code`, dan `response.correlationId`.
+   - **X-Correlation-ID Auto-Propagation**: Menghasilkan dan menyertakan header `X-Correlation-ID` pada setiap outgoing HTTP request dan mengekstraknya dari response headers.
+   - **Idempotency-Key Injection & Replay Flag Detection**: Mengotomasi `Idempotency-Key` pada mutasi (`POST`, `PUT`, `PATCH`, `DELETE`) dan membaca header `X-Idempotent-Replay: true` ke dalam `response.isReplay = true`.
+   - **Fail-Closed Resilience**: Menandai `isFailClosed: true` pada HTTP 500/503 atau kegagalan jaringan serta menjamin zero mock data injection.
+   - **24 HIS Authoritative Domain Coverage**: Menyediakan antarmuka gateway lengkap untuk seluruh 24 domain (auth, patients, encounters, beds, triage, clinicalNotes, cpoe, orders, medications, laboratory, radiology, billing, patientFinancial, bloodBank, staffPrivileges, masterData, appointments, inventory, satusehat, commandCenter, perioperative, casemix).
+3. **Penyelarasan Komponen UI & Studio:**
+   - Memperbarui `StaffPrivilegingWorkspacePage.jsx` dan `BloodInventoryColdChainStudio.jsx` untuk menangani unwrapping kanonikal.
+   - Memperbarui `server/routes/auth.routes.js` untuk mengembalikan HTTP 204 No Content Zero-Body pada aksi logout.
+   - Memperbarui `server/controllers/cpoe.controller.js` untuk meneruskan `idempotencyKey` dari HTTP headers dan memancarkan header `X-Idempotent-Replay: true`.
+   - Memperbaiki `server/services/cpoeApplication.service.js` untuk menangani race condition duplicate key constraint (`23505`) dan melakukan recovery otomatis transaksi konkuren.
+   - Memperbarui `server/middlewares/rbacMiddleware.js` untuk menyelaraskan alias role `ROLE_SUPER_ADMIN` dan `ADMIN`.
+4. **Pembuktian Otomatis 15 Kriteria Penerimaan (AC-1 s/d AC-15):**
+   - Membangun dan mengeksekusi [`scripts/verify_fase5a_ui_conformance.mjs`](file:///c:/Users/Mojo/NurseFlow-WebApp/scripts/verify_fase5a_ui_conformance.mjs) dengan hasil **15/15 PASS (100%)**:
+     - *AC-1 Envelope Unwrapping*: `{ data, meta }` di-unwrap presisi (`data: Array`, `meta.correlationId`).
+     - *AC-2 RFC 7807 Error*: `INCOMPLETE_CLINICAL_INDICATION` menghasilkan structured problem details.
+     - *AC-3 204 No Content*: Zero-body tanpa JSON parsing error (`data: null`).
+     - *AC-4 Correlation ID*: End-to-end trace dari browser ke backend headers persis sama.
+     - *AC-5 Idempotency Key*: Terinjeksi otomatis pada mutasi CPOE order.
+     - *AC-6 Idempotent Replay*: Identical payload menghasilkan `isReplay: true` dan 0 duplikasi di DB.
+     - *AC-7 Idempotency Conflict*: Modified payload menghasilkan HTTP 409 Conflict.
+     - *AC-8 Fail-Closed Resilience*: Network/service fault mengembalikan error eksplisit tanpa kebocoran mock data.
+     - *AC-9 OCC Versioning*: Baseline version control siap menangani 409 Concurrent Modification.
+     - *AC-10 Multi-Domain SSOT*: Pengambilan data live melintasi BDRS, Staff, dan Patients langsung ke PostgreSQL.
+     - *AC-11 Zero-Trust Negative RBAC*: Cashier diblokir dengan status 403 saat mencoba mengakses Bank Darah.
+     - *AC-12 Refresh State Parity*: Cold re-fetch membuktikan konsistensi absolut dengan PostgreSQL.
+     - *AC-13 Double-Click Protection*: 2 click simultan dalam rentang milidetik menghasilkan tepat 1 transaksi di DB.
+     - *AC-14 24 Domain Coverage*: 100% gateway surface terverifikasi lengkap.
+     - *AC-15 Zero Legacy Envelope*: Bersih dari properti usang `success`, `result`, `count`, atau `payload`.
+
+### ⚡ [26 AGUSTUS 2026] — FASE 5A.4: CONCURRENT MUTATION SAFETY & EXACTLY-ONCE MUTATION SEMANTICS LOCKED (OCC VERSIONING, PESSIMISTIC ROW LOCKING, CANONICAL LOCK HIERARCHY & ZERO IN-MEMORY MUTEX FALLBACK)
+
+**Tag Rilis:** `fase-5a4-concurrency-safety-v1.0`  
+**Kategori:** `[MAJOR]` `[ARCHITECTURE]` `[SECURITY]` `[ENHANCEMENT]`  
+**Status Evidence:** 🟢 **`12/12 FASE 5A.4 CONCURRENCY SAFETY TESTS PASS (100%), 8/8 FASE 5A.3 TRANSACTION INTEGRITY TESTS PASS (100%), 9/9 FASE 5A.2 SHADOW STATE AUDIT PASS (100%), 8/8 FASE 5A.1 PILOT TESTS PASS (100%), 14/14 GATE 0C PERSONA REALITY TESTS PASS (100%), 4/4 NEGATIVE RBAC PROOF PASS (100%), GATE 0B POSTGRESQL 16 PERSISTENCE AUDIT PASS (100%), ZERO-REGRESSION LOCKED.`**
+
+1. **Dokumentasi Standar Hierarki Perolehan Kunci Kanonikal (`docs/FASE_5A4_CANONICAL_LOCK_HIERARCHY.md`):**
+   - Mengunci urutan akuisisi kunci bertingkat 7 Level ($\text{Tenant} \rightarrow \text{Patient} \rightarrow \text{Encounter} \rightarrow \text{Clinical Aggregate} \rightarrow \text{Physical/Financial Resource} \rightarrow \text{Audit} \rightarrow \text{Outbox}$) untuk mengeliminasi siklus kunci penyebab deadlock (`40P01`).
+2. **Pembangunan Master Concurrency Guard Service (`concurrencyGuard.service.js`):**
+   - Mengimplementasikan `concurrencyGuardService.updateWithVersionCheck` untuk Optimistic Concurrency Control (OCC) menggunakan klausa `WHERE id = $1 AND version = $expectedVersion` dan `version = version + 1`.
+   - Mengotomasi respons RFC 7807 HTTP 409 Conflict (`CONCURRENT_MODIFICATION`) ketika versi yang dikirimkan klien usang.
+   - Menyediakan metode `concurrencyGuardService.lockRow` untuk penguncian eksplisit (`SELECT ... FOR UPDATE`).
+3. **Penguatan Master Idempotency Guard Service (`idempotencyGuard.service.js`):**
+   - Menyediakan jaminan *In-Flight Row Lock & Insert-On-Conflict* di PostgreSQL.
+   - Menjamin *Deterministic Replay* untuk *Same Key + Same Payload* dan penolakan HTTP 409 untuk *Same Key + Different Payload*.
+   - Menjamin tepat 1 mutasi efektif pada 10 request konkuren paralel.
+4. **Pencegahan Race Condition pada Resource Kritis (Bed, FEFO Stock, Financial Ledger):**
+   - Mengunci ranjang `master_beds` saat admisi/transfer untuk mencegah *double booking*.
+   - Mengunci batch `inventory_batches` saat kalkulasi FEFO & dispensing untuk menjamin stok tidak pernah menjadi minus (*anti-negative inventory*).
+   - Mengunci saldo `patient_deposit_ledgers` saat debit untuk mencegah penarikan berlebih (*anti-overdraw*).
+5. **Pembuktian Forensik 12 Acceptance Criteria (AC-1 s/d AC-12):**
+   - Membangun dan mengeksekusi [`scripts/verify_fase5a4_concurrency_safety.mjs`](file:///c:/Users/Mojo/NurseFlow-WebApp/scripts/verify_fase5a4_concurrency_safety.mjs) dengan hasil **12/12 PASS (100%)**:
+     - *AC-1 Concurrent Identical Mutation*: 10 parallel calls $\rightarrow$ Tepat 1 mutasi efektif di database, 9 replay terlayani.
+     - *AC-2 Deterministic Replay*: Same key + same payload $\rightarrow$ status code dan data identik.
+     - *AC-3 Payload Mismatch*: Same key + modified payload $\rightarrow$ HTTP 409 Conflict.
+     - *AC-4 Lost-Update Prevention*: Update dengan versi usang ditolak dengan HTTP 409 `CONCURRENT_MODIFICATION`.
+     - *AC-5 Pessimistic Row Lock*: `SELECT ... FOR UPDATE` berhasil menahan pembacaan paralel hingga transaksi komit.
+     - *AC-6 Anti-Double-Booking*: 20 admisi simultan untuk 1 ranjang $\rightarrow$ Tepat 1 `OCCUPIED`, 19 ditolak aman.
+     - *AC-7 Anti-Negative Stock*: 20 dispense simultan untuk batch berisi 5 obat $\rightarrow$ Tepat 5 sukses, 15 ditolak, sisa stok tepat 0 (tidak minus).
+     - *AC-8 Anti-Overdraw*: 10 debit simultan masing-masing Rp 300k pada saldo Rp 500k $\rightarrow$ Tepat 1 debit berhasil, 9 ditolak, saldo akhir Rp 200k.
+     - *AC-9 Deadlock Prevention*: 50 transaksi paralel multi-tabel kanonikal selesai tanpa satupun deadlock (`40P01`).
+     - *AC-10 Atomic Audit & Outbox*: 1:1:1 korelasi presisi pada seluruh mutasi sukses.
+     - *AC-11 Multi-Instance Parity*: Terbukti konsisten melintasi 3 koneksi independen tanpa dependensi *in-memory mutex*.
+     - *AC-12 Full Regression*: 100% lulus seluruh suite 5A.1–5A.3, Gate 0B, Gate 0C, Negative RBAC, dan Vite Build.
+
+### ⚡ [26 AGUSTUS 2026] — FASE 5A.3: TRANSACTION INTEGRITY & ATOMIC COMMIT BOUNDARY LOCKED (CENTRAL UNIT OF WORK, STRICT SINGLE CONNECTION DISCIPLINE & FAIL-STOP ZERO PARTIAL PERSISTENCE)
+**Tag Rilis:** `fase-5a3-transaction-integrity-v1.0`  
+**Kategori:** `[MAJOR]` `[ARCHITECTURE]` `[SECURITY]` `[ENHANCEMENT]`  
+**Status Evidence:** 🟢 **`8/8 FASE 5A.3 TRANSACTION INTEGRITY TESTS PASS (100%), 9/9 FASE 5A.2 SHADOW STATE AUDIT PASS (100%), 8/8 FASE 5A.1 PILOT TESTS PASS (100%), 14/14 GATE 0C PERSONA REALITY TESTS PASS (100%), 4/4 NEGATIVE RBAC PROOF PASS (100%), GATE 0B POSTGRESQL 16 PERSISTENCE AUDIT PASS (100%), ZERO-REGRESSION LOCKED.`**
+
+1. **Pembangunan Abstraksi Central Unit of Work (`transactionManager.js`):**
+   - Mengimplementasikan `transactionManager.withTransaction(options, callback)` di [`server/db/transactionManager.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/db/transactionManager.js) dengan jaminan *Single Connection Discipline*.
+   - Menyediakan metode atomik terpadu: `tx.query()`, `tx.audit()`, dan `tx.outbox()`.
+   - Mengotomasi `BEGIN ... COMMIT` dengan penanganan `ROLLBACK` dan pembebasan koneksi (`client.release()`) secara deterministik.
+2. **Standardisasi Master Repositories Terikat Transaksi:**
+   - Membangun [`server/repositories/audit.repository.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/repositories/audit.repository.js) untuk pencatatan WORM audit trail ke `universal_audit_logs` langsung di dalam konteks `tx`.
+   - Membangun [`server/repositories/outbox.repository.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/repositories/outbox.repository.js) untuk pendaftaran event domain ke `clinical_domain_outbox` (*Atomic Creation of Intent*).
+3. **Dokumentasi Matriks Batas Transaksi 10 Domain Kritis:**
+   - Menyusun [`docs/FASE_5A3_TRANSACTION_BOUNDARY_MATRIX.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/FASE_5A3_TRANSACTION_BOUNDARY_MATRIX.md) yang merinci tabel mutasi, invariant bisnis, locking strategy (`FOR UPDATE`), audit WORM, event outbox, dan skenario pembuktian rollback untuk: CPOE, Clinical Notes, ADT, Closed-Loop Meds/FEFO, Blood Bank, Operating Theatre, RIS/PACS, LIS, Emergency Triage, dan Patient Billing.
+4. **Refaktorisasi Vertical Slice CPOE Service:**
+   - Memodernisasi [`server/services/cpoeApplication.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/cpoeApplication.service.js) untuk mengeksekusi pembuatan order CPOE secara atomik melalui `transactionManager.withTransaction`.
+5. **Pembuktian Forensik 8 Acceptance Criteria (AC-1 s/d AC-8):**
+   - Membangun dan mengeksekusi [`scripts/verify_fase5a3_transaction_integrity.mjs`](file:///c:/Users/Mojo/NurseFlow-WebApp/scripts/verify_fase5a3_transaction_integrity.mjs) dengan hasil **8/8 PASS (100%)**:
+     - *AC-1 Full Commit Proof*: Mutasi bisnis + WORM audit + domain outbox serentak committed.
+     - *AC-2 Business Rollback*: Invariant error memicu zero partial persistence (0 order rows).
+     - *AC-3 Audit Rollback*: Kegagalan audit WORM membatalkan seluruh mutasi bisnis.
+     - *AC-4 Outbox Rollback*: Kegagalan outbox membatalkan mutasi bisnis dan audit log.
+     - *AC-5 Connection Discipline*: 1 dedicated `pg.Client` (`pg_backend_pid()` identik sepanjang transaksi).
+     - *AC-6 No Orphan Outbox*: 100% referential integrity terjamin pada `clinical_domain_outbox`.
+     - *AC-7 Engine Abort*: Simulasi crash/abort tertangani bersih tanpa dangling locks/deadlocks.
+     - *AC-8 E2E Application Service*: Pembuatan CPOE order end-to-end terbukti atomik 100%.
+
+### ⚡ [26 AGUSTUS 2026] — FASE 5A.2: POSTGRESQL 16 AUTHORITY & ZERO SHADOW STATE LOCKED (ELIMINASI TOTAL IN-MEMORY FALLBACK & FAIL-CLOSED ENFORCEMENT)
+**Tag Rilis:** `fase-5a2-postgresql-authority-v1.0`  
+**Kategori:** `[MAJOR]` `[ARCHITECTURE]` `[SECURITY]` `[ENHANCEMENT]`  
+**Status Evidence:** 🟢 **`9/9 FASE 5A.2 FORENSIC AUDIT TESTS PASS (100%), 8/8 FASE 5A.1 PILOT TESTS PASS (100%), 14/14 GATE 0C PERSONA REALITY TESTS PASS (100%), 4/4 NEGATIVE RBAC PROOF PASS (100%), GATE 0B POSTGRESQL 16 PERSISTENCE AUDIT PASS (100%), ZERO-REGRESSION LOCKED.`**
+
+1. **Eliminasi 100% Dual-Mode & In-Memory Fallback di 22 Controllers:**
+   - Memburu dan mematikan seluruh blok `catch` yang sebelumnya menyajikan mock/in-memory fixture (`source: 'IN_MEMORY_FALLBACK'`) pada:
+     - [`server/controllers/bloodBank.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/bloodBank.controller.js): Eliminasi fallback memori & dual-write mirror.
+     - [`server/controllers/appointment.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/appointment.controller.js): Eliminasi fallback booking slot memori & dual-write mirror.
+     - [`server/controllers/staffPrivileging.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/staffPrivileging.controller.js): Eliminasi fallback profil staf & verifikasi STR/SIP memori.
+     - [`server/controllers/enterpriseInventory.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/enterpriseInventory.controller.js): Eliminasi fallback batch stok obat & stock movement memori.
+     - [`server/controllers/commandCenter.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/commandCenter.controller.js): Menggantikan mock capacity metrics dengan real-time query PostgreSQL `master_beds`, `encounters`, `hospital_invoices`, dan `universal_audit_logs`.
+     - [`server/controllers/satusehatStudio.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/satusehatStudio.controller.js): Eliminasi fallback in-memory log transmisi FHIR.
+2. **Penegakan Prinsip Fail-Closed (JCI Patient Safety Standard):**
+   - Ketika koneksi database gagal atau terputus, backend **WAJIB FAIL-CLOSED**:
+     - Mengembalikan respons standar IETF RFC 7807 `500 Internal Server Error` / `503 Service Unavailable` (`Content-Type: application/problem+json`).
+     - **DILARANG KERAS menyajikan data palsu/fixture** yang berisiko fatal terhadap keselamatan pasien (*patient safety*).
+3. **Penyelarasan Legacy Services ke PostgreSQL Authoritative:**
+   - Memodernisasi [`server/services/adtEngine.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/adtEngine.service.js): Mengganti `this.bedRegistry = new Map()` dengan mutasi atomik langsung ke tabel PostgreSQL `master_beds` dan `bed_assignments` dengan row-level lock `FOR UPDATE`.
+4. **Verifikasi 5 Vertical Slices Kritis & Paritas Multi-Instance (`scripts/audit_fase5a2_shadow_state.mjs`):**
+   - **Static AST & Grep Scan**: 22 file controller diverifikasi 100% bersih (0 fallback terdeteksi).
+   - **Persistence across Reboots**: Mutasi data di Koneksi A terbukti terbaca utuh dan konsisten oleh Koneksi B yang dingin.
+   - **Multi-Instance State Parity**: Dua instance terpisah mengamati jumlah encounter yang 100% identik di PostgreSQL.
+   - **Fail-Closed on DB Error**: Terbukti mengembalikan RFC 7807 problem details dan tidak membocorkan data mock.
+   - **5 Critical Slices Authoritative Verification**: ADT/Bed (205 ranjang), Universal CPOE (728k+ order), Clinical Notes (1M+ SOAP), Pharmacy/FEFO Batches (20 batch), dan Financial Deposits (9 ledger) diverifikasi langsung di PostgreSQL.
+
+---
+
+### ⚡ [26 AGUSTUS 2026] — FASE 5A.1 PILOT: CANONICAL API CONTRACT ({ DATA, META }), RFC 7807 PROBLEM DETAILS & POSTGRESQL 16 IDEMPOTENCY ENGINE LOCKED
+
+**Tag Rilis:** `fase-5a1-canonical-contract-pilot-v1.1`  
+**Kategori:** `[MAJOR]` `[FEATURE]` `[ARCHITECTURE]` `[SECURITY]`  
+**Status Evidence:** 🟢 **`8/8 FASE 5A.1 PILOT TESTS PASS (100%), 14/14 GATE 0C PERSONA REALITY TESTS PASS (100%), 4/4 NEGATIVE RBAC PROOF PASS (100%), GATE 0B POSTGRESQL 16 PERSISTENCE AUDIT PASS (100%), ZERO-REGRESSION LOCKED.`**
+
+1. **Standarisasi Kontrak REST API Kanonikal (`server/contracts/` & `server/utils/`):**
+   - Mengunci kontrak versi `1.0.0-FROZEN` pada [`server/contracts/apiResponse.contract.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/contracts/apiResponse.contract.js).
+   - Memodernisasi helper terpusat [`server/utils/apiResponse.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/utils/apiResponse.js):
+     - Single Entity: `{ data: { ... }, meta: { correlationId: "...", ... } }` (murni tanpa pembungkus ganda `data.data` dan tanpa legacy properties).
+     - Collection: `{ data: [ ... ], meta: { page: 1, pageSize: 20, total: 100, totalPages: 5, correlationId: "...", ... } }`.
+     - HTTP 204 No Content: Zero-body (`res.status(204).end()`) tanpa memaksakan envelope JSON.
+2. **Standardisasi Error RFC 7807 Problem Details Murni (`server/contracts/problemDetails.contract.js` & `server/middlewares/problemDetails.middleware.js`):**
+   - Menambahkan kelas error terstandarisasi: `ValidationError` (422), `NotFoundError` (404), `ConflictError` (409), `IdempotencyConflictError` (409), `UnauthorizedError` (401), dan `ForbiddenError` (403).
+   - Global middleware secara otomatis memformat seluruh unhandled exception, syntax error JSON, domain error, dan error HTTP menjadi format standar IETF RFC 7807:
+     `{ type, title, status, detail, instance, correlationId, code, errors }` dengan header `Content-Type: application/problem+json` dan `X-Correlation-ID`.
+   - Mengeliminasi format error legacy manual `{ success: false, error: ... }` pada controller.
+3. **Pemisahan Konseptual & Teknis: `X-Correlation-ID` vs `Idempotency-Key`:**
+   - **`X-Correlation-ID`**: Traceability, Observability, WORM Audit Trail, dan Outbox event correlation.
+   - **`Idempotency-Key`**: Replay protection & mutation deduplication dengan state tersimpan durable di tabel PostgreSQL 16 `idempotency_records` (`UNIQUE (tenant_id, actor_id, operation, idempotency_key)`).
+   - **Payload Hash Integrity**: SHA-256 hash checking otomatis menolak request dengan key sama namun payload berbeda via `HTTP 409 Conflict` (`IDEMPOTENCY_KEY_REUSE_WITH_DIFFERENT_PAYLOAD`).
+4. **Migrasi Pilot Slice Domain Klinis: Universal CPOE & Clinical Notes:**
+   - [`server/controllers/cpoe.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/cpoe.controller.js): Termigrasi 100% ke `respond.created()`, `respond.ok()`, `respond.collection()`, dan `next(err)`.
+   - [`server/controllers/clinicalNotes.controller.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/controllers/clinicalNotes.controller.js): SOAP note recording, SOAP amendment, CPPT entry, dan DPJP 24h CPPT verification termigrasi ke canonical response envelope dan RFC 7807 error handling.
+   - [`server/routes/orders.routes.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/routes/orders.routes.js): Seluruh compatibility routes termigrasi ke canonical contract.
+5. **Otomasi Pengujian Bukti Lapangan (`scripts/verify_fase5a1_contract_pilot.mjs`):**
+   - Menjalankan live test 8 skenario: RFC 7807 404, RFC 7807 Domain Validation, Canonical Success `{ data, meta }`, Idempotency Replay, 409 Payload Mismatch Conflict, Clinical Notes SOAP/CPPT, HTTP 204 Zero-Body, dan PostgreSQL DB State Integrity Verification (100% PASS).
+
+
+---
+**Tag Rilis:** `fase-5a-architecture-inventory-v1.0`  
+**Kategori:** `[MAJOR]` `[ARCHITECTURE]` `[SECURITY]` `[DOCS]`  
+**Status Evidence:** 🟢 **`GATE 0C FULLY LOCKED, FASE 5A ROADMAP ESTABLISHED ACROSS 8 WORKSTREAMS (5A.1 S/D 5A.8), STRICT ISOLATION MATRIX (READ COMMITTED + FOR UPDATE + OPTIMISTIC VERSIONING) MAPPED ACROSS 14 CLINICAL DOMAINS.`**
+
+1. **Pemetaan Inventaris Arsitektur 14 Domain Klinis & Endpoint Mutasi:**
+   - Menyusun berkas [`docs/FASE_5A_ARCHITECTURE_INVENTORY_AND_ROADMAP_2026.md`](file:///c:/Users/Mojo/NurseFlow-WebApp/docs/FASE_5A_ARCHITECTURE_INVENTORY_AND_ROADMAP_2026.md) sebagai panduan resmi batas transaksi (*transaction boundaries*) dan *concurrency locking*.
+2. **Penegakan 3 Guardrail Arsitektural Kritis:**
+   - **Guardrail 1 (Isolation Terkalibrasi):** Menggunakan `READ COMMITTED` sebagai default, `FOR UPDATE` untuk ranjang/stok/darah/kamar bedah, dan *optimistic locking* (`version`) untuk EMR/CPPT (menghindari *contention* dan *serialization retry storm* dari `SERIALIZABLE` global).
+   - **Guardrail 2 (Atomic In-Transaction Outbox):** Memastikan `clinical_domain_outbox` (`status = 'PENDING'`) di-insert dalam satu transaksi database atomik bersama mutasi bisnis (`BEGIN ... COMMIT`).
+   - **Guardrail 3 (Mandatory Idempotency Keys):** Mewajibkan header `Idempotency-Key` pada seluruh endpoint mutasi kritis finansial, alokasi ranjang, resep obat, dan CPOE.
+3. **Struktur 8 Workstream Sekuensial:**
+   - `5A.1` API Contract $\to$ `5A.2` Database Authority $\to$ `5A.3` Transaction Integrity $\to$ `5A.4` Concurrency & Idempotency $\to$ `5A.5` Outbox Consistency $\to$ `5A.6` Audit & Trace $\to$ `5A.7` FHIR Canonicalization $\to$ `5A.8` Reality Regression.
+4. **Penetapan Kebijakan Mutlak:**
+   - *"NO NEW FEATURE WITHOUT REALITY PROOF"*.
+
+---
+**Tag Rilis:** `gate-0c-final-locked-true-browser-reality-v1.0`  
+**Kategori:** `[MAJOR]` `[FEATURE]` `[SECURITY]` `[ARCHITECTURE]` `[BROWSER-EVIDENCE]`  
+**Status Evidence:** 🟢 **`175/175 TEST SUITES PASS (1.727/1.727 TESTS 100% PASS), 14/14 PERSONAS BROWSER WORKSPACE VISITED & SCREENSHOTTED, 4/4 DIRECT NEGATIVE RBAC ATTACKS BLOCKED (HTTP 403 & 0 POSTGRESQL MUTATION), SESSION DURABILITY & F5 LIFECYCLE 100% VERIFIED.`**
+
+1. **Gate 0C-B True Browser Reality Execution (14 Personas):**
+   - Menjalankan live frontend React 19 (`http://localhost:5173`) dan Express API Gateway (`http://localhost:5000`) yang terhubung langsung ke PostgreSQL 16.
+   - Menguji dan mendokumentasikan 14 persona rumah sakit nyata yang login, mendarat di workspace operasional masing-masing, memvalidasi elemen DOM, dan menyimpan bukti tangkapan layar di `docs/screenshots/`:
+     1. `DOCTOR`: `/doctor-workspace` (`persona_01_doctor.png`)
+     2. `NURSE`: `/nursing-workspace` (`persona_02_nurse.png`)
+     3. `PHARMACIST`: `/pharmacy-enterprise` (`persona_03_pharmacist.png`)
+     4. `CASHIER`: `/billing` (`persona_04_cashier.png`)
+     5. `CASEMIX_CODER`: `/billing` (`persona_05_casemix_coder.png`)
+     6. `LAB_ANALYST`: `/lab` (`persona_06_lab_analyst.png`)
+     7. `RADIOLOGIST`: `/radiology` (`persona_07_radiologist.png`)
+     8. `BLOOD_BANK_OFFICER`: `/blood-bank` (`persona_08_blood_bank.png`)
+     9. `SURGEON`: `/operating-theatre` (`persona_09_surgeon.png`)
+     10. `ANESTHESIOLOGIST`: `/operating-theatre` (`persona_10_anesthesiologist.png`)
+     11. `OR_NURSE`: `/operating-theatre` (`persona_11_or_nurse.png`)
+     12. `ICU_NURSE`: `/icu-acuity` (`persona_12_icu_nurse.png`)
+     13. `CLINICAL_DIRECTOR`: `/command-center` (`persona_13_clinical_director.png`)
+     14. `ADMIN`: `/master-data` (`persona_14_admin.png`)
+2. **Gate 0C-C Zero-Trust 2-Layer Negative RBAC Enforcement:**
+   - **Lapis 1 (Browser Route Guard):** Percobaan akses address bar oleh `CASHIER` ke `/doctor-workspace` dan `/admin/master-data` langsung diblokir dan dialihkan kembali (`08_cashier_blocked_from_doctor_workspace.png`, `09_cashier_blocked_from_admin_master_data.png`).
+   - **Lapis 2 (Backend API & DB Guard):** Serangan langsung (*direct API bypass*) dengan token Cashier, Nurse, Doctor, dan Pharmacist ke domain non-otoritas ditolak dengan `HTTP 403 Forbidden` dan diverifikasi menghasilkan **0 baris mutasi di tabel PostgreSQL** (`scripts/verify_negative_rbac_proof.mjs`).
+3. **Gate 0C-D Session Durability & Re-login Lifecycle:**
+   - Login Doctor $\to$ F5 Refresh $\to$ Sesi bertahan utuh (`05_doctor_after_f5_refresh.png`).
+   - Logout $\to$ Sesi dibersihkan dari penyimpanan lokal $\to$ Redirect `/login`.
+   - F5 Post-Logout $\to$ Pengguna terbukti tetap anonim tanpa kebocoran hak akses (`06_logged_out_after_f5.png`).
+4. **Klasifikasi Perubahan Kode Produksi:**
+   - Menambahkan guard `requireRole` pada `server/routes/patientFinancialAndRevenueCycle.routes.js` dan menambahkan peran `CLINICAL_DIRECTOR` pada `src/routes/admin.routes.jsx`. Kategori: `[FIX]` & `[ENHANCEMENT]`, **0 test-only workarounds**.
+
+---
 **Tag Rilis:** `gate-0c-14-persona-reality-and-fail-closed-v1.0`  
 **Kategori:** `[MAJOR]` `[FEATURE]` `[SECURITY]` `[ARCHITECTURE]` `[CLINICAL-WORKFLOW]`  
 **Status Evidence:** 🟢 **`175/175 TEST SUITES PASS (1.727/1.727 TESTS 100% PASS), 24/24 GATE 0C SCENARIOS PASS (14/14 PERSONAS REALITY PASS, 6/6 CROSS-PERSONA HANDOFF PASS, 4/4 FAIL-CLOSED DISCONNECT PASS), ZERO REGRESSION ACROSS VS-01 S/D VS-13.`**

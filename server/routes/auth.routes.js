@@ -65,6 +65,8 @@ router.post('/refresh', (req, res) => {
   }
 });
 
+import { respond } from '../utils/apiResponse.js';
+
 // POST /api/v1/auth/logout
 router.post('/logout', authenticateJwt, (req, res) => {
   const authHeader = req.headers['authorization'];
@@ -76,11 +78,9 @@ router.post('/logout', authenticateJwt, (req, res) => {
     res.clearCookie('access_token');
   }
 
-  return res.json({
-    success: true,
-    message: 'Sesi berhasil diakhiri dan token telah dicabut (Revoked).'
-  });
+  return respond.noContent(res);
 });
+
 
 // GET /api/v1/auth/me
 router.get('/me', authenticateJwt, (req, res) => {

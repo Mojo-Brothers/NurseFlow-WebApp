@@ -33,6 +33,9 @@ import satusehatStudioRoutes from './routes/satusehatStudio.routes.js';
 import commandCenterRoutes from './routes/commandCenter.routes.js';
 
 import { observabilityMiddleware } from './middlewares/observabilityMiddleware.js';
+import { correlationIdMiddleware } from './middlewares/correlationId.middleware.js';
+import { problemDetailsMiddleware } from './middlewares/problemDetails.middleware.js';
+import { PROBLEM_TYPES } from './contracts/problemDetails.contract.js';
 import { healthCheckService } from './services/healthCheck.service.js';
 import { metricsService } from './services/metrics.service.js';
 
@@ -42,12 +45,11 @@ const PORT = process.env.PORT || 5000;
 // ─── Middleware Foundation ───
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(correlationIdMiddleware);
 app.use(observabilityMiddleware);
 
-// Security & Audit Correlation Interceptor
+// Security Headers Interceptor
 app.use((req, res, next) => {
-  req.correlationId = req.headers['x-correlation-id'] || `CORR-${Date.now()}`;
-  res.setHeader('X-Correlation-ID', req.correlationId);
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   next();
@@ -104,15 +106,24 @@ app.use('/api/v1', medicationKnowledgeRoutes);
 app.use('/api/v1', cdssRoutes);
 app.use('/dicomweb', dicomwebRoutes);
 
-// Global 404 & Error Handler
+// Global 404 Handler (RFC 7807)
 app.use((req, res) => {
-  res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'API Endpoint tidak ditemukan.' });
+  const correlationId = req.correlationId || req.headers['x-correlation-id'] || `CORR-${Date.now()}`;
+  res.setHeader('Content-Type', 'application/problem+json');
+  res.setHeader('X-Correlation-ID', correlationId);
+  res.status(404).json({
+    type: PROBLEM_TYPES.NOT_FOUND,
+    title: 'Resource Not Found',
+    status: 404,
+    detail: `API Endpoint [${req.method} ${req.originalUrl}] tidak ditemukan.`,
+    instance: req.originalUrl,
+    correlationId,
+    code: 'NOT_FOUND'
+  });
 });
 
-app.use((err, req, res, next) => {
-  console.error('[ServerError]', err);
-  res.status(500).json({ success: false, error: 'INTERNAL_SERVER_ERROR', message: err.message });
-});
+// Master RFC 7807 Problem Details Global Error Middleware
+app.use(problemDetailsMiddleware);
 
 if (process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1].includes('server'))) {
   app.listen(PORT, () => {
@@ -120,4 +131,5 @@ if (process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1]
   });
 }
 
+export { app };
 export default app;

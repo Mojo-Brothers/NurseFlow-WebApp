@@ -11,10 +11,9 @@ import { hospitalFormularyService } from '../services/hospitalFormulary.service.
 import { authenticateJwt } from '../middlewares/authMiddleware.js';
 
 const router = express.Router();
-router.use(authenticateJwt);
 
 // ─── 1. Master Medications Endpoints ───
-router.get('/medications', async (req, res, next) => {
+router.get('/medications', authenticateJwt, async (req, res, next) => {
   try {
     const { search, drugClass, isHighAlert, status, limit, offset } = req.query;
     const result = await medicationKnowledgeBaseService.getMedications({
@@ -31,7 +30,7 @@ router.get('/medications', async (req, res, next) => {
   }
 });
 
-router.get('/medications/:id', async (req, res, next) => {
+router.get('/medications/:id', authenticateJwt, async (req, res, next) => {
   try {
     const med = await medicationKnowledgeBaseService.getMedicationById(req.params.id);
     if (!med) {
@@ -43,7 +42,7 @@ router.get('/medications/:id', async (req, res, next) => {
   }
 });
 
-router.post('/medications', async (req, res, next) => {
+router.post('/medications', authenticateJwt, async (req, res, next) => {
   try {
     const created = await medicationKnowledgeBaseService.createMedication(req.body);
     res.status(201).json({ success: true, data: created });
@@ -52,7 +51,7 @@ router.post('/medications', async (req, res, next) => {
   }
 });
 
-router.put('/medications/:id', async (req, res, next) => {
+router.put('/medications/:id', authenticateJwt, async (req, res, next) => {
   try {
     const updated = await medicationKnowledgeBaseService.updateMedication(req.params.id, req.body);
     res.json({ success: true, data: updated });
@@ -61,7 +60,7 @@ router.put('/medications/:id', async (req, res, next) => {
   }
 });
 
-router.patch('/medications/:id/archive', async (req, res, next) => {
+router.patch('/medications/:id/archive', authenticateJwt, async (req, res, next) => {
   try {
     const { reason } = req.body;
     const archived = await medicationKnowledgeBaseService.archiveMedication(req.params.id, reason);
@@ -72,7 +71,7 @@ router.patch('/medications/:id/archive', async (req, res, next) => {
 });
 
 // Explicitly block hard DELETE
-router.delete('/medications/:id', (req, res) => {
+router.delete('/medications/:id', authenticateJwt, (req, res) => {
   res.status(405).json({
     success: false,
     error: 'METHOD_NOT_ALLOWED',
@@ -81,7 +80,7 @@ router.delete('/medications/:id', (req, res) => {
 });
 
 // ─── 2. Terminology Service Endpoints ───
-router.get('/terminologies/search', async (req, res, next) => {
+router.get('/terminologies/search', authenticateJwt, async (req, res, next) => {
   try {
     const { q, system } = req.query;
     const results = await terminologyService.searchTerminology({ query: q, system });
@@ -92,7 +91,7 @@ router.get('/terminologies/search', async (req, res, next) => {
 });
 
 // ─── 3. Patient Allergies Endpoints ───
-router.get('/patients/:patientId/allergies', async (req, res, next) => {
+router.get('/patients/:patientId/allergies', authenticateJwt, async (req, res, next) => {
   try {
     const { status } = req.query;
     const allergies = await patientAllergyService.getPatientAllergies(req.params.patientId, status);
@@ -102,7 +101,7 @@ router.get('/patients/:patientId/allergies', async (req, res, next) => {
   }
 });
 
-router.post('/patients/:patientId/allergies', async (req, res, next) => {
+router.post('/patients/:patientId/allergies', authenticateJwt, async (req, res, next) => {
   try {
     const created = await patientAllergyService.recordAllergy({
       ...req.body,
@@ -115,7 +114,7 @@ router.post('/patients/:patientId/allergies', async (req, res, next) => {
   }
 });
 
-router.patch('/patients/:patientId/allergies/:allergyId', async (req, res, next) => {
+router.patch('/patients/:patientId/allergies/:allergyId', authenticateJwt, async (req, res, next) => {
   try {
     const { action, mutationData, reason, actorId } = req.body;
     if (action === 'VOID') {
@@ -130,7 +129,7 @@ router.patch('/patients/:patientId/allergies/:allergyId', async (req, res, next)
 });
 
 // ─── 4. Hospital Formulary Endpoints ───
-router.get('/formulary', async (req, res, next) => {
+router.get('/formulary', authenticateJwt, async (req, res, next) => {
   try {
     const { tier, status, organizationId } = req.query;
     const list = await hospitalFormularyService.getFormulary({ tier, status, organizationId });
@@ -140,7 +139,7 @@ router.get('/formulary', async (req, res, next) => {
   }
 });
 
-router.post('/formulary', async (req, res, next) => {
+router.post('/formulary', authenticateJwt, async (req, res, next) => {
   try {
     const created = await hospitalFormularyService.addDrugToFormulary(req.body);
     res.status(201).json({ success: true, data: created });
@@ -149,7 +148,7 @@ router.post('/formulary', async (req, res, next) => {
   }
 });
 
-router.patch('/formulary/:id', async (req, res, next) => {
+router.patch('/formulary/:id', authenticateJwt, async (req, res, next) => {
   try {
     const updated = await hospitalFormularyService.updateFormularyEntry(req.params.id, req.body);
     res.json({ success: true, data: updated });

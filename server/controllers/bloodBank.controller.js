@@ -47,16 +47,17 @@ export const bloodBankController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('BLOOD_BANK_PG_FETCH_FALLBACK', { error: error.message });
-      const units = Array.from(bloodBankService.units.values());
-      return res.status(200).json({
-        success: true,
-        data: units,
-        total: units.length,
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('BLOOD_BANK_PG_FETCH_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
+
 
   /**
    * POST /api/v1/blood-bank/units
@@ -140,27 +141,9 @@ export const bloodBankController = {
         await client.query('COMMIT;');
 
         const created = result.rows[0];
-        // Mirror in memory
-        try {
-          bloodBankService.registerBloodUnit({
-            id: created.id,
-            tenantId,
-            unitNumber: created.unit_number,
-            productType: created.product_type,
-            aboType: created.abo_type,
-            rhesusType: created.rhesus_type,
-            volumeMl: created.volume_ml,
-            donationDate: created.donation_date,
-            expiryDate: created.expiry_date,
-            storageTemperatureCelsius: created.storage_temperature_celsius,
-            storageLocation: created.storage_location,
-            screeningStatus: created.screening_status
-          });
-        } catch (e) {
-          // ignore
-        }
 
         return res.status(201).json({
+
           success: true,
           data: {
             id: created.id,

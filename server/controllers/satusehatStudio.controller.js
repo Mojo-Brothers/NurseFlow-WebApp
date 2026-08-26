@@ -46,16 +46,17 @@ export const satusehatStudioController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('SATUSEHAT_LOGS_FALLBACK', { error: error.message });
-      const logs = satusehatFhirStudioService.getTransmissionLogs();
-      return res.status(200).json({
-        success: true,
-        data: logs,
-        total: logs.length,
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('SATUSEHAT_LOGS_FETCH_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
+
 
   /**
    * GET /api/v1/satusehat/token

@@ -21,7 +21,7 @@ export const adminRoutes = (Wrap) => [
     ]
   },
   {
-    element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR', 'HOSPITAL_DIRECTOR', 'EXECUTIVE']} />,
+    element: <ProtectedRoute allowedRoles={['ADMIN', 'SUPERVISOR', 'HOSPITAL_DIRECTOR', 'EXECUTIVE', 'CLINICAL_DIRECTOR']} />,
     children: [
       { path: "/command-center", element: <Wrap><HospitalCentralCommandCenterPage /></Wrap> },
       { path: "/executive-cockpit", element: <Wrap><HospitalCentralCommandCenterPage /></Wrap> }

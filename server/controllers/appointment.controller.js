@@ -47,16 +47,17 @@ export const appointmentController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('APPOINTMENT_PG_FETCH_FALLBACK', { error: error.message });
-      const appointments = Array.from(appointmentQueueService.appointments.values());
-      return res.status(200).json({
-        success: true,
-        data: appointments,
-        total: appointments.length,
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('APPOINTMENT_PG_FETCH_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
+
 
   /**
    * POST /api/v1/appointments/book
@@ -198,18 +199,9 @@ export const appointmentController = {
         await client.query('COMMIT;');
 
         const created = result.rows[0];
-        // Mirror in memory
-        appointmentQueueService.bookAppointment({
-          id: created.id,
-          patientId: created.patient_id,
-          doctorId: created.doctor_id,
-          doctorName: created.doctor_name,
-          departmentId: created.department_id,
-          appointmentDate: created.appointment_date,
-          slotTime: created.slot_time
-        });
 
         return res.status(201).json({
+
           success: true,
           data: {
             id: created.id,

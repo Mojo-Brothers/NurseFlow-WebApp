@@ -1,7 +1,10 @@
 /**
  * NurseFlow Enterprise HIS 2026 — Admission, Discharge, Transfer (ADT) & Bed Management Engine
  * Standar: JCI International Patient Safety Goals (IPSG) & HL7 ADT Message Specifications (A01, A02, A03)
+ * Authoritative: PostgreSQL 16 ACID Persistence Layer
  */
+
+import { postgresPoolService } from '../db/postgresPool.js';
 
 export const ADT_EVENT_TYPES = {
   ADMIT: 'A01_ADMIT_PATIENT',
@@ -11,119 +14,175 @@ export const ADT_EVENT_TYPES = {
 };
 
 class AdtEngineService {
-  constructor() {
-    this.bedRegistry = new Map(); // BedId -> Bed State
-    this.activeOccupancies = new Map(); // EncounterId -> BedOccupancy Context
+  /**
+   * 1. ADMIT PATIENT (HL7 A01) — PostgreSQL Authoritative
+   */
+  async admitPatient({ encounterId, patientId, patientName, targetBedId, admittingDoctorName, wardName = 'Ruang Inap Melati 3A' }) {
+    const pool = postgresPoolService.getPool();
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN ISOLATION LEVEL READ COMMITTED;');
+
+      const bedRes = await client.query('SELECT * FROM master_beds WHERE id = $1 FOR UPDATE;', [targetBedId]);
+      if (bedRes.rows.length === 0) {
+        throw new Error(`Bed ${targetBedId} tidak ditemukan di database master.`);
+      }
+
+      const bed = bedRes.rows[0];
+      if (bed.bed_status !== 'AVAILABLE') {
+        throw new Error(`Bed ${targetBedId} tidak dapat digunakan. Status saat ini: ${bed.bed_status}`);
+      }
+
+      await client.query(`
+        UPDATE master_beds
+        SET bed_status = 'OCCUPIED', updated_at = NOW()
+        WHERE id = $1;
+      `, [targetBedId]);
+
+      await client.query(`
+        INSERT INTO bed_occupancies (
+          id, tenant_id, bed_id, patient_id, encounter_id, check_in_time, occupancy_status, admitting_doctor_name, created_at
+        ) VALUES (
+          uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', $1, $2, $3, NOW(), 'ACTIVE', $4, NOW()
+        );
+      `, [targetBedId, patientId, encounterId, admittingDoctorName || 'ADM-OFFICER']);
+
+      await client.query('COMMIT;');
+
+      return {
+        success: true,
+        event: ADT_EVENT_TYPES.ADMIT,
+        occupancy: {
+          bedId: targetBedId,
+          encounterId,
+          patientId,
+          patientName,
+          wardName,
+          status: 'OCCUPIED'
+        },
+        message: `Pasien ${patientName} berhasil di-ADMIT ke Bed ${targetBedId} (${wardName}) di PostgreSQL.`
+      };
+    } catch (err) {
+      await client.query('ROLLBACK;');
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * 1. ADMIT PATIENT (HL7 A01)
+   * 2. TRANSFER PATIENT (HL7 A02) — PostgreSQL Authoritative
    */
-  admitPatient({ encounterId, patientId, patientName, targetBedId, admittingDoctorName, wardName = 'Ruang Inap Melati 3A' }) {
-    // Check if bed is available
-    const currentBedStatus = this.bedRegistry.get(targetBedId)?.status || 'AVAILABLE';
-    if (currentBedStatus !== 'AVAILABLE') {
-      throw new Error(`Bed ${targetBedId} tidak dapat digunakan. Status saat ini: ${currentBedStatus}`);
-    }
+  async transferPatient({ encounterId, fromBedId, toBedId, targetWardName = 'Ruang Inap ICU', transferReason, transferredBy }) {
+    const pool = postgresPoolService.getPool();
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN ISOLATION LEVEL READ COMMITTED;');
 
-    // Lock Bed & Create Occupancy Record
-    this.bedRegistry.set(targetBedId, { status: 'OCCUPIED', patientId, encounterId, wardName });
-    const occupancy = {
-      occupancyId: `OCC-${Date.now()}`,
-      encounterId,
-      patientId,
-      patientName,
-      bedId: targetBedId,
-      wardName,
-      admittingDoctorName,
-      checkInTime: new Date().toISOString(),
-      status: 'ACTIVE'
-    };
+      // Release From Bed
+      await client.query(`
+        UPDATE master_beds
+        SET bed_status = 'CLEANING', updated_at = NOW()
+        WHERE id = $1;
+      `, [fromBedId]);
 
-    this.activeOccupancies.set(encounterId, occupancy);
+      await client.query(`
+        UPDATE bed_occupancies
+        SET occupancy_status = 'TRANSFERRED', check_out_time = NOW()
+        WHERE bed_id = $1 AND encounter_id = $2 AND occupancy_status = 'ACTIVE';
+      `, [fromBedId, encounterId]);
 
-    return {
-      success: true,
-      event: ADT_EVENT_TYPES.ADMIT,
-      occupancy,
-      message: `Pasien ${patientName} berhasil di-ADMIT ke Bed ${targetBedId} (${wardName}).`
-    };
-  }
+      // Lock & Occupy Target Bed
+      const targetBedRes = await client.query('SELECT * FROM master_beds WHERE id = $1 FOR UPDATE;', [toBedId]);
+      if (targetBedRes.rows.length === 0 || targetBedRes.rows[0].bed_status !== 'AVAILABLE') {
+        throw new Error(`Bed tujuan ${toBedId} sedang tidak tersedia.`);
+      }
 
-  /**
-   * 2. TRANSFER PATIENT (HL7 A02)
-   */
-  transferPatient({ encounterId, fromBedId, toBedId, targetWardName = 'Ruang Inap ICU', transferReason, transferredBy }) {
-    const activeOccupancy = this.activeOccupancies.get(encounterId);
-    if (!activeOccupancy) {
-      throw new Error(`Encounter ${encounterId} tidak memiliki riwayat occupancy rawat inap aktif.`);
-    }
+      await client.query(`
+        UPDATE master_beds
+        SET bed_status = 'OCCUPIED', updated_at = NOW()
+        WHERE id = $1;
+      `, [toBedId]);
 
-    const targetBedStatus = this.bedRegistry.get(toBedId)?.status || 'AVAILABLE';
-    if (targetBedStatus !== 'AVAILABLE') {
-      throw new Error(`Bed tujuan ${toBedId} sedang tidak tersedia (${targetBedStatus}).`);
-    }
+      await client.query(`
+        INSERT INTO bed_occupancies (
+          id, tenant_id, bed_id, encounter_id, check_in_time, occupancy_status, admitting_doctor_name, created_at
+        ) VALUES (
+          uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', $1, $2, NOW(), 'ACTIVE', $3, NOW()
+        );
+      `, [toBedId, encounterId, transferredBy || 'NURSE-OFFICER']);
 
-    // Release From-Bed to CLEANING / AVAILABLE
-    this.bedRegistry.set(fromBedId, { status: 'CLEANING', patientId: null, encounterId: null });
+      await client.query('COMMIT;');
 
-    // Occupy New Bed
-    this.bedRegistry.set(toBedId, { status: 'OCCUPIED', patientId: activeOccupancy.patientId, encounterId });
-
-    activeOccupancy.bedId = toBedId;
-    activeOccupancy.wardName = targetWardName;
-    activeOccupancy.lastTransferredAt = new Date().toISOString();
-
-    return {
-      success: true,
-      event: ADT_EVENT_TYPES.TRANSFER,
-      transferLog: {
+      return {
+        success: true,
+        event: ADT_EVENT_TYPES.TRANSFER,
         fromBedId,
         toBedId,
         targetWardName,
-        transferReason,
-        transferredBy,
-        timestamp: new Date().toISOString()
-      },
-      currentOccupancy: activeOccupancy,
-      message: `Pasien berhasil di-TRANSFER dari ${fromBedId} ke ${toBedId} (${targetWardName}).`
-    };
+        message: `Pasien berhasil di-TRANSFER dari ${fromBedId} ke ${toBedId} di PostgreSQL.`
+      };
+    } catch (err) {
+      await client.query('ROLLBACK;');
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * 3. DISCHARGE PATIENT (HL7 A03)
+   * 3. DISCHARGE PATIENT (HL7 A03) — PostgreSQL Authoritative
    */
-  dischargePatient({ encounterId, dischargeType = 'PULANG_SEMBUH', dischargeDoctorName }) {
-    const activeOccupancy = this.activeOccupancies.get(encounterId);
-    if (!activeOccupancy) {
-      throw new Error(`Encounter ${encounterId} tidak ditemukan dalam daftar rawat inap aktif.`);
-    }
+  async dischargePatient({ encounterId, dischargeType = 'PULANG_SEMBUH', dischargeDoctorName }) {
+    const pool = postgresPoolService.getPool();
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN ISOLATION LEVEL READ COMMITTED;');
 
-    // Release Bed to CLEANING
-    this.bedRegistry.set(activeOccupancy.bedId, { status: 'CLEANING', patientId: null, encounterId: null });
-    activeOccupancy.status = 'DISCHARGED';
-    activeOccupancy.checkOutTime = new Date().toISOString();
-    activeOccupancy.dischargeType = dischargeType;
+      const occRes = await client.query(
+        'SELECT bed_id FROM bed_occupancies WHERE encounter_id = $1 AND occupancy_status = \'ACTIVE\';',
+        [encounterId]
+      );
 
-    this.activeOccupancies.delete(encounterId);
+      if (occRes.rows.length > 0) {
+        const bedId = occRes.rows[0].bed_id;
+        await client.query(`
+          UPDATE master_beds
+          SET bed_status = 'CLEANING', updated_at = NOW()
+          WHERE id = $1;
+        `, [bedId]);
 
-    return {
-      success: true,
-      event: ADT_EVENT_TYPES.DISCHARGE,
-      dischargedBedId: activeOccupancy.bedId,
-      dischargeSummary: {
+        await client.query(`
+          UPDATE bed_occupancies
+          SET occupancy_status = 'DISCHARGED', check_out_time = NOW(), discharge_type = $1
+          WHERE encounter_id = $2 AND occupancy_status = 'ACTIVE';
+        `, [dischargeType, encounterId]);
+      }
+
+
+      await client.query('COMMIT;');
+
+      return {
+        success: true,
+        event: ADT_EVENT_TYPES.DISCHARGE,
         encounterId,
         dischargeType,
-        dischargeDoctorName,
-        checkOutTime: activeOccupancy.checkOutTime
-      },
-      message: `Pasien berhasil di-DISCHARGE. Bed ${activeOccupancy.bedId} dialihkan ke status CLEANING.`
-    };
+        message: `Pasien berhasil di-DISCHARGE di PostgreSQL.`
+      };
+    } catch (err) {
+      await client.query('ROLLBACK;');
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
-  getBedStatus(bedId) {
-    return this.bedRegistry.get(bedId) || { status: 'AVAILABLE' };
+  async getBedStatus(bedId) {
+    const pool = postgresPoolService.getPool();
+    const res = await pool.query('SELECT bed_status FROM master_beds WHERE id = $1;', [bedId]);
+    return res.rows.length > 0 ? { status: res.rows[0].bed_status } : { status: 'AVAILABLE' };
   }
 }
 
 export const adtEngineService = new AdtEngineService();
+

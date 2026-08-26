@@ -65,16 +65,17 @@ export const enterpriseInventoryController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('INVENTORY_PG_FETCH_FALLBACK', { error: error.message });
-      const stock = inventoryManagementService.getWarehouseStock(warehouseId || 'WH-MAIN-PHARMACY', itemCode);
-      return res.status(200).json({
-        success: true,
-        data: stock,
-        total: stock.length,
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('INVENTORY_PG_FETCH_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
+
 
   /**
    * POST /api/v1/inventory/receive
@@ -411,14 +412,15 @@ export const enterpriseInventoryController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('INVENTORY_MOVEMENTS_FALLBACK', { error: error.message });
-      const movements = inventoryManagementService.movements || [];
-      return res.status(200).json({
-        success: true,
-        data: movements,
-        total: movements.length,
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('INVENTORY_MOVEMENTS_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   }
 };
+

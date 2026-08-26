@@ -1,12 +1,11 @@
 /**
  * NurseFlow Enterprise HIS 2026 — Master Staff Credentialing & Privileging Controller
  * Standards: JCI GLD & KARS KPS, KKI & Permenkes No. 755/2011 (Komite Medik & SPK/RKK)
- * Dual-Mode: Full PostgreSQL 16 ACID Persistence with database trigger enforcement
+ * Authoritative: Full PostgreSQL 16 ACID Persistence Layer (Zero Shadow State)
  */
 
 import crypto from 'crypto';
 import { postgresPoolService } from '../db/postgresPool.js';
-import { staffSchedulingService } from '../services/staffScheduling.service.js';
 import { structuredLoggerService } from '../services/structuredLogger.service.js';
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
@@ -43,13 +42,13 @@ export const staffPrivilegingController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('STAFF_PRIVILEGING_PG_FETCH_FALLBACK', { error: error.message });
-      const staffList = Array.from(staffSchedulingService.staffProfiles.values());
-      return res.status(200).json({
-        success: true,
-        data: staffList,
-        total: staffList.length,
-        source: 'IN_MEMORY_FALLBACK'
+      structuredLoggerService.error('STAFF_PRIVILEGING_PG_FETCH_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   },
@@ -107,33 +106,7 @@ export const staffPrivilegingController = {
         ]);
 
         await client.query('COMMIT;');
-
         const created = result.rows[0];
-        // Mirror in memory
-        try {
-          staffSchedulingService.registerStaffProfile({
-            id: rawId || created.id,
-            tenantId,
-            staffNumber: created.staff_number,
-            fullName: created.full_name,
-            staffCategory: created.staff_category,
-            primarySpecialty: created.primary_specialty,
-            primaryDepartmentId: created.primary_department_id
-          });
-          if (rawId && rawId !== created.id) {
-            staffSchedulingService.registerStaffProfile({
-              id: created.id,
-              tenantId,
-              staffNumber: created.staff_number,
-              fullName: created.full_name,
-              staffCategory: created.staff_category,
-              primarySpecialty: created.primary_specialty,
-              primaryDepartmentId: created.primary_department_id
-            });
-          }
-        } catch (e) {
-          // ignore memory sync error
-        }
 
         return res.status(201).json({
           success: true,
@@ -147,7 +120,7 @@ export const staffPrivilegingController = {
             employmentStatus: created.employment_status,
             isActive: created.is_active
           },
-          message: 'Staff profile successfully registered and persisted in PostgreSQL.'
+          message: 'Clinical staff profile successfully created and persisted in PostgreSQL database.'
         });
       } catch (dbErr) {
         await client.query('ROLLBACK;');
@@ -156,7 +129,7 @@ export const staffPrivilegingController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.error('STAFF_PRIVILEGING_CREATE_STAFF_ERROR', { error: error.message });
+      structuredLoggerService.error('STAFF_PRIVILEGING_CREATE_ERROR', { error: error.message });
       const statusCode = error.code === '23505' ? 409 : 400;
       return res.status(statusCode).json({
         success: false,
@@ -169,23 +142,23 @@ export const staffPrivilegingController = {
   /**
    * POST /api/v1/staff-privileges/credentials
    */
-  async addCredential(req, res) {
+  async registerCredential(req, res) {
     const tenantId = (req.user?.tenantId && isUUID(req.user.tenantId)) ? req.user.tenantId : DEFAULT_TENANT_ID;
-    const credId = isUUID(req.body?.id) ? req.body?.id : crypto.randomUUID();
-    const rawStaffId = req.body?.staff_id || req.body?.staffId;
-    const credentialType = req.body?.credential_type || req.body?.credentialType || 'STR';
-    const credentialNumber = req.body?.credential_number || req.body?.credentialNumber || `STR-${Date.now()}`;
-    const issuingAuthority = req.body?.issuing_authority || req.body?.issuingAuthority || 'Konsil Kedokteran Indonesia (KKI)';
-    const issuedAt = req.body?.issued_at || req.body?.issuedAt || req.body?.issuedDate || '2026-01-01';
-    const validFrom = req.body?.valid_from || req.body?.validFrom || '2026-01-01';
-    const validUntil = req.body?.valid_until || req.body?.validUntil || req.body?.expiryDate || '2030-01-01';
-    const verificationStatus = req.body?.verification_status || req.body?.verificationStatus || 'ACTIVE_VERIFIED';
 
-    if (!rawStaffId || !credentialNumber) {
+    const rawStaffId = req.body?.staff_id || req.body?.staffId;
+    const credentialType = req.body?.credential_type || req.body?.credentialType; // STR, SIP, RN_LICENSE
+    const credentialNumber = req.body?.credential_number || req.body?.credentialNumber;
+    const issuingAuthority = req.body?.issuing_authority || req.body?.issuingAuthority || 'KKI / Kemenkes RI';
+    const issuedAt = req.body?.issued_at || req.body?.issuedAt || '2024-01-01';
+    const validFrom = req.body?.valid_from || req.body?.validFrom || '2024-01-01';
+    const validUntil = req.body?.valid_until || req.body?.validUntil || '2029-01-01';
+    const verificationStatus = req.body?.verification_status || req.body?.verificationStatus || 'VERIFIED';
+
+    if (!rawStaffId || !credentialType || !credentialNumber) {
       return res.status(400).json({
         success: false,
         error: 'VALIDATION_FAILED',
-        message: 'staffId dan credentialNumber wajib disertakan.'
+        message: 'staff_id, credential_type, dan credential_number wajib diisi.'
       });
     }
 
@@ -195,38 +168,27 @@ export const staffPrivilegingController = {
       try {
         await client.query('BEGIN ISOLATION LEVEL READ COMMITTED;');
 
-        // Resolve staff ID
-        let realStaffId;
-        const staffLookup = await client.query(
-          'SELECT id FROM clinical_staff_profiles WHERE (id::text = $1 OR staff_number = $1) LIMIT 1;',
-          [rawStaffId]
-        );
-        if (staffLookup.rows.length > 0) {
-          realStaffId = staffLookup.rows[0].id;
+        let realStaffId = rawStaffId;
+        const staffCheck = await client.query('SELECT id FROM clinical_staff_profiles WHERE id::text = $1 OR staff_number = $1', [rawStaffId]);
+        if (staffCheck.rows.length > 0) {
+          realStaffId = staffCheck.rows[0].id;
         } else {
           realStaffId = isUUID(rawStaffId) ? rawStaffId : crypto.randomUUID();
           await client.query(`
-            INSERT INTO clinical_staff_profiles (id, tenant_id, staff_number, full_name, title_prefix, title_suffix, staff_category, primary_specialty, primary_department_id, is_active, created_at, updated_at)
-            VALUES ($1, $2, $3, 'dr. Tenaga Medis', 'dr.', 'Sp.B', 'SPECIALIST_DOCTOR', 'Bedah Umum', 'DEPT_BEDAH', true, NOW(), NOW())
-            ON CONFLICT (tenant_id, staff_number) DO NOTHING;
+            INSERT INTO clinical_staff_profiles (id, tenant_id, staff_number, full_name, staff_category, primary_specialty, primary_department_id, is_active, created_at, updated_at)
+            VALUES ($1, $2, $3, 'Auto Staff for Credential', 'DOCTOR_SPECIALIST', 'SURGERY', 'DEP-SURGERY', true, NOW(), NOW());
           `, [realStaffId, tenantId, rawStaffId]);
         }
 
+        const credId = isUUID(req.body?.id) ? req.body.id : crypto.randomUUID();
         const insertQuery = `
           INSERT INTO staff_credentials (
             id, tenant_id, staff_id, credential_type, credential_number,
-            issuing_authority, issued_at, valid_from, valid_until,
-            verification_status, verified_at, verified_by, created_at, updated_at
-          ) VALUES (
-            $1, $2, $3, $4, $5,
-            $6, $7, $8, $9,
-            $10, NOW(), 'Komite Kredensial', NOW(), NOW()
-          )
-          ON CONFLICT (tenant_id, staff_id, credential_type, credential_number)
-          DO UPDATE SET
-            verification_status = EXCLUDED.verification_status,
-            valid_until = EXCLUDED.valid_until,
-            updated_at = NOW()
+            issuing_authority, issued_at, valid_from, valid_until, verification_status,
+            created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+          ON CONFLICT (tenant_id, staff_id, credential_type, credential_number) DO UPDATE
+          SET valid_until = EXCLUDED.valid_until, verification_status = EXCLUDED.verification_status, updated_at = NOW()
           RETURNING *;
         `;
 
@@ -238,22 +200,6 @@ export const staffPrivilegingController = {
         await client.query('COMMIT;');
 
         const created = result.rows[0];
-        // Mirror in memory safely
-        try {
-          staffSchedulingService.registerCredential({
-            id: created.id,
-            tenantId,
-            staffId: rawStaffId,
-            credentialType: created.credential_type,
-            credentialNumber: created.credential_number,
-            issuedAt: created.issued_at,
-            validFrom: created.valid_from,
-            validUntil: created.valid_until,
-            verificationStatus: created.verification_status
-          });
-        } catch (e) {
-          // ignore memory sync error
-        }
 
         return res.status(201).json({
           success: true,
@@ -262,11 +208,10 @@ export const staffPrivilegingController = {
             staffId: created.staff_id,
             credentialType: created.credential_type,
             credentialNumber: created.credential_number,
-            validFrom: created.valid_from,
             validUntil: created.valid_until,
             verificationStatus: created.verification_status
           },
-          message: 'Clinical credential registered and persisted in PostgreSQL.'
+          message: 'Clinical credential (STR/SIP) successfully registered and persisted in PostgreSQL.'
         });
       } catch (dbErr) {
         await client.query('ROLLBACK;');
@@ -275,7 +220,7 @@ export const staffPrivilegingController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.error('STAFF_PRIVILEGING_ADD_CREDENTIAL_ERROR', { error: error.message });
+      structuredLoggerService.error('STAFF_PRIVILEGING_CREDENTIAL_ERROR', { error: error.message });
       return res.status(400).json({
         success: false,
         error: error.code || 'CREDENTIAL_REGISTRATION_FAILED',
@@ -285,25 +230,32 @@ export const staffPrivilegingController = {
   },
 
   /**
+   * Alias for addCredential -> registerCredential
+   */
+  async addCredential(req, res) {
+    return this.registerCredential(req, res);
+  },
+
+  /**
    * POST /api/v1/staff-privileges/privileges
    */
   async grantPrivilege(req, res) {
     const tenantId = (req.user?.tenantId && isUUID(req.user.tenantId)) ? req.user.tenantId : DEFAULT_TENANT_ID;
-    const privId = isUUID(req.body?.id) ? req.body?.id : crypto.randomUUID();
+
     const rawStaffId = req.body?.staff_id || req.body?.staffId;
-    const departmentId = req.body?.department_id || req.body?.departmentId || 'POLI_DALAM';
-    const procedureCode = req.body?.procedure_code || req.body?.procedureCode || 'PROC-EGD-01';
-    const procedureName = req.body?.procedure_name || req.body?.procedureName || 'Esophagogastroduodenoscopy (EGD)';
+    const departmentId = req.body?.department_id || req.body?.departmentId || 'DEP-SURGERY';
+    const procedureCode = req.body?.procedure_code || req.body?.procedureCode;
+    const procedureName = req.body?.procedure_name || req.body?.procedureName || 'General Clinical Procedure';
     const privilegeLevel = req.body?.privilege_level || req.body?.privilegeLevel || 'INDEPENDENT';
-    const effectiveFrom = req.body?.effective_from || req.body?.effectiveFrom || '2026-01-01';
+    const effectiveFrom = req.body?.effective_from || req.body?.effectiveFrom || '2024-01-01';
     const effectiveUntil = req.body?.effective_until || req.body?.effectiveUntil || '2029-01-01';
-    const spkDocNumber = req.body?.spk_document_number || req.body?.spkDocumentNumber || `SPK-MEDIK-${Date.now()}`;
+    const spkDocNumber = req.body?.spk_document_number || req.body?.spkDocumentNumber || `SPK-${Date.now()}`;
 
     if (!rawStaffId || !procedureCode) {
       return res.status(400).json({
         success: false,
         error: 'VALIDATION_FAILED',
-        message: 'staffId dan procedureCode wajib disertakan.'
+        message: 'staff_id dan procedure_code wajib diisi.'
       });
     }
 
@@ -313,39 +265,27 @@ export const staffPrivilegingController = {
       try {
         await client.query('BEGIN ISOLATION LEVEL READ COMMITTED;');
 
-        let realStaffId;
-        const staffLookup = await client.query(
-          'SELECT id FROM clinical_staff_profiles WHERE (id::text = $1 OR staff_number = $1) LIMIT 1;',
-          [rawStaffId]
-        );
-        if (staffLookup.rows.length > 0) {
-          realStaffId = staffLookup.rows[0].id;
+        let realStaffId = rawStaffId;
+        const staffCheck = await client.query('SELECT id FROM clinical_staff_profiles WHERE id::text = $1 OR staff_number = $1', [rawStaffId]);
+        if (staffCheck.rows.length > 0) {
+          realStaffId = staffCheck.rows[0].id;
         } else {
           realStaffId = isUUID(rawStaffId) ? rawStaffId : crypto.randomUUID();
           await client.query(`
-            INSERT INTO clinical_staff_profiles (id, tenant_id, staff_number, full_name, title_prefix, title_suffix, staff_category, primary_specialty, primary_department_id, is_active, created_at, updated_at)
-            VALUES ($1, $2, $3, 'dr. Tenaga Medis', 'dr.', 'Sp.B', 'SPECIALIST_DOCTOR', 'Bedah Umum', 'DEPT_BEDAH', true, NOW(), NOW())
-            ON CONFLICT (tenant_id, staff_number) DO NOTHING;
-          `, [realStaffId, tenantId, rawStaffId]);
+            INSERT INTO clinical_staff_profiles (id, tenant_id, staff_number, full_name, staff_category, primary_specialty, primary_department_id, is_active, created_at, updated_at)
+            VALUES ($1, $2, $3, 'Auto Staff for Privilege', 'DOCTOR_SPECIALIST', 'SURGERY', $4, true, NOW(), NOW());
+          `, [realStaffId, tenantId, rawStaffId, departmentId]);
         }
 
+        const privId = isUUID(req.body?.id) ? req.body.id : crypto.randomUUID();
         const insertQuery = `
           INSERT INTO clinical_privileges (
             id, tenant_id, staff_id, department_id, procedure_code,
-            procedure_name, privilege_level, effective_from, effective_until,
-            privilege_status, approved_by_komite_medik_id, approved_by_komite_medik_name,
-            spk_document_number, granted_at, created_at, updated_at
-          ) VALUES (
-            $1, $2, $3, $4, $5,
-            $6, $7, $8, $9,
-            'ACTIVE', 'KM-001', 'dr. Sp.B Ketua Komite Medik',
-            $10, NOW(), NOW(), NOW()
-          )
-          ON CONFLICT (tenant_id, staff_id, department_id, procedure_code)
-          DO UPDATE SET
-            privilege_status = 'ACTIVE',
-            effective_until = EXCLUDED.effective_until,
-            updated_at = NOW()
+            procedure_name, privilege_level, effective_from, effective_until, spk_document_number,
+            privilege_status, created_at, updated_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'ACTIVE', NOW(), NOW())
+          ON CONFLICT (tenant_id, staff_id, procedure_code) DO UPDATE
+          SET privilege_level = EXCLUDED.privilege_level, effective_until = EXCLUDED.effective_until, privilege_status = 'ACTIVE', updated_at = NOW()
           RETURNING *;
         `;
 
@@ -357,23 +297,6 @@ export const staffPrivilegingController = {
         await client.query('COMMIT;');
 
         const created = result.rows[0];
-        // Mirror in memory safely
-        try {
-          staffSchedulingService.grantClinicalPrivilege({
-            id: created.id,
-            tenantId,
-            staffId: rawStaffId,
-            departmentId: created.department_id,
-            procedureCode: created.procedure_code,
-            procedureName: created.procedure_name,
-            privilegeLevel: created.privilege_level,
-            effectiveFrom: created.effective_from,
-            effectiveUntil: created.effective_until,
-            spkDocumentNumber: created.spk_document_number
-          });
-        } catch (e) {
-          // ignore memory sync error
-        }
 
         return res.status(201).json({
           success: true,
@@ -451,16 +374,13 @@ export const staffPrivilegingController = {
         client.release();
       }
     } catch (error) {
-      structuredLoggerService.warn('STAFF_PRIVILEGING_VERIFY_FALLBACK', { error: error.message });
-      const verification = staffSchedulingService.evaluateClinicalAuthorization({
-        staffId,
-        procedureCode,
-        evaluationTimestamp: evalDate.toISOString()
-      });
-      return res.status(200).json({
-        success: true,
-        data: verification,
-        authorized: verification.isAuthorized
+      structuredLoggerService.error('STAFF_PRIVILEGING_VERIFY_ERROR', { error: error.message });
+      return res.status(500).json({
+        type: 'https://nurseflow.local/problems/internal-server-error',
+        title: 'Database Error',
+        status: 500,
+        detail: error.message,
+        code: 'DATABASE_QUERY_ERROR'
       });
     }
   }

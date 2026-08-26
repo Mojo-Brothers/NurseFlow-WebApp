@@ -1,38 +1,43 @@
 /**
- * NurseFlow Enterprise HIS 2026 — Master Universal CPOE Controller
+ * NurseFlow Enterprise HIS 2026 — Master Universal CPOE Controller (Canonical Reference)
  * Domain: Canonical Clinical Ordering Backbone
- * Standards: Canonical JSON Response Envelope ({ data, meta } / { error, meta })
+ * Standards: Canonical Response Helpers (respond.*), RFC 7807 Global Error Handling, X-Correlation-ID
  */
 
-import { cpoeApplicationService, CpoeDomainError } from '../services/cpoeApplication.service.js';
+import { cpoeApplicationService } from '../services/cpoeApplication.service.js';
+import { respond } from '../utils/apiResponse.js';
 
 export const cpoeController = {
   /**
    * Create Universal CPOE Order
    * POST /api/v1/orders/cpoe
    */
-  createOrder: async (req, res) => {
-    const requestId = req.headers['x-request-id'] || `REQ-${Date.now()}`;
-    const correlationId = req.correlationId || req.headers['x-correlation-id'] || `CORR-${Date.now()}`;
-    const timestamp = new Date().toISOString();
-
+  createOrder: async (req, res, next) => {
     try {
+      const requestId = req.headers?.['x-request-id'] || req.requestId || `REQ-${Date.now()}`;
       const actor = req.user || {
         userId: 'USR-DOC-001',
         username: 'dr_siti',
         role: 'ROLE_DOCTOR_DPJP'
       };
       const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+      const correlationId = req.correlationId || req.headers?.['x-correlation-id'] || `CORR-${Date.now()}`;
+      const idempotencyKey = req.idempotencyKey || req.headers?.['idempotency-key'] || req.headers?.['Idempotency-Key'] || req.body?.idempotencyKey;
 
       const result = await cpoeApplicationService.createOrder(
-        req.body,
+        { ...req.body, idempotencyKey },
         actor,
         clientIp,
         correlationId
       );
 
-      return res.status(201).json({
-        success: true,
+
+      if (result.isIdempotentReplay && typeof res.setHeader === 'function') {
+        res.setHeader('X-Idempotent-Replay', 'true');
+      }
+
+      return respond.created(res, {
+
         data: result,
         meta: {
           message: result.isIdempotentReplay
@@ -42,24 +47,12 @@ export const cpoeController = {
           orderNumber: result.order_number,
           auditSignature: result.auditSignature,
           outboxEventId: result.outboxEventId,
-          requestId,
-          correlationId,
-          timestamp
-        }
+          requestId
+        },
+        correlationId
       });
     } catch (err) {
-      const statusCode = err.statusCode || (err instanceof CpoeDomainError ? 400 : 500);
-      const code = err.code || 'CPOE_ORDER_FAILED';
-
-      return res.status(statusCode).json({
-        success: false,
-        error: {
-          code,
-          message: err.message,
-          details: err.details || []
-        },
-        meta: { requestId, correlationId, timestamp }
-      });
+      next(err);
     }
   },
 
@@ -67,54 +60,39 @@ export const cpoeController = {
    * Cancel CPOE Order
    * POST /api/v1/orders/cpoe/:id/cancel
    */
-  cancelOrder: async (req, res) => {
-    const requestId = req.headers['x-request-id'] || `REQ-${Date.now()}`;
-    const correlationId = req.correlationId || req.headers['x-correlation-id'] || `CORR-${Date.now()}`;
-    const timestamp = new Date().toISOString();
-
+  cancelOrder: async (req, res, next) => {
     try {
+      const requestId = req.headers?.['x-request-id'] || req.requestId || `REQ-${Date.now()}`;
       const actor = req.user || {
         userId: 'USR-DOC-001',
         username: 'dr_siti',
         role: 'ROLE_DOCTOR_DPJP'
       };
       const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
+      const correlationId = req.correlationId || req.headers?.['x-correlation-id'] || `CORR-${Date.now()}`;
 
       const result = await cpoeApplicationService.cancelOrder(
         {
           orderId: req.params.id,
-          cancellationReason: req.body.cancellationReason || req.body.reason,
-          expectedVersion: req.body.expectedVersion || req.body.version
+          cancellationReason: req.body?.cancellationReason || req.body?.reason,
+          expectedVersion: req.body?.expectedVersion || req.body?.version
         },
         actor,
         clientIp,
         correlationId
       );
 
-      return res.status(200).json({
-        success: true,
+      return respond.ok(res, {
         data: result,
         meta: {
           message: 'Order CPOE berhasil dibatalkan dengan alasan medicolegal tercatat',
           orderId: result.id,
-          requestId,
-          correlationId,
-          timestamp
-        }
+          requestId
+        },
+        correlationId
       });
     } catch (err) {
-      const statusCode = err.statusCode || (err instanceof CpoeDomainError ? 400 : 500);
-      const code = err.code || 'CPOE_CANCEL_FAILED';
-
-      return res.status(statusCode).json({
-        success: false,
-        error: {
-          code,
-          message: err.message,
-          details: err.details || []
-        },
-        meta: { requestId, correlationId, timestamp }
-      });
+      next(err);
     }
   },
 
@@ -122,28 +100,17 @@ export const cpoeController = {
    * Get CPOE Order by ID
    * GET /api/v1/orders/cpoe/:id
    */
-  getOrderById: async (req, res) => {
-    const requestId = req.headers['x-request-id'] || `REQ-${Date.now()}`;
-    const correlationId = req.correlationId || req.headers['x-correlation-id'] || `CORR-${Date.now()}`;
-    const timestamp = new Date().toISOString();
-
+  getOrderById: async (req, res, next) => {
     try {
+      const requestId = req.headers?.['x-request-id'] || req.requestId || `REQ-${Date.now()}`;
       const order = await cpoeApplicationService.getOrderById(req.params.id);
-      return res.status(200).json({
-        success: true,
+      return respond.ok(res, {
         data: order,
-        meta: { requestId, correlationId, timestamp }
+        meta: { requestId },
+        correlationId: req.correlationId
       });
     } catch (err) {
-      const statusCode = err.statusCode || (err instanceof CpoeDomainError ? 400 : 500);
-      return res.status(statusCode).json({
-        success: false,
-        error: {
-          code: err.code || 'GET_CPOE_ORDER_FAILED',
-          message: err.message
-        },
-        meta: { requestId, correlationId, timestamp }
-      });
+      next(err);
     }
   },
 
@@ -151,34 +118,55 @@ export const cpoeController = {
    * Get CPOE Orders by Encounter ID
    * GET /api/v1/orders/cpoe/encounter/:encounterId
    */
-  getOrdersByEncounter: async (req, res) => {
-    const requestId = req.headers['x-request-id'] || `REQ-${Date.now()}`;
-    const correlationId = req.correlationId || req.headers['x-correlation-id'] || `CORR-${Date.now()}`;
-    const timestamp = new Date().toISOString();
-
+  getOrdersByEncounter: async (req, res, next) => {
     try {
+      const requestId = req.headers?.['x-request-id'] || req.requestId || `REQ-${Date.now()}`;
       const orders = await cpoeApplicationService.getOrdersByEncounterId(req.params.encounterId);
-      return res.status(200).json({
-        success: true,
-        count: orders.length,
+      return respond.collection(res, {
         data: orders,
+        page: 1,
+        pageSize: orders.length || 20,
+        total: orders.length,
         meta: {
           encounterId: req.params.encounterId,
-          requestId,
-          correlationId,
-          timestamp
-        }
+          requestId
+        },
+        correlationId: req.correlationId
       });
     } catch (err) {
-      const statusCode = err.statusCode || (err instanceof CpoeDomainError ? 400 : 500);
-      return res.status(statusCode).json({
-        success: false,
-        error: {
-          code: err.code || 'GET_ENCOUNTER_ORDERS_FAILED',
-          message: err.message
+      next(err);
+    }
+  },
+
+  /**
+   * List all CPOE Orders with filters
+   * GET /api/v1/orders/cpoe
+   */
+  listOrders: async (req, res, next) => {
+    try {
+      const requestId = req.headers?.['x-request-id'] || req.requestId || `REQ-${Date.now()}`;
+      const filters = {
+        encounterId: req.query.encounterId,
+        patientId: req.query.patientId,
+        status: req.query.status,
+        orderCategory: req.query.orderCategory
+      };
+      const orders = await cpoeApplicationService.listOrders(filters);
+      return respond.collection(res, {
+        data: orders,
+        page: 1,
+        pageSize: orders.length || 20,
+        total: orders.length,
+        meta: {
+          filters,
+          requestId
         },
-        meta: { requestId, correlationId, timestamp }
+        correlationId: req.correlationId
       });
+    } catch (err) {
+      next(err);
     }
   }
 };
+
+

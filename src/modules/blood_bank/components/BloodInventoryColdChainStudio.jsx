@@ -12,12 +12,13 @@ export default function BloodInventoryColdChainStudio() {
   useEffect(() => {
     async function loadUnits() {
       const res = await apiClient.bloodBank.getUnits();
-      if (res.ok && res.data?.data) {
-        setUnits(res.data.data);
+      if (res.ok && res.data) {
+        setUnits(Array.isArray(res.data) ? res.data : (res.data.data || []));
       }
     }
     loadUnits();
   }, []);
+
 
   const getStatusBadge = (status) => {
     switch (status) {
