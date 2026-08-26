@@ -213,44 +213,83 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
 
         // 11. INSERT INTO universal_audit_logs
         if (normalized.startsWith('INSERT INTO UNIVERSAL_AUDIT_LOGS')) {
-          const newAudit = {
-            id: params[0],
-            actor_id: params[1],
-            actor_name: params[2],
-            actor_role: params[3],
-            client_ip: params[4],
-            action_type: params[5],
-            resource_type: params[6],
-            resource_id: params[7],
-            patient_id: params[8],
-            before_state: params[9],
-            after_state: params[10],
-            reason_for_action: params[11],
-            signature_hash: params[12],
-            created_at: params[13]
-          };
+          let newAudit;
+          if (params.length === 12) {
+            newAudit = {
+              id: crypto.randomUUID(),
+              actor_id: params[0],
+              actor_name: params[1],
+              actor_role: params[2],
+              client_ip: params[3],
+              action_type: params[4],
+              resource_type: params[5],
+              resource_id: params[6],
+              patient_id: params[7],
+              before_state: params[8],
+              after_state: params[9],
+              reason_for_action: params[10],
+              signature_hash: params[11],
+              created_at: new Date().toISOString()
+            };
+          } else {
+            newAudit = {
+              id: params[0],
+              actor_id: params[1],
+              actor_name: params[2],
+              actor_role: params[3],
+              client_ip: params[4],
+              action_type: params[5],
+              resource_type: params[6],
+              resource_id: params[7],
+              patient_id: params[8],
+              before_state: params[9],
+              after_state: params[10],
+              reason_for_action: params[11],
+              signature_hash: params[12],
+              created_at: params[13] || new Date().toISOString()
+            };
+          }
 
           if (activeTransactionState) {
             activeTransactionState.stagedAuditLogs.push(newAudit);
           } else {
             mockDatabaseState.universal_audit_logs.push(newAudit);
           }
-          return { rows: [{ id: newAudit.id }], rowCount: 1 };
+          return { rows: [{ id: newAudit.id, signature_hash: newAudit.signature_hash }], rowCount: 1 };
         }
 
         // 12. INSERT INTO clinical_domain_outbox
         if (normalized.startsWith('INSERT INTO CLINICAL_DOMAIN_OUTBOX')) {
-          const newOutbox = {
-            id: params[0],
-            aggregate_type: params[1],
-            aggregate_id: params[2],
-            event_type: params[3],
-            event_payload: JSON.parse(params[4] || '{}'),
-            status: params[5],
-            idempotency_key: params[6],
-            correlation_id: params[7],
-            created_at: params[8]
-          };
+          let newOutbox;
+          if (params.length === 6) {
+            const rawPayload = params[3];
+            const parsedPayload = typeof rawPayload === 'string' ? JSON.parse(rawPayload || '{}') : (rawPayload || {});
+            newOutbox = {
+              id: crypto.randomUUID(),
+              aggregate_type: params[0],
+              aggregate_id: params[1],
+              event_type: params[2],
+              event_payload: parsedPayload,
+              status: 'PENDING',
+              idempotency_key: params[4],
+              correlation_id: params[5],
+              created_at: new Date().toISOString()
+            };
+          } else {
+            const rawPayload = params[4];
+            const parsedPayload = typeof rawPayload === 'string' ? JSON.parse(rawPayload || '{}') : (rawPayload || {});
+            newOutbox = {
+              id: params[0],
+              aggregate_type: params[1],
+              aggregate_id: params[2],
+              event_type: params[3],
+              event_payload: parsedPayload,
+              status: params[5] || 'PENDING',
+              idempotency_key: null,
+              correlation_id: params[6],
+              created_at: params[7] || new Date().toISOString()
+            };
+          }
 
           if (activeTransactionState) {
             activeTransactionState.stagedOutbox.push(newOutbox);
@@ -259,6 +298,8 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
           }
           return { rows: [{ id: newOutbox.id }], rowCount: 1 };
         }
+
+
 
         // 13. UPDATE clinical_orders
         if (normalized.startsWith('UPDATE CLINICAL_ORDERS')) {

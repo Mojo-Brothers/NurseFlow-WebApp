@@ -52,9 +52,19 @@ export const cpoeController = {
         correlationId
       });
     } catch (err) {
-      next(err);
+      if (typeof next === 'function') {
+        next(err);
+      } else {
+        return res.status(err.statusCode || 500).json({
+          success: false,
+          error: err.code || 'INTERNAL_ERROR',
+          message: err.message,
+          meta: { message: err.message }
+        });
+      }
     }
   },
+
 
   /**
    * Cancel CPOE Order
@@ -92,9 +102,19 @@ export const cpoeController = {
         correlationId
       });
     } catch (err) {
-      next(err);
+      if (typeof next === 'function') {
+        next(err);
+      } else {
+        return res.status(err.statusCode || 500).json({
+          success: false,
+          error: err.code || 'INTERNAL_ERROR',
+          message: err.message,
+          meta: { message: err.message }
+        });
+      }
     }
   },
+
 
   /**
    * Get CPOE Order by ID
@@ -110,9 +130,19 @@ export const cpoeController = {
         correlationId: req.correlationId
       });
     } catch (err) {
-      next(err);
+      if (typeof next === 'function') {
+        next(err);
+      } else {
+        return res.status(err.statusCode || 500).json({
+          success: false,
+          error: err.code || 'INTERNAL_ERROR',
+          message: err.message,
+          meta: { message: err.message }
+        });
+      }
     }
   },
+
 
   /**
    * Get CPOE Orders by Encounter ID
@@ -134,9 +164,19 @@ export const cpoeController = {
         correlationId: req.correlationId
       });
     } catch (err) {
-      next(err);
+      if (typeof next === 'function') {
+        next(err);
+      } else {
+        return res.status(err.statusCode || 500).json({
+          success: false,
+          error: err.code || 'INTERNAL_ERROR',
+          message: err.message,
+          meta: { message: err.message }
+        });
+      }
     }
   },
+
 
   /**
    * List all CPOE Orders with filters

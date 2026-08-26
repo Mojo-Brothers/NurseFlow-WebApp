@@ -106,8 +106,12 @@ class TransactionManager {
           sig
         ]);
 
-        return res.rows[0]?.id;
+        return {
+          id: res.rows[0]?.id || crypto.randomUUID(),
+          signature_hash: sig
+        };
       },
+
 
       /**
        * Atomically enqueue a domain event to clinical_domain_outbox (Creation of Intent).

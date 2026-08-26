@@ -64,8 +64,13 @@ export async function requestApi(endpoint, {
     ...(body ? { body: JSON.stringify(body) } : {})
   };
 
+  const baseUrl = typeof window !== 'undefined'
+    ? (window.location?.origin || '')
+    : (process.env.API_BASE_URL || 'http://127.0.0.1:3000');
+  const targetUrl = endpoint.startsWith('http') ? endpoint : `${baseUrl}${endpoint}`;
+
   try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, config);
+    const response = await fetch(targetUrl, config);
     const respCorrelationId = response.headers.get('x-correlation-id') || reqCorrelationId;
     const isReplay = response.headers.get('x-idempotent-replay') === 'true';
     const contentType = response.headers.get('content-type') || '';
@@ -73,6 +78,7 @@ export async function requestApi(endpoint, {
     // 1. Session Expiry / Unauthorized Handling (RFC 7235)
     if (response.status === 401) {
       console.warn(`[API_CLIENT] 401 Unauthorized on ${endpoint} [${respCorrelationId}]`);
+
       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
         localStorage.removeItem('access_token');
         sessionStorage.removeItem('access_token');
@@ -165,6 +171,7 @@ export async function requestApi(endpoint, {
       correlationId: reqCorrelationId,
       meta: { correlationId: reqCorrelationId },
       isFailClosed: true,
+      isNetworkError: true,
       isConcurrentConflict: false,
       data: null
     };

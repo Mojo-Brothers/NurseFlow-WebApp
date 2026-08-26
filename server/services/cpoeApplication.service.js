@@ -282,8 +282,7 @@ export const cpoeApplicationService = {
         }
 
         // 9. Insert Immutable Audit Log via Central Tx Audit Method
-        await tx.audit({
-
+        const auditLog = await tx.audit({
           actorId: requesterId,
           actorName: requesterName,
           actorRole: authorRole,
@@ -297,33 +296,36 @@ export const cpoeApplicationService = {
           reason: `Penerbitan CPOE Order [${orderNumber}] Kategori [${orderCategory}]`
         });
 
+        // 10. Insert Domain Event into Outbox via Central Tx Outbox Method
+        const outboxLog = await tx.outbox({
+          aggregateType: 'CPOE_ORDER',
+          aggregateId: orderId,
+          eventType: 'ORDER_CREATED',
+          eventPayload: {
+            orderId,
+            orderNumber,
+            encounterId,
+            patientId: targetPatientId,
+            orderCategory,
+            priority,
+            requesterId,
+            requesterName,
+            items: insertedItems,
+            createdAt: serverTimestamp.toISOString()
+          },
+          idempotencyKey
+        });
 
-      // 10. Insert Domain Event into Outbox via Central Tx Outbox Method
-      await tx.outbox({
-        aggregateType: 'CPOE_ORDER',
-        aggregateId: orderId,
-        eventType: 'ORDER_CREATED',
-        eventPayload: {
-          orderId,
-          orderNumber,
-          encounterId,
-          patientId: targetPatientId,
-          orderCategory,
-          priority,
-          requesterId,
-          requesterName,
+        return {
+          ...createdOrder,
           items: insertedItems,
-          createdAt: serverTimestamp.toISOString()
-        },
-        idempotencyKey
+          auditSignature: auditLog?.signature_hash,
+          outboxEventId: outboxLog?.id || crypto.randomUUID()
+        };
       });
 
-      return {
-        ...createdOrder,
-        items: insertedItems,
-        isIdempotentReplay: false
-      };
-    });
+
+
   } catch (err) {
     if (idempotencyKey && (err.code === '23505' || err.message?.includes('uq_clinical_orders_idempotency'))) {
       const pool = postgresPoolService.getPool();

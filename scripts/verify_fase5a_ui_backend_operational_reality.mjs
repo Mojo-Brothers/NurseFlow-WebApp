@@ -105,9 +105,17 @@ async function setupTestServer() {
     server = http.createServer(app);
     server.listen(0, () => {
       serverPort = server.address().port;
+      process.env.API_BASE_URL = `http://127.0.0.1:${serverPort}`;
       const originalFetch = global.fetch;
       global.fetch = async (url, options = {}) => {
-        const fullUrl = url.startsWith('http') ? url : `http://127.0.0.1:${serverPort}${url}`;
+        let fullUrl = url;
+        if (typeof url === 'string') {
+          if (url.startsWith('http://127.0.0.1:3000')) {
+            fullUrl = url.replace('http://127.0.0.1:3000', `http://127.0.0.1:${serverPort}`);
+          } else if (!url.startsWith('http')) {
+            fullUrl = `http://127.0.0.1:${serverPort}${url}`;
+          }
+        }
         const headers = {
           'Authorization': `Bearer ${doctorToken}`,
           ...(options.headers || {})
@@ -118,6 +126,7 @@ async function setupTestServer() {
     });
   });
 }
+
 
 let doctorAuth;
 let nurseAuth;

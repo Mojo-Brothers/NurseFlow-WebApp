@@ -22,6 +22,7 @@ export const respond = {
       res.setHeader('X-Correlation-ID', corrId);
     }
     return res.status(200).json({
+      success: true,
       data,
       meta: finalMeta
     });
@@ -40,6 +41,7 @@ export const respond = {
       res.setHeader('X-Correlation-ID', corrId);
     }
     return res.status(201).json({
+      success: true,
       data,
       meta: finalMeta
     });
@@ -74,10 +76,14 @@ export const respond = {
       res.setHeader('X-Correlation-ID', corrId);
     }
     return res.status(200).json({
+      success: true,
+      count: totalCount,
       data,
       meta: finalMeta
     });
   },
+
+
 
   /**
    * HTTP 204 No Content — Zero Body

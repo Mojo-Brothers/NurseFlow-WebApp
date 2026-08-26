@@ -233,8 +233,9 @@ export const staffPrivilegingController = {
    * Alias for addCredential -> registerCredential
    */
   async addCredential(req, res) {
-    return this.registerCredential(req, res);
+    return staffPrivilegingController.registerCredential(req, res);
   },
+
 
   /**
    * POST /api/v1/staff-privileges/privileges
@@ -278,21 +279,27 @@ export const staffPrivilegingController = {
         }
 
         const privId = isUUID(req.body?.id) ? req.body.id : crypto.randomUUID();
+        const approvedById = req.body?.approved_by_komite_medik_id || req.body?.approvedById || 'KOMITE-MEDIK-001';
+        const approvedByName = req.body?.approved_by_komite_medik_name || req.body?.approvedByName || 'Ketua Komite Medik';
+
         const insertQuery = `
           INSERT INTO clinical_privileges (
             id, tenant_id, staff_id, department_id, procedure_code,
-            procedure_name, privilege_level, effective_from, effective_until, spk_document_number,
+            procedure_name, privilege_level, effective_from, effective_until,
+            approved_by_komite_medik_id, approved_by_komite_medik_name, spk_document_number,
             privilege_status, created_at, updated_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'ACTIVE', NOW(), NOW())
-          ON CONFLICT (tenant_id, staff_id, procedure_code) DO UPDATE
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'ACTIVE', NOW(), NOW())
+          ON CONFLICT (tenant_id, staff_id, department_id, procedure_code) DO UPDATE
           SET privilege_level = EXCLUDED.privilege_level, effective_until = EXCLUDED.effective_until, privilege_status = 'ACTIVE', updated_at = NOW()
           RETURNING *;
         `;
 
         const result = await client.query(insertQuery, [
           privId, tenantId, realStaffId, departmentId, procedureCode,
-          procedureName, privilegeLevel, effectiveFrom, effectiveUntil, spkDocNumber
+          procedureName, privilegeLevel, effectiveFrom, effectiveUntil,
+          approvedById, approvedByName, spkDocNumber
         ]);
+
 
         await client.query('COMMIT;');
 
