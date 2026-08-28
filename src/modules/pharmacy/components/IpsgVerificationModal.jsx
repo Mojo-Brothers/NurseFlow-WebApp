@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { checkAllergyConflict } from '../../../../utils/clinicalEngine.js';
 import ClinicalCard from '../../../components/ui/ClinicalCard';
+import { HardStopDialog } from '../../../design-system/components/HardStopDialog.jsx';
 
 const ROUTE_CONFIG = {
   PO:  { labelKey: 'pharmacy_v2.routes.oral', defaultLabel: 'Oral', icon: 'pill', bg: 'var(--surface-container-high)', text: 'var(--on-surface)' },
@@ -15,6 +16,7 @@ export default function IpsgVerificationModal({ med, patient, currentUser, onCon
   const [ipsgInput, setIpsgInput] = useState('');
   const [ipsgError, setIpsgError] = useState(false);
   const [witness, setWitness] = useState('');
+  const [showAllergyHardStop, setShowAllergyHardStop] = useState(false);
 
   const routeInfo = ROUTE_CONFIG[med.route] || { labelKey: '', defaultLabel: med.route, icon: 'medication', highAlert: false };
   const isHighAlert = med.isHighAlert || routeInfo.highAlert;
@@ -32,9 +34,8 @@ export default function IpsgVerificationModal({ med, patient, currentUser, onCon
     }
     
     if (allergyConflict) {
-       if (!window.confirm(t('pharmacy_v2.alerts.allergy_override', { defaultValue: 'WARNING: Allergy conflict detected. Are you sure you want to proceed and override this safety alert?' }))) {
-          return;
-       }
+       setShowAllergyHardStop(true);
+       return;
     }
 
     onConfirm(witness);
@@ -135,6 +136,37 @@ export default function IpsgVerificationModal({ med, patient, currentUser, onCon
              </button>
           </footer>
        </ClinicalCard>
+
+       {/* HardStop Dialog for Pharmacy Allergy Override */}
+       <HardStopDialog
+         isOpen={showAllergyHardStop}
+         title="PERINGATAN ALERGI OBAT: OVERRIDE DISPENSASI FARMASI"
+         actionName={`Dispensasi Obat ${med.medication_name}`}
+         riskLevel="critical"
+         patientContext={{
+           name: patient?.name,
+           mrn: patient?.mrn,
+           room: patient?.room || 'Instalasi Farmasi',
+           encounterId: patient?.encounterId || 'ENC-PHARMACY'
+         }}
+         warningDetails={
+           <div className="flex flex-col gap-1">
+             <p className="font-bold">Konflik Alergi Pasien Terdeteksi!</p>
+             <p>Pasien memiliki riwayat alergi terdokumentasi terhadap obat ini atau golongannya.</p>
+             <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+               Dispensasi obat yang berkonflik dengan alergi memerlukan verifikasi ganda dan justifikasi tertulis dari apoteker/petugas farmasi.
+             </p>
+           </div>
+         }
+         acknowledgmentText="Saya telah memverifikasi konfirmasi dokter dan memastikan pasien siap menerima obat ini."
+         requireJustification={true}
+         justificationPlaceholder="Masukkan justifikasi farmasi klinis (misal: 'Sudah dikonfirmasi ke DPJP dr. X Sp.A, instruksi tetap lanjut')..."
+         onConfirm={() => {
+           setShowAllergyHardStop(false);
+           onConfirm(witness);
+         }}
+         onCancel={() => setShowAllergyHardStop(false)}
+       />
     </div>
   );
 }

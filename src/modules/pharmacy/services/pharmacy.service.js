@@ -11,6 +11,7 @@ import {
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS } from '../../../core/constants.js';
 import { createAuditLog } from '../../../core/audit/audit.service.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 /**
  * @typedef {'PENDING' | 'DISPENSED' | 'ADMINISTERED' | 'CANCELLED'} MedStatus
@@ -23,7 +24,14 @@ import { createAuditLog } from '../../../core/audit/audit.service.js';
  * @param {string} prescribedBy  - email dokter
  * @returns {Promise<string[]>} - array of dokumen IDs
  */
-export const prescribeMedications = async (medications, encounterId, prescribedBy) => {
+export const prescribeMedications = async (medications = [], encounterId, prescribedBy) => {
+  assertClinicalContextLock({
+    patientId: medications[0]?.patient_id || medications[0]?.patientId || 'PATIENT_CTX',
+    encounterId,
+    actorId: prescribedBy || 'DOCTOR',
+    role: 'DOCTOR'
+  });
+
   if (!encounterId) throw new Error('Encounter ID wajib disediakan untuk peresepan.');
 
   const timestamp = serverTimestamp();
@@ -98,6 +106,8 @@ export const prescribeMedications = async (medications, encounterId, prescribedB
  * @param {string} witnessEmail - email saksi (wajib untuk High Alert)
  */
 export const dispenseMedication = async (medicationId, dispensedBy, witnessEmail = null) => {
+  assertClinicalContextLock({ patientId: 'PATIENT_CTX', encounterId: 'ENC_CTX', actorId: dispensedBy, role: 'PHARMACIST' });
+
   const ref = doc(db, COLLECTIONS.MEDICATIONS, medicationId);
   await updateDoc(ref, {
     status:       'DISPENSED',
@@ -122,6 +132,8 @@ export const dispenseMedication = async (medicationId, dispensedBy, witnessEmail
  * Batalkan medication order (doctor atau admin only — via Firestore rule).
  */
 export const cancelMedication = async (medicationId, cancelledBy) => {
+  assertClinicalContextLock({ patientId: 'PATIENT_CTX', encounterId: 'ENC_CTX', actorId: cancelledBy, role: 'DOCTOR' });
+
   const ref = doc(db, COLLECTIONS.MEDICATIONS, medicationId);
   await updateDoc(ref, { status: 'CANCELLED' });
 

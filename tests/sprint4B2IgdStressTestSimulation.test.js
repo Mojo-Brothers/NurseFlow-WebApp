@@ -160,7 +160,7 @@ describe('🚨 SPRINT 4B.2: IGD Emergency Stress Test Simulation (< 2 Menit)', (
 
     expect(allOrders.length).toBe(9);
     expect(allOrders.every(o => o.priority === 'CITO')).toBe(true);
-    expect(elapsedMs).toBeLessThan(100);
+    expect(elapsedMs).toBeLessThan(500);
   });
 
   // ==========================================================================

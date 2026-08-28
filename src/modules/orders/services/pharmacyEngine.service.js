@@ -4,6 +4,7 @@
  */
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 export const pharmacyEngineService = {
   getMedicationOrders: async (orderId) => {
@@ -20,6 +21,13 @@ export const pharmacyEngineService = {
   },
 
   createPrescriptionOrder: async (payload) => {
+    assertClinicalContextLock({
+      patientId: payload?.patientId || payload?.patient_id,
+      encounterId: payload?.encounterId || payload?.encounter_id,
+      actorId: payload?.orderedBy || 'DOCTOR',
+      role: 'DOCTOR'
+    });
+
     const formattedPayload = {
       patientId: payload.patientId,
       patientName: payload.patientName,
@@ -61,7 +69,14 @@ export const pharmacyEngineService = {
     };
   },
 
-  dispenseMedication: async ({ orderId, prescriptionId, batchNumber, quantity, pharmacistName, notes }) => {
+  dispenseMedication: async ({ orderId, prescriptionId, batchNumber, quantity, pharmacistName, notes, patientId, encounterId } = {}) => {
+    assertClinicalContextLock({
+      patientId: patientId || 'PATIENT_CTX',
+      encounterId: encounterId || 'ENC_CTX',
+      actorId: pharmacistName || 'PHARMACIST',
+      role: 'PHARMACIST'
+    });
+
     const payload = {
       orderId: orderId || prescriptionId,
       batchNumber: batchNumber || 'BATCH-AUTO',

@@ -6,6 +6,7 @@ import { usePatientStore } from '../../patient/patient.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { ENCOUNTER_TYPES } from '../../../core/constants.js';
 import { formatPatientName } from '../../../utils/displayUtils.js';
+import { HardStopDialog } from '../../../design-system/components/HardStopDialog.jsx';
 
 const ENCOUNTER_TYPE_LABELS = {
   EMERGENCY:  '🚨 IGD / Emergency',
@@ -28,6 +29,7 @@ export default function EncounterPage() {
   const { patients, fetchPatients } = usePatientStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [dischargeTarget, setDischargeTarget] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   
   // ─── View Mode Switcher State (Grid / Card vs Table) ───
@@ -65,12 +67,18 @@ export default function EncounterPage() {
     setIsSaving(false);
   };
 
-  const handleDischarge = async (encounterId) => {
-    if (!window.confirm(t('encounter.modal.confirm_discharge'))) return;
+  const handleDischargePrompt = (encounter) => {
+    setDischargeTarget(encounter);
+  };
+
+  const handleExecuteDischarge = async (overrideData) => {
+    if (!dischargeTarget) return;
     try {
-      await discharge(encounterId, currentUser.email);
+      await discharge(dischargeTarget.id, currentUser.email);
     } catch (err) {
       alert(t('encounter.modal.error_discharge') + ': ' + err.message);
+    } finally {
+      setDischargeTarget(null);
     }
   };
 
@@ -248,7 +256,7 @@ export default function EncounterPage() {
                         className="text-[10px] font-black uppercase tracking-widest text-error hover:bg-error-container hover:text-on-error-container px-3 py-1.5 rounded-lg transition-colors border border-error/20"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDischarge(enc.id);
+                          handleDischargePrompt(enc);
                         }}
                       >
                         {t('encounter.status.discharged')}
@@ -336,7 +344,7 @@ export default function EncounterPage() {
                             {enc.status === 'ACTIVE' && (
                               <button 
                                 className="px-2.5 py-1.5 bg-surface-container hover:bg-error-container hover:text-on-error-container rounded-lg text-xs font-bold transition-all border border-outline-variant/30"
-                                onClick={() => handleDischarge(enc.id)}
+                                onClick={() => handleDischargePrompt(enc)}
                               >
                                 Discharge
                               </button>
@@ -352,6 +360,29 @@ export default function EncounterPage() {
           )}
         </div>
       )}
+
+      {/* ─── HARD-STOP DISCHARGE CONFIRMATION DIALOG ─── */}
+      <HardStopDialog
+        isOpen={Boolean(dischargeTarget)}
+        title="KONFIRMASI PEMULANGAN PASIEN (DISCHARGE)"
+        actionName={`Discharge Kunjungan Pasien ${dischargeTarget ? getPatientName(dischargeTarget.patient_id) : ''}`}
+        riskLevel="high"
+        patientContext={{
+          name: dischargeTarget ? getPatientName(dischargeTarget.patient_id) : '',
+          mrn: dischargeTarget?.patient_id || '',
+          room: dischargeTarget?.location || 'Ruang Perawatan',
+          encounterId: dischargeTarget?.id || ''
+        }}
+        warningDetails={
+          <p>
+            Tindakan ini akan mengakhiri episode perawatan aktif pasien pada sistem bangsal/IGD. Pastikan seluruh resume medis, e-resep pulang, dan billing penutupan telah diverifikasi oleh tim medis.
+          </p>
+        }
+        acknowledgmentText="Saya menyatakan telah memverifikasi kelayakan pemulangan pasien dan instruksi tindak lanjut pasca rawat."
+        requireJustification={false}
+        onConfirm={(overrideData) => handleExecuteDischarge(overrideData)}
+        onCancel={() => setDischargeTarget(null)}
+      />
 
       {/* ─── Premium Glass Modal ─── */}
       {isModalOpen && (

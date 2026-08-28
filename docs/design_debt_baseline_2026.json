@@ -1,0 +1,109 @@
+{
+  "timestamp": "2026-08-28T08:07:51.601Z",
+  "filesScanned": 632,
+  "filesWithDebt": 330,
+  "classification": {
+    "nonCanonicalDebt": 3228,
+    "canonicalLiteralDebt": 1030
+  },
+  "metrics": {
+    "hardcodedColors": 673,
+    "hardcodedSpacing": 70,
+    "hardcodedTypography": 3387,
+    "hardcodedRadius": 21,
+    "hardcodedElevation": 107,
+    "totalDebtPoints": 4258
+  },
+  "top10DebtFiles": [
+    {
+      "file": "modules/admin/components/StaffPortfolioDetailModal.jsx",
+      "colors": 5,
+      "spacing": 0,
+      "typography": 117,
+      "radius": 0,
+      "elevation": 1,
+      "total": 123
+    },
+    {
+      "file": "modules/inventory/components/MaterialRequestTab.jsx",
+      "colors": 5,
+      "spacing": 0,
+      "typography": 77,
+      "radius": 0,
+      "elevation": 10,
+      "total": 92
+    },
+    {
+      "file": "modules/clinical_core/pages/UnifiedPatientChart.jsx",
+      "colors": 25,
+      "spacing": 0,
+      "typography": 56,
+      "radius": 0,
+      "elevation": 0,
+      "total": 81
+    },
+    {
+      "file": "modules/emr/components/UgdAssessmentForm.jsx",
+      "colors": 19,
+      "spacing": 1,
+      "typography": 57,
+      "radius": 1,
+      "elevation": 2,
+      "total": 80
+    },
+    {
+      "file": "modules/admin/pages/StaffManagementPage.jsx",
+      "colors": 34,
+      "spacing": 0,
+      "typography": 38,
+      "radius": 0,
+      "elevation": 1,
+      "total": 73
+    },
+    {
+      "file": "modules/emr/components/ClinicalModuleModal.jsx",
+      "colors": 0,
+      "spacing": 0,
+      "typography": 59,
+      "radius": 0,
+      "elevation": 1,
+      "total": 60
+    },
+    {
+      "file": "modules/inventory/components/MutasiBarangTab.jsx",
+      "colors": 0,
+      "spacing": 0,
+      "typography": 46,
+      "radius": 0,
+      "elevation": 3,
+      "total": 49
+    },
+    {
+      "file": "modules/admin/pages/AdminHubPage.jsx",
+      "colors": 8,
+      "spacing": 0,
+      "typography": 36,
+      "radius": 1,
+      "elevation": 1,
+      "total": 46
+    },
+    {
+      "file": "modules/dashboard/components/OperationalCockpitLiveTelemetry.jsx",
+      "colors": 0,
+      "spacing": 0,
+      "typography": 46,
+      "radius": 0,
+      "elevation": 0,
+      "total": 46
+    },
+    {
+      "file": "modules/patient/styles/Patients.css",
+      "colors": 13,
+      "spacing": 10,
+      "typography": 2,
+      "radius": 2,
+      "elevation": 18,
+      "total": 45
+    }
+  ]
+}

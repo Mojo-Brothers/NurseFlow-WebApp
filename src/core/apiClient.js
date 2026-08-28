@@ -37,7 +37,8 @@ export async function requestApi(endpoint, {
   body = null,
   headers = {},
   correlationId = null,
-  idempotencyKey = null
+  idempotencyKey = null,
+  signal = null
 } = {}) {
   const token = typeof window !== 'undefined'
     ? (localStorage.getItem('access_token') || sessionStorage.getItem('access_token'))
@@ -61,6 +62,7 @@ export async function requestApi(endpoint, {
   const config = {
     method,
     headers: finalHeaders,
+    ...(signal ? { signal } : {}),
     ...(body ? { body: JSON.stringify(body) } : {})
   };
 

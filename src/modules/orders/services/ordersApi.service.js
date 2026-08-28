@@ -5,6 +5,7 @@
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
 import { orderCatalogEngineService } from './orderCatalogEngine.service.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 export const ordersApiService = {
   // ─── 1. UNIVERSAL ORDER APIS (POSTGRESQL 16 SSOT) ───
@@ -27,7 +28,14 @@ export const ordersApiService = {
     return res.data;
   },
 
-  createOrder: async (payload) => {
+  createOrder: async (payload = {}) => {
+    assertClinicalContextLock({
+      patientId: payload.patientId || payload.patient_id,
+      encounterId: payload.encounterId || payload.encounter_id,
+      actorId: payload.doctorId || payload.doctor_id || 'DOCTOR',
+      role: 'DOCTOR'
+    });
+
     try {
       const res = await apiClient.cpoe.createOrder(payload);
       if (res.ok && res.data) return res.data;
@@ -48,13 +56,18 @@ export const ordersApiService = {
     };
   },
 
-  cancelOrder: async (orderId, reason) => {
+  cancelOrder: async (orderId, reason, actor = 'DOCTOR', patientId = 'PATIENT_CTX', encounterId = 'ENC_CTX') => {
+    assertClinicalContextLock({ patientId, encounterId, actorId: actor, role: 'DOCTOR' });
+    if (!reason || !reason.trim()) {
+      throw new Error('FAIL-CLOSED: Alasan pembatalan (justifikasi klinis) wajib disertakan untuk rekam jejak keselamatan pasien.');
+    }
     const res = await apiClient.cpoe.cancelOrder(orderId, reason);
     if (!res.ok) throw new Error(res.error || 'Gagal membatalkan order CPOE');
     return res.data;
   },
 
-  transitionOrderStatus: async ({ orderId, nextStatus, reason, version }) => {
+  transitionOrderStatus: async ({ orderId, nextStatus, reason, version, actor = 'DOCTOR', patientId = 'PATIENT_CTX', encounterId = 'ENC_CTX' } = {}) => {
+    assertClinicalContextLock({ patientId, encounterId, actorId: actor, role: 'DOCTOR' });
     if (nextStatus === 'CANCELLED') {
       const res = await apiClient.cpoe.cancelOrder(orderId, reason);
       if (!res.ok) throw new Error(res.error || 'Gagal membatalkan order CPOE');
@@ -114,7 +127,13 @@ export const ordersApiService = {
     return res.data;
   },
 
-  dispenseMedication: async (payload) => {
+  dispenseMedication: async (payload = {}) => {
+    assertClinicalContextLock({
+      patientId: payload.patientId || payload.patient_id || 'PATIENT_CTX',
+      encounterId: payload.encounterId || payload.encounter_id || 'ENC_CTX',
+      actorId: payload.pharmacistId || payload.pharmacist_id || 'PHARMACIST',
+      role: 'PHARMACIST'
+    });
     const res = await apiClient.medications.dispense(payload);
     if (!res.ok) throw new Error(res.error || 'Gagal melakukan dispensing obat');
     return res.data;
@@ -165,7 +184,13 @@ export const ordersApiService = {
     return res.data;
   },
 
-  releaseLabResult: async (payload) => {
+  releaseLabResult: async (payload = {}) => {
+    assertClinicalContextLock({
+      patientId: payload.patientId || payload.patient_id || 'PATIENT_CTX',
+      encounterId: payload.encounterId || payload.encounter_id || 'ENC_CTX',
+      actorId: payload.analystId || payload.analyst_id || 'LAB_ANALYST',
+      role: 'LAB_ANALYST'
+    });
     const res = await apiClient.laboratory.releaseResult(payload.orderId || payload.specimenId, payload);
     if (!res.ok) throw new Error(res.error || 'Gagal merilis hasil laboratorium');
     return res.data;
@@ -216,7 +241,13 @@ export const ordersApiService = {
     return res.data;
   },
 
-  releaseRadiologyReport: async (payload) => {
+  releaseRadiologyReport: async (payload = {}) => {
+    assertClinicalContextLock({
+      patientId: payload.patientId || payload.patient_id || 'PATIENT_CTX',
+      encounterId: payload.encounterId || payload.encounter_id || 'ENC_CTX',
+      actorId: payload.radiologistId || payload.radiologist_id || 'RADIOLOGIST',
+      role: 'RADIOLOGIST'
+    });
     const res = await apiClient.radiology.releaseReport(payload.studyId || payload.orderId, payload);
     if (!res.ok) throw new Error(res.error || 'Gagal merilis expertise laporan radiologi');
     return res.data;

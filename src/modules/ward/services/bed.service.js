@@ -5,6 +5,7 @@
  */
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 /**
  * Mengambil daftar seluruh tempat tidur di bangsal langsung dari PostgreSQL 16.
@@ -38,6 +39,8 @@ export const getAllBeds = async (filters = {}) => {
  * Menempatkan pasien ke Bed tertentu (ADT Assignment).
  */
 export const assignBed = async (bedId, encounterId, patientId, userEmail = 'Petugas Admisi') => {
+  assertClinicalContextLock({ patientId, encounterId, actorId: userEmail, role: 'NURSE' });
+
   const payload = {
     bedId,
     encounterId,
@@ -61,7 +64,9 @@ export const assignBed = async (bedId, encounterId, patientId, userEmail = 'Petu
 /**
  * Memindahkan pasien ke Bed lain (ADT Transfer).
  */
-export const transferBed = async ({ sourceBedId, targetBedId, encounterId, reason, userEmail }) => {
+export const transferBed = async ({ sourceBedId, targetBedId, encounterId, patientId, reason, userEmail = 'Perawat Ruangan' }) => {
+  assertClinicalContextLock({ patientId: patientId || 'PATIENT_CTX', encounterId, actorId: userEmail, role: 'NURSE' });
+
   const payload = {
     sourceBedId,
     targetBedId,
@@ -81,7 +86,9 @@ export const transferBed = async ({ sourceBedId, targetBedId, encounterId, reaso
 /**
  * Melepaskan Bed (Discharge ADT).
  */
-export const releaseBed = async (bedId, userEmail = 'Petugas Admisi') => {
+export const releaseBed = async (bedId, encounterId = 'ENC_DISCHARGE', patientId = 'PATIENT_DISCHARGE', userEmail = 'Petugas Admisi') => {
+  assertClinicalContextLock({ patientId, encounterId, actorId: userEmail, role: 'NURSE' });
+
   const payload = {
     bedId,
     dischargeReason: 'Discharge resmi pasien',

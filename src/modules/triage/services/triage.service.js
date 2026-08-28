@@ -4,6 +4,7 @@
  */
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 /**
  * Submit Triage Assessment to PostgreSQL 16
@@ -22,6 +23,8 @@ export const submitTriage = async ({
   nutritionalRisk = false,
   assessedBy = 'Perawat Triase'
 }) => {
+  assertClinicalContextLock({ patientId, encounterId, actorId: assessedBy, role: 'NURSE' });
+
   const payload = {
     patientId,
     encounterId,

@@ -6,6 +6,7 @@
 
 import { encounterEngine } from './encounterEngine.service.js';
 import CoreRegistryService from './coreRegistry.service.js';
+import { assertClinicalContextLock } from '../clinicalRuntimeSafetyContract.js';
 
 export const EMAR_STATUS = {
   PRESCRIBED: 'PRESCRIBED',         // Diresetkan Dokter
@@ -28,7 +29,9 @@ class EMARService {
   }
 
   // Create eMAR entry from Prescription
-  createEMARRecord({ encounterId, patientId, patientName, medicationId, dosage, route, frequency, prescribedBy, notes }) {
+  createEMARRecord({ encounterId, patientId, patientName, medicationId, dosage, route, frequency, prescribedBy, notes } = {}) {
+    assertClinicalContextLock({ patientId, encounterId, actorId: prescribedBy, role: 'DOCTOR' });
+
     let encPatientId = patientId;
     let encPatientName = patientName;
 
@@ -71,6 +74,13 @@ class EMARService {
   administerMedication(emarId, nurseId, nurseName, notes = '') {
     const record = this.records.get(emarId);
     if (!record) throw new Error(`eMAR Record ${emarId} not found`);
+
+    assertClinicalContextLock({
+      patientId: record.patientId,
+      encounterId: record.encounterId,
+      actorId: nurseId,
+      role: 'NURSE'
+    });
 
     record.status = EMAR_STATUS.GIVEN;
     record.administeredBy = `${nurseName} (${nurseId})`;

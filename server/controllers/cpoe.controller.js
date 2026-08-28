@@ -85,7 +85,8 @@ export const cpoeController = {
         {
           orderId: req.params.id,
           cancellationReason: req.body?.cancellationReason || req.body?.reason,
-          expectedVersion: req.body?.expectedVersion || req.body?.version
+          expectedVersion: req.body?.expectedVersion || req.body?.version,
+          safetyDecision: req.body?.safetyDecision
         },
         actor,
         clientIp,

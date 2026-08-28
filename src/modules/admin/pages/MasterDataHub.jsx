@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useMasterDataStore } from '../masterData.store.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { fetchAuditLogs } from '../services/admin.service.js';
+import { ClinicalModal, ClinicalButton } from '../../../design-system/components/index.js';
 
 export default function MasterDataHub({ isEmbedded = false }) {
   const { t } = useTranslation();
@@ -16,6 +17,8 @@ export default function MasterDataHub({ isEmbedded = false }) {
   const [activeTab, setActiveTab] = useState('GENERAL'); // GENERAL, CATALOG, SAFETY
   const [recentLogs, setRecentLogs] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showSeedModal, setShowSeedModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const [selectedCat, setSelectedCat] = useState(null);
   const [newItemValue, setNewItemValue] = useState('');
 
@@ -32,15 +35,18 @@ export default function MasterDataHub({ isEmbedded = false }) {
     loadLogs();
   }, [fetchMasterData]);
 
-  const handleInitialize = async (e) => {
+  const handleInitialize = (e) => {
     e.preventDefault();
-    if (!window.confirm(t('admin_hub.confirm_seed'))) return;
+    setShowSeedModal(true);
+  };
+
+  const confirmSeed = async () => {
+    setShowSeedModal(false);
     const result = await performSeed();
     if (result === true) {
       alert(t('admin_hub.seed_success'));
     }
   };
-
 
   const onAddItemSubmit = async (e) => {
     e.preventDefault();
@@ -282,9 +288,7 @@ export default function MasterDataHub({ isEmbedded = false }) {
                             <span className="material-symbols-outlined text-base">edit</span>
                           </button>
                           <button 
-                            onClick={() => {
-                              if (window.confirm(t('admin_hub.confirm_delete_item', { item }))) deleteItem(cat.id, item, currentUser?.email);
-                            }} 
+                            onClick={() => setItemToDelete({ catId: cat.id, item })}
                             className="p-1.5 rounded-lg hover:bg-error/10 text-error"
                           >
                             <span className="material-symbols-outlined text-base">delete</span>
@@ -380,6 +384,58 @@ export default function MasterDataHub({ isEmbedded = false }) {
           ))}
         </div>
       </div>
+
+      {/* Seed Confirmation Modal */}
+      <ClinicalModal
+        isOpen={showSeedModal}
+        onClose={() => setShowSeedModal(false)}
+        title="INISIALISASI SEED DATA MASTER"
+        description="Konfirmasi inisialisasi dataset standar sistem."
+        footer={
+          <>
+            <ClinicalButton variant="secondary" onClick={() => setShowSeedModal(false)}>
+              Batal
+            </ClinicalButton>
+            <ClinicalButton variant="primary" onClick={confirmSeed}>
+              Inisialisasi Data
+            </ClinicalButton>
+          </>
+        }
+      >
+        <p className="text-xs text-slate-700 dark:text-slate-300">
+          Apakah Anda yakin ingin mengisi basis data dengan dataset default/seeding awal?
+        </p>
+      </ClinicalModal>
+
+      {/* Delete Item Confirmation Modal */}
+      <ClinicalModal
+        isOpen={Boolean(itemToDelete)}
+        onClose={() => setItemToDelete(null)}
+        title="HAPUS ENTRI DATA MASTER"
+        description="Konfirmasi penghapusan item referensi master."
+        footer={
+          <>
+            <ClinicalButton variant="secondary" onClick={() => setItemToDelete(null)}>
+              Batal
+            </ClinicalButton>
+            <ClinicalButton
+              variant="destructive"
+              onClick={() => {
+                if (itemToDelete) {
+                  deleteItem(itemToDelete.catId, itemToDelete.item, currentUser?.email);
+                  setItemToDelete(null);
+                }
+              }}
+            >
+              Hapus Item
+            </ClinicalButton>
+          </>
+        }
+      >
+        <p className="text-xs text-slate-700 dark:text-slate-300">
+          Apakah Anda yakin ingin menghapus item <strong>"{itemToDelete?.item}"</strong> dari katalog master?
+        </p>
+      </ClinicalModal>
     </div>
   );
 }

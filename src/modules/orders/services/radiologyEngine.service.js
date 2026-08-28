@@ -4,6 +4,7 @@
  */
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 export const radiologyEngineService = {
   getRadOrders: async (orderId) => {
@@ -26,6 +27,13 @@ export const radiologyEngineService = {
   },
 
   createRadiologyOrder: async (payload) => {
+    assertClinicalContextLock({
+      patientId: payload?.patientId || payload?.patient_id,
+      encounterId: payload?.encounterId || payload?.encounter_id,
+      actorId: payload?.orderedBy || 'DOCTOR',
+      role: 'DOCTOR'
+    });
+
     try {
       const res = await apiClient.cpoe.createOrder({
         patientId: payload.patientId,
@@ -80,7 +88,14 @@ export const radiologyEngineService = {
     };
   },
 
-  releaseRadiologyReport: async ({ studyId, orderId, radiologistReport, radiologistName, findingsSummary, criticalFinding }) => {
+  releaseRadiologyReport: async ({ studyId, orderId, radiologistReport, radiologistName, findingsSummary, criticalFinding, patientId, encounterId } = {}) => {
+    assertClinicalContextLock({
+      patientId: patientId || 'PATIENT_CTX',
+      encounterId: encounterId || 'ENC_CTX',
+      actorId: radiologistName || 'RADIOLOGIST',
+      role: 'RADIOLOGIST'
+    });
+
     const payload = {
       radiologistReport,
       radiologistName: radiologistName || 'dr. Sp.Rad',

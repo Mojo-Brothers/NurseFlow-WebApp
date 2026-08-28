@@ -4,6 +4,7 @@ import { MASTER_DATA_ENTITIES } from '../data/masterDataSchemas.js';
 import { ENTERPRISE_ENTITY_SCHEMAS } from '../data/enterpriseMasterSchemas.js';
 import { useAuth } from '../../../contexts/useAuth.js';
 import { enterpriseFhirMapper } from '../services/enterpriseFhirMapper.service.js';
+import { ClinicalModal, ClinicalButton } from '../../../design-system/components/index.js';
 
 export default function MasterDataDetailDrawer() {
   const { currentUser } = useAuth();
@@ -21,6 +22,7 @@ export default function MasterDataDetailDrawer() {
 
   const [activeTab, setActiveTab] = useState('DETAILS'); // 'DETAILS' | 'AUDIT' | 'FHIR' | 'JSON'
   const [copied, setCopied] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   if (!isDetailDrawerOpen || !selectedItemForDetail) return null;
 
@@ -310,12 +312,7 @@ export default function MasterDataDetailDrawer() {
             </button>
           ) : (
             <button
-              onClick={() => {
-                if (window.confirm(`Hapus lunak record ini?`)) {
-                  softDeleteRecord(item.id, userEmail);
-                  closeDetailDrawer();
-                }
-              }}
+              onClick={() => setShowDeleteModal(true)}
               className="px-4 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs hover:bg-rose-700 transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -339,6 +336,35 @@ export default function MasterDataDetailDrawer() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ClinicalModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        title="KONFIRMASI HAPUS LUNAK RECORD"
+        description="Data master akan dipindahkan ke tempat sampah."
+        footer={
+          <>
+            <ClinicalButton variant="secondary" onClick={() => setShowDeleteModal(false)}>
+              Batal
+            </ClinicalButton>
+            <ClinicalButton
+              variant="destructive"
+              onClick={() => {
+                softDeleteRecord(item.id, userEmail);
+                setShowDeleteModal(false);
+                closeDetailDrawer();
+              }}
+            >
+              Hapus Lunak
+            </ClinicalButton>
+          </>
+        }
+      >
+        <p className="text-xs text-slate-700 dark:text-slate-300">
+          Apakah Anda yakin ingin memindahkan data <strong>{item[config.nameField] || item.id}</strong> ke tempat sampah? Data ini dapat dipulihkan sewaktu-waktu.
+        </p>
+      </ClinicalModal>
     </div>
   );
 }

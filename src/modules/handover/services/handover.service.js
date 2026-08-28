@@ -8,11 +8,19 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
 import { COLLECTIONS, AUDIT_ACTIONS, SYNC_PRIORITIES } from '../../../core/constants.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 /**
  * Menyimpan catatan serah terima SBAR.
  */
-export const saveHandover = async (handoverData) => {
+export const saveHandover = async (handoverData = {}) => {
+  assertClinicalContextLock({
+    patientId: handoverData.patient_id || handoverData.patientId,
+    encounterId: handoverData.encounter_id || handoverData.encounterId || 'ENC-HANDOVER',
+    actorId: handoverData.sender_email || 'NURSE',
+    role: 'NURSE'
+  });
+
   const handoverRef = doc(collection(db, COLLECTIONS.HANDOVER_LOGS));
   const timestamp = serverTimestamp();
 

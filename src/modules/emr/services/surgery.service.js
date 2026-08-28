@@ -1,4 +1,5 @@
 import { db } from '../../../core/firebase.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 import { 
   collection, 
   doc, 
@@ -37,6 +38,8 @@ export const saveSurgicalChecklist = async ({
   phase, // 'SIGN_IN' | 'TIME_OUT' | 'SIGN_OUT'
   checklistData 
 }) => {
+  assertClinicalContextLock({ patientId, encounterId, actorId: userEmail, role: 'SURGEON' });
+
   if (!encounterId) throw new Error('Encounter ID is mandatory.');
 
   const logRef = doc(collection(db, COLLECTIONS.SURGERY_LOGS));

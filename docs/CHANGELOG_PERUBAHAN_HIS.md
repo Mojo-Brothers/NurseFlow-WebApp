@@ -20,6 +20,273 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### ⚡ [28 AGUSTUS 2026] — PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY & COMMAND BOUNDARY ENFORCEMENT (IMMUTABLE SAFETY DECISION CONTRACT, BACKEND CONTEXT BINDING & ANTI-REPLAY DEFENSE, ACID TRANSACTION WORM AUDIT LINKAGE, 10/10 D2.3-D TESTS PASS 100%, 69/69 TOTAL ARCHITECTURE & DESIGN SYSTEM TESTS PASS 100%, ALL 7 CI AUDIT GATES GREEN, ZERO BUILD ERRORS)
+**Tag Rilis:** `phase-d23d-safety-authorization-v1.0`  
+**Kategori:** `[MAJOR]` `[SAFETY]` `[SECURITY]` `[AUDIT]` `[E5-F]` `[ENTERPRISE-GOVERNANCE]`  
+**Status Evidence:** 🟢 **`PHASE D2.3 (D2.3-A, D2.3-B, D2.3-C, D2.3-D) FULLY CLOSED — ENTERPRISE CLINICAL SAFETY ENFORCEMENT VERIFIED (FAIL-CLOSED COMMAND BOUNDARY WITHOUT VALID SAFETY DECISION, CONTEXT-BOUND PATIENT/ENCOUNTER/ACTOR MATCHING, ANTI-TAMPER JUSTIFICATION GUARD, SINGLE-USE ANTI-REPLAY PROTECTION, PHYSICAL POSTGRESQL E5-F WORM IMMUTABILITY SHIELD, 10/10 D2.3-D TESTS PASS, 69/69 TOTAL SUITE PASS 100%, ALL 7 CI AUDIT GATES GREEN, VITE PRODUCTION BUILD PASS IN 10.28S).`**
+
+1. **Penerbitan Kontrak Otorisasi Keselamatan (`SafetyDecision`):**
+   - [`src/core/safetyDecision.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/core/safetyDecision.js):
+     * Membangun objek otorisasi keselamatan imutabel berstandar enterprise yang memuat: `decisionId` (UUID unik *single-use*), `patientId`, `encounterId`, `actorId`, `actorRole`, `action`, `riskType`, `justification`, `acknowledgment`, `correlationId`, `createdAt`, dan `status`.
+   - [`src/design-system/components/HardStopDialog.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/HardStopDialog.jsx):
+     * Mengintegrasikan generator `createSafetyDecision` secara otomatis saat pengguna mengonfirmasi intervensi keselamatan, sehingga mutasi downstream menerima otorisasi resmi.
+
+2. **Layanan Penegakan Sisi Server & Batas Perintah ([`server/services/safetyAuthorization.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/safetyAuthorization.service.js)):**
+   - **Fail-Closed Mandatory Decision**: Menolak seluruh mutasi klinis berisiko tinggi jika `safetyDecision` tidak disertakan (`403 SAFETY_DECISION_REQUIRED`).
+   - **Context Binding Verification**: Memastikan `safetyDecision.patientId` identik dengan ID pasien pada rekam data fisik (`400 SAFETY_PATIENT_CONTEXT_MISMATCH`).
+   - **Encounter Context Verification**: Memastikan `safetyDecision.encounterId` sesuai (`400 SAFETY_ENCOUNTER_CONTEXT_MISMATCH`).
+   - **Actor Accountability Guard**: Memastikan pengguna yang mengeksekusi perintah identik dengan pengguna yang mengotorisasi keputusan (`403 SAFETY_ACTOR_MISMATCH`).
+   - **Anti-Tampering Justification**: Menolak mutasi jika justifikasi pada request body dimanipulasi atau berbeda dengan justifikasi yang telah diotorisasi pada HardStop (`400 SAFETY_JUSTIFICATION_TAMPERED`).
+   - **Anti-Replay / Single-Use Token**: Mengunci `decisionId` yang telah digunakan dan menolak upaya mutasi kedua menggunakan token yang sama (`409 SAFETY_DECISION_ALREADY_CONSUMED`).
+
+3. **Integrasi Transaksional CPOE & WORM E5-F ([`server/services/cpoeApplication.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/cpoeApplication.service.js)):**
+   - Mengikat eksekusi pembatalan order CPOE ke dalam transaksi ACID PostgreSQL:
+     * Mengunci baris `clinical_orders` secara eksklusif (`FOR UPDATE`).
+     * Melakukan verifikasi otorisasi keselamatan `safetyAuthorizationService.verifyAndConsumeDecision`.
+     * Merekam `decisionId`, `signature_hash`, `actor_id`, dan `cancellation_reason` secara atomik ke dalam `universal_audit_logs`.
+     * Menjamin perlindungan *fail-closed*: Jika terjadi kegagalan di langkah mana pun, transaksi dibatalkan (`ROLLBACK`) dan 0 mutasi terjadi.
+
+4. **Suite Pengujian Integritas End-to-End ([`tests/phaseD23DSafetyAuthorizationIntegrity.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD23DSafetyAuthorizationIntegrity.test.js)):**
+   - Merilis 10 skenario uji (7 negative paths, 1 positive path, 1 E5-F WORM linkage proof, 1 WORM immutability defense).
+   - **Hasil: 10/10 tests PASS 100%**.
+   - Total Keseluruhan: **69/69 tests PASS 100%** di 8 test suite.
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D2.3-B & D2.3-C: CLINICAL SAFETY SURFACE REMEDIATION & COMMAND BOUNDARY INTEGRATION (100% RAW CONFIRM REMEDIATED, HARDSTOPDIALOG INTEGRATED INTO CPOE & PHARMACY & DISCHARGE, MANDATORY JUSTIFICATION AT COMMAND BOUNDARY, 59/59 TESTS PASS 100%, ALL 7 CI AUDIT GATES GREEN, ZERO BUILD ERRORS)
+**Tag Rilis:** `phase-d23bc-safety-remediation-v1.0`  
+**Kategori:** `[MAJOR]` `[SAFETY]` `[REMEDIATION]` `[COMMAND-BOUNDARY]` `[AUDIT]`  
+**Status Evidence:** 🟢 **`PHASE D2.3-B & D2.3-C CLOSED — SAFETY SURFACE REMEDIATION & COMMAND BOUNDARY ADOPTION VERIFIED (11/11 RAW CONFIRM CALLS REMEDIATED TO ZERO, HIGH-RISK OVERRIDES WIRED TO HARDSTOPDIALOG WITH PATIENT CONTEXT BANNER & WRITTEN CLINICAL JUSTIFICATION, ORDERS COMMAND BOUNDARY ENFORCING FAIL-CLOSED JUSTIFICATION, 15/15 PHASE D2.3 TESTS PASS, 59/59 TOTAL DESIGN SYSTEM & ARCHITECTURE TESTS PASS 100%, ALL 7 CI AUDIT GATES GREEN, PRODUCTION BUILD PASS IN 10.6S).`**
+
+1. **Remediasi P0 — Intervensi Klinis Risiko Tinggi ([`src/modules/`]):**
+   - [`CPOEWorkspace.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/components/CPOEWorkspace.jsx):
+     * Mengganti raw `window.confirm` peringatan alergi dengan `HardStopDialog` (Authoritative Z-Index 9999).
+     * Mewajibkan DPJP mengisi justifikasi klinis tertulis dan mencentang pemahaman risiko sebelum resep dengan konflik alergi dapat diteruskan ke farmasi.
+   - [`IpsgVerificationModal.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/pharmacy/components/IpsgVerificationModal.jsx):
+     * Mengganti raw `window.confirm` override alergi farmasi dengan `HardStopDialog` yang mewajibkan justifikasi klinis apoteker.
+   - [`EncounterPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/encounter/pages/EncounterPage.jsx):
+     * Mengganti raw `window.confirm` pemulangan pasien dengan `HardStopDialog` dengan snapshot identitas pasien dan verifikasi status klinis.
+   - [`PatientCarePanel.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/components/PatientCarePanel.jsx):
+     * Mengganti raw `window.confirm` penghapusan billing tindakan dengan `ClinicalModal`.
+
+2. **Remediasi P1 — Penghapusan Master Data Administratif:**
+   - Memigrasikan 7 titik `window.confirm` pada modul Master Data dan Admin (`MasterDataTable.jsx`, `MasterDataFilterBar.jsx`, `MasterDataDetailDrawer.jsx`, `MasterServicePage.jsx`, `MasterDataHub.jsx`, `AdminHubPage.jsx`) ke dalam `ClinicalModal`.
+   - **Hasil Audit Scanner (`npm run audit:safety-inventory`)**: **0 raw `confirm()` calls tersisa di seluruh codebase (100% remediated)**.
+
+3. **Command Boundary Safety Contract Guard ([`src/modules/orders/services/ordersApi.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/orders/services/ordersApi.service.js)):**
+   - Menambahkan fail-closed validation pada `cancelOrder`: Mutasi destruktif ditolak langsung pada command boundary jika justifikasi klinis kosong.
+
+4. **Suite Pengujian & Verifikasi:**
+   - Merilis [`tests/phaseD23SafetyAdoption.test.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD23SafetyAdoption.test.jsx) (5/5 tests PASS).
+   - Menambahkan uji *inert backdrop*, *escape blocking*, dan *patient context snapshot* pada [`tests/phaseD23SafetyPrimitives.test.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD23SafetyPrimitives.test.jsx) (10/10 tests PASS).
+   - Total 7 Suite Pengujian: **59/59 tests PASS 100%**.
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D2.3: CLINICAL SAFETY PRIMITIVES & D2.3.0 SAFETY SURFACE DISCOVERY (CLINICALBADGE, CLINICALSTATUSINDICATOR, CLINICALALERT WITH RFC 7807, CLINICALMODAL, HARDSTOPDIALOG WITH AUTHORITATIVE Z-INDEX 9999, 8/8 VITEST TESTS PASS 100%, 52/52 DESIGN SYSTEM TESTS PASS 100%, ALL 7 CI AUDIT GATES GREEN)
+**Tag Rilis:** `phase-d23-safety-primitives-v1.0`  
+**Kategori:** `[MAJOR]` `[SAFETY]` `[DESIGN-SYSTEM]` `[CLINICAL-DECISION-SUPPORT]` `[AUDIT]`  
+**Status Evidence:** 🟢 **`PHASE D2.3 CLOSED — CLINICAL SAFETY PRIMITIVES VERIFIED (CLINICALBADGE WITH DOMAIN SEMANTICS & TABULAR MONO NUMERALS, CLINICALSTATUSINDICATOR WITH WCAG 1.4.1 NON-COLOR RELIANCE, CLINICALALERT WITH RFC 7807 LINEAGE, CLINICALMODAL WITH Z-INDEX 1050, HARDSTOPDIALOG WITH AUTHORITATIVE Z-INDEX 9999 & PATIENT CONTEXT BANNER & MANDATORY JUSTIFICATION, 8/8 VITEST TESTS PASS 100%, 52/52 DESIGN SYSTEM TESTS PASS 100%, ALL 7 CI AUDIT GATES GREEN).`**
+
+1. **D2.3.0 Safety Surface Discovery & Contract Inventory ([`scripts/audit_safety_surfaces_inventory.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/audit_safety_surfaces_inventory.mjs)):**
+   - Memetakan titik-titik intervensi risiko tinggi di 630 file kode sumber (`npm run audit:safety-inventory`):
+     * **11 Browser raw `confirm()` calls** (di 10 file) $\rightarrow$ Kandidat migrasi ke `HardStopDialog`
+     * **102 Browser raw `alert()` calls** $\rightarrow$ Kandidat migrasi ke `ClinicalAlert`
+     * **3 ARIA `role="alert/dialog"` instances**
+     * **5 Titik Mutasi Destruktif** (`cancelOrder`, `discontinue`, `overrideWarning`, dll)
+2. **Komponen Primitif Keselamatan Klinis (`src/design-system/components/`):**
+   - [`ClinicalBadge.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalBadge.jsx):
+     * **Clinical Domain Semantics**: Berbicara dalam bahasa klinis (`severity`: `routine`, `info`, `warning`, `critical`, `panic` & `clinicalType`: `esi`, `news2`, `high-alert-medication`, `lab-critical`, `allergy`, `fall-risk`, `code-blue`).
+     * **Tabular Numerals**: Mengaktifkan `font-vitals-mono font-feature-tnum` untuk visualisasi skor numerik klinis.
+   - [`ClinicalStatusIndicator.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalStatusIndicator.jsx):
+     * **WCAG 1.4.1 Non-Color Reliance**: Menggabungkan kombinasi bentuk visual, ikon glif khusus, dan label teks (`stable`, `monitoring`, `degraded`, `warning`, `critical`, `offline`, `unknown`) sehingga tidak bergantung pada warna saja.
+   - [`ClinicalAlert.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalAlert.jsx):
+     * **Integrasi Native RFC 7807**: Menerima objek problem details (`type`, `title`, `status`, `detail`, `instance`, `correlationId`) dan menampilkan Lineage ID untuk pelacakan audit trail.
+     * **ARIA Live Strategy**: Menggunakan `aria-live="assertive"` untuk kondisi darurat/kritis/panic dan `aria-live="polite"` untuk notifikasi standar.
+   - [`ClinicalModal.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalModal.jsx):
+     * Modal dialog generik berstandar aksesibilitas tinggi: `role="dialog"`, `aria-modal="true"`, focus trap, Escape key listener, Z-Index `1050`.
+   - [`HardStopDialog.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/HardStopDialog.jsx):
+     * **Authoritative Z-Index 9999**: Menempati kasta tertinggi dalam sistem hierarki visual HIS NurseFlow (`var(--nf-z-safety-hard-stop-modal)`).
+     * **Anti-Accidental Dismissal**: Backdrop click dan tombol `Escape` diblokir total untuk mencegah lolosnya intervensi keselamatan tanpa sengaja.
+     * **Patient Identity Snapshot Banner**: Menampilkan nama pasien, No. RM, dan ruang rawat aktif untuk mencegah *wrong-patient error*.
+     * **Mandatory Acknowledgment & Justification**: Checkbox pemahaman risiko wajib dicentang dan alasan klinis minimal 5 karakter wajib diisi untuk rekam jejak WORM E5-F sebelum tombol eksekusi aktif.
+     * **Optional Typed Confirmation Phrase**: Mendukung opsi pengetikan kata kunci (misal: `"OVERRIDE"`) untuk aksi katastropik.
+3. **Penyusunan Suite Pengujian:**
+   - Merilis [`tests/phaseD23SafetyPrimitives.test.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD23SafetyPrimitives.test.jsx) (8/8 tests pass 100%).
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D2.2: SELECTION & DATA ENTRY PRIMITIVES & D2.2.0 DISCOVERY INVENTORY (CLINICALSELECT DUAL-MODE, CLINICALCHECKBOX INDETERMINATE TREE, CLINICALRADIO SEGMENTED CARDS, 211 SELECT & 99 CHECKBOX DISCOVERED, 8/8 VITEST TESTS PASS 100%, 44/44 DESIGN SYSTEM TESTS PASS 100%, ZERO BUILD ERRORS)
+**Tag Rilis:** `phase-d22-selection-primitives-v1.0`  
+**Kategori:** `[MAJOR]` `[UI/UX]` `[DESIGN-SYSTEM]` `[DATA-ENTRY]` `[ACCESSIBILITY]`  
+**Status Evidence:** 🟢 **`PHASE D2.2 CLOSED — SELECTION PRIMITIVES VERIFIED (CLINICALSELECT WITH NATIVE & SEARCHABLE COMBOBOX MODES, CLINICALCHECKBOX WITH INDETERMINATE TREE SUPPORT & 44PX TOUCH TARGET, CLINICALRADIO WITH STANDARD & SEGMENTED CLINICAL CARDS, 8/8 VITEST TESTS PASS 100%, 44/44 DESIGN SYSTEM SUITE TESTS PASS 100%, ALL 6 CI AUDIT GATES GREEN, PRODUCTION BUILD PASS IN 11.2S).`**
+
+1. **D2.2.0 Discovery & Contract Inventory ([`scripts/audit_selection_primitives_inventory.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/audit_selection_primitives_inventory.mjs)):**
+   - Memindai seluruh codebase frontend (`npm run audit:selection-inventory`):
+     * **211 Native `<select>` instances** (tersebar di 86 file)
+     * **8 Custom Comboboxes / Select** (di 3 file)
+     * **99 Checkbox Elements** (di 32 file)
+     * **5 Radio / RadioGroup Elements** (di 4 file)
+     * **153 Searchable Lookups** (pencarian obat farmasi, ICD-10, DPJP)
+2. **Komponen Primitif Seleksi Klinis (`src/design-system/components/`):**
+   - [`ClinicalSelect.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalSelect.jsx):
+     * **Mode 1 (Native Clean Mode)**: Dropdown native terbungkus styling kanonikal `--nf-*`, label association, required mark, status validation (`error`, `warning`, `success`), chevron icon.
+     * **Mode 2 (Searchable Combobox Mode)**: Pencarian interaktif real-time, filter opsi cepat, keyboard traversal (`ArrowUp`, `ArrowDown`, `Enter`, `Escape`), tombol clear, `role="combobox"` dan `role="listbox"`.
+   - [`ClinicalCheckbox.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalCheckbox.jsx):
+     * **Indeterminate State (`aria-checked="mixed"`)**: Mendukung status sebagian terpilih (*indeterminate*) untuk bundel paket order CPOE, master-child checklist, dan verifikasi checklist bedah WHO.
+     * **Target Sentuh WCAG 2.5.5**: Menjamin target sentuh minimal **$44 \times 44\text{ px}$** (`min-h-[44px]`).
+   - [`ClinicalRadio.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalRadio.jsx):
+     * **Varian Standard**: Single-choice form rekam medis dengan label and helper description.
+     * **Varian Segmented Card (`variant="card"`)**: Kartu seleksi interaktif besar dengan badge (e.g. Tingkat Triase ESI 1-5, Skala Nyeri Wong-Baker, Kategori NEWS2).
+     * **`ClinicalRadioGroup`**: Pengelompokan terpusat dengan ARIA `role="radiogroup"` dan orientasi vertikal/horizontal.
+   - [`index.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/index.js): Pembaruan barrel export dengan `ClinicalSelect`, `ClinicalCheckbox`, `ClinicalRadio`, dan `ClinicalRadioGroup`.
+3. **Penyusunan Suite Pengujian:**
+   - Merilis [`tests/phaseD22SelectionPrimitives.test.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD22SelectionPrimitives.test.jsx) (8/8 tests pass 100%).
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D2.1: CLINICAL INTERACTION PRIMITIVES & D1.2.1 SCANNER HARDENING (CLINICALBUTTON, CLINICALICONBUTTON, CLINICALINPUT, DOUBLE-SUBMIT SAFETY SHIELD, WCAG 44PX TOUCH TARGET, TABULAR VITALS MONO, MULTI-TIER DEBT CLASSIFICATION, 12/12 VITEST TESTS PASS 100%)
+**Tag Rilis:** `phase-d21-interaction-primitives-v1.0`  
+**Kategori:** `[MAJOR]` `[UI/UX]` `[DESIGN-SYSTEM]` `[SAFETY]` `[ACCESSIBILITY]`  
+**Status Evidence:** 🟢 **`PHASE D2.1 CLOSED — CLINICAL INTERACTION PRIMITIVES VERIFIED (CLINICALBUTTON WITH DOUBLE-SUBMIT SHIELD & HIGH-ALERT STYLING, CLINICALICONBUTTON WITH WCAG 44X44PX TARGET & ACCESSIBLE TOOLTIP, CLINICALINPUT WITH MEDICAL UNIT ADORNMENTS & TABULAR NUMERALS "TNUM" 1, 12/12 VITEST TESTS PASS 100%, 36/36 DESIGN SYSTEM TESTS PASS 100%, ALL 5 CI AUDIT GATES GREEN).`**
+
+1. **Komponen Primitif Interaktif Klinis Berstandar Keselamatan (`src/design-system/components/`):**
+   - [`ClinicalButton.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalButton.jsx):
+     * **Variants**: `primary` (Oceanic Brand), `secondary` (Clean Slate), `ghost`, `destructive` (Code Red/Panic), dan `highAlert` (HAM/LASA Warning Gradient).
+     * **Safety Shield**: Otomatis mencegah dan memblokir *double-submit* saat `loading` aktif (`aria-busy="true"`, `disabled="true"`, `event.stopPropagation()`).
+     * **Tactile Feedback**: Animasi mikro klik responsif (`active:scale-[0.98]`) dan focus ring kontras tinggi.
+   - [`ClinicalIconButton.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalIconButton.jsx):
+     * **Target Sentuh WCAG 2.5.5**: Menjamin target sentuh minimal **$44 \times 44\text{ px}$** (`min-w-[44px] min-h-[44px]`) untuk penggunaan layar sentuh/tablet perawat di samping ranjang pasien.
+     * **Aksesibilitas**: Wajib `ariaLabel`, keyboard triggerable, dan built-in accessible tooltip.
+   - [`ClinicalInput.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/ClinicalInput.jsx):
+     * **Medical Form Integration**: Label dengan tanda wajib (`*`), helper text, validation message, status state (`default`, `error`, `warning`, `success`), prefix & suffix unit adornments (`mmHg`, `mg/dL`, `bpm`, `°C`, `kg`).
+     * **Tabular Numerals Vitals**: Opsi `isVitalsMono` mengaktifkan font monospace dengan `font-feature-settings: "tnum" 1, "zero" 1` untuk visualisasi tanda vital yang stabil dan tidak goyang saat angka berubah.
+     * **Aksesibilitas Lengkap**: Asosiasi otomatis `id`, `htmlFor`, `aria-describedby`, `aria-invalid`, `aria-required`.
+   - [`index.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/index.js): Master barrel exporter.
+2. **D1.2.1 Scanner Classification Hardening ([`scripts/audit_design_debt_baseline.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/audit_design_debt_baseline.mjs)):**
+   - Mengklasifikasikan utang desain menjadi:
+     * **🔴 Hardcoded Non-Canonical**: 3.304 poin (Target aktif burndown).
+     * **🟡 Canonical Literal Match**: 1.033 poin (Nilai literal yang nilainya identik dengan skala token resmi).
+3. **Penyusunan Suite Pengujian:**
+   - Merilis [`tests/phaseD21InteractionPrimitives.test.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD21InteractionPrimitives.test.jsx) (12/12 tests pass 100%).
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D1.2: LEGACY DESIGN DEBT DISCOVERY AUDIT & BASELINE ESTABLISHMENT (637 SOURCE FILES SCANNED, 4264 DESIGN DEBT POINTS INVENTORIED, EMPIRICAL POINT 0 ESTABLISHED, 2/2 VITEST TESTS PASS)
+**Tag Rilis:** `phase-d12-design-debt-baseline-v1.0`  
+**Kategori:** `[MAJOR]` `[AUDIT]` `[DESIGN-SYSTEM]` `[ARCHITECTURE]`  
+**Status Evidence:** 🟢 **`PHASE D1.2 CLOSED — EMPIRICAL DESIGN DEBT BASELINE ESTABLISHED (637 FILES SCANNED, 334 FILES WITH DESIGN DEBT, 674 HARDCODED COLORS, 70 HARDCODED SPACING, 3392 HARDCODED TYPOGRAPHY, 21 HARDCODED RADIUS, 107 HARDCODED ELEVATION = 4264 TOTAL DESIGN DEBT POINTS SAVED IN DOCS/DESIGN_DEBT_BASELINE_2026.JSON).`**
+
+1. **Pemindaian Kuantitatif Seluruh Utang Desain Visual Frontend:**
+   - Merilis skrip auditor [`scripts/audit_design_debt_baseline.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/audit_design_debt_baseline.mjs) (`npm run audit:design-debt`) yang memetakan seluruh nilai visual hardcoded pada 637 file kode sumber `src/`.
+   - Menetapkan **Baseline Titik Nol (*Point 0 Baseline*)**:
+     * **Hardcoded Colors**: 674 titik (`#hex`, `rgb`, `rgba`)
+     * **Hardcoded Spacing**: 70 titik (`padding: Npx`, `margin: Npx`, dsb)
+     * **Hardcoded Typography**: 3.392 titik (`font-size: Npx`, `font-weight`, dsb)
+     * **Hardcoded Radius**: 21 titik (`border-radius: Npx`)
+     * **Hardcoded Elevation**: 107 titik (`z-index: N`, `box-shadow`)
+     * **Total Utang Desain Baseline**: **4.264 Poin** (tersebar di 334 file).
+2. **Penyimpanan Baseline Terstruktur:**
+   - Menyimpan seluruh hasil inventori ke [`docs/design_debt_baseline_2026.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/design_debt_baseline_2026.json) sebagai tolok ukur penurunan utang desain terukur (*measurable debt reduction*) pada Phase D2 hingga D6.
+3. **Penyusunan Suite Pengujian:**
+   - Merilis [`tests/phaseD12DesignDebt.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD12DesignDebt.test.js) (2/2 tests pass 100%).
+4. **Pernyataan Penutupan Gerbang Phase D1.2:**
+   - *"Medan perang visual warisan NurseFlow kini telah terpetakan secara kuantitatif (4.264 poin utang desain pada 334 file). Phase D1.2 resmi dinyatakan CLOSED — EMPIRICAL DESIGN DEBT BASELINE ESTABLISHED."*
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D1.1: DESIGN TOKEN VALUE INTEGRITY & ANTI-DRIFT CI GATE (AUTOMATIC CSS COMPILER, BIJECTIVE 1-TO-1 VALUE INTEGRITY, ZERO ORPHAN CSS VARIABLES, ZERO VALUE DRIFT, 6/6 VITEST TESTS PASS, 100% VALUE AUDIT PASS)
+**Tag Rilis:** `phase-d11-token-value-integrity-v1.0`  
+**Kategori:** `[MAJOR]` `[SAFETY]` `[ARCHITECTURE]` `[DESIGN-SYSTEM]` `[AUDIT]`  
+**Status Evidence:** 🟢 **`PHASE D1 & D1.1 CLOSED — CANONICAL DESIGN TOKEN SSOT VERIFIED (91 BASE TOKENS, 24 SEMANTIC LIGHT, 24 SEMANTIC DARK, 19 CLINICAL TOKENS, 22 TYPOGRAPHY, 28 SPACING, 19 ELEVATION, 11 MOTION CHECKED — 0 MISSING MAPPINGS, 0 VALUE MISMATCHES, 0 ORPHAN CSS VARIABLES, 0 DUPLICATE KEYS, 22/22 VITEST DESIGN TOKEN TESTS PASS 100%).`**
+
+1. **Eliminasi Risiko Duplikasi & Value Drift dengan Token CSS Compiler:**
+   - Merilis [`scripts/generate_design_token_css.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/generate_design_token_css.mjs) (`npm run tokens:build`) dan mapping kamus [`cssMapping.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/cssMapping.js) yang secara otomatis menyusun [`src/design-system/styles/tokens.generated.css`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/styles/tokens.generated.css) langsung dari sumber kanonikal JavaScript SSOT.
+2. **Implementasi Anti-Drift & Orphan CSS Variable Auditor:**
+   - Merilis skrip auditor [`scripts/audit_token_value_integrity.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/audit_token_value_integrity.mjs) (`npm run audit:token-integrity`) yang memverifikasi kecocokan nilai eksak (hex, font, z-index, spacing) antara JS dan CSS variables serta menolak *orphan variables* (variabel `--nf-*` liar yang tidak terdaftar di token registry).
+3. **Penyusunan Suite Pengujian Anti-Drift:**
+   - Merilis [`tests/phaseD11AntiDrift.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD11AntiDrift.test.js) (6/6 tests pass 100%).
+4. **Pernyataan Penutupan Gerbang Phase D1 / D1.1:**
+   - *"Seluruh representasi visual runtime CSS NurseFlow telah terbukti secara otomatis terkompilasi dan cocok 100% dengan Canonical JS Token SSOT tanpa ada nilai yang mengalami drift atau variabel liar. Phase D1 & D1.1 resmi dinyatakan CLOSED — CANONICAL DESIGN TOKEN SSOT VERIFIED."*
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D1: CANONICAL DESIGN TOKEN FOUNDATION (SSOT VISUAL COORDINATES, ZERO-AMBIGUITY CLINICAL SEVERITY, TABULAR NUMERALS "TNUM" 1, Z-INDEX STACKING HIERARCHY, 16/16 VITEST TESTS PASS 100%, 28/28 TOKEN AUDIT PASS 100%)
+**Tag Rilis:** `phase-d1-design-token-foundation-v1.0`  
+**Kategori:** `[MAJOR]` `[UI/UX]` `[DESIGN-SYSTEM]` `[ARCHITECTURE]`  
+**Status Evidence:** 🟢 **`16/16 PHASE D1 VITEST TESTS PASS (100%), 28/28 DESIGN TOKEN AUDIT CHECKS PASS (100%), 176/176 GLOBAL TEST FILES PASS (100%), 1772/1772 TESTS PASS (100%), VITE PRODUCTION BUILD CLEAN (2189 MODULES TRANSFORMED, 0 ERRORS).`**
+
+1. **Pembentukan Master Canonical Token Hub (`src/design-system/tokens/`):**
+   - [`base.tokens.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/base.tokens.js): Primitives warna murni (Ocean, Teal, Slate, Red, Amber, Emerald, Blue, Purple) dengan skala 50 s/d 950.
+   - [`semantic.tokens.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/semantic.tokens.js): Surface, canvas, text, borders, dan interaktif (Hover, Active, Focus, Disabled) simetris untuk Light dan Dark themes.
+   - [`clinical.tokens.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/clinical.tokens.js): Skala keparahan klinis tanpa ambiguitas (ESI 1-5 IGD, Nilai Kritis Lab dengan panic glow, Obat High-Alert/LASA/Narkotika, NEWS2 Early Warning, Emergency Hospital Codes).
+   - [`typography.tokens.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/typography.tokens.js): Skala font (2xs 11px s/d 4xl 36px), weights, dan **Tabular Numerals (`font-feature-settings: "tnum" 1, "zero" 1`)** untuk stabilitas visual angka tanda vital & dosis obat.
+   - [`spacing.tokens.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/spacing.tokens.js): Skala spasi klinis padat (2px s/d 64px) dan dimensi komponen terstandarisasi.
+   - [`elevation.tokens.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/elevation.tokens.js): Shadow physics dan **Hirarki Z-Index Otoritatif**: Modal Hard-Stop Keselamatan ($9999$) > Notifikasi Toast ($2000$) > Dialog Modal ($1050$) > Drawer ($500$) > Dropdown ($100$) > Top Navbar ($60$) > Patient Ribbon HUD ($50$) > Table Header Sticky ($10$) > Base Canvas ($0$).
+   - [`motion.tokens.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/motion.tokens.js): Durasi & kurva easing transisi klinis terkalibrasi.
+   - [`index.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/tokens/index.js): Master barrel exporter terenkapsulasi `Object.freeze()` dengan helper `getSemanticToken()`, `getClinicalSeverityStyle()`, dan `getNews2BadgeConfig()`.
+2. **Sinkronisasi Variabel CSS Custom Properties ([`src/index.css`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/index.css)):**
+   - Menghubungkan seluruh variabel `--nf-*` untuk `:root` dan `.dark` serta menambahkan kelas utilitas typography klinis `.font-vitals-mono` dan `.font-feature-tnum`.
+3. **Penyusunan Test Suite & Audit Gate:**
+   - Merilis test suite [`tests/phaseD1DesignTokens.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/phaseD1DesignTokens.test.js) (16/16 pass 100%).
+   - Merilis skrip auditor [`scripts/audit_design_token_adoption.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/audit_design_token_adoption.mjs) (`npm run audit:tokens`, 28/28 checks pass 100%).
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D0.5.1: MUTATION SURFACE DISCOVERY & RUNTIME ADOPTION COVERAGE AUDIT (SYSTEMATIC MACHINE-DISCOVERED SCAN 628 FILES, ZERO UNPROTECTED CLINICAL BYPASS, 30/30 PROTECTED SURFACES, 87/87 NON-CLINICAL ISOLATED, NPM RUN AUDIT:MUTATION-COVERAGE & AUDIT:E5F PASS 100%)
+**Tag Rilis:** `phase-d051-mutation-surface-coverage-v1.0`  
+**Kategori:** `[MAJOR]` `[SAFETY]` `[AUDIT]` `[ARCHITECTURE]`  
+**Status Evidence:** 🟢 **`PHASE D0.5 CLOSED — EVIDENCE-BOUNDED RUNTIME SAFETY VERIFIED (628 SOURCE FILES SCANNED, 120 TOTAL MUTATION SURFACES CLASSIFIED, 30/30 CLINICAL SURFACES PROTECTED BY CONTEXT LOCK, 87 INTENTIONALLY NON-CLINICAL, 0 UNPROTECTED MUTATIONS, 19/19 PHYSICAL POSTGRESQL E5-F CHECKS PASS, 33/33 UNIT/INTEGRATION TESTS PASS 100%).`**
+
+1. **Pemindaian Sistematis & Penemuan Permukaan Mutasi Otomatis (Machine-Discovered Mutation Surface):**
+   - Merilis script auditor [`scripts/audit_mutation_surface_coverage.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/audit_mutation_surface_coverage.mjs) (`npm run audit:mutation-coverage`) yang memindai 628 berkas kode sumber frontend di seluruh `src/`.
+   - Mengidentifikasi 120 titik mutasi data aktif dan mengklasifikasikannya secara ketat tanpa asumsi manusia:
+     * **`🟢 PROTECTED BY CONTEXT LOCK`**: 30 titik mutasi klinis terlindungi `assertClinicalContextLock()`.
+     * **`⚪ INTENTIONALLY NON-CLINICAL`**: 87 titik mutasi non-klinis (Master data admin, otentikasi user login/logout, telemetri, logistik gudang farmasi, antrean registrasi).
+     * **`🔴 UNPROTECTED CLINICAL MUTATIONS`**: **0 (NOL)** — Tidak ada satu pun mutasi klinis tersembunyi yang lolos tanpa penguncian konteks.
+2. **Penyempurnaan Proteksi pada Jalur Mutasi Tambahan:**
+   - **`bed.service.js`**: `transferBed` dan `releaseBed` kini mengadopsi fail-closed context lock.
+   - **`nursingCareEngine.service.js`**: `recordNursingCarePlan` kini mengadopsi fail-closed context lock.
+   - **`aimsAnesthesiaEngine.service.js`**: `saveAnesthesiaRecord` kini mengadopsi fail-closed context lock.
+   - **`handover.service.js`**: `saveHandover` kini mengadopsi fail-closed context lock.
+   - **`ordersApi.service.js`**: `createOrder`, `cancelOrder`, `transitionOrderStatus`, `dispenseMedication`, `releaseLabResult`, dan `releaseRadiologyReport` mengadopsi fail-closed context lock.
+   - **`lis.service.js`** & **`pharmacy.service.js`** & **`payment.service.js`**: Seluruh mutasi telah dilengkapi verifikasi fail-closed context lock.
+3. **Pernyataan Penutupan Gerbang Phase D0.5 / D0.5.1:**
+   - *"Seluruh permukaan mutasi klinis yang ditemukan oleh machine discovery (30 dari 30) telah terbukti mengadopsi fail-closed context enforcement. Bukti fisik integritas WORM PostgreSQL (19/19 checks) dan mitigasi race condition perpindahan pasien telah diverifikasi secara empiris. Phase D0.5 resmi dinyatakan CLOSED — EVIDENCE-BOUNDED RUNTIME SAFETY VERIFIED."*
+
+---
+
+### ⚡ [28 AGUSTUS 2026] — PHASE D0.5: RUNTIME SAFETY CONTRACT ADOPTION AUDIT & PHYSICAL POSTGRESQL E5-F EVIDENCE PROOF (RECONCILED 9-MODULE CONSUMER INVENTORY, ABORTCONTROLLER PATIENT-SWITCH SHIELD, RFC 7807 422 TO SAFETY MODALS, PHYSICAL WORM AUDIT TRIGGER VERIFICATION, 19/19 E5-F PASS, 33/33 D0.5 UNIT PASS, 176/176 GLOBAL TEST FILES PASS 100%)
+**Tag Rilis:** `phase-d05-runtime-safety-adoption-v1.1`  
+**Kategori:** `[MAJOR]` `[SAFETY]` `[ARCHITECTURE]` `[TESTING]` `[DATABASE]`  
+**Status Evidence:** 🟢 **`E5-F VERIFIED FOR TESTED SAFETY FLOWS (19/19 PHYSICAL POSTGRESQL CHECKS PASS), 33/33 D0.5 ADOPTION TESTS PASS (100%), 176/176 GLOBAL TEST FILES PASS (100%), 1756/1756 TESTS PASS (100%), VITE PRODUCTION BUILD CLEAN (2189 MODULES TRANSFORMED, 0 ERRORS).`**
+
+1. **Rekonsiliasi Lengkap & Adopsi Menyeluruh 9 Modul Mutasi Klinis (10 Consumer Entrypoints):**
+   - Mengimplementasikan `assertClinicalContextLock()` pada seluruh 10 entrypoint service frontend tanpa perkecualian:
+     * **1. SOAP & CPPT:** [`soapEngine.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/services/soapEngine.service.js) & [`emr.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/services/emr.service.js) (`saveSoapNote`)
+     * **2. CPOE Universal Orders:** [`universalOrderEngine.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/orders/services/universalOrderEngine.service.js) (`createOrder`)
+     * **3. eMAR & Pipeline Obat:** [`eMARService.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/core/services/eMARService.js) (`createEMARRecord` & `administerMedication`) & [`pharmacyEngine.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/orders/services/pharmacyEngine.service.js) (`createPrescriptionOrder`)
+     * **4. LIS Laboratory:** [`laboratoryEngine.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/orders/services/laboratoryEngine.service.js) (`createLabOrder`)
+     * **5. RIS / PACS Radiology:** [`radiologyEngine.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/orders/services/radiologyEngine.service.js) (`createRadiologyOrder`)
+     * **6. Surgery & IBS:** [`operatingTheatreEngine.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/surgery/services/operatingTheatreEngine.service.js) (`scheduleSurgicalCase`) & [`surgery.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/services/surgery.service.js) (`saveSurgicalChecklist`)
+     * **7. Billing / Discharge:** [`billing.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/billing/services/billing.service.js) (`createBill`)
+     * **8. Triase IGD:** [`triage.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/triage/services/triage.service.js) (`submitTriage`)
+     * **9. Clinical Records / Notes:** [`emr.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/services/emr.service.js) (`saveClinicalRecord`) & [`bed.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/ward/services/bed.service.js) (`assignBed`)
+2. **Eksekusi Bukti Fisik PostgreSQL E5-F WORM Audit Trail ([`scripts/verify_phase_d05_physical_e5f_proof.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/verify_phase_d05_physical_e5f_proof.mjs)):**
+   - Melakukan koneksi langsung ke live PostgreSQL `nurseflow_enterprise_his` (`localhost:5432`).
+   - Menyisipkan rekaman audit override klinis nyata ke tabel `universal_audit_logs` dengan `X-Correlation-ID`.
+   - Menguji dan membuktikan trigger `prevent_audit_log_modification()` secara fisik menolak percobaan mutasi `UPDATE` dan `DELETE` dengan error `JCI AUDIT INTEGRITY VIOLATION`.
+   - Menambahkan perintah permanen `npm run audit:e5f` pada [`package.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/package.json).
+3. **Mekanisme Peredam Balapan Perpindahan Pasien 50–100 ms (*Patient-Switch Abort Shield*):**
+   - Mengikat sinyal pembatalan (`signal`) pada [`apiClient.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/core/apiClient.js) dan validator silsilah respon (`validateResponseContextLineage()`).
+   - Terbukti pada consumer workspace nyata: Pergantian pasien 60-80 ms membatalkan permintaan in-flight dan menggugurkan commit React state tanpa ada kontaminasi data silang pasien (*zero cross-patient contamination*).
+4. **Penerjemahan Otoritatif Error RFC 7807 HTTP 422 Menjadi Modal Keselamatan UI:**
+   - Menyediakan `mapErrorToClinicalSafetyAction()` untuk mengubah kode error backend (`ALLERGY_HARD_STOP`, `HIGH_ALERT_DUAL_SIGN_REQUIRED`, `EMERGENCY_PANIC`, `CONCURRENCY_CONFLICT`) menjadi aksi modal non-dismissible dengan kewajiban telaah klinis eksplisit.
+5. **Pernyataan Engineering Baseline Terkalibrasi:**
+   - *"Untuk mutation paths yang telah diintegrasikan dan diuji dalam Phase D0.5, NurseFlow telah menunjukkan fail-closed context enforcement dan deterministic protection terhadap stale-response/patient-switch race. Bukti fisik PostgreSQL E5-F WORM audit trail telah terverifikasi penuh melalui eksekusi live DB."*
+
+---
+
 ### ⚡ [26 AGUSTUS 2026] — ENTERPRISE QUALITY & CLINICAL SAFETY CI GATE HARDENING (RESOLUSI 18 TEST FAILURES CI/CD, RESOLUSI URL PARSING NODE.JS, PEMULIHAN IN-MEMORY RUNNER SUITE, 175/175 FILES PASS 100%, 1727/1727 TESTS PASS 100%)
 **Tag Rilis:** `ci-quality-gate-hardening-v1.0`  
 **Kategori:** `[FIX]` `[ENHANCEMENT]` `[TESTING]` `[ARCHITECTURE]`  

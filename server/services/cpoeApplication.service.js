@@ -8,6 +8,7 @@
 import crypto from 'crypto';
 import { postgresPoolService } from '../db/postgresPool.js';
 import { transactionManager } from '../db/transactionManager.js';
+import { safetyAuthorizationService } from './safetyAuthorization.service.js';
 
 export class CpoeDomainError extends Error {
   constructor(message, code = 'CPOE_DOMAIN_ERROR', statusCode = 400, details = []) {
@@ -353,12 +354,13 @@ export const cpoeApplicationService = {
 
 
   /**
-   * Cancel an existing CPOE Order with Mandatory Medicolegal Rationale
+   * Cancel an existing CPOE Order with Mandatory Medicolegal Rationale & Safety Decision Guard
    */
   cancelOrder: async ({
     orderId,
     cancellationReason,
-    expectedVersion = null
+    expectedVersion = null,
+    safetyDecision = null
   }, actor = {}, clientIp = '127.0.0.1', correlationId = `CORR-${Date.now()}`) => {
     const authorRole = actor.role || 'UNAUTHENTICATED';
     if (!AUTHORIZED_ORDER_CREATORS.includes(authorRole)) {
@@ -393,6 +395,17 @@ export const cpoeApplicationService = {
       }
 
       const existingOrder = orderRes.rows[0];
+
+      // ─── STRICT SAFETY DECISION AUTHORIZATION VERIFICATION ───
+      const verifiedDecision = safetyAuthorizationService.verifyAndConsumeDecision({
+        safetyDecision,
+        expectedAction: 'CPOE_ORDER_CANCEL',
+        expectedPatientId: existingOrder.patient_id,
+        expectedEncounterId: existingOrder.encounter_id,
+        actor,
+        justification: cancellationReason
+      });
+
       if (expectedVersion !== undefined && expectedVersion !== null && existingOrder.version !== Number(expectedVersion)) {
         throw new CpoeDomainError(
           `Konflik konkurensi: Versi order (${existingOrder.version}) tidak sesuai dengan versi request (${expectedVersion}).`,
@@ -437,10 +450,16 @@ export const cpoeApplicationService = {
         [serverTimestamp, orderId]
       );
 
-      // Audit Log
+      // Audit Log with Safety Decision Lineage
       const signatureHash = crypto
         .createHash('sha256')
-        .update(JSON.stringify({ orderId, status: 'CANCELLED', cancellationReason, timestamp: serverTimestamp }))
+        .update(JSON.stringify({ 
+          orderId, 
+          status: 'CANCELLED', 
+          cancellationReason, 
+          decisionId: verifiedDecision.decisionId,
+          timestamp: serverTimestamp 
+        }))
         .digest('hex');
 
       await client.query(`
@@ -464,8 +483,8 @@ export const cpoeApplicationService = {
         orderId,
         existingOrder.patient_id,
         JSON.stringify(existingOrder),
-        JSON.stringify(updateRes.rows[0]),
-        `Pembatalan CPOE Order [${existingOrder.order_number}]: ${cancellationReason}`,
+        JSON.stringify({ ...updateRes.rows[0], safetyDecisionId: verifiedDecision.decisionId }),
+        `[Decision: ${verifiedDecision.decisionId}] Pembatalan CPOE Order [${existingOrder.order_number}]: ${cancellationReason}`,
         signatureHash,
         serverTimestamp
       ]);
@@ -487,9 +506,11 @@ export const cpoeApplicationService = {
         JSON.stringify({
           orderId,
           orderNumber: existingOrder.order_number,
-          cancelledBy,
           cancellationReason,
-          cancelledAt: serverTimestamp.toISOString()
+          cancelledBy,
+          safetyDecisionId: verifiedDecision.decisionId,
+          correlationId,
+          timestamp: serverTimestamp.toISOString()
         }),
         'PENDING',
         correlationId,
@@ -497,10 +518,18 @@ export const cpoeApplicationService = {
       ]);
 
       await client.query('COMMIT;');
-      return updateRes.rows[0];
+
+      return {
+        ...updateRes.rows[0],
+        safetyDecisionId: verifiedDecision.decisionId,
+        auditSignature: signatureHash
+      };
     } catch (err) {
       await client.query('ROLLBACK;');
       if (err instanceof CpoeDomainError) throw err;
+      if (err.name === 'SafetyAuthorizationError') {
+        throw new CpoeDomainError(err.message, err.code, err.statusCode, err.details);
+      }
       throw new CpoeDomainError(`Gagal membatalkan order: ${err.message}`, 'CANCEL_FAILED', 500);
     } finally {
       client.release();

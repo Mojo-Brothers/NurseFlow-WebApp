@@ -11,6 +11,7 @@ import { calculateAge } from '../../../utils/clinicalCalculators.js';
 import PatientDetailDrawerModal from './PatientDetailDrawerModal.jsx';
 import DischargeModalClassic from './DischargeModalClassic.jsx';
 import BmiModalSlider from './BmiModalSlider.jsx';
+import { ClinicalModal, ClinicalButton } from '../../../design-system/components/index.js';
 
 import { useNavigate } from 'react-router-dom';
 
@@ -276,10 +277,17 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
     toast.success('Tindakan medis berhasil ditambahkan ke riwayat billing!');
   };
 
+  const [actionToDelete, setActionToDelete] = useState(null);
+
   const handleDeleteAction = (id) => {
-    if (!window.confirm('Apakah Anda yakin ingin menghapus tindakan ini dari riwayat billing?')) return;
-    setActionsList(prev => prev.filter(a => a.id !== id));
+    setActionToDelete(id);
+  };
+
+  const confirmDeleteAction = () => {
+    if (!actionToDelete) return;
+    setActionsList(prev => prev.filter(a => a.id !== actionToDelete));
     toast.success('Tindakan telah dihapus dari billing.');
+    setActionToDelete(null);
   };
 
   const handleProcessDischarge = () => {
@@ -1091,6 +1099,28 @@ export default function PatientCarePanel({ patient, encounter, onDischargeSucces
           toast.success(`Berhasil memperbarui BB (${newBb} kg) & TB (${newTb} cm)`);
         }}
       />
+
+      {/* Delete Action Confirmation Modal */}
+      <ClinicalModal
+        isOpen={Boolean(actionToDelete)}
+        onClose={() => setActionToDelete(null)}
+        title="HAPUS TINDAKAN MEDIS DARI BILLING"
+        description="Konfirmasi penghapusan data tindakan keperawatan/medis."
+        footer={
+          <>
+            <ClinicalButton variant="secondary" onClick={() => setActionToDelete(null)}>
+              Batal
+            </ClinicalButton>
+            <ClinicalButton variant="destructive" onClick={confirmDeleteAction}>
+              Hapus Tindakan
+            </ClinicalButton>
+          </>
+        }
+      >
+        <p className="text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+          Apakah Anda yakin ingin menghapus item tindakan ini dari rincian billing pasien? Item yang dihapus tidak akan ditagihkan ke rincian kasir atau klaim BPJS.
+        </p>
+      </ClinicalModal>
     </div>
   );
 }

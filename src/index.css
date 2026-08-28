@@ -1,49 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import "./design-system/styles/tokens.generated.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Colors - Rich Deep Oceanic Teal (EHIS 2026 Premium) */
-  --primary: #007399; 
-  --primary-rgb: 0, 115, 153;
-  --primary-container: #005978;
-  --on-primary: #ffffff;
-  --on-primary-container: #a3e7ff;
+  /* Legacy Compatibility Aliases (Anchored to Canonical SSOT) */
+  --primary: var(--nf-brand-ocean); 
+  --primary-rgb: 1, 92, 128;
+  --primary-container: var(--nf-brand-ocean-dark);
+  --on-primary: var(--nf-text-inverse);
+  --on-primary-container: var(--nf-base-ocean-200);
 
-  --secondary: #0f172a;
-  --secondary-container: #1e293b;
-  --on-secondary: #ffffff;
-  --on-secondary-container: #f8fafc;
+  --secondary: var(--nf-base-slate-900);
+  --secondary-container: var(--nf-base-slate-800);
+  --on-secondary: var(--nf-text-inverse);
+  --on-secondary-container: var(--nf-surface-canvas);
 
-  --tertiary: #b45309;
-  --tertiary-container: #78350f;
-  --on-tertiary: #ffffff;
-  --on-tertiary-container: #fde68a;
+  --tertiary: var(--nf-base-amber-700);
+  --tertiary-container: var(--nf-base-amber-900);
+  --on-tertiary: var(--nf-text-inverse);
+  --on-tertiary-container: var(--nf-base-amber-200);
 
   /* Surfaces - Clean, High Contrast */
-  --background: #f8fafc;
-  --on-background: #090e17;
-  --surface: #ffffff;
-  --on-surface: #0f172a;
-  --on-surface-variant: #334155;
+  --background: var(--nf-surface-canvas);
+  --on-background: var(--nf-text-primary);
+  --surface: var(--nf-surface-card);
+  --on-surface: var(--nf-text-primary);
+  --on-surface-variant: var(--nf-text-secondary);
   
-  --surface-container-lowest: #ffffff;
-  --surface-container-low: #f1f5f9;
-  --surface-container: #e2e8f0;
-  --surface-container-high: #cbd5e1;
-  --surface-container-highest: #94a3b8;
+  --surface-container-lowest: var(--nf-base-pure-white);
+  --surface-container-low: var(--nf-base-slate-100);
+  --surface-container: var(--nf-base-slate-200);
+  --surface-container-high: var(--nf-base-slate-300);
+  --surface-container-highest: var(--nf-base-slate-400);
   
-  --outline: #cbd5e1;
-  --outline-variant: #94a3b8;
+  --outline: var(--nf-border-default);
+  --outline-variant: var(--nf-border-strong);
 
   /* Clinical Indicator Colors */
-  --clinical-red: #dc2626;
-  --clinical-amber: #d97706;
-  --clinical-green: #059669;
-  --clinical-cyan: #0891b2;
-  --clinical-indigo: #4f46e5;
+  --clinical-red: var(--nf-clinical-panic);
+  --clinical-amber: var(--nf-clinical-warning);
+  --clinical-green: var(--nf-clinical-normal);
+  --clinical-cyan: var(--nf-brand-teal);
+  --clinical-indigo: var(--nf-base-blue-600);
 
   /* Typography */
   --font-headline: 'Outfit', 'Inter', system-ui, sans-serif;
@@ -51,30 +52,30 @@
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Transitions */
-  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-smooth: 300ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: var(--nf-duration-standard, 150ms) cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: var(--nf-duration-deliberate, 300ms) cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .dark {
-  --primary: #38bdf8;
+  --primary: var(--nf-base-ocean-400);
   --primary-rgb: 56, 189, 248;
-  --primary-container: #0284c7;
-  --on-primary: #082f49;
+  --primary-container: var(--nf-base-ocean-600);
+  --on-primary: var(--nf-base-ocean-950);
   
-  --background: #090e17;
-  --on-background: #f8fafc;
-  --surface: #0f172a;
-  --on-surface: #f1f5f9;
-  --on-surface-variant: #94a3b8;
+  --background: var(--nf-surface-canvas);
+  --on-background: var(--nf-text-primary);
+  --surface: var(--nf-surface-card);
+  --on-surface: var(--nf-text-primary);
+  --on-surface-variant: var(--nf-text-secondary);
   
-  --surface-container-lowest: #020617;
-  --surface-container-low: #0b1120;
-  --surface-container: #0f172a;
-  --surface-container-high: #1e293b;
-  --surface-container-highest: #334155;
+  --surface-container-lowest: var(--nf-base-slate-950);
+  --surface-container-low: var(--nf-base-slate-900);
+  --surface-container: var(--nf-base-slate-800);
+  --surface-container-high: var(--nf-base-slate-700);
+  --surface-container-highest: var(--nf-base-slate-600);
   
-  --outline: #1e293b;
-  --outline-variant: #334155;
+  --outline: var(--nf-border-subtle);
+  --outline-variant: var(--nf-border-default);
 }
 
 @layer base {
@@ -242,6 +243,17 @@
     text-transform: uppercase;
     color: var(--on-surface-variant);
     letter-spacing: 0.06em;
+  }
+
+  /* ─── Clinical Vitals Tabular Numerals ─── */
+  .font-vitals-mono {
+    font-family: var(--nf-font-vitals-mono);
+    font-feature-settings: var(--nf-font-feature-tnum);
+    letter-spacing: -0.02em;
+  }
+
+  .font-feature-tnum {
+    font-feature-settings: var(--nf-font-feature-tnum);
   }
 }
 

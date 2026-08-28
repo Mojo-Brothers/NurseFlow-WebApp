@@ -1,5 +1,6 @@
 import { db } from '../../../core/firebase.js';
 import { deductStock } from '../../inventory/services/inventory.service.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 import { 
   collection, 
   doc, 
@@ -144,6 +145,8 @@ export const triggerRadOrder = async ({ rads, patientId, encounterId, doctorEmai
  * Saves the soap note and audit log. Operational effects are returned for external triggering.
  */
 export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapData, status = 'SIGNED' }) => {
+  assertClinicalContextLock({ patientId, encounterId, actorId: doctorEmail, role: 'DOCTOR' });
+
   if (!encounterId) throw new Error('Encounter ID wajib disediakan.');
 
   const soapRef = doc(collection(db, COLLECTIONS.MEDICAL_RECORDS)); // V6 Primary Collection
@@ -255,7 +258,16 @@ export const saveSoapNote = async ({ patientId, encounterId, doctorEmail, soapDa
   }
 };
 
-export const saveClinicalRecord = async ({ patientId, encounterId, author, moduleName, data, status = 'SIGNED' }) => {
+export const saveClinicalRecord = async ({
+  patientId, 
+  encounterId, 
+  moduleName, 
+  data, 
+  author, 
+  status = 'SIGNED' 
+}) => {
+  assertClinicalContextLock({ patientId, encounterId, actorId: author, role: 'DOCTOR' });
+
   if (!encounterId) throw new Error('Encounter ID wajib disediakan.');
 
   const recordRef = doc(collection(db, COLLECTIONS.MEDICAL_RECORDS));

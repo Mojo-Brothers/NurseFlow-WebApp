@@ -15,6 +15,7 @@ import {
   acknowledgeAlert 
 } from '../services/alert.service.js';
 import { SYSTEM_MODES, ALERT_STATUSES, ALERT_SEVERITY } from '../../../core/constants.js';
+import { ClinicalModal, ClinicalButton } from '../../../design-system/components/index.js';
 
 const ACTION_COLOR = {
   CREATE: { bg: 'var(--success-container)', text: 'var(--on-success-container)' },
@@ -92,14 +93,21 @@ export default function AdminHubPage() {
     };
   }, [loadData]);
 
-  const handleUpdateRole = async (userId, newRole) => {
-    if (!window.confirm(t('admin_hub.prompt_edit') + ` ${newRole}?`)) return;
+  const [roleUpdateTarget, setRoleUpdateTarget] = useState(null);
+
+  const handleUpdateRole = (userId, newRole) => {
+    setRoleUpdateTarget({ userId, newRole });
+  };
+
+  const confirmUpdateRole = async () => {
+    if (!roleUpdateTarget) return;
     try {
-      await updateUserRole(userId, newRole, currentUser.email);
-      alert(t('common.success') || 'Success');
+      await updateUserRole(roleUpdateTarget.userId, roleUpdateTarget.newRole, currentUser.email);
       loadData();
     } catch (err) {
-      alert(t('common.error') + ': ' + err.message);
+      console.error('Failed to update role:', err);
+    } finally {
+      setRoleUpdateTarget(null);
     }
   };
 
@@ -424,6 +432,28 @@ function ObservabilityView({ alerts, inventoryAlerts, health, flow, formatTimest
           </div>
         </div>
       </div>
+
+      {/* Role Update Confirmation Modal */}
+      <ClinicalModal
+        isOpen={Boolean(roleUpdateTarget)}
+        onClose={() => setRoleUpdateTarget(null)}
+        title="UBAH HAK AKSES PENGGUNA"
+        description="Konfirmasi perubahan peran dan wewenang pengguna sistem."
+        footer={
+          <>
+            <ClinicalButton variant="secondary" onClick={() => setRoleUpdateTarget(null)}>
+              Batal
+            </ClinicalButton>
+            <ClinicalButton variant="primary" onClick={confirmUpdateRole}>
+              Simpan Perubahan Peran
+            </ClinicalButton>
+          </>
+        }
+      >
+        <p className="text-xs text-slate-700 dark:text-slate-300">
+          Apakah Anda yakin ingin mengubah hak akses pengguna ini menjadi peran <strong>"{roleUpdateTarget?.newRole}"</strong>?
+        </p>
+      </ClinicalModal>
     </div>
   );
 }

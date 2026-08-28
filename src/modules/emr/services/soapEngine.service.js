@@ -5,6 +5,7 @@
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
 import { diagnosisEngineService } from './diagnosisEngine.service.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 export const soapEngineService = {
   /**
@@ -29,6 +30,8 @@ export const soapEngineService = {
     actorEmail = 'admin@nurseflow.id',
     expectedVersion = 1
   }) => {
+    assertClinicalContextLock({ patientId, encounterId, actorId: physicianId, role: 'DOCTOR' });
+
     if (!subjective || !objective || !assessment || !plan) {
       throw new Error('Validasi SOAP gagal: Seluruh komponen Subjective, Objective, Assessment, dan Plan wajib diisi lengkap.');
     }

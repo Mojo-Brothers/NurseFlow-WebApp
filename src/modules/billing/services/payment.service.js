@@ -2,14 +2,17 @@
  * Billing & Payment Domain — Service Layer
  * Centralizes revenue management and simulated payment processing.
  */
-import { 
-  collection, getDocs, doc, query, where, runTransaction, serverTimestamp 
-} from 'firebase/firestore';
 import { db } from '../../../core/firebase.js';
-import { COLLECTIONS } from '../../../core/constants.js';
+import { 
+  collection, doc, getDoc, getDocs, query, where, 
+  serverTimestamp, runTransaction 
+} from 'firebase/firestore';
+import { COLLECTIONS, AUDIT_ACTIONS } from '../../../core/constants.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 /**
- * Mengonsolidasikan seluruh biaya untuk satu kunjungan (Encounter).
+ * Payment & Revenue Breakdown Service (ASC - Phase 30)
+ * JCI Standard for Financial Reconciliation & Multi-source settlement.
  */
 export const getBillingBreakdown = async (encounterId) => {
   try {
@@ -56,6 +59,8 @@ export const getBillingBreakdown = async (encounterId) => {
  * Simulasi pemrosesan pembayaran digital.
  */
 export const processSimulatedPayment = async (billingId, method) => {
+  assertClinicalContextLock({ patientId: 'PATIENT_FINANCIAL', encounterId: billingId, actorId: 'CASHIER', role: 'CASHIER' });
+
   return runTransaction(db, async (transaction) => {
     const bRef = doc(db, COLLECTIONS.BILLING, billingId);
     const bSnap = await transaction.get(bRef);

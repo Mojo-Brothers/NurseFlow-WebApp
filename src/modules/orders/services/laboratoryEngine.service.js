@@ -4,6 +4,7 @@
  */
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 export const laboratoryEngineService = {
   getLabOrders: async (orderId) => {
@@ -26,6 +27,13 @@ export const laboratoryEngineService = {
   },
 
   createLabOrder: async (payload) => {
+    assertClinicalContextLock({
+      patientId: payload?.patientId || payload?.patient_id,
+      encounterId: payload?.encounterId || payload?.encounter_id,
+      actorId: payload?.orderedBy || 'DOCTOR',
+      role: 'DOCTOR'
+    });
+
     try {
       const res = await apiClient.cpoe.createOrder({
         patientId: payload.patientId,
@@ -82,7 +90,14 @@ export const laboratoryEngineService = {
     };
   },
 
-  releaseLabResult: async ({ orderId, resultId, testName, resultValue, isCriticalPanic, validatedBy }) => {
+  releaseLabResult: async ({ orderId, resultId, testName, resultValue, isCriticalPanic, validatedBy, patientId, encounterId } = {}) => {
+    assertClinicalContextLock({
+      patientId: patientId || 'PATIENT_CTX',
+      encounterId: encounterId || 'ENC_CTX',
+      actorId: validatedBy || 'LAB_ANALYST',
+      role: 'LAB_ANALYST'
+    });
+
     const payload = {
       testName,
       resultValue,

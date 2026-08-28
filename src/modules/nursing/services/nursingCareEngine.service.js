@@ -3,6 +3,8 @@
  * Standards: JCI 7th Edition (IPSG 3, IPSG 6: Fall Risk), PPNI 3S (SDKI, SLKI, SIKI), ISBAR Handover
  */
 
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
+
 const NURSING_CARE_STORAGE_KEY = 'nurseflow_nursing_care_records';
 const FLUID_BALANCE_STORAGE_KEY = 'nurseflow_fluid_balance_records';
 
@@ -126,7 +128,9 @@ export const nursingCareEngineService = {
     slkiGoal, // e.g. Bersihan Jalan Napas Meningkat dalam 3x24 Jam
     sikiInterventions = [], // e.g. ['Manajemen Jalan Napas (I.01011)', 'Pemantauan Respirasi (I.01014)']
     recordedByNurseName = 'Ns. Ratna Sari, S.Kep'
-  }) => {
+  } = {}) => {
+    assertClinicalContextLock({ patientId, encounterId, actorId: recordedByNurseName, role: 'NURSE' });
+
     const record = {
       id: `NCP-${Date.now()}`,
       encounterId,

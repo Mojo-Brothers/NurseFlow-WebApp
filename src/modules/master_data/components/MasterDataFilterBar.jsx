@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMasterDataStore } from '../masterData.store.js';
 import { MASTER_DATA_ENTITIES } from '../data/masterDataSchemas.js';
 import { ENTERPRISE_ENTITY_SCHEMAS } from '../data/enterpriseMasterSchemas.js';
+import { ClinicalModal, ClinicalButton } from '../../../design-system/components/index.js';
 
 export default function MasterDataFilterBar() {
+  const [showResetModal, setShowResetModal] = useState(false);
+
   const {
     activeEntity,
     searchQuery,
@@ -20,10 +23,13 @@ export default function MasterDataFilterBar() {
 
   const config = ENTERPRISE_ENTITY_SCHEMAS[activeEntity] || MASTER_DATA_ENTITIES[activeEntity] || {};
 
-  const handleResetData = async () => {
-    if (window.confirm(`Apakah Anda yakin ingin memulihkan seluruh dataset awal untuk ${config.title}? Data perubahan lokal akan di-reset ke standar default.`)) {
-      if (resetEntireEnterpriseData) await resetEntireEnterpriseData();
-    }
+  const handleResetData = () => {
+    setShowResetModal(true);
+  };
+
+  const confirmReset = async () => {
+    if (resetEntireEnterpriseData) await resetEntireEnterpriseData();
+    setShowResetModal(false);
   };
 
   return (
@@ -170,6 +176,28 @@ export default function MasterDataFilterBar() {
           Tempat Sampah (Soft-Deleted)
         </button>
       </div>
+
+      {/* Reset Data Confirmation Modal */}
+      <ClinicalModal
+        isOpen={showResetModal}
+        onClose={() => setShowResetModal(false)}
+        title="PULIHKAN DATASET DEFAULT"
+        description="Konfirmasi pemulihan dataset bawaan master data."
+        footer={
+          <>
+            <ClinicalButton variant="secondary" onClick={() => setShowResetModal(false)}>
+              Batal
+            </ClinicalButton>
+            <ClinicalButton variant="destructive" onClick={confirmReset}>
+              Reset ke Standar
+            </ClinicalButton>
+          </>
+        }
+      >
+        <p className="text-xs text-slate-700 dark:text-slate-300">
+          Apakah Anda yakin ingin memulihkan seluruh dataset awal untuk <strong>{config.title}</strong>? Data perubahan lokal akan di-reset ke standar default sistem.
+        </p>
+      </ClinicalModal>
     </div>
   );
 }

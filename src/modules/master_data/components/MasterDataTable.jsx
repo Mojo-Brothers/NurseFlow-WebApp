@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useMasterDataStore } from '../masterData.store.js';
 import { MASTER_DATA_ENTITIES } from '../data/masterDataSchemas.js';
 import { ENTERPRISE_ENTITY_SCHEMAS } from '../data/enterpriseMasterSchemas.js';
 import { useAuth } from '../../../contexts/useAuth.js';
+import { ClinicalModal, ClinicalButton } from '../../../design-system/components/index.js';
 
 export default function MasterDataTable() {
   const { currentUser } = useAuth();
@@ -30,6 +31,8 @@ export default function MasterDataTable() {
     batchRestore,
     isLoading
   } = useMasterDataStore();
+
+  const [deleteItemTarget, setDeleteItemTarget] = useState(null);
 
   const config = ENTERPRISE_ENTITY_SCHEMAS[activeEntity] || MASTER_DATA_ENTITIES[activeEntity] || {};
   const allRecords = entitiesData[activeEntity] || [];
@@ -378,11 +381,7 @@ export default function MasterDataTable() {
                           </button>
                         ) : (
                           <button
-                            onClick={() => {
-                              if (window.confirm(`Hapus lunak data ${item[config.nameField] || item.id}? Data dapat dipulihkan dari tempat sampah.`)) {
-                                softDeleteRecord(item.id, userEmail);
-                              }
-                            }}
+                            onClick={() => setDeleteItemTarget(item)}
                             className="p-1.5 rounded-lg text-on-surface-variant hover:text-rose-600 hover:bg-rose-500/10 transition-colors"
                             title="Hapus Lunak (Soft Delete)"
                           >
@@ -440,6 +439,36 @@ export default function MasterDataTable() {
           </button>
         </div>
       </div>
+
+      {/* Soft Delete Confirmation Modal */}
+      <ClinicalModal
+        isOpen={Boolean(deleteItemTarget)}
+        onClose={() => setDeleteItemTarget(null)}
+        title="KONFIRMASI HAPUS LUNAK"
+        description="Data master akan dipindahkan ke tempat sampah dan dapat dipulihkan kapan saja."
+        footer={
+          <>
+            <ClinicalButton variant="secondary" onClick={() => setDeleteItemTarget(null)}>
+              Batal
+            </ClinicalButton>
+            <ClinicalButton
+              variant="destructive"
+              onClick={() => {
+                if (deleteItemTarget) {
+                  softDeleteRecord(deleteItemTarget.id, userEmail);
+                  setDeleteItemTarget(null);
+                }
+              }}
+            >
+              Hapus Lunak
+            </ClinicalButton>
+          </>
+        }
+      >
+        <p className="text-xs text-slate-700 dark:text-slate-300">
+          Apakah Anda yakin ingin memindahkan data <strong>{deleteItemTarget?.[config?.nameField] || deleteItemTarget?.id}</strong> ke tempat sampah?
+        </p>
+      </ClinicalModal>
     </div>
   );
 }

@@ -4,6 +4,7 @@
  */
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 export const ALLOWED_ORDER_TRANSITIONS = {
   DRAFT: ['ORDERED', 'CANCELLED'],
@@ -35,6 +36,13 @@ export const universalOrderEngineService = {
   },
 
   createOrder: async (payload) => {
+    assertClinicalContextLock({
+      patientId: payload?.patientId || payload?.patient_id,
+      encounterId: payload?.encounterId || payload?.encounter_id,
+      actorId: payload?.orderedBy,
+      role: 'DOCTOR'
+    });
+
     const now = new Date().toISOString();
     const totalEstimated = (payload.items || []).reduce(
       (sum, i) => sum + (Number(i.totalPrice) || (Number(i.unitPrice || 0) * Number(i.quantity || 1))),
@@ -92,7 +100,14 @@ export const universalOrderEngineService = {
     return inMemoryOrders.find(o => o.id === orderId) || null;
   },
 
-  transitionOrderStatus: async ({ orderId, nextStatus, reason, actor, notes, version }) => {
+  transitionOrderStatus: async ({ orderId, nextStatus, reason, actor, notes, version, patientId, encounterId } = {}) => {
+    assertClinicalContextLock({
+      patientId: patientId || 'PATIENT_CTX',
+      encounterId: encounterId || 'ENC_CTX',
+      actorId: actor || 'DOCTOR',
+      role: 'DOCTOR'
+    });
+
     const found = inMemoryOrders.find(o => o.id === orderId);
     const currentStatus = found ? found.status : 'ORDERED';
 

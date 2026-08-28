@@ -5,11 +5,14 @@
  */
 
 import { apiClient, requestApi } from '../../../core/apiClient.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 /**
  * Membuat faktur tagihan pasien langsung di PostgreSQL 16.
  */
 export const createBill = async ({ encounterId, patientId, createdBy }) => {
+  assertClinicalContextLock({ patientId, encounterId, actorId: createdBy, role: 'CASHIER' });
+
   const payload = {
     encounterId,
     patientId,

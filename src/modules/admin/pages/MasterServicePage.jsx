@@ -8,6 +8,7 @@ import { getAllMasterServices, saveMasterService, deleteMasterService } from '..
 import ServiceFormModal from '../components/ServiceFormModal.jsx';
 import ServiceBundleModal from '../components/ServiceBundleModal.jsx';
 import toast from 'react-hot-toast';
+import { ClinicalModal, ClinicalButton } from '../../../design-system/components/index.js';
 
 export default function MasterServicePage() {
   const [services, setServices] = useState([]);
@@ -23,6 +24,7 @@ export default function MasterServicePage() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [isBundleModalOpen, setIsBundleModalOpen] = useState(false);
+  const [serviceToDelete, setServiceToDelete] = useState(null);
 
   // Load Data
   const loadData = async () => {
@@ -79,14 +81,20 @@ export default function MasterServicePage() {
   };
 
   // Delete Handler
-  const handleDeleteService = async (id, name) => {
-    if (!window.confirm(`Apakah Anda yakin ingin menonaktifkan layanan "${name}"?`)) return;
+  const handleDeleteService = (id, name) => {
+    setServiceToDelete({ id, name });
+  };
+
+  const confirmDeleteService = async () => {
+    if (!serviceToDelete) return;
     try {
-      await deleteMasterService(id);
-      toast.success(`Layanan "${name}" berhasil dinonaktifkan.`);
+      await deleteMasterService(serviceToDelete.id);
+      toast.success(`Layanan "${serviceToDelete.name}" berhasil dinonaktifkan.`);
       loadData();
     } catch (err) {
       toast.error(`Gagal menghapus layanan: ${err.message}`);
+    } finally {
+      setServiceToDelete(null);
     }
   };
 
@@ -455,6 +463,28 @@ export default function MasterServicePage() {
           }}
         />
       )}
+
+      {/* SERVICE DELETION MODAL */}
+      <ClinicalModal
+        isOpen={Boolean(serviceToDelete)}
+        onClose={() => setServiceToDelete(null)}
+        title="NONAKTIFKAN LAYANAN MEDIS"
+        description="Konfirmasi penonaktifan katalog tarif dan master layanan."
+        footer={
+          <>
+            <ClinicalButton variant="secondary" onClick={() => setServiceToDelete(null)}>
+              Batal
+            </ClinicalButton>
+            <ClinicalButton variant="destructive" onClick={confirmDeleteService}>
+              Nonaktifkan Layanan
+            </ClinicalButton>
+          </>
+        }
+      >
+        <p className="text-xs text-slate-700 dark:text-slate-300">
+          Apakah Anda yakin ingin menonaktifkan layanan <strong>{serviceToDelete?.name}</strong>? Layanan yang dinonaktifkan tidak akan muncul pada pencarian CPOE atau billing baru.
+        </p>
+      </ClinicalModal>
 
     </div>
   );

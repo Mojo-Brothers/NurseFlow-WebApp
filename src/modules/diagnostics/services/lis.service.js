@@ -1,6 +1,7 @@
 import { db } from '../../../core/firebase.js';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { COLLECTIONS } from '../../../core/constants.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 /**
  * LIS Service — Simulated Laboratory Information System interface.
@@ -26,6 +27,7 @@ export const evaluateLabResult = (testName, value) => {
  * Simulates a lab result being pushed from a blood analyzer machine.
  */
 export const simulateMachineResult = async (encounterId, patientId, testName, value) => {
+  assertClinicalContextLock({ patientId, encounterId, actorId: 'AUTO_LIS_ANALYZER', role: 'LAB_ANALYST' });
   const status = evaluateLabResult(testName, value);
   
   const labResult = {

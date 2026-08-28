@@ -1,7 +1,4 @@
-/**
- * NurseFlow Enterprise HIS 2026 — Anesthesia Information Management System (AIMS)
- * Real-time intraoperative hemodynamics, anesthetic drugs, airway, and fluid/blood balance
- */
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 class AimsAnesthesiaEngineService {
   constructor() {
@@ -49,7 +46,14 @@ class AimsAnesthesiaEngineService {
     this.anesthesiaRecords.set(rec1.surgicalCaseId, rec1);
   }
 
-  saveAnesthesiaRecord(payload) {
+  saveAnesthesiaRecord(payload = {}) {
+    assertClinicalContextLock({
+      patientId: payload.patientMrn || payload.patientId,
+      encounterId: payload.encounterId,
+      actorId: payload.anesthesiologistId || 'ANESTHESIOLOGIST',
+      role: 'DOCTOR'
+    });
+
     this.anesthesiaRecords.set(payload.surgicalCaseId, payload);
     return payload;
   }

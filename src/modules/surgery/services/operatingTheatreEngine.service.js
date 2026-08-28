@@ -5,6 +5,7 @@
 
 import { eventBusService, DOMAIN_EVENTS } from '../../../../server/realtime/eventBus.service.js';
 import { generateSha256Digest } from '../../radiology/services/pacsDicomEngine.service.js';
+import { assertClinicalContextLock } from '../../../core/clinicalRuntimeSafetyContract.js';
 
 export const SURGERY_STATUS = {
   SCHEDULED: 'SCHEDULED',
@@ -98,7 +99,14 @@ class OperatingTheatreEngineService {
   /**
    * Schedule new surgical case
    */
-  scheduleSurgicalCase(payload) {
+  scheduleSurgicalCase(payload = {}) {
+    assertClinicalContextLock({
+      patientId: payload.patientId || payload.patientMrn,
+      encounterId: payload.encounterId,
+      actorId: payload.primarySurgeonId || payload.primarySurgeonName || 'SURGEON',
+      role: 'SURGEON'
+    });
+
     const caseId = payload.id || `CASE-SURG-${Date.now()}`;
     const bookingNumber = payload.bookingNumber || `SURG-${Date.now().toString().slice(-8)}`;
 

@@ -7,6 +7,7 @@ import {
   Clock, Check, HelpCircle, Layers, Activity, RefreshCw, Lock
 } from 'lucide-react';
 import { saveClinicalRecord } from '../services/emr.service.js';
+import { HardStopDialog } from '../../../design-system/components/HardStopDialog.jsx';
 
 // ─── MASTER FORMULARIUM RUMAH SAKIT 2026 ───
 const HOSPITAL_FORMULARY = [
@@ -72,6 +73,7 @@ export default function CPOEWorkspace({ patient, encounter, onClose, onSaveSucce
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('formulary'); // 'formulary' | 'ordersets'
   const [cdssAlertDismissed, setCdssAlertDismissed] = useState(false);
+  const [showAllergyHardStop, setShowAllergyHardStop] = useState(false);
 
   // Patient allergy check
   const patientAllergies = patient?.allergies || [
@@ -193,16 +195,7 @@ export default function CPOEWorkspace({ patient, encounter, onClose, onSaveSucce
     setPrescriptions(prev => prev.map(p => p.drugId === drugId ? { ...p, [field]: value } : p));
   };
 
-  const handleSave = async () => {
-    if (prescriptions.length === 0) {
-      alert("Pilih minimal satu obat untuk diresepkan.");
-      return;
-    }
-    if (allergyWarnings.length > 0 && !cdssAlertDismissed) {
-      const confirmAllergy = window.confirm(`PERINGATAN ALERGI KRITIS:\nPasien terindikasi alergi terhadap obat yang diresepkan (${allergyWarnings.map(a => a.drugName).join(', ')}).\n\nApakah DPJP tetap menyetujui dengan justifikasi klinis tertulis?`);
-      if (!confirmAllergy) return;
-    }
-
+  const executeSave = async (overrideData = null) => {
     setIsSaving(true);
     try {
       await saveClinicalRecord({
@@ -214,16 +207,28 @@ export default function CPOEWorkspace({ patient, encounter, onClose, onSaveSucce
           prescriptions,
           allergyWarnings,
           interactions,
+          override: overrideData || null,
           timestamp: new Date().toISOString()
         }
       });
-      alert('Resep Elektronik berhasil diautentikasi & diteruskan ke Instalasi Farmasi (Standar JCI MMU.4).');
       if (onSaveSuccess) onSaveSuccess();
     } catch (e) {
-      alert('Gagal mengirim resep: ' + e.message);
+      console.error('Gagal mengirim resep:', e);
     } finally {
       setIsSaving(false);
+      setShowAllergyHardStop(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (prescriptions.length === 0) return;
+
+    if (allergyWarnings.length > 0 && !cdssAlertDismissed) {
+      setShowAllergyHardStop(true);
+      return;
+    }
+
+    await executeSave();
   };
 
   return (
@@ -749,6 +754,38 @@ export default function CPOEWorkspace({ patient, encounter, onClose, onSaveSucce
         </div>
 
       </div>
+
+      {/* Hard-Stop Allergy Conflict Dialog */}
+      <HardStopDialog
+        isOpen={showAllergyHardStop}
+        title="PERINGATAN ALERGI KRITIS: OVERRIDE CDSS CPOE"
+        actionName="Penulisan Resep dengan Konflik Alergi Pasien"
+        riskLevel="critical"
+        patientContext={{
+          name: patient?.nama || patient?.name || 'Pasien Rekam Medis',
+          mrn: patient?.no_rm || patient?.mrn || 'RM-UNKNOWN',
+          room: encounter?.room || 'Rawat Inap / IGD',
+          encounterId: encounter?.id || 'ENC-ACTUAL'
+        }}
+        warningDetails={
+          <div className="flex flex-col gap-1">
+            <p className="font-bold">Pasien terindikasi memiliki alergi berat terhadap obat yang diresepkan:</p>
+            <ul className="list-disc list-inside space-y-0.5">
+              {allergyWarnings.map((a, idx) => (
+                <li key={idx}><strong className="text-red-700 dark:text-red-300">{a.drugName}</strong>: {a.reason}</li>
+              ))}
+            </ul>
+            <p className="text-[11px] mt-1 text-slate-600 dark:text-slate-300">
+              Sesuai standar Akreditasi RS Kemenkes & JCI MMU.4, override terhadap peringatan alergi membutuhkan justifikasi klinis tertulis dari DPJP yang dicatat secara permanen pada audit log.
+            </p>
+          </div>
+        }
+        acknowledgmentText="Saya menyatakan telah memverifikasi riwayat alergi pasien dan memutuskan tetap meresepkan dengan pertimbangan klinis matang."
+        requireJustification={true}
+        justificationPlaceholder="Tuliskan justifikasi klinis DPJP (misal: 'Manfaat melebihi risiko, telah disiapkan premedikasi antihistamin/kortikosteroid')..."
+        onConfirm={(overrideData) => executeSave(overrideData)}
+        onCancel={() => setShowAllergyHardStop(false)}
+      />
 
     </div>
   );
