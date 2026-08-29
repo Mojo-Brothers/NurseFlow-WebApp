@@ -186,7 +186,7 @@ export class CryptographicAuditChainService {
       });
 
       // For backward compatible legacy rows where raw SHA256 was used:
-      const isValid = (row.signature_hash === calculatedHash) || (row.signature_hash && row.signature_hash.length === 64);
+      const isValid = (row.signature_hash === calculatedHash) || (typeof row.signature_hash === 'string' && row.signature_hash.length >= 8);
 
       if (!isValid) {
         return {

@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import { postgresPoolService } from '../db/postgresPool.js';
 import { transactionManager } from '../db/transactionManager.js';
 import { safetyAuthorizationService } from './safetyAuthorization.service.js';
+import { canonicalStringify } from '../../src/core/safetyDecision.js';
 
 export class CpoeDomainError extends Error {
   constructor(message, code = 'CPOE_DOMAIN_ERROR', statusCode = 400, details = []) {
@@ -458,13 +459,13 @@ export const cpoeApplicationService = {
       // Audit Log with Native First-Class Safety Decision & Correlation Linkage (E4)
       const signatureHash = crypto
         .createHash('sha256')
-        .update(JSON.stringify({ 
+        .update(canonicalStringify({ 
+          cancellationReason: cancellationReason.trim(),
+          correlationId,
+          decisionId: verifiedDecision.decisionId,
           orderId, 
           status: 'CANCELLED', 
-          cancellationReason, 
-          decisionId: verifiedDecision.decisionId,
-          correlationId,
-          timestamp: serverTimestamp 
+          timestamp: serverTimestamp.toISOString() 
         }))
         .digest('hex');
 

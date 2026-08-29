@@ -1,16 +1,15 @@
 /**
  * ============================================================================
  * 🏥 NURSEFLOW ENTERPRISE HIS 2026 — PHASE D2.3-E ADVERSARIAL VERIFICATION PROOF
- * LIVE POSTGRESQL MULTI-CONNECTION CONCURRENCY, ROLLBACK INVARIANCE, CRYPTO BINDING
+ * PROVENANCE INTEGRITY (E6), LIVE MULTI-CONNECTION CONCURRENCY & ZERO-TRUST GATES
  * ============================================================================
  */
 
 import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
 import pg from 'pg';
 import { safetyAuthorizationService } from '../server/services/safetyAuthorization.service.js';
-import { createSafetyDecision, computeCommandHash } from '../src/core/safetyDecision.js';
+import { computeCommandHash } from '../src/core/safetyDecision.js';
 
 const { Pool } = pg;
 
@@ -32,11 +31,12 @@ const pool = new Pool({
   port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
   user: process.env.POSTGRES_USER || 'postgres',
   password: process.env.POSTGRES_PASSWORD || '',
-  database: process.env.POSTGRES_DB || 'nurseflow_enterprise_his'
+  database: process.env.POSTGRES_DB || 'nurseflow_enterprise_his',
+  connectionTimeoutMillis: 5000
 });
 
 console.log('\n================================================================');
-console.log('🛡️  NURSEFLOW PHASE D2.3-E: PRODUCTION SAFETY ADVERSARIAL PROOF');
+console.log('🛡️  NURSEFLOW PHASE D2.3-E / E6: ZERO-TRUST ADVERSARIAL PROOF');
 console.log('================================================================\n');
 
 let passed = 0;
@@ -53,130 +53,190 @@ function assert(condition, message) {
 }
 
 async function runAdversarialProof() {
-  const testActor = {
+  const legitimateDoctor = {
     userId: 'USR-DOC-ADV-001',
     username: 'dr_siti_sp_pd',
     fullName: 'dr. Siti Rahma, Sp.PD',
     role: 'ROLE_DOCTOR_DPJP'
   };
 
+  const rogueImpersonator = {
+    userId: 'USR-ROGUE-999',
+    username: 'impersonator',
+    fullName: 'Rogue Actor',
+    role: 'ROLE_DOCTOR_DPJP'
+  };
+
   const testPatientId = 'pat-adv-888';
   const testEncounterId = 'enc-adv-888';
+  const defaultTenantId = '00000000-0000-0000-0000-000000000001';
 
   try {
-    console.log('🔐 1. Verifying Cryptographic Command Binding (RFC 8785 JCS & SHA-256)...');
-    const validPayload = { orderId: 'ord-cpoe-888', cancellationReason: 'Uji klinis otorisasi sah', expectedVersion: 1 };
-    const hash1 = computeCommandHash(validPayload);
-    const hash2 = computeCommandHash({ cancellationReason: 'Uji klinis otorisasi sah', expectedVersion: 1, orderId: 'ord-cpoe-888' });
-    assert(hash1 === hash2 && hash1.length === 64, 'Deterministic canonical SHA-256 hash generated consistently');
+    // 0. Database Connectivity Check
+    const probeClient = await pool.connect();
+    probeClient.release();
+    console.log('🔗 PostgreSQL live connection established at localhost:5432.');
 
-    const validDecision = createSafetyDecision({
-      patientId: testPatientId,
-      encounterId: testEncounterId,
-      actorId: testActor.userId,
-      actorRole: testActor.role,
-      action: 'CPOE_ORDER_CANCEL',
-      justification: validPayload.cancellationReason,
-      targetPayload: validPayload,
-      acknowledgment: true
-    });
-
-    let tamperedRejected = false;
+    // 1. Forged Client Safety Decision (Unissued Token) -> Must be 404
+    console.log('\n🔐 1. Verifying Authorization Provenance (Rejection of Forged Unissued Token)...');
+    const forgedClient = await pool.connect();
+    let forgedRejected = false;
     try {
-      safetyAuthorizationService.verifyDecisionContract({
-        safetyDecision: validDecision,
-        actualCommandPayload: { orderId: 'ord-cpoe-888', cancellationReason: 'Payload dimanipulasi peretas', expectedVersion: 1 },
+      await forgedClient.query('BEGIN;');
+      await safetyAuthorizationService.verifyAndConsumeTransactional(forgedClient, {
+        decisionId: `SD-FORGED-${crypto.randomUUID()}`,
+        actualCommandPayload: { orderId: 'ord-101', cancellationReason: 'Tampered reason' },
         expectedAction: 'CPOE_ORDER_CANCEL',
         expectedPatientId: testPatientId,
         expectedEncounterId: testEncounterId,
-        actor: testActor
+        actor: legitimateDoctor
       });
+      await forgedClient.query('COMMIT;');
     } catch (err) {
-      if (err.code === 'SAFETY_COMMAND_HASH_MISMATCH') {
-        tamperedRejected = true;
+      if (err.code === 'SAFETY_DECISION_NOT_FOUND' && err.statusCode === 404) {
+        forgedRejected = true;
       }
+      await forgedClient.query('ROLLBACK;');
+    } finally {
+      forgedClient.release();
     }
-    assert(tamperedRejected, 'Tampered command payload in transit strictly blocked (400 SAFETY_COMMAND_HASH_MISMATCH)');
+    assert(forgedRejected, 'Client-manufactured forged token strictly rejected with 404 SAFETY_DECISION_NOT_FOUND');
 
-    console.log('\n🔄 2. Verifying Transactional Rollback Invariance (Token Recovery)...');
-    const rbDecisionId = `SD-PROOF-RB-${crypto.randomUUID()}`;
-    const rbPayload = { orderId: 'ord-rb-proof', cancellationReason: 'Uji pembatalan transaksi' };
-    const rbDecision = {
-      decisionId: rbDecisionId,
-      patientId: testPatientId,
-      encounterId: testEncounterId,
-      actorId: testActor.userId,
-      actorRole: testActor.role,
-      action: 'CPOE_ORDER_CANCEL',
-      riskType: 'DESTRUCTIVE_ACTION',
-      justification: rbPayload.cancellationReason,
-      commandHash: computeCommandHash(rbPayload),
-      acknowledgment: true,
-      correlationId: `CORR-RB-${Date.now()}`
-    };
-
-    // Client A starts tx and rolls back
-    const clientA = await pool.connect();
+    // 2. Server-Side Trusted Issuance -> Must be ISSUED in Database
+    console.log('\n🏛️  2. Verifying Trusted Server-Side Issuance & RFC 8785 Canonical Hashing...');
+    const issuerClient = await pool.connect();
+    const payload = { orderId: 'ord-adv-001', cancellationReason: 'Instruksi DPJP resmi' };
+    let issued;
     try {
-      await clientA.query('BEGIN;');
-      await safetyAuthorizationService.verifyAndConsumeTransactional(clientA, {
-        safetyDecision: rbDecision,
-        actualCommandPayload: rbPayload,
+      issued = await safetyAuthorizationService.issueSafetyDecision(issuerClient, {
+        actor: legitimateDoctor,
+        patientId: testPatientId,
+        encounterId: testEncounterId,
+        action: 'CPOE_ORDER_CANCEL',
+        justification: payload.cancellationReason,
+        targetPayload: payload,
+        tenantId: defaultTenantId
+      });
+    } finally {
+      issuerClient.release();
+    }
+    assert(issued && issued.status === 'ISSUED' && issued.commandHash.length === 64, 'Server-issued Safety Decision created in database with canonical RFC 8785 SHA-256 hash');
+
+    // 3. Payload Tampering Detection -> Must be 400
+    console.log('\n🛡️  3. Verifying Cryptographic Payload Tampering Detection in Transit...');
+    const tamperClient = await pool.connect();
+    let tamperRejected = false;
+    try {
+      await tamperClient.query('BEGIN;');
+      await safetyAuthorizationService.verifyAndConsumeTransactional(tamperClient, {
+        decisionId: issued.decisionId,
+        actualCommandPayload: { orderId: 'ord-adv-001', cancellationReason: 'Hacked reason in transit' },
         expectedAction: 'CPOE_ORDER_CANCEL',
         expectedPatientId: testPatientId,
         expectedEncounterId: testEncounterId,
-        actor: testActor
+        actor: legitimateDoctor
       });
-      await clientA.query('ROLLBACK;');
+      await tamperClient.query('COMMIT;');
+    } catch (err) {
+      if (err.code === 'SAFETY_COMMAND_HASH_MISMATCH' && err.statusCode === 400) {
+        tamperRejected = true;
+      }
+      await tamperClient.query('ROLLBACK;');
     } finally {
-      clientA.release();
+      tamperClient.release();
+    }
+    assert(tamperRejected, 'Payload tampering in transit strictly blocked with 400 SAFETY_COMMAND_HASH_MISMATCH');
+
+    // 4. Actor Impersonation Detection -> Must be 403
+    console.log('\n👤 4. Verifying Actor Accountability & Impersonation Defense...');
+    const actorClient = await pool.connect();
+    let impersonationRejected = false;
+    try {
+      await actorClient.query('BEGIN;');
+      await safetyAuthorizationService.verifyAndConsumeTransactional(actorClient, {
+        decisionId: issued.decisionId,
+        actualCommandPayload: payload,
+        expectedAction: 'CPOE_ORDER_CANCEL',
+        expectedPatientId: testPatientId,
+        expectedEncounterId: testEncounterId,
+        actor: rogueImpersonator
+      });
+      await actorClient.query('COMMIT;');
+    } catch (err) {
+      if (err.code === 'SAFETY_ACTOR_MISMATCH' && err.statusCode === 403) {
+        impersonationRejected = true;
+      }
+      await actorClient.query('ROLLBACK;');
+    } finally {
+      actorClient.release();
+    }
+    assert(impersonationRejected, 'Actor impersonation strictly blocked with 403 SAFETY_ACTOR_MISMATCH');
+
+    // 5. Transaction Rollback Invariance (Token Recovery)
+    console.log('\n🔄 5. Verifying Transactional Rollback Invariance (Token Recovery)...');
+    const rbClientA = await pool.connect();
+    try {
+      await rbClientA.query('BEGIN;');
+      await safetyAuthorizationService.verifyAndConsumeTransactional(rbClientA, {
+        decisionId: issued.decisionId,
+        actualCommandPayload: payload,
+        expectedAction: 'CPOE_ORDER_CANCEL',
+        expectedPatientId: testPatientId,
+        expectedEncounterId: testEncounterId,
+        actor: legitimateDoctor
+      });
+      // Simulate crash: Rollback
+      await rbClientA.query('ROLLBACK;');
+    } finally {
+      rbClientA.release();
     }
 
-    // Client B retries with SAME decisionId -> MUST succeed
-    const clientB = await pool.connect();
+    const rbClientB = await pool.connect();
     let retrySucceeded = false;
     try {
-      await clientB.query('BEGIN;');
-      const res = await safetyAuthorizationService.verifyAndConsumeTransactional(clientB, {
-        safetyDecision: rbDecision,
-        actualCommandPayload: rbPayload,
+      await rbClientB.query('BEGIN;');
+      const res = await safetyAuthorizationService.verifyAndConsumeTransactional(rbClientB, {
+        decisionId: issued.decisionId,
+        actualCommandPayload: payload,
         expectedAction: 'CPOE_ORDER_CANCEL',
         expectedPatientId: testPatientId,
         expectedEncounterId: testEncounterId,
-        actor: testActor
+        actor: legitimateDoctor
       });
-      await clientB.query('COMMIT;');
+      await rbClientB.query('COMMIT;');
       retrySucceeded = res.isConsumed === true;
     } finally {
-      clientB.release();
+      rbClientB.release();
     }
-    assert(retrySucceeded, 'PostgreSQL ACID Rollback preserved Safety Decision status without burning token');
+    assert(retrySucceeded, 'PostgreSQL ACID Rollback preserved token status as ISSUED (Never burned prematurely)');
 
-    console.log('\n🔒 3. Verifying Distributed Multi-Connection Anti-Replay Defense...');
+    // 6. Distributed Multi-Connection Replay Defense -> Must be 409
+    console.log('\n🔒 6. Verifying Distributed Multi-Connection Anti-Replay Defense...');
     const replayClient = await pool.connect();
     let replayBlocked = false;
     try {
       await replayClient.query('BEGIN;');
       await safetyAuthorizationService.verifyAndConsumeTransactional(replayClient, {
-        safetyDecision: rbDecision, // Same decision committed above!
-        actualCommandPayload: rbPayload,
+        decisionId: issued.decisionId, // Already committed above!
+        actualCommandPayload: payload,
         expectedAction: 'CPOE_ORDER_CANCEL',
         expectedPatientId: testPatientId,
         expectedEncounterId: testEncounterId,
-        actor: testActor
+        actor: legitimateDoctor
       });
       await replayClient.query('COMMIT;');
     } catch (err) {
-      if (err.code === 'SAFETY_DECISION_ALREADY_CONSUMED') {
+      if (err.code === 'SAFETY_DECISION_ALREADY_CONSUMED' && err.statusCode === 409) {
         replayBlocked = true;
       }
       await replayClient.query('ROLLBACK;');
     } finally {
       replayClient.release();
     }
-    assert(replayBlocked, 'Multi-connection Replay strictly rejected via PostgreSQL safety_decision_registry (409)');
+    assert(replayBlocked, 'Replay after commit strictly rejected via PostgreSQL safety_decision_registry (409)');
 
-    console.log('\n🏛️  4. Verifying Physical Native Column E5-F Audit Linkage & WORM Defense...');
+    // 7. Physical Native Column E5-F Audit Linkage & WORM Defense
+    console.log('\n🏛️  7. Verifying Physical Native Column Audit Linkage & WORM Defense...');
     const auditClient = await pool.connect();
     try {
       const patRes = await auditClient.query('SELECT id FROM master_patients LIMIT 1;');
@@ -185,6 +245,8 @@ async function runAdversarialProof() {
       const auditId = crypto.randomUUID();
       const directDecisionId = `SD-NATIVE-${crypto.randomUUID()}`;
       const directCorrId = `CORR-NATIVE-${Date.now()}`;
+
+      const validSigHash = crypto.createHash('sha256').update('NATIVE_PROOF_' + auditId).digest('hex');
 
       await auditClient.query(`
         INSERT INTO universal_audit_logs (
@@ -197,18 +259,19 @@ async function runAdversarialProof() {
           $10, $11, $12, $13, NOW()
         );
       `, [
-        auditId, testActor.userId, testActor.fullName, testActor.role, '127.0.0.1',
-        'OVERRIDE', 'CPOE_ORDER', 'ord-cpoe-888', physicalPatientId,
-        'Native E5-F Column Audit Verification', 'sig_hash_888', directDecisionId, directCorrId
+        auditId, legitimateDoctor.userId, legitimateDoctor.fullName, legitimateDoctor.role, '127.0.0.1',
+        'OVERRIDE', 'CPOE_ORDER', 'ord-adv-001', physicalPatientId,
+        'Native E5-F Column Audit Verification', validSigHash, directDecisionId, directCorrId
       ]);
 
-      const auditCheck = await auditClient.query(`
-        SELECT id, decision_id, correlation_id FROM universal_audit_logs WHERE id = $1;
-      `, [auditId]);
+      const auditCheck = await auditClient.query(
+        'SELECT id, decision_id, correlation_id FROM universal_audit_logs WHERE id = $1;',
+        [auditId]
+      );
 
       assert(
-        auditCheck.rowCount === 1 && 
-        auditCheck.rows[0].decision_id === directDecisionId && 
+        auditCheck.rowCount === 1 &&
+        auditCheck.rows[0].decision_id === directDecisionId &&
         auditCheck.rows[0].correlation_id === directCorrId,
         'First-class physical columns decision_id and correlation_id verified in live PostgreSQL universal_audit_logs'
       );
@@ -216,7 +279,7 @@ async function runAdversarialProof() {
       // Verify WORM protection on native audit row
       let wormBlocked = false;
       try {
-        await auditClient.query(`UPDATE universal_audit_logs SET decision_id = 'TAMPERED' WHERE id = $1;`, [auditId]);
+        await auditClient.query('UPDATE universal_audit_logs SET decision_id = $1 WHERE id = $2;', ['TAMPERED', auditId]);
       } catch (err) {
         if (err.message.includes('JCI AUDIT INTEGRITY VIOLATION')) {
           wormBlocked = true;
@@ -235,7 +298,7 @@ async function runAdversarialProof() {
   }
 
   console.log('\n================================================================');
-  console.log(`🏁 PHASE D2.3-E ADVERSARIAL SAFETY AUDIT COMPLETED`);
+  console.log(`🏁 ZERO-TRUST ADVERSARIAL SAFETY AUDIT COMPLETED`);
   console.log(`   Passed : ${passed}`);
   console.log(`   Failed : ${failed}`);
   console.log('================================================================\n');

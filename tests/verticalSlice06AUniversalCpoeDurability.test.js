@@ -222,18 +222,19 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
           if (!existing) {
             existing = {
               decision_id: decisionId,
-              patient_id: params[1],
-              encounter_id: params[2],
-              actor_id: params[3],
-              actor_role: params[4],
-              action_type: params[5],
-              risk_type: params[6],
-              justification: params[7],
-              command_hash: params[8],
-              correlation_id: params[9],
+              tenant_id: params[1],
+              patient_id: params[2],
+              encounter_id: params[3],
+              actor_id: params[4],
+              actor_role: params[5],
+              action_type: params[6],
+              risk_type: params[7],
+              justification: params[8],
+              command_hash: params[9],
+              correlation_id: params[10],
               status: 'ISSUED',
-              expires_at: params[10],
-              created_at: params[11]
+              expires_at: params[11],
+              created_at: params[12]
             };
             mockDatabaseState.safety_decision_registry = mockDatabaseState.safety_decision_registry || [];
             mockDatabaseState.safety_decision_registry.push(existing);
@@ -600,18 +601,16 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       items: [{ catalogCode: 'LAB-CBC', itemName: 'Darah Lengkap', quantity: 1, unitPrice: 75000 }]
     }, doctorActor);
 
-    const safetyDecision = createSafetyDecision({
+    const safetyDecision = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: 'pat-cpoe-001',
       encounterId: 'enc-cpoe-001',
-      actorId: doctorActor.userId,
-      actorRole: doctorActor.role,
+      actor: doctorActor,
       action: 'CPOE_ORDER_CANCEL',
       justification: 'Pasien menolak pengambilan darah dan meminta penundaan',
       targetPayload: {
         orderId: created.id,
         cancellationReason: 'Pasien menolak pengambilan darah dan meminta penundaan'
-      },
-      acknowledgment: true
+      }
     });
 
     // Cancel order
@@ -800,18 +799,16 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       role: ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP
     });
 
-    const safetyDecision = createSafetyDecision({
+    const safetyDecision = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: 'pat-cpoe-001',
       encounterId: 'enc-cpoe-001',
-      actorId: 'DOC-1001',
-      actorRole: ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP,
+      actor: { userId: 'DOC-1001', role: ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP },
       action: 'CPOE_ORDER_CANCEL',
       justification: 'Tindakan operasi dibatalkan oleh pasien',
       targetPayload: {
         orderId: created.id,
         cancellationReason: 'Tindakan operasi dibatalkan oleh pasien'
-      },
-      acknowledgment: true
+      }
     });
 
     const req = {
@@ -952,19 +949,17 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       items: [{ catalogCode: 'LAB-CBC', itemName: 'CBC Panel', quantity: 1, unitPrice: 75000 }]
     }, doctorActor);
 
-    const safetyDecision = createSafetyDecision({
+    const safetyDecision = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: 'pat-cpoe-001',
       encounterId: 'enc-cpoe-001',
-      actorId: doctorActor.userId,
-      actorRole: doctorActor.role,
+      actor: doctorActor,
       action: 'CPOE_ORDER_CANCEL',
       justification: 'Stale update attempt',
       targetPayload: {
         orderId: created.id,
         cancellationReason: 'Stale update attempt',
         expectedVersion: 999
-      },
-      acknowledgment: true
+      }
     });
 
     // Attempt cancellation with STALE version (e.g. expectedVersion = 999 instead of 1)

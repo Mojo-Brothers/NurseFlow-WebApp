@@ -28,6 +28,15 @@ CREATE INDEX IF NOT EXISTS idx_safety_dec_lookup ON safety_decision_registry(dec
 CREATE INDEX IF NOT EXISTS idx_safety_dec_patient ON safety_decision_registry(patient_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_safety_dec_actor ON safety_decision_registry(actor_id);
 CREATE INDEX IF NOT EXISTS idx_safety_dec_correlation ON safety_decision_registry(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_safety_dec_tenant ON safety_decision_registry(tenant_id);
+
+-- Enable RLS for Multi-Tenant Isolation
+ALTER TABLE safety_decision_registry ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_safety_isolation_policy ON safety_decision_registry;
+CREATE POLICY tenant_safety_isolation_policy ON safety_decision_registry
+FOR ALL
+USING (tenant_id = current_app_tenant_id() OR tenant_id IS NULL OR current_app_tenant_id() IS NULL)
+WITH CHECK (tenant_id = current_app_tenant_id() OR current_app_tenant_id() IS NULL);
 
 -- 2. First-Class Physical Audit Columns on Universal Audit Logs
 ALTER TABLE universal_audit_logs 

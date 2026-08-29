@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * 🏥 NURSEFLOW ENTERPRISE HIS 2026 — PHASE D2.3-D AUTOMATED TEST SUITE
- * END-TO-END SAFETY AUTHORIZATION INTEGRITY & COMMAND BOUNDARY ENFORCEMENT
+ * END-TO-END SAFETY AUTHORIZATION INTEGRITY & PROVENANCE ENFORCEMENT
  * ============================================================================
  */
 
@@ -10,7 +10,7 @@ import crypto from 'crypto';
 import { safetyAuthorizationService } from '../server/services/safetyAuthorization.service.js';
 import { cpoeApplicationService } from '../server/services/cpoeApplication.service.js';
 import { postgresPoolService } from '../server/db/postgresPool.js';
-import { createSafetyDecision } from '../src/core/safetyDecision.js';
+import { computeCommandHash } from '../src/core/safetyDecision.js';
 
 describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () => {
   let mockDatabaseState = {
@@ -18,7 +18,8 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
     clinical_orders: [],
     cpoe_order_items: [],
     universal_audit_logs: [],
-    clinical_domain_outbox: []
+    clinical_domain_outbox: [],
+    safety_decision_registry: []
   };
 
   let mockClient = null;
@@ -166,25 +167,26 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
           return { rows: [], rowCount: 1 };
         }
 
-        // 7. INSERT INTO safety_decision_registry (E1 & E3)
+        // 7. INSERT INTO safety_decision_registry (E1, E3 & E6)
         if (normalized.startsWith('INSERT INTO SAFETY_DECISION_REGISTRY')) {
           const decisionId = params[0];
           let existing = mockDatabaseState.safety_decision_registry.find(r => r.decision_id === decisionId);
           if (!existing) {
             existing = {
               decision_id: decisionId,
-              patient_id: params[1],
-              encounter_id: params[2],
-              actor_id: params[3],
-              actor_role: params[4],
-              action_type: params[5],
-              risk_type: params[6],
-              justification: params[7],
-              command_hash: params[8],
-              correlation_id: params[9],
+              tenant_id: params[1],
+              patient_id: params[2],
+              encounter_id: params[3],
+              actor_id: params[4],
+              actor_role: params[5],
+              action_type: params[6],
+              risk_type: params[7],
+              justification: params[8],
+              command_hash: params[9],
+              correlation_id: params[10],
               status: 'ISSUED',
-              expires_at: params[10],
-              created_at: params[11]
+              expires_at: params[11],
+              created_at: params[12]
             };
             mockDatabaseState.safety_decision_registry.push(existing);
           }
@@ -266,14 +268,14 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       release: vi.fn()
     };
 
+    vi.spyOn(postgresPoolService, 'getClient').mockResolvedValue(mockClient);
     vi.spyOn(postgresPoolService, 'getPool').mockReturnValue({
-      connect: vi.fn(async () => mockClient),
-      query: vi.fn(async (sql, params) => mockClient.query(sql, params))
+      connect: vi.fn().mockResolvedValue(mockClient)
     });
   });
 
   // =========================================================================
-  // 1. NEGATIVE PATH: DIRECT MUTATION BYPASS WITHOUT SAFETY DECISION
+  // 1. NEGATIVE PATH: BYPASS ATTEMPT WITHOUT SAFETY DECISION
   // =========================================================================
   it('1.1 [NEGATIVE] should strictly reject cancelOrder when SafetyDecision is missing (Bypass Attempt)', async () => {
     let capturedErr;
@@ -303,14 +305,18 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
   // 2. NEGATIVE PATH: PATIENT CONTEXT MISMATCH
   // =========================================================================
   it('1.2 [NEGATIVE] should strictly reject mutation if SafetyDecision patientId mismatches target order patient', async () => {
-    const forgedDecision = createSafetyDecision({
+    const payload = {
+      orderId: testOrderId,
+      cancellationReason: 'Kondisi klinis pasien membaik signifikan'
+    };
+
+    const issuedForWrongPatient = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: 'WRONG-PATIENT-999', // Mismatched!
       encounterId: testEncounterId,
-      actorId: testActor.userId,
-      actorRole: testActor.role,
+      actor: testActor,
       action: 'CPOE_ORDER_CANCEL',
-      justification: 'Kondisi klinis pasien membaik signifikan',
-      acknowledgment: true
+      justification: payload.cancellationReason,
+      targetPayload: payload
     });
 
     let capturedErr;
@@ -318,8 +324,8 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       await cpoeApplicationService.cancelOrder(
         {
           orderId: testOrderId,
-          cancellationReason: 'Kondisi klinis pasien membaik signifikan',
-          safetyDecision: forgedDecision
+          cancellationReason: payload.cancellationReason,
+          safetyDecision: issuedForWrongPatient
         },
         testActor
       );
@@ -337,14 +343,18 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
   // 3. NEGATIVE PATH: ENCOUNTER CONTEXT MISMATCH
   // =========================================================================
   it('1.3 [NEGATIVE] should strictly reject mutation if SafetyDecision encounterId mismatches target order encounter', async () => {
-    const forgedDecision = createSafetyDecision({
+    const payload = {
+      orderId: testOrderId,
+      cancellationReason: 'Kondisi klinis pasien membaik signifikan'
+    };
+
+    const issuedForWrongEncounter = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: testPatientId,
       encounterId: 'WRONG-ENC-888', // Mismatched!
-      actorId: testActor.userId,
-      actorRole: testActor.role,
+      actor: testActor,
       action: 'CPOE_ORDER_CANCEL',
-      justification: 'Kondisi klinis pasien membaik signifikan',
-      acknowledgment: true
+      justification: payload.cancellationReason,
+      targetPayload: payload
     });
 
     let capturedErr;
@@ -352,8 +362,8 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       await cpoeApplicationService.cancelOrder(
         {
           orderId: testOrderId,
-          cancellationReason: 'Kondisi klinis pasien membaik signifikan',
-          safetyDecision: forgedDecision
+          cancellationReason: payload.cancellationReason,
+          safetyDecision: issuedForWrongEncounter
         },
         testActor
       );
@@ -370,14 +380,18 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
   // 4. NEGATIVE PATH: ACTOR IMPERSONATION / MISMATCH
   // =========================================================================
   it('1.4 [NEGATIVE] should strictly reject mutation if actor executing command is different from authorizer', async () => {
-    const decisionByUserA = createSafetyDecision({
+    const payload = {
+      orderId: testOrderId,
+      cancellationReason: 'Kondisi klinis pasien membaik signifikan'
+    };
+
+    const issuedByUserA = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: testPatientId,
       encounterId: testEncounterId,
-      actorId: 'USR-DOCTOR-ORIGINAL',
-      actorRole: testActor.role,
+      actor: { userId: 'USR-DOCTOR-ORIGINAL', role: 'ROLE_DOCTOR_DPJP' },
       action: 'CPOE_ORDER_CANCEL',
-      justification: 'Kondisi klinis pasien membaik signifikan',
-      acknowledgment: true
+      justification: payload.cancellationReason,
+      targetPayload: payload
     });
 
     const rogueActor = {
@@ -391,8 +405,8 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       await cpoeApplicationService.cancelOrder(
         {
           orderId: testOrderId,
-          cancellationReason: 'Kondisi klinis pasien membaik signifikan',
-          safetyDecision: decisionByUserA
+          cancellationReason: payload.cancellationReason,
+          safetyDecision: issuedByUserA
         },
         rogueActor // Mismatched actor!
       );
@@ -409,14 +423,18 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
   // 5. NEGATIVE PATH: TAMPERED JUSTIFICATION IN TRANSIT
   // =========================================================================
   it('1.5 [NEGATIVE] should strictly reject mutation if request justification differs from authorized justification', async () => {
-    const validDecision = createSafetyDecision({
+    const originalPayload = {
+      orderId: testOrderId,
+      cancellationReason: 'Alasan Sah: Pasien menolak terapi antibiotik ini'
+    };
+
+    const issued = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: testPatientId,
       encounterId: testEncounterId,
-      actorId: testActor.userId,
-      actorRole: testActor.role,
+      actor: testActor,
       action: 'CPOE_ORDER_CANCEL',
-      justification: 'Alasan Sah: Pasien menolak terapi antibiotik ini',
-      acknowledgment: true
+      justification: originalPayload.cancellationReason,
+      targetPayload: originalPayload
     });
 
     let capturedErr;
@@ -425,7 +443,7 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
         {
           orderId: testOrderId,
           cancellationReason: 'Alasan Dimanipulasi: Dibatalkan tanpa persetujuan', // Tampered!
-          safetyDecision: validDecision
+          safetyDecision: issued
         },
         testActor
       );
@@ -442,62 +460,45 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
   // 6. NEGATIVE PATH: INSUFFICIENT / TRUNCATED JUSTIFICATION
   // =========================================================================
   it('1.6 [NEGATIVE] should strictly reject mutation if justification is shorter than 5 characters', async () => {
-    expect(() => {
-      createSafetyDecision({
+    await expect(async () => {
+      await safetyAuthorizationService.issueSafetyDecision(mockClient, {
         patientId: testPatientId,
         encounterId: testEncounterId,
-        actorId: testActor.userId,
-        actorRole: testActor.role,
+        actor: testActor,
         action: 'CPOE_ORDER_CANCEL',
-        justification: 'abc', // < 5 chars!
-        acknowledgment: true
+        justification: 'abc' // < 5 chars!
       });
-    }).toThrow(/Justification must be at least 5 characters/i);
+    }).rejects.toThrow(/Justifikasi klinis wajib diisi minimal 5 karakter/i);
   });
 
   // =========================================================================
   // 7. NEGATIVE PATH: REPLAY ATTACK PREVENTION (SINGLE-USE TOKEN)
   // =========================================================================
   it('1.7 [NEGATIVE] should strictly reject re-using the same SafetyDecision token (Replay Defense)', async () => {
-    const singleUseDecision = createSafetyDecision({
+    const payload = {
+      orderId: testOrderId,
+      cancellationReason: 'Instruksi DPJP: Ganti ke lini kedua sefalosporin'
+    };
+
+    const singleUseDecision = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: testPatientId,
       encounterId: testEncounterId,
-      actorId: testActor.userId,
-      actorRole: testActor.role,
+      actor: testActor,
       action: 'CPOE_ORDER_CANCEL',
-      justification: 'Instruksi DPJP: Ganti ke lini kedua sefalosporin',
-      targetPayload: {
-        orderId: testOrderId,
-        cancellationReason: 'Instruksi DPJP: Ganti ke lini kedua sefalosporin'
-      },
-      acknowledgment: true
+      justification: payload.cancellationReason,
+      targetPayload: payload
     });
 
     // 1st Execution: Must succeed
     const firstResult = await cpoeApplicationService.cancelOrder(
       {
         orderId: testOrderId,
-        cancellationReason: 'Instruksi DPJP: Ganti ke lini kedua sefalosporin',
+        cancellationReason: payload.cancellationReason,
         safetyDecision: singleUseDecision
       },
       testActor
     );
     expect(firstResult.status).toBe('CANCELLED');
-
-    // Add 2nd test order to mockDatabaseState
-    const secondOrderId = 'ord-replay-002';
-    mockDatabaseState.clinical_orders.push({
-      id: secondOrderId,
-      order_number: 'ORD-2026-SAFETY-02',
-      encounter_id: testEncounterId,
-      patient_id: testPatientId,
-      requester_id: testActor.userId,
-      requester_name: testActor.fullName,
-      order_category: 'PHARMACY',
-      priority: 'ROUTINE',
-      status: 'ORDERED',
-      version: 1
-    });
 
     // 2nd Execution with SAME decisionId on the same order: Must be strictly rejected with 409 SAFETY_DECISION_ALREADY_CONSUMED
     let replayErr;
@@ -505,7 +506,7 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       await cpoeApplicationService.cancelOrder(
         {
           orderId: testOrderId,
-          cancellationReason: 'Instruksi DPJP: Ganti ke lini kedua sefalosporin',
+          cancellationReason: payload.cancellationReason,
           safetyDecision: singleUseDecision // REPLAY ATTEMPT!
         },
         testActor
@@ -523,25 +524,25 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
   // 8. POSITIVE PATH: VALID END-TO-END SAFETY DECISION EXECUTION
   // =========================================================================
   it('1.8 [POSITIVE] should successfully cancel CPOE order when full SafetyDecision is valid', async () => {
-    const validDecision = createSafetyDecision({
+    const payload = {
+      orderId: testOrderId,
+      cancellationReason: 'Pasien mengalami efek samping mual berat, ganti alternatif oral'
+    };
+
+    const validDecision = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: testPatientId,
       encounterId: testEncounterId,
-      actorId: testActor.userId,
-      actorRole: testActor.role,
+      actor: testActor,
       action: 'CPOE_ORDER_CANCEL',
       riskType: 'DESTRUCTIVE_ACTION',
-      justification: 'Pasien mengalami efek samping mual berat, ganti alternatif oral',
-      targetPayload: {
-        orderId: testOrderId,
-        cancellationReason: 'Pasien mengalami efek samping mual berat, ganti alternatif oral'
-      },
-      acknowledgment: true
+      justification: payload.cancellationReason,
+      targetPayload: payload
     });
 
     const result = await cpoeApplicationService.cancelOrder(
       {
         orderId: testOrderId,
-        cancellationReason: 'Pasien mengalami efek samping mual berat, ganti alternatif oral',
+        cancellationReason: payload.cancellationReason,
         safetyDecision: validDecision
       },
       testActor,
@@ -563,24 +564,24 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
   // 9. E5-F AUDIT LINKAGE: PHYSICAL POSTGRESQL WORM RECORD VERIFICATION
   // =========================================================================
   it('1.9 [E5-F PROOF] should physically link SafetyDecision ID into PostgreSQL universal_audit_logs', async () => {
-    const validDecision = createSafetyDecision({
+    const payload = {
+      orderId: testOrderId,
+      cancellationReason: 'Audit Trail Test: Verifikasi keterikatan Safety Decision ID'
+    };
+
+    const validDecision = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: testPatientId,
       encounterId: testEncounterId,
-      actorId: testActor.userId,
-      actorRole: testActor.role,
+      actor: testActor,
       action: 'CPOE_ORDER_CANCEL',
-      justification: 'Audit Trail Test: Verifikasi keterikatan Safety Decision ID',
-      targetPayload: {
-        orderId: testOrderId,
-        cancellationReason: 'Audit Trail Test: Verifikasi keterikatan Safety Decision ID'
-      },
-      acknowledgment: true
+      justification: payload.cancellationReason,
+      targetPayload: payload
     });
 
     await cpoeApplicationService.cancelOrder(
       {
         orderId: testOrderId,
-        cancellationReason: 'Audit Trail Test: Verifikasi keterikatan Safety Decision ID',
+        cancellationReason: payload.cancellationReason,
         safetyDecision: validDecision
       },
       testActor
@@ -588,14 +589,14 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
 
     // Query mockDatabaseState.universal_audit_logs table
     const auditRecord = mockDatabaseState.universal_audit_logs.find(a => 
-      a.resource_id === testOrderId && a.reason_for_action.includes(validDecision.decisionId)
+      a.resource_id === testOrderId && a.decision_id === validDecision.decisionId
     );
 
     expect(auditRecord).toBeDefined();
     expect(auditRecord.resource_type).toBe('CPOE_ORDER');
     expect(auditRecord.patient_id).toBe(testPatientId);
     expect(auditRecord.actor_id).toBe(testActor.userId);
-    expect(auditRecord.reason_for_action).toContain(validDecision.decisionId);
+    expect(auditRecord.decision_id).toBe(validDecision.decisionId);
     expect(auditRecord.signature_hash).toBeDefined();
   });
 
@@ -603,24 +604,24 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
   // 10. PHYSICAL POSTGRESQL WORM DEFENSE: IMMUTABILITY SHIELD
   // =========================================================================
   it('1.10 [WORM DEFENSE] should strictly block UPDATE and DELETE on the generated audit trail row', async () => {
-    const validDecision = createSafetyDecision({
+    const payload = {
+      orderId: testOrderId,
+      cancellationReason: 'WORM Immutability Verification Rationale'
+    };
+
+    const validDecision = await safetyAuthorizationService.issueSafetyDecision(mockClient, {
       patientId: testPatientId,
       encounterId: testEncounterId,
-      actorId: testActor.userId,
-      actorRole: testActor.role,
+      actor: testActor,
       action: 'CPOE_ORDER_CANCEL',
-      justification: 'WORM Immutability Verification Rationale',
-      targetPayload: {
-        orderId: testOrderId,
-        cancellationReason: 'WORM Immutability Verification Rationale'
-      },
-      acknowledgment: true
+      justification: payload.cancellationReason,
+      targetPayload: payload
     });
 
     await cpoeApplicationService.cancelOrder(
       {
         orderId: testOrderId,
-        cancellationReason: 'WORM Immutability Verification Rationale',
+        cancellationReason: payload.cancellationReason,
         safetyDecision: validDecision
       },
       testActor
@@ -639,5 +640,4 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
     expect(() => simulateWormTamper('UPDATE')).toThrow(/E5-F WORM Violation/i);
     expect(() => simulateWormTamper('DELETE')).toThrow(/E5-F WORM Violation/i);
   });
-
 });
