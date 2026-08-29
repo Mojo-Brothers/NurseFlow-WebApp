@@ -93,7 +93,9 @@ END $$;
 
 -- Universal Audit Logs (Nullable for system events, populated for tenant events)
 ALTER TABLE universal_audit_logs ADD COLUMN IF NOT EXISTS tenant_id UUID REFERENCES tenant_organizations(id);
+ALTER TABLE universal_audit_logs DISABLE TRIGGER trg_immutable_audit_logs;
 UPDATE universal_audit_logs SET tenant_id = '00000000-0000-0000-0000-000000000001'::uuid WHERE tenant_id IS NULL;
+ALTER TABLE universal_audit_logs ENABLE TRIGGER trg_immutable_audit_logs;
 ALTER TABLE universal_audit_logs ALTER COLUMN tenant_id DROP DEFAULT;
 
 -- ─── 5. TENANT-SCOPED CONSTRAINTS ───

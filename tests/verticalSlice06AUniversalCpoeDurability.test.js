@@ -8,8 +8,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import crypto from 'crypto';
 import { cpoeApplicationService, CpoeDomainError } from '../server/services/cpoeApplication.service.js';
+import { safetyAuthorizationService } from '../server/services/safetyAuthorization.service.js';
 import { postgresPoolService } from '../server/db/postgresPool.js';
 import { ENTERPRISE_ROLES } from '../src/shared/constants/roles.js';
+import { createSafetyDecision } from '../src/core/safetyDecision.js';
 
 describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability & Chaos Integrity Proof', () => {
   let mockDatabaseState = {
@@ -24,6 +26,7 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
   let activeTransactionState = null;
 
   beforeEach(() => {
+    safetyAuthorizationService._resetReplayCache();
     mockDatabaseState = {
       encounters: [
         {
@@ -550,10 +553,21 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       items: [{ catalogCode: 'LAB-CBC', itemName: 'Darah Lengkap', quantity: 1, unitPrice: 75000 }]
     }, doctorActor);
 
+    const safetyDecision = createSafetyDecision({
+      patientId: 'pat-cpoe-001',
+      encounterId: 'enc-cpoe-001',
+      actorId: doctorActor.userId,
+      actorRole: doctorActor.role,
+      action: 'CPOE_ORDER_CANCEL',
+      justification: 'Pasien menolak pengambilan darah dan meminta penundaan',
+      acknowledgment: true
+    });
+
     // Cancel order
     const cancelResult = await cpoeApplicationService.cancelOrder({
       orderId: created.id,
-      cancellationReason: 'Pasien menolak pengambilan darah dan meminta penundaan'
+      cancellationReason: 'Pasien menolak pengambilan darah dan meminta penundaan',
+      safetyDecision
     }, doctorActor);
 
     expect(cancelResult.status).toBe('CANCELLED');
@@ -735,6 +749,16 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       role: ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP
     });
 
+    const safetyDecision = createSafetyDecision({
+      patientId: 'pat-cpoe-001',
+      encounterId: 'enc-cpoe-001',
+      actorId: 'DOC-1001',
+      actorRole: ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP,
+      action: 'CPOE_ORDER_CANCEL',
+      justification: 'Tindakan operasi dibatalkan oleh pasien',
+      acknowledgment: true
+    });
+
     const req = {
       headers: { 'x-request-id': 'REQ-CANCEL-001', 'x-correlation-id': 'CORR-CANCEL-001' },
       params: { id: created.id },
@@ -745,7 +769,10 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
         role: ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP
       },
       ip: '192.168.1.100',
-      body: { cancellationReason: 'Tindakan operasi dibatalkan oleh pasien' }
+      body: { 
+        cancellationReason: 'Tindakan operasi dibatalkan oleh pasien',
+        safetyDecision
+      }
     };
 
     let statusCode = 200;
@@ -870,11 +897,22 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       items: [{ catalogCode: 'LAB-CBC', itemName: 'CBC Panel', quantity: 1, unitPrice: 75000 }]
     }, doctorActor);
 
+    const safetyDecision = createSafetyDecision({
+      patientId: 'pat-cpoe-001',
+      encounterId: 'enc-cpoe-001',
+      actorId: doctorActor.userId,
+      actorRole: doctorActor.role,
+      action: 'CPOE_ORDER_CANCEL',
+      justification: 'Stale update attempt',
+      acknowledgment: true
+    });
+
     // Attempt cancellation with STALE version (e.g. expectedVersion = 999 instead of 1)
     await expect(cpoeApplicationService.cancelOrder({
       orderId: created.id,
       cancellationReason: 'Stale update attempt',
-      expectedVersion: 999
+      expectedVersion: 999,
+      safetyDecision
     }, doctorActor)).rejects.toThrow('Konflik konkurensi: Versi order (1) tidak sesuai dengan versi request (999).');
   });
 });
