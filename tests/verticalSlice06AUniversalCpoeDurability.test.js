@@ -47,7 +47,8 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       clinical_orders: [],
       cpoe_order_items: [],
       universal_audit_logs: [],
-      clinical_domain_outbox: []
+      clinical_domain_outbox: [],
+      safety_decision_registry: []
     };
 
     activeTransactionState = null;
@@ -212,6 +213,52 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
             mockDatabaseState.cpoe_order_items.push(newItem);
           }
           return { rows: [newItem], rowCount: 1 };
+        }
+
+        // 10.5. INSERT INTO safety_decision_registry
+        if (normalized.startsWith('INSERT INTO SAFETY_DECISION_REGISTRY')) {
+          const decisionId = params[0];
+          let existing = mockDatabaseState.safety_decision_registry?.find(r => r.decision_id === decisionId);
+          if (!existing) {
+            existing = {
+              decision_id: decisionId,
+              patient_id: params[1],
+              encounter_id: params[2],
+              actor_id: params[3],
+              actor_role: params[4],
+              action_type: params[5],
+              risk_type: params[6],
+              justification: params[7],
+              command_hash: params[8],
+              correlation_id: params[9],
+              status: 'ISSUED',
+              expires_at: params[10],
+              created_at: params[11]
+            };
+            mockDatabaseState.safety_decision_registry = mockDatabaseState.safety_decision_registry || [];
+            mockDatabaseState.safety_decision_registry.push(existing);
+          }
+          return { rows: [existing], rowCount: 1 };
+        }
+
+        // 10.6. SELECT FROM safety_decision_registry FOR UPDATE
+        if (normalized.includes('FROM SAFETY_DECISION_REGISTRY') && normalized.includes('FOR UPDATE')) {
+          const decisionId = params[0];
+          const found = (mockDatabaseState.safety_decision_registry || []).filter(r => r.decision_id === decisionId);
+          return { rows: found, rowCount: found.length };
+        }
+
+        // 10.7. UPDATE safety_decision_registry
+        if (normalized.startsWith('UPDATE SAFETY_DECISION_REGISTRY')) {
+          const decisionId = params[0];
+          const actorId = params[1];
+          const found = (mockDatabaseState.safety_decision_registry || []).find(r => r.decision_id === decisionId);
+          if (found) {
+            found.status = 'CONSUMED';
+            found.consumed_at = new Date().toISOString();
+            found.consumed_by_actor_id = actorId;
+          }
+          return { rows: found ? [found] : [], rowCount: found ? 1 : 0 };
         }
 
         // 11. INSERT INTO universal_audit_logs
@@ -560,6 +607,10 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       actorRole: doctorActor.role,
       action: 'CPOE_ORDER_CANCEL',
       justification: 'Pasien menolak pengambilan darah dan meminta penundaan',
+      targetPayload: {
+        orderId: created.id,
+        cancellationReason: 'Pasien menolak pengambilan darah dan meminta penundaan'
+      },
       acknowledgment: true
     });
 
@@ -756,6 +807,10 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       actorRole: ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP,
       action: 'CPOE_ORDER_CANCEL',
       justification: 'Tindakan operasi dibatalkan oleh pasien',
+      targetPayload: {
+        orderId: created.id,
+        cancellationReason: 'Tindakan operasi dibatalkan oleh pasien'
+      },
       acknowledgment: true
     });
 
@@ -904,6 +959,11 @@ describe('VS-06A — Universal CPOE Transaction Core ➔ PostgreSQL Durability &
       actorRole: doctorActor.role,
       action: 'CPOE_ORDER_CANCEL',
       justification: 'Stale update attempt',
+      targetPayload: {
+        orderId: created.id,
+        cancellationReason: 'Stale update attempt',
+        expectedVersion: 999
+      },
       acknowledgment: true
     });
 

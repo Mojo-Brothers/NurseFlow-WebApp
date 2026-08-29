@@ -30,6 +30,7 @@ export const HardStopDialog = React.forwardRef(function HardStopDialog(
     justificationPlaceholder = 'Masukkan alasan klinis / justifikasi medis tertulis...',
     requiredTypedPhrase = null, // e.g. 'OVERRIDE' or 'BATALKAN'
     correlationId = null,
+    targetPayload = null,
     onConfirm,
     onCancel,
     className = '',
@@ -99,6 +100,7 @@ export const HardStopDialog = React.forwardRef(function HardStopDialog(
           riskType: riskLevel === 'critical' ? 'CRITICAL_OVERRIDE' : 'DESTRUCTIVE_ACTION',
           justification: justification.trim() || 'Dikonfirmasi secara klinis oleh staf medis',
           acknowledgment: true,
+          targetPayload,
           typedConfirmation: typedPhrase ? typedPhrase.trim() : null,
           correlationId: correlationId || `HARDSTOP-${Date.now()}`
         });

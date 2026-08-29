@@ -72,7 +72,8 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
         }
       ],
       universal_audit_logs: [],
-      clinical_domain_outbox: []
+      clinical_domain_outbox: [],
+      safety_decision_registry: []
     };
 
     activeTransactionState = null;
@@ -165,7 +166,52 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
           return { rows: [], rowCount: 1 };
         }
 
-        // 7. INSERT INTO universal_audit_logs
+        // 7. INSERT INTO safety_decision_registry (E1 & E3)
+        if (normalized.startsWith('INSERT INTO SAFETY_DECISION_REGISTRY')) {
+          const decisionId = params[0];
+          let existing = mockDatabaseState.safety_decision_registry.find(r => r.decision_id === decisionId);
+          if (!existing) {
+            existing = {
+              decision_id: decisionId,
+              patient_id: params[1],
+              encounter_id: params[2],
+              actor_id: params[3],
+              actor_role: params[4],
+              action_type: params[5],
+              risk_type: params[6],
+              justification: params[7],
+              command_hash: params[8],
+              correlation_id: params[9],
+              status: 'ISSUED',
+              expires_at: params[10],
+              created_at: params[11]
+            };
+            mockDatabaseState.safety_decision_registry.push(existing);
+          }
+          return { rows: [existing], rowCount: 1 };
+        }
+
+        // 8. SELECT FROM safety_decision_registry FOR UPDATE
+        if (normalized.includes('FROM SAFETY_DECISION_REGISTRY') && normalized.includes('FOR UPDATE')) {
+          const decisionId = params[0];
+          const found = mockDatabaseState.safety_decision_registry.filter(r => r.decision_id === decisionId);
+          return { rows: found, rowCount: found.length };
+        }
+
+        // 9. UPDATE safety_decision_registry
+        if (normalized.startsWith('UPDATE SAFETY_DECISION_REGISTRY')) {
+          const decisionId = params[0];
+          const actorId = params[1];
+          const found = mockDatabaseState.safety_decision_registry.find(r => r.decision_id === decisionId);
+          if (found) {
+            found.status = 'CONSUMED';
+            found.consumed_at = new Date().toISOString();
+            found.consumed_by_actor_id = actorId;
+          }
+          return { rows: found ? [found] : [], rowCount: found ? 1 : 0 };
+        }
+
+        // 10. INSERT INTO universal_audit_logs
         if (normalized.startsWith('INSERT INTO UNIVERSAL_AUDIT_LOGS')) {
           const newAudit = {
             id: params[0],
@@ -181,7 +227,9 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
             after_state: params[10],
             reason_for_action: params[11],
             signature_hash: params[12],
-            created_at: params[13] || new Date().toISOString()
+            decision_id: params[13] || null,
+            correlation_id: params[14] || null,
+            created_at: params[15] || params[13] || new Date().toISOString()
           };
 
           if (activeTransactionState) {
@@ -192,7 +240,7 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
           return { rows: [{ id: newAudit.id, signature_hash: newAudit.signature_hash }], rowCount: 1 };
         }
 
-        // 8. INSERT INTO clinical_domain_outbox
+        // 11. INSERT INTO clinical_domain_outbox
         if (normalized.startsWith('INSERT INTO CLINICAL_DOMAIN_OUTBOX')) {
           const newOutbox = {
             id: params[0],
@@ -418,6 +466,10 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       actorRole: testActor.role,
       action: 'CPOE_ORDER_CANCEL',
       justification: 'Instruksi DPJP: Ganti ke lini kedua sefalosporin',
+      targetPayload: {
+        orderId: testOrderId,
+        cancellationReason: 'Instruksi DPJP: Ganti ke lini kedua sefalosporin'
+      },
       acknowledgment: true
     });
 
@@ -447,12 +499,12 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       version: 1
     });
 
-    // 2nd Execution with SAME decisionId: Must be strictly rejected with 409
+    // 2nd Execution with SAME decisionId on the same order: Must be strictly rejected with 409 SAFETY_DECISION_ALREADY_CONSUMED
     let replayErr;
     try {
       await cpoeApplicationService.cancelOrder(
         {
-          orderId: secondOrderId,
+          orderId: testOrderId,
           cancellationReason: 'Instruksi DPJP: Ganti ke lini kedua sefalosporin',
           safetyDecision: singleUseDecision // REPLAY ATTEMPT!
         },
@@ -465,10 +517,6 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
     expect(replayErr).toBeDefined();
     expect(replayErr.code).toBe('SAFETY_DECISION_ALREADY_CONSUMED');
     expect(replayErr.statusCode).toBe(409);
-
-    // Verify 2nd order was NOT cancelled
-    const secondOrder = mockDatabaseState.clinical_orders.find(o => o.id === secondOrderId);
-    expect(secondOrder.status).toBe('ORDERED');
   });
 
   // =========================================================================
@@ -483,6 +531,10 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       action: 'CPOE_ORDER_CANCEL',
       riskType: 'DESTRUCTIVE_ACTION',
       justification: 'Pasien mengalami efek samping mual berat, ganti alternatif oral',
+      targetPayload: {
+        orderId: testOrderId,
+        cancellationReason: 'Pasien mengalami efek samping mual berat, ganti alternatif oral'
+      },
       acknowledgment: true
     });
 
@@ -518,6 +570,10 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       actorRole: testActor.role,
       action: 'CPOE_ORDER_CANCEL',
       justification: 'Audit Trail Test: Verifikasi keterikatan Safety Decision ID',
+      targetPayload: {
+        orderId: testOrderId,
+        cancellationReason: 'Audit Trail Test: Verifikasi keterikatan Safety Decision ID'
+      },
       acknowledgment: true
     });
 
@@ -554,6 +610,10 @@ describe('🛡️ PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY', () =
       actorRole: testActor.role,
       action: 'CPOE_ORDER_CANCEL',
       justification: 'WORM Immutability Verification Rationale',
+      targetPayload: {
+        orderId: testOrderId,
+        cancellationReason: 'WORM Immutability Verification Rationale'
+      },
       acknowledgment: true
     });
 

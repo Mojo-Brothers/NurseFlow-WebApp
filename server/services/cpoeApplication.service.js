@@ -396,14 +396,19 @@ export const cpoeApplicationService = {
 
       const existingOrder = orderRes.rows[0];
 
-      // ─── STRICT SAFETY DECISION AUTHORIZATION VERIFICATION ───
-      const verifiedDecision = safetyAuthorizationService.verifyAndConsumeDecision({
+      // ─── STRICT SAFETY DECISION AUTHORIZATION VERIFICATION (E2 & E3) ───
+      const verifiedDecision = await safetyAuthorizationService.verifyAndConsumeTransactional(client, {
         safetyDecision,
+        actualCommandPayload: {
+          orderId,
+          cancellationReason: cancellationReason.trim(),
+          expectedVersion: expectedVersion !== undefined && expectedVersion !== null ? Number(expectedVersion) : undefined
+        },
         expectedAction: 'CPOE_ORDER_CANCEL',
         expectedPatientId: existingOrder.patient_id,
         expectedEncounterId: existingOrder.encounter_id,
         actor,
-        justification: cancellationReason
+        justification: cancellationReason.trim()
       });
 
       if (expectedVersion !== undefined && expectedVersion !== null && existingOrder.version !== Number(expectedVersion)) {
@@ -450,7 +455,7 @@ export const cpoeApplicationService = {
         [serverTimestamp, orderId]
       );
 
-      // Audit Log with Safety Decision Lineage
+      // Audit Log with Native First-Class Safety Decision & Correlation Linkage (E4)
       const signatureHash = crypto
         .createHash('sha256')
         .update(JSON.stringify({ 
@@ -458,6 +463,7 @@ export const cpoeApplicationService = {
           status: 'CANCELLED', 
           cancellationReason, 
           decisionId: verifiedDecision.decisionId,
+          correlationId,
           timestamp: serverTimestamp 
         }))
         .digest('hex');
@@ -466,11 +472,13 @@ export const cpoeApplicationService = {
         INSERT INTO universal_audit_logs (
           id, actor_id, actor_name, actor_role, client_ip,
           action_type, resource_type, resource_id, patient_id,
-          before_state, after_state, reason_for_action, signature_hash, created_at
+          before_state, after_state, reason_for_action, signature_hash,
+          decision_id, correlation_id, created_at
         ) VALUES (
           $1, $2, $3, $4, $5,
           $6, $7, $8, $9,
-          $10, $11, $12, $13, $14
+          $10, $11, $12, $13,
+          $14, $15, $16
         );
       `, [
         crypto.randomUUID(),
@@ -486,6 +494,8 @@ export const cpoeApplicationService = {
         JSON.stringify({ ...updateRes.rows[0], safetyDecisionId: verifiedDecision.decisionId }),
         `[Decision: ${verifiedDecision.decisionId}] Pembatalan CPOE Order [${existingOrder.order_number}]: ${cancellationReason}`,
         signatureHash,
+        verifiedDecision.decisionId,
+        correlationId,
         serverTimestamp
       ]);
 

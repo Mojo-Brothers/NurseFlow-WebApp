@@ -20,6 +20,7 @@
     "audit:design-debt": "node scripts/audit_design_debt_baseline.mjs",
     "audit:selection-inventory": "node scripts/audit_selection_primitives_inventory.mjs",
     "audit:safety-inventory": "node scripts/audit_safety_surfaces_inventory.mjs",
+    "audit:d23e": "node scripts/verify_phase_d23e_adversarial_proof.mjs",
     "migrate:up": "node scripts/execute_all_migrations.js",
     "chaos:torture": "node scripts/run_sprint3l_chaos_torture.js",
     "chaos:evidence": "node scripts/run_sprint3l1_evidence_validation.js",

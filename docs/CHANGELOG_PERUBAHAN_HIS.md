@@ -20,6 +20,46 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### ⚡ [29 AGUSTUS 2026] — PHASE D2.3-E: PRODUCTION-GRADE SAFETY AUTHORIZATION HARDENING & PHYSICAL ADVERSARIAL PROOF (POSTGRESQL ACID DECISION REGISTRY, RFC 8785 DETERMINISTIC CRYPTOGRAPHIC COMMAND BINDING, DISTRIBUTED MULTI-CONNECTION ANTI-REPLAY LOCKING, TRANSACTIONAL ROLLBACK INVARIANCE, FIRST-CLASS PHYSICAL AUDIT LINKAGE COLUMNS, 188/188 TEST SUITES PASS 100%, 1859/1859 TESTS GREEN, ZERO BUILD ERRORS)
+**Tag Rilis:** `phase-d23e-production-safety-hardening-v1.0`  
+**Kategori:** `[MAJOR]` `[SAFETY]` `[SECURITY]` `[AUDIT]` `[E5-F]` `[ENTERPRISE-ARCHITECTURE]`  
+**Status Evidence:** 🟢 **`PHASE D2.3-E FULLY CLOSED — PRODUCTION-GRADE SAFETY AUTHORIZATION HARDENED & PHYSICALLY PROVEN (POSTGRESQL TABLE safety_decision_registry WITH ROW-LEVEL FOR UPDATE LOCKING, RFC 8785 JSON CANONICALIZATION + SHA-256 CONSTANT-TIME COMMAND HASH BINDING, ACID TRANSACTION ROLLBACK TOKEN RECOVERY PROOF, FIRST-CLASS decision_id AND correlation_id COLUMNS IN universal_audit_logs WITH WORM TRIGGER ENFORCEMENT, LIVE ADVERSARIAL SCRIPT PASSED 6/6, 188/188 TEST SUITES PASS 100%, 1859/1859 TESTS PASS 100%, VITE PRODUCTION BUILD READY).`**
+
+1. **Skema Basis Data Registry Otorisasi Keselamatan ([`database/migrations/067_enterprise_safety_decision_registry.sql`](file:///c:/Users/Mojo/NurseFlow-WebApp/database/migrations/067_enterprise_safety_decision_registry.sql)):**
+   - **Tabel Fisik `safety_decision_registry`**:
+     * Kolom: `decision_id` (PK, VARCHAR(100)), `tenant_id` (UUID), `patient_id` (VARCHAR(100)), `encounter_id` (VARCHAR(100)), `actor_id` (VARCHAR(100)), `actor_role` (VARCHAR(100)), `action_type` (VARCHAR(100)), `risk_type` (VARCHAR(100)), `justification` (TEXT), `command_hash` (VARCHAR(64)), `correlation_id` (VARCHAR(100)), `status` (VARCHAR(30) — `ISSUED`, `CONSUMED`, `REVOKED`, `EXPIRED`), `consumed_at` (TIMESTAMPTZ), `consumed_by_actor_id` (VARCHAR(100)), `consumed_in_tx_id` (VARCHAR(100)), `expires_at` (TIMESTAMPTZ), `created_at` (TIMESTAMPTZ).
+     * B-Tree Indexes pada `(patient_id, encounter_id)`, `status`, `command_hash`, dan `correlation_id`.
+   - **Kolom Audit Fisik Tingkat Pertama (First-Class Physical Columns)**:
+     * Menambahkan kolom `decision_id VARCHAR(100)` dan `correlation_id VARCHAR(100)` secara fisik pada tabel `universal_audit_logs` dengan indeks B-Tree khusus untuk audit forensik tanpa penguraian JSON.
+
+2. **Pengikatan Kriptografis Perintah Deterministik (Deterministic Cryptographic Command Binding — RFC 8785 & SHA-256):**
+   - [`src/core/safetyDecision.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/src/core/safetyDecision.js):
+     * Fungsi `canonicalStringify(obj)` mengurutkan kunci secara leksikografis rekursif (RFC 8785 JSON Canonicalization Scheme) dan mengabaikan nilai `undefined`.
+     * Fungsi `computeCommandHash(payload)` menghitung *digest* SHA-256 64-karakter hex secara deterministik.
+     * `createSafetyDecision` secara otomatis menghitung `commandHash` ketika `targetPayload` diteruskan.
+   - [`src/design-system/components/HardStopDialog.jsx`](file:///c:/Users/Mojo/NurseFlow-WebApp/src/design-system/components/HardStopDialog.jsx):
+     * Menerima prop `targetPayload` dan meneruskannya ke `createSafetyDecision` saat staf medis mengonfirmasi intervensi keselamatan.
+
+3. **Konsumsi Transaksional Atomik & Perlindungan Rollback ([`server/services/safetyAuthorization.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/safetyAuthorization.service.js)):**
+   - **`verifyDecisionContract`**: Validasi statis tanpa status (stateless) meliputi: kelengkapan struktur, konfirmasi risiko, batas waktu kadaluarsa, pencocokan konteks pasien/encounter/aktor/aksi, serta verifikasi *constant-time cryptographic hash* (`crypto.timingSafeEqual`).
+   - **`verifyAndConsumeTransactional(client, params)`**:
+     * Menjalankan `INSERT ... ON CONFLICT DO NOTHING` dan `SELECT ... FOR UPDATE` pada `safety_decision_registry` di dalam transaksi PostgreSQL pemanggil.
+     * Jika status sudah `CONSUMED`, melempar `409 SAFETY_DECISION_ALREADY_CONSUMED` dan menggagalkan transaksi.
+     * Mengubah status menjadi `CONSUMED` secara atomik di dalam transaksi yang sama.
+     * **Rollback Invariance**: Jika transaksi SQL downstream gagal dan di-*ROLLBACK*, PostgreSQL secara otomatis mengembalikan status token menjadi `ISSUED` sehingga token sah tidak hangus (*never burned prematurely*).
+
+4. **Keterikatan Audit Transaksional CPOE ([`server/services/cpoeApplication.service.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/server/services/cpoeApplication.service.js)):**
+   - Alur `cancelOrder` kini meneruskan `client` transaksi aktif dan `actualCommandPayload` ke `verifyAndConsumeTransactional`.
+   - Mengisi kolom fisik `decision_id` dan `correlation_id` secara langsung pada `universal_audit_logs`.
+
+5. **Pengujian Adversarial PostgreSQL & Validasi Bukti:**
+   - [`tests/phaseD23EAdversarialSafetyProof.test.js`](file:///c:/Users/Mojo/NurseFlow-WebApp/tests/phaseD23EAdversarialSafetyProof.test.js): 6 skenario uji komprehensif menguji multi-koneksi paralel, pemulihan rollback, penolakan tampering hash, dan keterikatan audit fisik (6/6 PASS).
+   - [`scripts/verify_phase_d23e_adversarial_proof.mjs`](file:///c:/Users/Mojo/NurseFlow-WebApp/scripts/verify_phase_d23e_adversarial_proof.mjs): Runner verifikasi mandiri (`npm run audit:d23e`) membuktikan seluruh 6 uji adversarial lulus pada instance PostgreSQL aktual.
+   - Seluruh rangkaian tes repository: **188/188 test suites PASS 100% (1859/1859 tests passed)**.
+   - Vite production build lulus tanpa error (*zero build errors*).
+
+---
+
 ### ⚡ [28 AGUSTUS 2026] — PHASE D2.3-D: END-TO-END SAFETY AUTHORIZATION INTEGRITY & COMMAND BOUNDARY ENFORCEMENT (IMMUTABLE SAFETY DECISION CONTRACT, BACKEND CONTEXT BINDING & ANTI-REPLAY DEFENSE, ACID TRANSACTION WORM AUDIT LINKAGE, 10/10 D2.3-D TESTS PASS 100%, 69/69 TOTAL ARCHITECTURE & DESIGN SYSTEM TESTS PASS 100%, ALL 7 CI AUDIT GATES GREEN, ZERO BUILD ERRORS)
 **Tag Rilis:** `phase-d23d-safety-authorization-v1.0`  
 **Kategori:** `[MAJOR]` `[SAFETY]` `[SECURITY]` `[AUDIT]` `[E5-F]` `[ENTERPRISE-GOVERNANCE]`  
