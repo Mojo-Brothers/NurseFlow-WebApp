@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import { LOINC_CODES } from '../services/observationEngine.service.js';
 
 export default function ClinicalObservationWorkspace() {
-  const { observations, recordObservation, selectedPatientId } = useEmrStore();
+  const { observations, recordObservation } = useEmrStore();
+  const { patient: activePatient, encounterId: activeEncounterId, patientId } = useClinicalContext();
 
   const [selectedLoincKey, setSelectedLoincKey] = useState('BP_SYSTOLIC');
   const [obsValue, setObsValue] = useState('120');
@@ -13,10 +15,16 @@ export default function ClinicalObservationWorkspace() {
     const loinc = LOINC_CODES[selectedLoincKey];
 
     try {
+      const resolvedPatientId = patientId || activePatient?.id || null;
+      if (!resolvedPatientId) {
+        alert('Pilih pasien aktif terlebih dahulu sebelum mencatat observasi.');
+        return;
+      }
+
       await recordObservation({
-        encounterId: 'ENC-2026-001',
-        episodeId: 'EOC-2026-001',
-        patientId: selectedPatientId,
+        encounterId: activeEncounterId || `ENC-${resolvedPatientId}`,
+        episodeId: activePatient?.episodeId || `EOC-${resolvedPatientId}`,
+        patientId: resolvedPatientId,
         observationType: 'VITAL_SIGN',
         loincCode: loinc.code,
         loincDisplay: loinc.display,

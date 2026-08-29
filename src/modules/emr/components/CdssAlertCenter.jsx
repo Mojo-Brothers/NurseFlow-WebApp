@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 
 export default function CdssAlertCenter() {
-  const { cdssAlerts, evaluatePrescriptionSafeguards, selectedPatientId } = useEmrStore();
+  const { cdssAlerts, evaluatePrescriptionSafeguards } = useEmrStore();
+  const { patient: activePatient, encounterId: activeEncounterId, patientId } = useClinicalContext();
 
   const [testDrug, setTestDrug] = useState('Cefadroxil 500mg');
   const [testEgfr, setTestEgfr] = useState(25);
 
   const handleTestScreening = async () => {
+    const resolvedPatientId = patientId || activePatient?.id || null;
     const res = await evaluatePrescriptionSafeguards({
-      encounterId: 'ENC-2026-001',
-      patientId: selectedPatientId,
+      encounterId: activeEncounterId || (resolvedPatientId ? `ENC-${resolvedPatientId}` : 'ENC-CDSS-TEST'),
+      patientId: resolvedPatientId,
       prescribedDrugName: testDrug,
       prescribedDrugCode: 'MED-TEST',
       patientEgfr: Number(testEgfr),

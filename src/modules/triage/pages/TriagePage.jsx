@@ -5,6 +5,7 @@ import { useTriageStore } from '../triage.store.js';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { useAuthStore } from '../../auth/auth.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import toast from 'react-hot-toast';
 
 import IgdCommandCenter from '../components/IgdCommandCenter.jsx';
@@ -22,6 +23,7 @@ export default function TriagePage() {
   const { user } = useAuthStore();
   const { patients, addPatient, fetchPatients } = usePatientStore();
   const { activePatientId, liveContext, openEncounter, setLiveContext } = useEncounterStore();
+  const { patient: activePatient } = useClinicalContext();
 
   const [activeTab, setActiveTab] = useState('COMMAND_CENTER'); // 'COMMAND_CENTER' | 'RAPID_INTAKE' | 'DETAILED' | 'POLI'
   const [isResusModalOpen, setIsResusModalOpen] = useState(false);
@@ -31,8 +33,6 @@ export default function TriagePage() {
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
-
-  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || patients[0] || null;
 
   const handleCreateEmergencyPatient = async () => {
     if (isCreatingEmergency) return;

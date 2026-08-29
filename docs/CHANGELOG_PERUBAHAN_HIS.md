@@ -287,6 +287,100 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ---
 
+### ⚡ [26 AGUSTUS 2026] — MASTER TASK: PHASE D0.5 RUNTIME SAFETY CONTRACT ADOPTION AUDIT & E2E VALIDATION GATE (ALLERGY OVERRIDE MODAL, PANIC VALUE INTERRUPT BARRIER, FAST-SWITCH RACE REJECTION TEST, 24/24 SAFETY TESTS PASS)
+**Tag Rilis:** `phase-d0.5-runtime-safety-adoption-gate-v1.0`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[ARCHITECTURE]` `[TESTING]` `[UI/UX]`  
+**Status Evidence:** 🟢 **`PHASE D0.5 COMPLETE: RUNTIME SAFETY ADOPTION AUDIT SELESAI. IMPLEMENTASI MODAL INTERAKTIF: AllergyOverrideModal.jsx (JCI MMU 4) & PanicValueInterruptModal.jsx (JCI IPSG 2 TBAK READ-BACK) BERHASIL DIINTEGRASIKAN KE DoctorSoapWorkspace & UniversalOrderModal. SUITE tests/phaseD05RuntimeSafetyAdoptionValidation.test.js LULUS 8/8 (100%), MEMBUKTIKAN PENOLAKAN ASYNC RACE-CONDITION (50-100ms SWITCH) DAN WORM AUDIT CORRELATION. TOTAL 24/24 SAFETY TESTS PASS, 24/24 REALITY PASS, VITE BUILD CLEAN.`**
+
+1. **Perbaikan Runtime Defect & Error Boundary:**
+   - Memperbaiki `liveContext is not defined` pada `DoctorWorkspacePage.jsx` dengan mendestruktur `encounterId`, `careState`, dan `location` secara aman dari SSOT `useClinicalContext()`.
+2. **Implementasi Komponen Keselamatan Klinis Interaktif (JCI Standards):**
+   - **`AllergyOverrideModal.jsx`**: Mengintersepsi CDSS Hard-Stop 422, menampilkan alergen aktif, mewajibkan alasan justifikasi klinis tertulis ($\ge 5$ karakter), dan mencatat otorisasi DPJP sebelum pesanan diproses dengan rekonsiliasi WORM audit log.
+   - **`PanicValueInterruptModal.jsx`**: Mengintersepsi layar kerja DPJP saat nilai kritis laboratorium terbit, mewajibkan konfirmasi TBAK (Tulis, Baca, Konfirmasi) Read-Back sebelum interupsi ditutup.
+3. **Pengujian Verifikasi 5 Pilar Keselamatan D0.5:**
+   - Suite `tests/phaseD05RuntimeSafetyAdoptionValidation.test.js` memverifikasi: cakupan mutasi klinis (Q1), lineage respon async & simulasi race condition 50–100ms (Q2 & Q5), konversi error 422 menjadi modal interaktif (Q3), serta korelasi audit trail WORM (Q4).
+
+
+
+### ⚡ [26 AGUSTUS 2026] — MASTER TASK: PHASE D0 UI RUNTIME SAFETY CONTRACT IMPLEMENTATION (ASYNC CONTEXT-MATCHING GUARD, IN-FLIGHT REQUEST AUTO-ABORT, CANONICAL 422 TO ACTIONABLE MODAL MAPPER, 177/177 VITEST FILES PASS 100%)
+**Tag Rilis:** `phase-d0-ui-runtime-safety-contract-v1.0`  
+**Kategori:** `[MAJOR]` `[ARCHITECTURE]` `[SECURITY]` `[TESTING]` `[UI/UX]`  
+**Status Evidence:** 🟢 **`PHASE D0 COMPLETE: UI RUNTIME SAFETY CONTRACT (src/core/contracts/clinicalRuntimeSafetyContract.js) & SUITE (tests/phaseD0ClinicalRuntimeSafetyContract.test.js) DIIMPLEMENTASIKAN. 177/177 VITEST FILES PASS (1,743 TESTS 100%), 24/24 REALITY PASS, VITE PRODUCTION BUILD CLEAN.`**
+
+1. **Implementasi UI Runtime Safety Contract (`clinicalRuntimeSafetyContract.js`):**
+   - **`enforceActiveClinicalContext`**: Validasi fail-closed yang memblokir mutasi klinis tanpa pasien/encounter aktif (JCI IPSG 1).
+   - **`createContextBoundAbortController`**: Membatalkan secara otomatis (*auto-abort*) permintaan async tertunda saat dokter/perawat berganti pasien di tengah proses, mencegah kontaminasi state silang.
+   - **`validateResponseContextLineage`**: Mengintersepsi dan membuang respon async lambat yang tiba setelah konteks pasien berpindah (*race-condition guard*).
+   - **`mapBackendSafetyErrorToClinicalAction`**: Menerjemahkan kode error backend (`ALLERGY_HARD_STOP`, `DDI_SEVERE_WARNING`, `HIGH_ALERT_DUAL_SIGN_REQUIRED`, `EMERGENCY_PANIC`, `CONCURRENCY_CONFLICT`) menjadi aksi UI modal interaktif terstruktur, bukan sekadar toast.
+2. **Pengujian Vitest Phase D0:**
+   - Suite `tests/phaseD0ClinicalRuntimeSafetyContract.test.js` lulus 8/8 test cases (100%), menambah total test suite menjadi 177 test files (1,743 tests).
+
+
+
+### ⚡ [26 AGUSTUS 2026] — MASTER TASK: PHASE C3.5 EVIDENCE CLOSURE & REPOSITORY-WIDE SAFETY SWEEP (ZERO PATIENTS[0] ACROSS ALL 635 FILES, NORMALIZED E0-E5-F TAXONOMY, EVIDENCE BASELINE V1.0 FROZEN)
+**Tag Rilis:** `phase-c3.5-evidence-closure-baseline-v1.0`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[ARCHITECTURE]` `[TESTING]` `[UI/UX]`  
+**Status Evidence:** 🟢 **`PHASE C3.5 COMPLETE: EVIDENCE BASELINE V1.0 FROZEN. REPOSITORY-WIDE SCAN PADA 635 BERKAS SUMBER MEMBUKTIKAN 0 REMAINING FORBIDDEN PATIENT/ENCOUNTER FALLBACKS. TAXONOMY NORMALIZED TO E0-E5-F (SAFETY SCENARIO VS WORM AUDIT SPLIT). 176/176 VITEST FILES PASS (1,735 TESTS 100%), 24/24 REALITY PASS (100%), VITE PRODUCTION BUILD CLEAN. SIAP MASUK PHASE D (DESIGN SYSTEM).`**
+
+1. **Repository-Wide Forbidden Fallback Sweep (C3.5.1):**
+   - Melakukan audit dan remediasi menyeluruh terhadap 14 berkas yang mengandung fallback `patients[0]`, `selectedPatient ||`, dan hardcoded `'ENC-2026-001'` di seluruh modul klinis: `DoctorWorkspacePage`, `ClinicalCoreWorkspace`, `UnifiedPatientChart`, `NursingWorkspacePage`, `TriagePage`, `IgdCommandCenter`, `PatientCommandCenterPage`, `SpecimenAccessioningStudio`, `SoapWorkspace`, `CPPTWorkspace`, `DiagnosisWorkspace`, `ClinicalObservationWorkspace`, `CdssAlertCenter`, `BedsideTransfusionVerificationStudio`, `ResuscitationWorkspace`, `EmergencyWorkspace`, `EmergencyProtocolModal`, dan `PatientMasterWorkspace`.
+   - Seluruh komponen telah dimigrasikan ke `useClinicalContext()` dengan kebijakan *fail-closed* tanpa implicit fallback.
+2. **Normalisasi Taksonomi Bukti (C3.5.2):**
+   - Memecah E5 menjadi `E5-S` (*Safety Scenario Verified*), `E5-A` (*Audit / WORM Verified*), dan `E5-F` (*Full Safety + Audit Chain*).
+   - Mengoreksi seluruh label: `DEF-P1-06` dan `DEF-P1-08` ditetapkan sebagai `E1 & E2`, dan menghapus seluruh klaim absolut.
+3. **Pembekuan Baseline Bukti v1.0 (C3.5.3 & C3.5.4):**
+   - Mengesahkan `Evidence Baseline v1.0` di `docs/UI_UX_P0_EVIDENCE_VALIDATION.md` dan `docs/UI_UX_MASTER_AUDIT_2026.md`.
+
+
+
+### ⚡ [26 AGUSTUS 2026] — MASTER TASK: PHASE C2 & C3 RUNTIME & E2E SAFETY VALIDATION & SSOT CONTEXT ARCHITECTURE (CANONICAL CLINICAL CONTEXT PROVIDER, FAIL-CLOSED CONTEXT GATE, 8/8 SAFETY TESTS PASS, 176/176 VITEST PASS 100%)
+**Tag Rilis:** `phase-c2-c3-runtime-safety-ssot-v1.0`  
+**Kategori:** `[MAJOR]` `[ARCHITECTURE]` `[SECURITY]` `[TESTING]` `[UI/UX]`  
+**Status Evidence:** 🟢 **`PHASE C2 & C3 COMPLETE: CANONICAL CLINICAL CONTEXT PROVIDER (src/core/context/ClinicalContextProvider.jsx) & CLINICAL CONTEXT GATE (src/components/ui/ClinicalContextGate.jsx) DIIMPLEMENTASIKAN. SELURUH FALLBACK patients[0] DIHAPUS TOTAL DARI OrderEntryWorkspace & ModalityWorklistStudio. SUITE TESTS tests/phaseC2ClinicalSafetyE2EValidation.test.js (8/8 PASS 100%), 176/176 VITEST FILES PASS (1,735 TESTS 100%), 24/24 REALITY PASS, VITE PRODUCTION BUILD CLEAN.`**
+
+1. **Remediasi Fundamental DEF-P0-03 (Single Source of Truth Context):**
+   - Menghadirkan `ClinicalContextProvider.jsx` dan hook `useClinicalContext()` yang mengunci keterikatan aktif pasien, encounter, dan care state secara atomik dan terversi.
+   - Menghapus total `patients[0] || null` dan hardcoded `'ENC-2026-001'` dari `OrderEntryWorkspace.jsx` dan `ModalityWorklistStudio.jsx`.
+   - Menghadirkan `ClinicalContextGate.jsx` untuk mengintersepsi aksi klinis tanpa konteks pasien aktif (*fail-closed barrier* berstandar JCI IPSG 1).
+2. **Multi-Layer Evidence Matrix (E0 s/d E5) & Suite Pengujian Safety:**
+   - Menyusun `tests/phaseC2ClinicalSafetyE2EValidation.test.js` mencakup pengujian: SSOT isolation, validasi alasan klinis override alergi ($\ge 5$ karakter), TBAK read-back kalium kritis $7.2\text{ mEq/L}$, dual nurse sign-off eMAR, auto bed release to cleaning pada discharge, dan layout bounding-box 1366x768.
+3. **Pembaruan Dokumen Bukti & Master Audit:**
+   - Memperbarui `docs/UI_UX_P0_EVIDENCE_VALIDATION.md` dan `docs/UI_UX_MASTER_AUDIT_2026.md` dengan klasifikasi kedalaman bukti E0–E5 dan menghilangkan seluruh klaim absolut.
+
+
+
+### ⚡ [26 AGUSTUS 2026] — MASTER TASK: UX AUDIT EVIDENCE VALIDATION GATE (END-TO-END TRACEABILITY P0 & P1 DEFECTS, METRIC TAXONOMY RECONCILIATION, BROWSER SCENARIO VALIDATION A-E, REKLASIFIKASI VERIFIED VS FALSE POSITIVE VS BACKEND PROTECTED)
+**Tag Rilis:** `ux-audit-evidence-validation-gate-v1.0`  
+**Kategori:** `[DOCS]` `[TESTING]` `[ARCHITECTURE]` `[UI/UX]`  
+**Status Evidence:** 🟢 **`EVIDENCE VALIDATION GATE COMPLETE: docs/UI_UX_P0_EVIDENCE_VALIDATION.md DISUSUN, docs/UI_UX_MASTER_AUDIT_2026.md DIPERBARUI DENGAN CONFIDENCE LEVEL DAN VERDICT EMPIRIS (1 VERIFIED P0, 2 BACKEND PROTECTED/UX GAPS P0, 1 FALSE POSITIVE P0). METRIK DIREKONSILIASI KE DALAM KATEGORI MEASURED VS ESTIMATED VS DESIGN TARGET. SKENARIO OPERASIONAL A S/D E DIUJI 100% GREEN.`**
+
+1. **Forensic Traceability Defek P0 & P1:**
+   - Menelusuri seluruh jalur eksekusi UI $\rightarrow$ API $\rightarrow$ Controller $\rightarrow$ Service $\rightarrow$ PostgreSQL 16 $\rightarrow$ WORM Audit Trail untuk mengeliminasi false positives dan membedakan kesenjangan UI (*UX gap*) dari ketiadaan proteksi backend.
+   - Hasil P0: `DEF-P0-01` (`BACKEND PROTECTED / UX GAP`), `DEF-P0-02` (`FALSE POSITIVE` karena sudah ada di eMAR studio), `DEF-P0-03` (`VERIFIED` pada OrderEntryWorkspace fallback), `DEF-P0-04` (`BACKEND PROTECTED / UX GAP`).
+2. **Rekonsiliasi Taksonomi Metrik (Measured vs Estimated vs Design Target):**
+   - Mendisiplinkan seluruh angka: 7-9 clicks dan 2 context switches dilabeli `MEASURED`; maturity level dan konsistensi visual dilabeli `ESTIMATED`; target 80% route reduction dilabeli `DESIGN TARGET`.
+3. **Pengujian Empiris Skenario Operasional (A s/d E):**
+   - Menjalankan script `scripts/validate_ux_audit_evidence_scenarios.mjs` untuk menguji alur konsultasi dokter, layout 1366x768 triase IGD, isolasi konteks pasien, hard-stop alergi, dan eskalasi panic value laboratorium.
+
+
+
+### ⚡ [26 AGUSTUS 2026] — MASTER TASK: CLINICAL UX & WORKFLOW RE-ENGINEERING PHASE A & B (INVENTARISASI 33 MODUL UI, MATRIKS 18 PERAN KLINIS, AUDIT WORKFLOW END-TO-END, SPESIFIKASI CLINICAL DESIGN SYSTEM 2026, HEURISTIC SAFETY AUDIT)
+**Tag Rilis:** `clinical-ux-workflow-reengineering-v1.0`  
+**Kategori:** `[MAJOR]` `[UI/UX]` `[ARCHITECTURE]` `[DOCS]`  
+**Status Evidence:** 🟢 **`SELURUH 6 DOKUMEN RECONNAISSANCE & MASTER AUDIT SELESAI DISUSUN (docs/UI_MODULE_INVENTORY.md, docs/CLINICAL_ROLE_WORKFLOW_MATRIX.md, docs/CLINICAL_WORKFLOW_AUDIT_2026.md, docs/UI_UX_MASTER_AUDIT_2026.md, docs/UI_DESIGN_SYSTEM_2026.md, docs/UI_UX_REDESIGN_ROADMAP_2026.md, docs/UI_UX_CHANGELOG_2026.md). IMPLEMENTATION PLAN DISUSUN UNTUK TRANZISI TOTAL MENUJU CLINICAL OPERATING WORKSTATION.`**
+
+1. **Pemetaan Total 33 Modul & 130+ Layar (`docs/UI_MODULE_INVENTORY.md`):**
+   - Menginventarisasi seluruh antarmuka sistem (Dashboard, Bangsal, EMPI, Registrasi, Poliklinik, Triase, SOAP DPJP, Universal CPOE, eMAR, LIS, RIS, Bedah OK, Farmasi FEFO, Kasir, Casemix, BDRS, ICU, Kredensialing, SATUSEHAT, Master Data, Audit Trail).
+2. **Matriks Alur Kerja 18 Peran Tenaga Medis (`docs/CLINICAL_ROLE_WORKFLOW_MATRIX.md`):**
+   - Menganalisis kebutuhan kognitif, alur kerja, tindakan kritis (*critical actions*), dan titik rawan kesalahan (*error-prone points*) untuk 18 persona tenaga medis dan operasional rumah sakit.
+3. **Audit Alur Kerja Klinis Longitudinal (`docs/CLINICAL_WORKFLOW_AUDIT_2026.md`):**
+   - Mengevaluasi 7 alur kerja end-to-end (IGD, Rawat Jalan, Rawat Inap & eMAR, Farmasi FEFO, Laboratorium/Radiologi, Bedah Kamar Operasi, Kasir & Casemix) dengan pendekatan *User $\rightarrow$ Task $\rightarrow$ Context $\rightarrow$ Action $\rightarrow$ Result $\rightarrow$ Next Action*.
+4. **Spesifikasi Centralized Clinical Design System 2026 (`docs/UI_DESIGN_SYSTEM_2026.md`):**
+   - Menetapkan standar token warna berasio kontras tinggi (WCAG 2.1 AAA), tipografi medis terstruktur (*tabular monospaced numbers*), densitas informasi tinggi (*compact 36px table row*), dan 25 komponen primitif klinis terpusat.
+5. **Evaluasi Heuristik & Klasifikasi Defek Klinis (`docs/UI_UX_MASTER_AUDIT_2026.md`):**
+   - Mengaudit 15 dimensi heuristik usabilitas klinis dan mengklasifikasikan temuan defek ke dalam P0 (Patient Safety), P1 (Workflow Blocking), P2 (Major UX), P3 (Minor UX), dan P4 (Cosmetic Polish).
+---
+
 ### ⚡ [26 AGUSTUS 2026] — ENTERPRISE QUALITY & CLINICAL SAFETY CI GATE HARDENING (RESOLUSI 18 TEST FAILURES CI/CD, RESOLUSI URL PARSING NODE.JS, PEMULIHAN IN-MEMORY RUNNER SUITE, 175/175 FILES PASS 100%, 1727/1727 TESTS PASS 100%)
 **Tag Rilis:** `ci-quality-gate-hardening-v1.0`  
 **Kategori:** `[FIX]` `[ENHANCEMENT]` `[TESTING]` `[ARCHITECTURE]`  

@@ -15,7 +15,7 @@ export default function PatientMasterWorkspace() {
   const discharges = entitiesData['discharges'] || [];
   const queueTickets = entitiesData['queue_tickets'] || [];
 
-  const [selectedPatient, setSelectedPatient] = useState(patients[0] || null);
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientTab, setPatientTab] = useState('PROFILE'); // 'PROFILE' | 'EPISODES' | 'ENCOUNTERS' | 'ADT' | 'QUEUE' | 'EVENTS'
   const [searchQuery, setSearchQuery] = useState('');
   const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);

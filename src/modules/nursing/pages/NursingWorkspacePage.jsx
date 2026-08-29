@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useEncounterStore } from '../../encounter/encounter.store.js';
-import { usePatientStore } from '../../patient/patient.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import NursingCommandCenter from '../components/NursingCommandCenter.jsx';
 import EmarAdministrationStudio from '../components/EmarAdministrationStudio.jsx';
 import FluidBalanceSheet from '../components/FluidBalanceSheet.jsx';
@@ -11,10 +10,7 @@ import PatientJourneyTimeline from '../../patient/components/PatientJourneyTimel
 export default function NursingWorkspacePage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('COMMAND_CENTER'); // 'COMMAND_CENTER' | 'EMAR' | 'FLUID_BALANCE' | 'CARE_PLAN'
-  const { activePatientId } = useEncounterStore();
-  const { patients } = usePatientStore();
-
-  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || patients[0];
+  const { patient: activePatient } = useClinicalContext();
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col">

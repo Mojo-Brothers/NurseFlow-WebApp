@@ -13,6 +13,7 @@ import { useEncounterStore } from '../modules/encounter/encounter.store.js';
 import { useTriageStore } from '../modules/triage/triage.store.js';
 import { usePatientClipboardShortcuts } from '../hooks/usePatientClipboardShortcuts.js';
 import GlobalPatientSearchModal from '../components/common/GlobalPatientSearchModal.jsx';
+import { ClinicalContextProvider } from '../core/context/ClinicalContextProvider.jsx';
 
 // Enterprise 10-Domain Navigation Schema
 const ENTERPRISE_NAV_SCHEMA = [
@@ -242,7 +243,8 @@ export default function MainLayout() {
   ].filter(item => item.title.toLowerCase().includes(searchQuery.toLowerCase()) || item.type.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col lg:flex-row h-screen relative overflow-hidden font-sans">
+    <ClinicalContextProvider>
+      <div className="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col lg:flex-row h-screen relative overflow-hidden font-sans">
       
       {/* ─── Global Enterprise Sidebar (Desktop) ─── */}
       <aside 
@@ -593,6 +595,7 @@ export default function MainLayout() {
       </div>
 
       <OfflineStatusIndicator />
-    </div>
+      </div>
+    </ClinicalContextProvider>
   );
 }

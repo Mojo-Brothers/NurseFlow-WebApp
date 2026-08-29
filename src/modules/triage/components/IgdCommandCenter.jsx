@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { usePatientStore } from '../../patient/patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
 import { useTriageStore } from '../triage.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import toast from 'react-hot-toast';
 
 export default function IgdCommandCenter({ onStartRapidTriage, onOpenResuscitation, onSelectPatient }) {
@@ -10,11 +11,9 @@ export default function IgdCommandCenter({ onStartRapidTriage, onOpenResuscitati
   const { patients } = usePatientStore();
   const { setLiveContext, activePatientId } = useEncounterStore();
   const { activeQueue, fetchActiveQueue } = useTriageStore();
+  const { patient: activePatient } = useClinicalContext();
 
   const [selectedBedModal, setSelectedBedModal] = useState(null);
-
-  // Active Patient Resolution from Live Context
-  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || (patients.length > 0 ? patients[0] : null);
 
   // Interactive Bed Grid Matrix
   const [bedMatrix, setBedMatrix] = useState([

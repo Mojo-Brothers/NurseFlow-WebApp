@@ -214,7 +214,8 @@ export default function UnifiedPatientChart() {
   }, [fetchPatients, fetchActiveEncounters]);
 
   const activePatient = useMemo(() => {
-    return patients.find(p => p.id === selectedPatientId || p.mrn === selectedPatientId) || patients[0] || null;
+    if (!selectedPatientId) return null;
+    return patients.find(p => p.id === selectedPatientId || p.mrn === selectedPatientId) || null;
   }, [patients, selectedPatientId]);
 
   const activeEncounter = useMemo(() => {

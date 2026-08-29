@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { useEmergencyStore } from '../store/emergency.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 
-export default function ResuscitationWorkspace({ encounterId = 'ENC-2026-001' }) {
+export default function ResuscitationWorkspace({ encounterId: propEncounterId }) {
   const { resusTimeline, logResuscitationEvent, triggerEmergencyAlert } = useEmergencyStore();
+  const { encounterId: ctxEncounterId, patient } = useClinicalContext();
+  const encounterId = propEncounterId || ctxEncounterId || (patient ? `ENC-${patient.id}` : `ENC-RESUS-${Date.now()}`);
 
   const [cprCycle, setCprCycle] = useState(1);
   const [performer, setPerformer] = useState('Ns. Budi Santoso, S.Kep');

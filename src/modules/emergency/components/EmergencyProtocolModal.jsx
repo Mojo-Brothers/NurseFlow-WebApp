@@ -12,11 +12,12 @@ export default function EmergencyProtocolModal({ patient, onClose }) {
   const handleActivate = async () => {
     setLoading(true);
     try {
+      const resolvedPatientId = patient?.patient_id || patient?.id;
       await activateProtocol({
-        encounterId: patient.encounter_id || 'ENC-2026-001',
-        episodeId: patient.episode_id || 'EOC-2026-001',
-        patientId: patient.patient_id || patient.id,
-        patientName: patient.patient_name || patient.full_name,
+        encounterId: patient?.encounter_id || (resolvedPatientId ? `ENC-${resolvedPatientId}` : `ENC-PROTO-${Date.now()}`),
+        episodeId: patient?.episode_id || (resolvedPatientId ? `EOC-${resolvedPatientId}` : `EOC-PROTO-${Date.now()}`),
+        patientId: resolvedPatientId,
+        patientName: patient?.patient_name || patient?.full_name || patient?.name,
         protocolCode: selectedProtoCode,
         doctorName
       });

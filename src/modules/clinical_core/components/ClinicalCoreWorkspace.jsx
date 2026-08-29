@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useClinicalCoreStore } from '../clinicalCore.store.js';
-import { usePatientStore } from '../../patient/patient.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import { EPISODE_TYPES, EPISODE_STATUSES } from '../services/episodeOfCareEngine.service.js';
 import { ENCOUNTER_CLASSES, ENCOUNTER_STATES } from '../services/encounterEngine.service.js';
 
@@ -25,8 +25,7 @@ export default function ClinicalCoreWorkspace() {
     advanceWorkflow
   } = useClinicalCoreStore();
 
-  const { selectedPatient, patients } = usePatientStore();
-  const activePatient = selectedPatient || patients[0] || null;
+  const { patient: activePatient } = useClinicalContext();
 
   const [activeTab, setActiveTab] = useState('EPISODES'); // 'EPISODES' | 'ENCOUNTERS' | 'WORKFLOWS' | 'APPOINTMENTS' | 'LEDGER' | 'EVENTS'
   const [selectedEncounterId, setSelectedEncounterId] = useState('');

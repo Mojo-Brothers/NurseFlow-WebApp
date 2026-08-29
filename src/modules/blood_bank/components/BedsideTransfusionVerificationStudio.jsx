@@ -1,14 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { REACTION_TYPES } from '../constants/bloodBank.constants.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import { apiClient } from '../../../core/apiClient.js';
 import toast from 'react-hot-toast';
 
 export default function BedsideTransfusionVerificationStudio() {
-  const [patientMrn, setPatientMrn] = useState('MRX-2026-A1');
-  const [patientName] = useState('Tn. Hendra (Mr. X)');
-  const [patientBloodGroup, setPatientBloodGroup] = useState('A Rh+');
+  const { patient: activePatient, encounterId: activeEncounterId } = useClinicalContext();
+
+  const [patientMrn, setPatientMrn] = useState(activePatient?.mrn || 'MRX-2026-A1');
+  const [patientName, setPatientName] = useState(activePatient?.name || 'Tn. Hendra (Mr. X)');
+  const [patientBloodGroup, setPatientBloodGroup] = useState(activePatient?.bloodGroup || 'A Rh+');
   const [unitNumber, setUnitNumber] = useState('UTD-998241');
   const [donorGroup, setDonorGroup] = useState('A Rh+');
+
+  useEffect(() => {
+    if (activePatient) {
+      setPatientMrn(activePatient.mrn || '');
+      setPatientName(activePatient.name || '');
+      if (activePatient.bloodGroup) setPatientBloodGroup(activePatient.bloodGroup);
+    }
+  }, [activePatient]);
 
   const [primaryNurse, setPrimaryNurse] = useState('Ns. Ratna, S.Kep (SIPA: 2024/NRS/01)');
   const [secondaryNurse, setSecondaryNurse] = useState('Ns. Joko, S.Kep (SIPA: 2023/NRS/09)');
@@ -24,9 +35,10 @@ export default function BedsideTransfusionVerificationStudio() {
   const handleStartTransfusion = (e) => {
     e.preventDefault();
     try {
+      const resolvedEncounterId = activeEncounterId || (activePatient ? `ENC-${activePatient.id}` : 'ENC-BB-2026');
       const record = bloodBankEnterpriseEngineService.verifyBedsideTransfusion({
         unitNumber,
-        encounterId: 'ENC-2026-003',
+        encounterId: resolvedEncounterId,
         patientMrn,
         patientBloodGroup,
         donorUnitBloodGroup: donorGroup,
@@ -65,8 +77,9 @@ export default function BedsideTransfusionVerificationStudio() {
 
   const handleActivateMtp = () => {
     try {
+      const resolvedEncounterId = activeEncounterId || (activePatient ? `ENC-${activePatient.id}` : 'ENC-BB-2026');
       const session = bloodBankEnterpriseEngineService.activateMtp({
-        encounterId: 'ENC-2026-003',
+        encounterId: resolvedEncounterId,
         patientMrn,
         patientName,
         indication: 'HEMORRHAGIC_SHOCK',

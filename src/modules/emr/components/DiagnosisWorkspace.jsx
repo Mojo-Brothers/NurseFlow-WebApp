@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import { ICD10_CATALOG } from '../services/diagnosisEngine.service.js';
 
 export default function DiagnosisWorkspace() {
-  const { diagnoses, recordDiagnosis, selectedPatientId } = useEmrStore();
+  const { diagnoses, recordDiagnosis } = useEmrStore();
+  const { patient: activePatient, encounterId: activeEncounterId, patientId } = useClinicalContext();
 
   const [selectedIcd, setSelectedIcd] = useState(ICD10_CATALOG[0]);
   const [dxType, setDxType] = useState('PRIMARY');
@@ -11,10 +13,16 @@ export default function DiagnosisWorkspace() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      const resolvedPatientId = patientId || activePatient?.id || null;
+      if (!resolvedPatientId) {
+        alert('Pilih pasien aktif terlebih dahulu sebelum menyimpan diagnosis.');
+        return;
+      }
+
       await recordDiagnosis({
-        encounterId: 'ENC-2026-001',
-        episodeId: 'EOC-2026-001',
-        patientId: selectedPatientId,
+        encounterId: activeEncounterId || `ENC-${resolvedPatientId}`,
+        episodeId: activePatient?.episodeId || `EOC-${resolvedPatientId}`,
+        patientId: resolvedPatientId,
         diagnosisType: dxType,
         icd10Code: selectedIcd.code,
         diagnosisName: selectedIcd.name,

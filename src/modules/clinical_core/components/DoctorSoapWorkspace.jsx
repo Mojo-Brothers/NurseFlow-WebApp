@@ -7,12 +7,17 @@
 import React, { useState, useEffect } from 'react';
 import { soapEngineService } from '../../emr/services/soapEngine.service.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
+import { enforceActiveClinicalContext, mapBackendSafetyErrorToClinicalAction } from '../../../core/contracts/clinicalRuntimeSafetyContract.js';
 import ClinicalDecisionSupportCard from './ClinicalDecisionSupportCard.jsx';
 import UniversalOrderModal from './UniversalOrderModal.jsx';
+import PanicValueInterruptModal from '../../../components/ui/PanicValueInterruptModal.jsx';
 import toast from 'react-hot-toast';
 
 export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
   const { setLiveContext } = useEncounterStore();
+
+  // Critical Panic Value Interruption State (JCI IPSG 2)
+  const [activePanicAlert, setActivePanicAlert] = useState(null);
 
   // SOAP Form Fields
   const [subjective, setSubjective] = useState('Pasien mengeluh demam tinggi sejak 3 hari lalu disertai menggigil, mual, dan badan lemas.');
@@ -46,6 +51,18 @@ export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
 
   // Auto-Save Draft Key
   const DRAFT_KEY = patient ? `nurseflow_soap_draft_${patient.id || patient.mrn}` : null;
+
+  useEffect(() => {
+    const handlePanic = (e) => {
+      if (e.detail && (!e.detail.patientId || e.detail.patientId === patient?.id)) {
+        setActivePanicAlert(e.detail);
+      }
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('nurseflow:panic-value-broadcast', handlePanic);
+      return () => window.removeEventListener('nurseflow:panic-value-broadcast', handlePanic);
+    }
+  }, [patient?.id]);
 
   useEffect(() => {
     if (!DRAFT_KEY) return;
@@ -146,12 +163,15 @@ export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
     e.preventDefault();
     setIsSaving(true);
     try {
+      enforceActiveClinicalContext({ patientId: patient?.id, encounterId: encounter?.id }, 'Penyimpanan CPPT / SOAP');
+      const resolvedPatientId = patient.id;
+
       const record = await soapEngineService.recordSoapNote({
-        episodeId: encounter?.episodeId || 'EOC-2026-001',
-        encounterId: encounter?.id || 'ENC-2026-001',
-        patientId: patient?.id || 'PAT-001',
-        patientName: patient?.name || 'Budi Santoso',
-        mrn: patient?.mrn || '0019283',
+        episodeId: encounter?.episodeId || patient?.episodeId || `EOC-${resolvedPatientId}`,
+        encounterId: encounter?.id || `ENC-${resolvedPatientId}`,
+        patientId: resolvedPatientId,
+        patientName: patient?.name || 'Pasien',
+        mrn: patient?.mrn || '-',
         subjective,
         objective: `TTV: TD ${objectiveVitals.sbp}/${objectiveVitals.dbp} mmHg, HR ${objectiveVitals.hr} bpm, RR ${objectiveVitals.rr} x/m, Temp ${objectiveVitals.temp}°C, SpO2 ${objectiveVitals.spo2}%, GCS ${objectiveVitals.gcs}.\n\nPemeriksaan Fisik:\n${physicalExam}`,
         assessment: `${primaryIcd10} - ${primaryIcd10Name}. ${secondaryDiagnoses}`,
@@ -576,6 +596,17 @@ export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
         onOrderPlaced={(newOrder) => {
           setPlan(prev => `${prev}\n- [Order ${newOrder.order_category}]: ${newOrder.order_number} (${newOrder.clinical_indication})`);
         }}
+      />
+
+      {/* JCI IPSG 2 Critical Lab Value Auto-Interruption Barrier */}
+      <PanicValueInterruptModal
+        isOpen={!!activePanicAlert}
+        panicData={activePanicAlert}
+        onAcknowledge={(ackData) => {
+          toast.success(`✓ Nilai kritis berhasil dikonfirmasi (TBAK Read-Back): ${ackData.readBackText}`);
+          setActivePanicAlert(null);
+        }}
+        onDismiss={() => setActivePanicAlert(null)}
       />
     </div>
   );

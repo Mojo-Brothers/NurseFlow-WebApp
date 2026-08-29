@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
-import { usePatientStore } from '../../patient/patient.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 
 export default function CpptWorkspace() {
-  const { cpptNotes, recordCpptEntry, selectedPatientId } = useEmrStore();
-  const { selectedPatient, patients } = usePatientStore();
-  const activePatient = selectedPatient || patients.find(p => p.id === selectedPatientId) || patients[0] || null;
+  const { cpptNotes, recordCpptEntry } = useEmrStore();
+  const { patient: activePatient, encounterId: activeEncounterId, patientId } = useClinicalContext();
 
   const [proType, setProType] = useState('DOKTER_DPJP');
   const [authorName, setAuthorName] = useState('dr. Siti Wijaya, Sp.PD-KGEH');
@@ -17,10 +16,16 @@ export default function CpptWorkspace() {
     if (!soapNotes) return;
 
     try {
+      const resolvedPatientId = patientId || activePatient?.id || null;
+      if (!resolvedPatientId) {
+        alert('Pilih pasien aktif terlebih dahulu sebelum menyimpan CPPT.');
+        return;
+      }
+
       await recordCpptEntry({
-        episodeId: 'EOC-2026-001',
-        encounterId: 'ENC-2026-001',
-        patientId: selectedPatientId || activePatient?.id || 'P-001',
+        episodeId: activePatient?.episodeId || `EOC-${resolvedPatientId}`,
+        encounterId: activeEncounterId || `ENC-${resolvedPatientId}`,
+        patientId: resolvedPatientId,
         patientName: activePatient?.name || '-',
         professionalType: proType,
         authorName,

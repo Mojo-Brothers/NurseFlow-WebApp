@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
-import { usePatientStore } from '../../patient/patient.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import { ICD10_CATALOG } from '../services/diagnosisEngine.service.js';
 
 export default function SoapWorkspace() {
-  const { soapNotes, recordSoapNote, selectedPatientId } = useEmrStore();
-  const { selectedPatient, patients } = usePatientStore();
-  const activePatient = selectedPatient || patients.find(p => p.id === selectedPatientId) || patients[0] || null;
+  const { soapNotes, recordSoapNote } = useEmrStore();
+  const { patient: activePatient, encounterId: activeEncounterId, patientId } = useClinicalContext();
 
   const [subjective, setSubjective] = useState('');
   const [objective, setObjective] = useState('');
@@ -23,10 +22,16 @@ export default function SoapWorkspace() {
     }
 
     try {
+      const resolvedPatientId = patientId || activePatient?.id || null;
+      if (!resolvedPatientId) {
+        alert('Pilih pasien aktif terlebih dahulu sebelum menyimpan SOAP.');
+        return;
+      }
+
       await recordSoapNote({
-        episodeId: 'EOC-2026-001',
-        encounterId: 'ENC-2026-001',
-        patientId: selectedPatientId || activePatient?.id || 'P-001',
+        episodeId: activePatient?.episodeId || `EOC-${resolvedPatientId}`,
+        encounterId: activeEncounterId || `ENC-${resolvedPatientId}`,
+        patientId: resolvedPatientId,
         patientName: activePatient?.name || '-',
         mrn: activePatient?.mrn || '-',
         subjective,

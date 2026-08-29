@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useEmrStore } from '../store/emr.store.js';
-import { usePatientStore } from '../../patient/patient.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import SoapWorkspace from './SoapWorkspace.jsx';
 import CpptWorkspace from './CPPTWorkspace.jsx';
 import AllergyWorkspace from './AllergyWorkspace.jsx';
@@ -17,14 +17,13 @@ export default function EmrWorkspace() {
     cdssAlerts,
     selectedPatientId
   } = useEmrStore();
-  const { selectedPatient, patients } = usePatientStore();
-  const activePatient = selectedPatient || patients.find(p => p.id === selectedPatientId) || patients[0] || null;
+  const { patient: activePatient, patientId } = useClinicalContext();
 
   const [activeTab, setActiveTab] = useState('SOAP'); // 'SOAP' | 'CPPT' | 'ALLERGY' | 'DIAGNOSIS' | 'OBSERVATION' | 'CARE_PLAN' | 'CDSS' | 'TIMELINE'
 
   useEffect(() => {
-    fetchEmrData(selectedPatientId);
-  }, [fetchEmrData, selectedPatientId]);
+    fetchEmrData(patientId || selectedPatientId);
+  }, [fetchEmrData, patientId, selectedPatientId]);
 
   return (
     <div className="w-full min-h-screen bg-surface text-on-surface p-4 sm:p-6 lg:p-8 space-y-6">

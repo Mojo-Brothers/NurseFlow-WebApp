@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { pacsDicomEngineService, DICOM_MODALITIES } from '../services/pacsDicomEngine.service.js';
-import { usePatientStore } from '../../patient/patient.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import toast from 'react-hot-toast';
 
 export default function ModalityWorklistStudio({ onSelectStudy, activeStudyUid }) {
   const [selectedModality, setSelectedModality] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [studies, setStudies] = useState(pacsDicomEngineService.queryStudies());
-  const { selectedPatient, patients } = usePatientStore();
-  const currentPatient = selectedPatient || patients[0] || null;
+  const { patient } = useClinicalContext();
+  const currentPatient = patient || null;
 
   const filteredStudies = studies.filter(s => {
     const matchesModality = selectedModality === 'ALL' || s.modality === selectedModality;

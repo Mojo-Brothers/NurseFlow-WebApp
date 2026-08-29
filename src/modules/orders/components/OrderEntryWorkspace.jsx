@@ -1,20 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useOrdersStore } from '../store/orders.store.js';
-import { usePatientStore } from '../../patient/patient.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
+import { enforceActiveClinicalContext } from '../../../core/contracts/clinicalRuntimeSafetyContract.js';
+import ClinicalContextGate from '../../../components/ui/ClinicalContextGate.jsx';
 import { PHARMACY_CATALOG, LABORATORY_CATALOG, RADIOLOGY_CATALOG } from '../services/orderCatalogEngine.service.js';
 
 export default function OrderEntryWorkspace({ onOrderCreated }) {
   const { createPrescription, createLabOrder, createRadiologyOrder } = useOrdersStore();
-  const { selectedPatient, patients } = usePatientStore();
-
-  const activePatient = selectedPatient || patients[0] || null;
+  const { patient, patientId, encounterId, hasActiveContext } = useClinicalContext();
 
   const [orderCategory, setOrderCategory] = useState('PHARMACY'); // 'PHARMACY' | 'LABORATORY' | 'RADIOLOGY'
   const [priority, setPriority] = useState('ROUTINE');
   const [indication, setIndication] = useState('');
-  const [patientName, setPatientName] = useState(activePatient?.name || '');
-  const [mrn, setMrn] = useState(activePatient?.mrn || '');
+  const [patientName, setPatientName] = useState(patient?.name || '');
+  const [mrn, setMrn] = useState(patient?.mrn || '');
+
+  useEffect(() => {
+    if (patient) {
+      setPatientName(patient.name || '');
+      setMrn(patient.mrn || '');
+    }
+  }, [patient]);
 
   // Selection
   const [selectedMed, setSelectedMed] = useState(PHARMACY_CATALOG[0]);
@@ -33,9 +40,11 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
     }
 
     try {
-      const activePatientId = activePatient?.id || 'P-001';
-      const activeEpisodeId = 'EOC-2026-001';
-      const activeEncounterId = 'ENC-2026-001';
+      const activePatientId = patientId || patient?.id;
+      const activeEncounterId = encounterId || (activePatientId ? `ENC-${activePatientId}` : null);
+      const activeEpisodeId = patient?.episodeId || (activePatientId ? `EOC-${activePatientId}` : null);
+
+      enforceActiveClinicalContext({ patientId: activePatientId, encounterId: activeEncounterId }, 'Penerbitan Order CPOE');
 
       if (orderCategory === 'PHARMACY') {
         await createPrescription({
@@ -100,15 +109,16 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
   };
 
   return (
-    <div className="p-6 rounded-3xl bg-surface-container-high border border-outline-variant/30 space-y-4">
-      <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
-        <div>
-          <h3 className="text-sm font-headline font-black text-on-surface uppercase">
-            Computerized Physician Order Entry (CPOE / Universal Order Entry)
-          </h3>
-          <p className="text-xs text-on-surface-variant">Dokter menerbitkan order Farmasi, Laboratorium, dan Radiologi secara terpadu.</p>
+    <ClinicalContextGate workspaceName="Pusat Penerbitan Order Klinis (CPOE)">
+      <div className="p-6 rounded-3xl bg-surface-container-high border border-outline-variant/30 space-y-4">
+        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
+          <div>
+            <h3 className="text-sm font-headline font-black text-on-surface uppercase">
+              Computerized Physician Order Entry (CPOE / Universal Order Entry)
+            </h3>
+            <p className="text-xs text-on-surface-variant">Dokter menerbitkan order Farmasi, Laboratorium, dan Radiologi secara terpadu.</p>
+          </div>
         </div>
-      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Order Category Selector */}
@@ -261,5 +271,6 @@ export default function OrderEntryWorkspace({ onOrderCreated }) {
         </button>
       </form>
     </div>
-  );
+  </ClinicalContextGate>
+);
 }

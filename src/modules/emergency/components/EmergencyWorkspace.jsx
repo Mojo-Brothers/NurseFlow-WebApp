@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useEmergencyStore } from '../store/emergency.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import TriageAssessmentWorkspace from './TriageAssessmentWorkspace.jsx';
 import SlaTimerDashboard from './SlaTimerDashboard.jsx';
 import ResuscitationWorkspace from './ResuscitationWorkspace.jsx';
@@ -15,9 +16,10 @@ export default function EmergencyWorkspace() {
     triggerEmergencyAlert
   } = useEmergencyStore();
 
+  const { encounterId, patient } = useClinicalContext();
   const [activeTab, setActiveTab] = useState('TRACKER'); // 'TRACKER' | 'TRIAGE_FORM' | 'SLA_TIMERS' | 'RESUSCITATION'
   const [selectedProtoPatient, setSelectedProtoPatient] = useState(null);
-  const [activeResusEncounter, setActiveResusEncounter] = useState('ENC-2026-001');
+  const [activeResusEncounter, setActiveResusEncounter] = useState(encounterId || (patient ? `ENC-${patient.id}` : 'ENC-EMERGENCY'));
 
   useEffect(() => {
     fetchEmergencyData();

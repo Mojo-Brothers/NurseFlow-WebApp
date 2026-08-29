@@ -1,11 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { lisPacsEngineService, VACUTAINER_TUBES } from '../../../../server/services/lisPacsEngine.service.js';
-import { usePatientStore } from '../../patient/patient.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import toast from 'react-hot-toast';
 
 export default function SpecimenAccessioningStudio({ onSpecimenSelected }) {
-  const { selectedPatient, patients } = usePatientStore();
-  const activePatient = selectedPatient || patients[0] || null;
+  const { patient: activePatient, encounterId: activeEncounterId } = useClinicalContext();
 
   const [selectedTube, setSelectedTube] = useState('PURPLE_EDTA');
   const [patientId, setPatientId] = useState(activePatient?.id || '');
@@ -14,13 +13,21 @@ export default function SpecimenAccessioningStudio({ onSpecimenSelected }) {
   const [phlebotomistName, setPhlebotomistName] = useState('Analis Rina, A.Md.AK');
   const [collectionSite, setCollectionSite] = useState('Vena Fossa Cubiti Dextra');
 
+  useEffect(() => {
+    if (activePatient) {
+      setPatientId(activePatient.id || '');
+      setPatientMrn(activePatient.mrn || '');
+      setPatientName(activePatient.name || '');
+    }
+  }, [activePatient]);
+
   const [activeSpecimens, setActiveSpecimens] = useState([]);
 
   const handleCreateSpecimen = (e) => {
     e.preventDefault();
     const newSpecimen = lisPacsEngineService.collectSpecimen({
       orderId: `ORD-${Date.now()}`,
-      encounterId: 'ENC-2026-001',
+      encounterId: activeEncounterId || (activePatient ? `ENC-${activePatient.id}` : `ENC-LAB-${Date.now()}`),
       patientId,
       patientMrn,
       specimenType: VACUTAINER_TUBES[selectedTube].additive,

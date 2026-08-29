@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePatientStore } from '../patient.store.js';
 import { useEncounterStore } from '../../encounter/encounter.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import PatientIdentityCard from '../components/PatientIdentityCard.jsx';
 import PatientJourneyTimeline from '../components/PatientJourneyTimeline.jsx';
 import PatientRegistrationWithEmpiModal from '../components/PatientRegistrationWithEmpiModal.jsx';
@@ -11,6 +12,7 @@ import GlobalPatientSearchModal from '../../../components/common/GlobalPatientSe
 export default function PatientCommandCenterPage() {
   const { patients, fetchPatients } = usePatientStore();
   const { activePatientId, liveContext, setLiveContext } = useEncounterStore();
+  const { patient: activePatient } = useClinicalContext();
 
   const [isRegModalOpen, setIsRegModalOpen] = useState(false);
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
@@ -22,9 +24,6 @@ export default function PatientCommandCenterPage() {
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
-
-  // Find currently active patient from global context
-  const activePatient = patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || patients[0] || null;
 
   const handleOpenReconciliation = (anonPatient) => {
     setReconcileTargetPatient(anonPatient);

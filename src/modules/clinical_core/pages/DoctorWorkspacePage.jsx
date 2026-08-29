@@ -1,26 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePatientStore } from '../../patient/patient.store.js';
-import { useEncounterStore } from '../../encounter/encounter.store.js';
+import { useClinicalContext } from '../../../core/context/ClinicalContextProvider.jsx';
 import DoctorCommandCenter from '../components/DoctorCommandCenter.jsx';
 import DoctorSoapWorkspace from '../components/DoctorSoapWorkspace.jsx';
 
 export default function DoctorWorkspacePage() {
   const navigate = useNavigate();
-  const { patients, fetchPatients } = usePatientStore();
-  const { activePatientId, liveContext } = useEncounterStore();
+  const { fetchPatients } = usePatientStore();
+  const { patient: activePatient, encounterId, careState, location, setContext } = useClinicalContext();
 
   const [activeTab, setActiveTab] = useState('COMMAND_CENTER'); // 'COMMAND_CENTER' | 'SOAP_WORKSPACE'
-  const [selectedPatient, setSelectedPatient] = useState(null);
 
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
 
-  const activePatient = selectedPatient || patients.find(p => p.id === activePatientId || p.mrn === activePatientId) || patients[0] || null;
-
   const handleSelectPatient = (patient) => {
-    setSelectedPatient(patient);
+    if (patient) {
+      setContext(patient.id, patient.encounter_id || `ENC-${patient.id}`, 'OUTPATIENT_CONSULTATION');
+    }
     setActiveTab('SOAP_WORKSPACE');
   };
 
@@ -89,7 +88,7 @@ export default function DoctorWorkspacePage() {
       ) : (
         <DoctorSoapWorkspace
           patient={activePatient}
-          encounter={liveContext}
+          encounter={activePatient ? { id: encounterId || `ENC-${activePatient.id}`, patientId: activePatient.id, careState, location } : null}
           onSaved={() => {
             setActiveTab('COMMAND_CENTER');
           }}
