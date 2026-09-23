@@ -280,7 +280,7 @@ export default function DoctorSoapWorkspace({ patient, encounter, onSaved }) {
                 <span className="material-symbols-outlined text-rose-600 dark:text-rose-400 text-lg">warning</span>
                 <div>
                   <span className="text-[10px] uppercase tracking-wider block text-rose-600 dark:text-rose-400">Alergi Pasien:</span>
-                  <span>{p.allergies.join(', ').toUpperCase()}</span>
+                  <span>{(Array.isArray(p.allergies) ? p.allergies.map(a => typeof a === 'string' ? a : (a.allergen || a.name || 'Alergi')).join(', ') : String(p.allergies)).toUpperCase()}</span>
                 </div>
               </div>
             )}

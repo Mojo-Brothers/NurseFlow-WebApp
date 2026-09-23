@@ -14,6 +14,8 @@ import { useTriageStore } from '../modules/triage/triage.store.js';
 import { usePatientClipboardShortcuts } from '../hooks/usePatientClipboardShortcuts.js';
 import GlobalPatientSearchModal from '../components/common/GlobalPatientSearchModal.jsx';
 import { ClinicalContextProvider } from '../core/context/ClinicalContextProvider.jsx';
+import DokterDocumentAlertBanner from '../modules/emr/components/DokterDocumentAlertBanner.jsx';
+import { emrSupportingDocsService } from '../modules/emr/services/emrSupportingDocs.service.js';
 
 // Enterprise 10-Domain Navigation Schema
 const ENTERPRISE_NAV_SCHEMA = [
@@ -57,6 +59,22 @@ const ENTERPRISE_NAV_SCHEMA = [
       { name: 'Nursing Workspace & eMAR', path: '/nursing-workspace', icon: 'medication' },
       { name: 'Patient Chart (Unified EMR)', path: '/patient-chart', icon: 'folder_shared' },
       { name: 'Universal CPOE Orders Hub', path: '/orders', icon: 'receipt_long' }
+    ]
+  },
+  {
+    domain: 'EMR_TERPADU',
+    label: 'Rekam Medis (EMR)',
+    icon: 'folder_shared',
+    items: [
+      { name: 'Pusat Kontrol EMR Hub', path: '/emr', icon: 'hub' },
+      { name: 'Upload Dokumen Penunjang', path: '/emr/upload-penunjang', icon: 'upload_file' },
+      { name: 'Rujukan Internal (Konsul)', path: '/emr/rujukan-internal', icon: 'alt_route' },
+      { name: 'Catatan Terintegrasi (CPPT)', path: '/emr/catatan-terintegrasi', icon: 'assignment' },
+      { name: 'Daftar Pemeriksaan RJ', path: '/emr-rj', icon: 'clinical_notes' },
+      { name: 'Laporan Bulanan UGD', path: '/emr-rj/laporan-ugd', icon: 'bar_chart' },
+      { name: 'Daftar Pemeriksaan RI', path: '/emr-ri', icon: 'hotel' },
+      { name: 'Catatan Anestesi & Sedasi', path: '/emr-ri/catatan-anestesi', icon: 'medical_services' },
+      { name: 'Patient Chart (Longitudinal)', path: '/patient-chart', icon: 'folder_shared' }
     ]
   },
   {
@@ -145,6 +163,9 @@ export default function MainLayout() {
   const { openEncounter, setLiveContext } = useEncounterStore();
   const { setOperationalMode } = useTriageStore();
   const [isCreatingEmergency, setIsCreatingEmergency] = useState(false);
+  const [pendingPrescriptionsCount] = useState(() => 
+    emrSupportingDocsService.getPendingOnlinePrescriptionsCount()
+  );
 
   usePatientClipboardShortcuts();
 
@@ -557,6 +578,21 @@ export default function MainLayout() {
 
           {/* Center / Right: Global Search Trigger & Utility Controls */}
           <div className="flex items-center gap-2">
+            {/* Live Resep Online Blinking Badge (Legacy Parity) */}
+            <button
+              type="button"
+              onClick={() => navigate('/pharmacy-enterprise')}
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-bold cursor-pointer hover:bg-amber-100 transition-all shadow-2xs"
+              title="Resep Online Pending Telaah / Dispensing"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+              <span className="material-symbols-outlined text-[16px] text-amber-600">medication</span>
+              <span>Resep Online:</span>
+              <span className="px-1.5 py-0.2 rounded-md bg-amber-500 text-white font-mono text-[10px] font-black">
+                {pendingPrescriptionsCount}
+              </span>
+            </button>
+
             {/* Global Search Button */}
             <button
               type="button"
@@ -578,6 +614,9 @@ export default function MainLayout() {
             </div>
           </div>
         </header>
+
+        {/* Doctor SIP/STR Expiration Alert Banner (Legacy Parity) */}
+        <DokterDocumentAlertBanner />
 
         {/* 3. Global Universal Clinical Patient Search Modal (Ctrl+K) */}
         <GlobalPatientSearchModal

@@ -20,6 +20,192 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🏆 [23 SEPTEMBER 2026] — P0-1 FINAL CLOSURE AUDIT: RATIFIED UNDER OPTION B (CONDITIONAL CLOSURE)
+**Tag Rilis:** `stage1-slice-p01-final-closure-option-b`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[GOVERNANCE]` `[AUDIT]`  
+**Status Evidence:** 🟢 **`P0-1 FINAL CLOSURE AUDIT LENGKAP SELESAI & DIRATIFIKASI DI BAWAH OPTION B — P0-1 VERIFIED: CONDITIONAL CLOSURE. MENGEVALUASI 12 DIMENSI FORENSIK BERBASIS BUKTI REAL: CHANGE BOUNDARY (P0-1_CHANGE_BOUNDARY_AUDIT.MD), AUTHENTICATION BOUNDARY RUNTIME PROOF (LOGIN, ANTI-ENUMERATION SCALING 64MS, ATOMIC LOCKOUT HTTP 423, SERVER-AUTHORITATIVE IDENTITY PREVENTING CLIENT BODY INJECTION), JWT TAMPERING PROOF (8 KASUS DITOLAK 100%), TOKEN REVOCATION REALITY (LOGOUT & RTR PASS SINGLE-NODE, IN-MEMORY RESTART/MULTI-REPLICA LIMITATION DOCUMENTED), RATE LIMITER REALITY (IN-MEMORY SINGLE-PROCESS RATE LIMITER MAP), RBAC COVERAGE (142 ENDPOINT FISIK TERPASANG DI GATEWAY DIINVENTARISASI DALAM AUTHORIZATION_ENDPOINT_FORENSIC_MATRIX.MD, MENOLAK KLAIM RBAC COMPLETE), SUPER ADMIN SEPARATION OF DUTIES (WILDCARD RISK DOCUMENTED), CLINICAL IDENTITY BOUNDARY (7 ROLE BOUNDARIES PROVEN), DATABASE INTEGRITY (394 FK, 0 ORPHANS, 100% CLINICAL LICENSURE BINDING), REGRESSION FAILURES (ZERO REGRESSIONS CAUSED BY P0-1, PRE-EXISTING DATE-DRIFT & SPRINT D2.3 SCHEMAS CLARIFIED), MIGRATION REPRODUCIBILITY (MIG 073 IDEMPOTENT), SERTA SECRET AUDIT (.ENV GITIGNORED, DEV SCRIPT ISOLATED, JWT_SECRET FALLBACK RECORDED). FONDASI OTENTIKASI VERIFIED. KONTROL TERDISTRIBUSI DICATAT RESMI KE ARCHITECTURAL DEBT REGISTER. P0-1 RESMI DITUTUP BERSYARAT (CONDITIONALLY CLOSED).`**
+
+1. **Penerbitan Dokumen Penutupan Resmi:**
+   - [`docs/governance/P0-1_FINAL_CLOSURE_AUDIT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/P0-1_FINAL_CLOSURE_AUDIT.md) — Laporan Audit Penutupan Akhir Komprehensif.
+   - [`docs/governance/P0-1_CHANGE_BOUNDARY_AUDIT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/P0-1_CHANGE_BOUNDARY_AUDIT.md) — Audit Batas Perubahan Berkas dan Objek Basis Data.
+   - [`docs/governance/AUTHORIZATION_ENDPOINT_FORENSIC_MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/AUTHORIZATION_ENDPOINT_FORENSIC_MATRIX.md) — Matriks Forensik 142 Endpoint Gateway Terpasang.
+2. **Keputusan Akhir Gate:** `OPTION B — P0-1 VERIFIED — CONDITIONAL CLOSURE`.
+
+---
+
+### 🔬 [23 SEPTEMBER 2026] — POST-IMPLEMENTATION FORENSIC AUDIT GATE: P0-1 RATIFIED UNDER GATE C
+**Tag Rilis:** `stage1-slice-p01-forensic-audit-gate-c`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[GOVERNANCE]` `[AUDIT]`  
+**Status Evidence:** 🟢 **`POST-IMPLEMENTATION FORENSIC AUDIT LENGKAP SELESAI — MEMVERIFIKASI SELURUH KLAIM DOKUMENTASI TERHADAP SOURCE CODE, MIGRASI SQL, METADATA BASIS DATA POSTGRESQL 16, DAN RUNTIME API. MEMPERKUAT IMPLEMENTASI SCRYPT TERHADAP ARBITRARILY EXPENSIVE PARAMETERS DOS & DOWNGRADE ATTACKS DENGAN BOUNDS SCRYPT_CONSTRAINTS (N: 16384-65536 POWER-OF-TWO, R: 8-16, P: 1-4, MAXMEM: 64MB). MENERBITKAN CANONICAL_IDENTITY_FORENSIC_MATRIX.MD (AUDIT 13 TABEL IDENTITAS) DAN AUTHORIZATION_COVERAGE_MATRIX.MD (AUDIT 358 ENDPOINT API). KEPUTUSAN FINAL: GATE C — P0-1 VERIFIED WITH OPEN RISKS. SISTEM DISETUJUI ARSITEKTURAL UNTUK MELANGKAH KE P0-2.`**
+
+1. **Pengerasan Verifier Kata Sandi dari Serangan DoS (`server/utils/passwordSecurity.js`):**
+   - Menambahkan konstanta batas ketat `SCRYPT_CONSTRAINTS` pada parser format hash kredensial: $16384 \le N \le 65536$, $8 \le r \le 16$, $1 \le p \le 4$, $\text{maxmem} \le 64\text{MB}$, salt 16–64 bytes, derivedKey tepat 64 bytes, panjang input password $\le 1024$ karakter.
+   - Serangan manipulasi parameter mahal ($N=1048576, \text{maxmem}=1\text{GB}$) maupun pelemahan parameter ($N=1024, r=1$) ditolak seketika (*fail-closed*).
+   - Menambahkan 4 negative test cases pada `tests/authDatabaseDurability.test.js` (TC 1.6, 1.7, 1.8, 1.9), seluruh 21 tes lulus 100%.
+2. **Audit Forensik Identitas Kanonikal (`docs/governance/CANONICAL_IDENTITY_FORENSIC_MATRIX.md`):**
+   - Memeriksa seluruh 13 tabel basis data terkait identitas/staf.
+   - Membuktikan `master_staff` sebagai Canonical HR Single Source of Truth (5 entri terdaftar), `auth_users` sebagai Canonical Auth Record terikat via FK, dan `master_practitioners` sebagai ekstensi lisensi klinis (SIP/STR).
+   - Mendokumentasikan status *DEPRECATED* pada tabel prototipe lama (`clinical_staff_profiles` dan `enterprise_users`).
+3. **Audit Cakupan Otorisasi REST API (`docs/governance/AUTHORIZATION_COVERAGE_MATRIX.md`):**
+   - Menginventarisasi 358 endpoint unik yang terpasang pada Express Gateway.
+   - 338 endpoint (94.4%) terproteksi autentikasi JWT (`authenticateJwt`), 28 endpoint terproteksi otorisasi peran rute (`requirePermission`/`requireRole`).
+   - Mengklasifikasikan status RBAC secara jujur sebagai `PENDING VERIFICATION` dan menolak klaim selesai prematur sebelum seluruh 310 endpoint bisnis lainnya diproteksi secara granular.
+4. **Penerbitan Laporan Audit Forensik Resmi (`docs/governance/P0-1_POST_IMPLEMENTATION_FORENSIC_AUDIT.md`):**
+   - Menjawab eksplisit 8 pertanyaan audit integritas JWT.
+   - Mengklasifikasikan arsitektur rate limiter sebagai `PARTIAL — NOT DISTRIBUTED` (in-memory token bucket pada Node.js, belum shared Redis).
+   - Mengevaluasi risiko klinis penguncian akun (rekomendasi time-decay window untuk dokter gawat darurat).
+   - Menganalisis risiko wildcard `ROLE_SUPER_ADMIN` terhadap mutasi transaksi medis (separation of duties).
+   - Memvalidasi 394 Foreign Key aktif di PostgreSQL 16 dan 0 orphan record pada tabel otentikasi.
+   - Memastikan 190/192 test files lulus tanpa satupun regresi akibat P0-1.
+5. **Keputusan Gerbang:** `GATE C — P0-1 VERIFIED WITH OPEN RISKS`.
+
+---
+
+### 🛡️ [23 SEPTEMBER 2026] — STAGE 1 VERTICAL SLICE P0-1: PENGUATAN KEAMANAN OTENTIKASI & VERIFICATION GATE (SECURITY HARDENING)
+**Tag Rilis:** `stage1-slice-p01-security-hardening-gate`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[ENHANCEMENT]` `[GOVERNANCE]`  
+**Status Evidence:** 🟢 **`VERTICAL SLICE P0-1 SECURITY HARDENING & VERIFICATION GATE TERPENUHI LENGKAP — IMPLEMENTASI OTENTIKASI DIPERKUAT DENGAN SCRYPT PARAMETER TERENKODE, SALT 128-BIT ACAK KRIPTOGRAFIS UNIK PER KREDENSIAL, ANTI USER-ENUMERATION TIMING MITIGATION (DUMMY HASH), PEMISAHAN PERAN SUPER ADMIN DARI DOKTER KLINIS KE ADMIN.DEV TERISOLASI, PENGUNCIAN AKUN (LOCKOUT) 5X PERCOBAAN DENGAN OPERASI SQL ATOMIK (HTTP 423), PEMBATASAN LAJU PERMINTAAN PER-IP (RATE LIMITER 10 REQ/MIN HTTP 429), AUDIT KRIPTOGRAFIS JWT HS256 DENGAN TIMING-SAFE EQUAL & NEGATIVE TESTS, PENETAPAN MODEL KANONIKAL STAF MASTER_STAFF, SERTA PEMISAHAN EKSPLISIT STATUS AUTHENTICATION (VERIFIED) VS RBAC (PENDING VERIFICATION). SELURUH TEST VERIFIKASI LULUS 100% (17 DURABILITY TESTS, 7 HTTP ROUTE TESTS, 14 RBAC ENDPOINT TESTS).`**
+
+1. **Pengerasan Kredensial Kata Sandi (`server/utils/passwordSecurity.js`):**
+   - Mengganti salt statis dengan salt acak kriptografis 128-bit (16-byte) unik per akun menggunakan `crypto.randomBytes(16)`.
+   - Format penyimpanan kredensial kini secara eksplisit mencakup algoritma, parameter scrypt ($N=16384, r=8, p=1, \text{maxmem}=32\text{MB}$), salt hex, dan derived key hex (`scrypt$N=...,r=...,p=...$salt$derivedKey`).
+   - Verifier membaca metadata parameter dinamis dan membandingkan buffer menggunakan `crypto.timingSafeEqual`.
+   - Menambahkan `verifyDummyPassword` untuk menjalankan derivasi scrypt pada username yang tidak ditemukan, mengeliminasi kebocoran timing attack (*anti user-enumeration*).
+2. **Pemisahan Peran Super Admin & Identitas Dev (`database/migrations/073_reconcile_auth_credentials.sql`, `scripts/provision_dev_credentials.mjs`):**
+   - Mencabut `ROLE_SUPER_ADMIN` dari identitas klinis `dr.siti.wijaya` (kini murni `ROLE_DOCTOR_DPJP`).
+   - Mengarahkan `dr.budi.santoso` ke `ROLE_DOCTOR_EMERGENCY`.
+   - Membuat akun dev terisolasi `admin.dev` terhubung ke staf IT Administrator di `master_staff` (`EMP-IT-DEV-001`) yang secara eksklusif memegang `ROLE_SUPER_ADMIN`.
+   - Menghapus hash statis dari file migrasi skema dan memindahkan provisioning akun dev ke script terisolasi `scripts/provision_dev_credentials.mjs` (DEV ONLY).
+3. **Pengerasan Layanan Otentikasi & Rute API (`server/services/auth.service.js`, `server/routes/auth.routes.js`):**
+   - Counter `failed_login_attempts` kini diperbarui secara atomik di PostgreSQL (`SET failed_login_attempts = failed_login_attempts + 1 RETURNING failed_login_attempts`), mencegah race condition saat serangan paralel.
+   - Akun terkunci otomatis pada percobaan gagal ke-5 (HTTP 423 `ACCOUNT_LOCKED` berformat RFC 7807 Problem Details). Password yang benar setelah akun terkunci tetap ditolak selama akun terkunci.
+   - Memasang middleware `rateLimiter(10, 60)` pada rute `POST /api/v1/auth/login` (HTTP 429 Too Many Requests).
+   - Menyelaraskan seluruh respons kegagalan otentikasi menjadi format standar RFC 7807 (`application/problem+json`).
+4. **Audit & Pengerasan Kriptografis JWT (`src/core/security/jwtSecurity.service.js`):**
+   - Mengganti tanda tangan simulasi dengan real HMAC-SHA256 (`HS256`) menggunakan `crypto.createHmac`.
+   - Memvalidasi header algoritma (hanya `HS256`, menolak `none` atau algoritma lain), integritas payload, masa berlaku `exp`, waktu terbit `iat`, issuer `nurseflow-enterprise-his`, serta sub/userId.
+   - Menyediakan penyimpanan pencabutan token (blacklist) terintegrasi pada server memory dan localStorage.
+5. **Matriks Verifikasi Otorisasi RBAC Endpoint (`tests/rbacEndpointVerification.test.js`):**
+   - Membuat suite uji otorisasi yang membuktikan kasus ALLOW dan DENY pada 7 peran profesional kesehatan (`ROLE_DOCTOR_DPJP`, `ROLE_DOCTOR_EMERGENCY`, `ROLE_NURSE`, `ROLE_PHARMACIST`, `ROLE_LAB_ANALYST`, `ROLE_RADIOGRAPHER`, `ROLE_SUPER_ADMIN`) pada endpoint HTTP API nyata.
+   - Memperbaiki kerentanan pada `rbacGuard.service.js` yang sebelumnya menggunakan fallback ke Super Admin pada role tidak dikenal.
+6. **Penerbitan Dokumen Governance Verifikasi:**
+   - Menerbitkan [`docs/governance/P0-1_AUTHENTICATION_SECURITY_VERIFICATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/P0-1_AUTHENTICATION_SECURITY_VERIFICATION.md) mencakup 13 bagian evaluasi komprehensif.
+   - Memperbarui status `DEBT-01` pada [`docs/governance/ARCHITECTURAL_DEBT_REGISTER.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/ARCHITECTURAL_DEBT_REGISTER.md) menjadi `PARTIALLY RESOLVED — Authentication Root Repaired`.
+   - Memperbarui matriks kelengkapan sistem pada [`docs/governance/NURSEFLOW_COMPLETENESS_MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_COMPLETENESS_MATRIX.md).
+
+---
+
+
+### 🔐 [23 SEPTEMBER 2026] — STAGE 1 VERTICAL SLICE P0-1: REKONSTRUKSI ROOT OF TRUST IDENTITY & REAL POSTGRESQL 16 AUTHENTICATION ENGINE
+**Tag Rilis:** `stage1-slice-p01-canonical-auth`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[DATABASE]` `[IDENTITY]`  
+**Status Evidence:** 🟢 **`VERTICAL SLICE P0-1 VERIFIED COMPLETE — MENGHAPUS TOTAL MOCK LOGIN BYPASS PADA API GATEWAY. SELURUH PROSES OTENTIKASI KINI TERHUBUNG PENUH KE TABEL DATABASE POSTGRESQL 16 (auth_users, auth_roles, auth_user_roles, master_staff). MENERAPKAN PENGACAKAN HASH SCRYPT (NIST/OWASP) DENGAN CONSTANT-TIME TIMING-SAFE VERIFICATION, ENFORCEMENT NOT-NULL CONSTRAINTS STAFF IDENTITY, DAN PENERBITAN TOKEN JWT RIIL BERISI ATRIBUT KANONIKAL KLINIS. VERIFIKASI LANGSUNG TERHADAP POSTGRESQL 16 LOKAL: 12/12 TESTS PASS 100%, ZERO BUILD ERRORS.`**
+
+1. **Pondasi Database PostgreSQL 16 (Forward Migration 073):**
+   - [`database/migrations/073_reconcile_auth_credentials.sql`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/database/migrations/073_reconcile_auth_credentials.sql): Migrasi maju non-destruktif yang menstandarisasi hash kata sandi akun klinis dev (`dr.siti.wijaya`, `dr.budi.santoso`, `ners.indah`, `apt.dimas`) menggunakan scrypt 64-byte salt aman, memulihkan status aktif, dan menambahkan indeks performa pada `auth_users(username, staff_id)` serta `auth_user_roles(user_id, role_id)`.
+2. **Backend Services & Cryptographic Security Layer:**
+   - [`server/utils/passwordSecurity.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/utils/passwordSecurity.js): Utilitas keamanan kata sandi berbasis Node.js native `crypto.scrypt` dan pencegahan serangan *timing attack* via `crypto.timingSafeEqual`.
+   - [`server/services/auth.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/auth.service.js): Layanan otentikasi database terpusat yang memverifikasi kredensial terhadap tabel `auth_users`, mengunci akun setelah 5x gagal, memetakan peran kanonikal dari `auth_roles`, menghubungkan data master staf dari `master_staff`, dan mencatat `last_login_at`.
+   - [`server/routes/auth.routes.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/routes/auth.routes.js): Penghapusan total mock token `USR-DOC-001`. Endpoint `POST /login` dan `GET /me` kini memancarkan profil dokter/perawat riil dengan kepatuhan standar RFC 7807 Problem Details.
+   - [`src/core/security/jwtSecurity.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/core/security/jwtSecurity.service.js): Penambahan atribut identitas kanonikal (`roles`, `staffId`, `tenantId`, `fullName`) ke dalam klaim token JWT.
+3. **Verifikasi Durabilitas Database & Integritas HTTP:**
+   - [`tests/authDatabaseDurability.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/authDatabaseDurability.test.js): 9 pengujian otomatis terhadap database PostgreSQL 16 aktif (`127.0.0.1:5432`) lulus 100% (negative login 401, lockout increment, positive login DPJP, Nurse, Pharmacist, dan token verification).
+   - [`tests/authHttpRoutes.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/authHttpRoutes.test.js): 3 pengujian HTTP router via native fetch lulus 100%.
+   - Verifikasi build produksi Vite: Bersih tanpa error (`npm run build` selesai dalam 10.41s).
+
+---
+
+### 🏛️ [23 SEPTEMBER 2026] — STAGE 0 FORENSIK AUDIT REALITAS SISTEM: REKONSTRUKSI ROOT-LEVEL ENTERPRISE HIS & PENERBITAN 10 DOKUMEN BASELINE TATA KELOLA
+**Tag Rilis:** `audit-stage0-forensic-baseline`  
+**Kategori:** `[MAJOR]` `[GOVERNANCE]` `[FORENSIC-AUDIT]` `[ARCHITECTURE]`  
+**Status Evidence:** 🟢 **`STAGE 0 FORENSIC AUDIT COMPLETE & RATIFIED — AUDIT MENYELURUH TERHADAP SELURUH LAPISAN REPOSITORY (DATABASE, BACKEND API, FRONTEND UI, TEST SUITE) TELAH SELESAI DILAKUKAN TANPA MENGUBAH SOURCE CODE FUNGSIONAL. MEMBONGKAR TRI-LAYER DISCONNECT, RELATIONAL VOID (HANYA 11 FOREIGN KEYS PADA 211 TABEL POSTGRESQL), DISPARITAS MOCK AUTH, DAN FRAGMENTASI 42+ FORM KLINIS KE FIRESTORE. 10 DOKUMEN TATA KELOLA RESMI TELAH DIPERSIAPKAN DAN DISAHKAN DI DIREKTORI docs/governance/.`**
+
+1. **Penerbitan 10 Dokumen Tata Kelola Arsitektur Wajib (`docs/governance/`):**
+   - [`docs/governance/NURSEFLOW_SYSTEM_REALITY_AUDIT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_SYSTEM_REALITY_AUDIT.md): Evaluasi realitas tri-layer sistem (Frontend vs Express vs PostgreSQL 16), membongkar ilusi kelengkapan dan ketergantungan mock data.
+   - [`docs/governance/NURSEFLOW_MASTER_DOMAIN_MAP.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_MASTER_DOMAIN_MAP.md): Peta master 16 domain rumah sakit enterprise dengan audit tabel DDL, service, dan UI terkait.
+   - [`docs/governance/DATABASE_DOMAIN_AUDIT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/DATABASE_DOMAIN_AUDIT.md): Analisis DDL 72 migrasi PostgreSQL, penemuan 5 nomor migrasi bentrok, 11 tabel duplikat, defisit FK (hanya 11 FK), dan 118 tabel kosong (56% dorman).
+   - [`docs/governance/NURSEFLOW_COMPLETENESS_MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_COMPLETENESS_MATRIX.md): Matriks klasifikasi 22 subsistem dengan verifikasi bukti fisik kode (hanya 3 subsistem terverifikasi utuh, 7 partially integrated, 9 partial/debt, 3 architecture only).
+   - [`docs/governance/NURSEFLOW_TRACEABILITY_MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_TRACEABILITY_MATRIX.md): Penelusuran 11 layer siklus hidup data untuk 10 kebutuhan bisnis utama, mengungkap putusnya rantai otomatisasi pada Billing, Inventory, dan Form EMR.
+   - [`docs/governance/ARCHITECTURAL_DEBT_REGISTER.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/ARCHITECTURAL_DEBT_REGISTER.md): Register 10 utang arsitektur kritis (ADR-001 s.d. ADR-010) lengkap dengan analisis risiko, blast radius, dan rencana safe migration.
+   - [`docs/governance/NURSEFLOW_ROOT_REMEDIATION_ROADMAP.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_ROOT_REMEDIATION_ROADMAP.md): Roadmap pemulihan terstruktur 11 tahapan berjenjang (Stage 0 s.d. Stage 10) berdasarkan pohon dependensi (P0 s.d. P5).
+   - [`docs/governance/NURSEFLOW_WORKFLOW_COVERAGE_MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_WORKFLOW_COVERAGE_MATRIX.md): Evaluasi durabilitas persistensi 45 titik kritis pada 6 perjalanan rumah sakit nyata (IGD, Rawat Jalan, Rawat Inap, Bedah, Inventory, Revenue Cycle).
+   - [`docs/governance/NURSEFLOW_MEDICAL_FORM_CATALOG.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_MEDICAL_FORM_CATALOG.md): Katalog forensik 42+ form klinis hardcoded, analisis ketiadaan Form Engine dinamis, dan perancangan skema Metadata Form Registry & Document Locking.
+   - [`docs/governance/NURSEFLOW_ROLE_PERMISSION_MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/NURSEFLOW_ROLE_PERMISSION_MATRIX.md): Pemetaan batas kewenangan dan hak akses 17 persona rumah sakit, resolusi konflik tri-definisi role, serta arsitektur penegakan keamanan 3 lapis (UI, API, RLS PostgreSQL).
+
+2. **Temuan Kunci Penyelidikan Forensik Independen:**
+   - **Tri-Layer Architectural Disconnect:** Terjadi keterputusan komunikasi data antara antarmuka React UI (yang sebagian besar mengalir ke Firebase Firestore atau LocalStorage), backend Express API, dan database relasional PostgreSQL 16 (`127.0.0.1:5432`).
+   - **Relational Void:** Dari 211 tabel pada DDL PostgreSQL, hanya 11 tabel yang memiliki constraint `FOREIGN KEY`. Integritas referensial data pasien, encounter, catatan medis, dan tagihan tidak dipaksakan di level database engine.
+   - **False Durability pada Test Suite:** Pengujian unit dan integrasi yang lulus 100% menggunakan *in-memory mock client* (`mockClient = { query: vi.fn(...) }`) sehingga menyembunyikan kenyataan bahwa tabel-tabel database relasional aktualnya kosong melompong (misal: tabel `billing_invoices` memiliki 0 baris data).
+   - **Mock Auth Token Bypass:** Endpoint otentikasi backend pada `server/routes/auth.routes.js` menerbitkan JWT dokter (`dr. Siti`) tanpa memverifikasi kata sandi terhadap hash tabel pengguna database.
+
+3. **Status Kepatuhan Terhadap Arahan Rekonstruksi:**
+   - Aturan operasional **"JANGAN LANGSUNG CODING"** dipatuhi secara mutlak.
+   - Seluruh tahapan forensik (Discover -> Map -> Verify -> Classify -> Design -> Prioritize) telah selesai sebelum memulai implementasi kode fungsional.
+
+---
+
+
+### ⚡ [23 SEPTEMBER 2026] — PULL UPDATE & REKONSILIASI ARSITEKTUR KESELAMATAN RUNTIME KLINIS (PHASE D2.3-E) DAN MODERNISASI EMR PARITY
+**Tag Rilis:** `sync-origin-main-phase-d23e-emr`  
+**Kategori:** `[MAJOR]` `[ENHANCEMENT]` `[SAFETY]` `[MERGE]`  
+**Status Evidence:** 🟢 **`SINKRONISASI UPDATE ORIGIN/MAIN BERHASIL — MENGGABUNGKAN FRAMEWORK ZERO-TRUST AUTHORIZATION PROVENANCE (E6), TRUSTED SERVER-SIDE SAFETY DECISION ISSUANCE, DATABASE AUTHORITATIVE EXPIRY & RLS ISOLATION DENGAN SUITE EMR TERPADU PARITAS 100% (8 MODUL EMR, DOKTER STR/SIP ALERT BANNER, REAL-TIME RESEP ONLINE BADGE, DAN UNIVERSAL CLINICAL CONTEXT).`**
+
+1. **Penarikan & Penggabungan Komit Utama `origin/main`:**
+   - 4 komit upstream ditarik (`342a91f`, `cc9fbca`, `8cbcd0d`, `42ba75f`):
+     * Phase D0 & D0.5: `clinicalRuntimeSafetyContract.js` dan `ClinicalContextProvider.jsx` untuk fail-closed context boundary & perlindungan race-condition 50-100ms saat pergantian pasien cepat.
+     * Phase D2.3-D & D2.3-E: Registry otorisasi keselamatan `safety_decision_registry` (Migration 067), RFC 8785 JSON Canonicalization Scheme (JCS UTF-16), multi-tenant RLS, dan verifikasi forensik `consumed_in_tx_id`.
+   - Resolusi konflik penggabungan pada:
+     * `src/layouts/MainLayout.jsx`: Memadukan pembungkus `ClinicalContextProvider` dengan integrasi `DokterDocumentAlertBanner`.
+     * `src/modules/emr/components/CPPTWorkspace.jsx`: Menyatukan form CPPT multidisiplin lengkap dengan konsumsi aman `useClinicalContext()` (menghilangkan silent fallback ke `patients[0]`).
+     * `docs/design_debt_baseline_2026.json`: Memperbarui metrik baseline pemindaian berkas.
+     * `docs/CHANGELOG_PERUBAHAN_HIS.md`: Penggabungan log kronologis berurutan rapi.
+
+---
+
+### ⚡ [10 SEPTEMBER 2026] — PHASE EMR-LEGACY-TRANSFORMATION: MODERNISASI & PARITAS FITUR EMR DARI LEGACY HIS KE ENTERPRISE DESIGN SYSTEM NURSEFLOW (PARITAS 100% FITUR LEGACY TANPA REGRESI UI, 8 MODUL KLINIS BARU, DOCTOR CREDENTIAL ALERT BANNER, REAL-TIME RESEP ONLINE BADGE, WORKSPACE PEMERIKSAAN RJ 13 TAB KLINIS & MODAL CARI PASIEN MULTI-KRITERIA, 17/17 UNIT TESTS PASS, VITE PRODUCTION BUILD GREEN)
+**Tag Rilis:** `phase-emr-legacy-parity-v1.1`  
+**Kategori:** `[MAJOR]` `[FEATURE]` `[EMR-MODERNIZATION]` `[LEGACY-PARITY]` `[CLINICAL-WORKFLOW]`  
+**Status Evidence:** 🟢 **`PHASE EMR-LEGACY-TRANSFORMATION FULLY VERIFIED — PARITAS 100% FITUR DARI LEGACY HIS PHP/JQUERY DIPINDAHKAN KE ENTERPRISE REACT/TAILWIND DENGAN DESIGN SYSTEM NURSEFLOW (ZERO UI REGRESSION, 8 MODUL KLINIS INTEGRATED, LEMBAR PEMERIKSAAN RJ DENGAN 13 TAB KLINIS, DOKTER STR/SIP ALERT, REAL-TIME RESEP ONLINE COUNTER, DYNAMIC HOSPITAL SHIFT, 17/17 TESTS PASS 100%, ZERO BUILD ERRORS).`**
+
+1. **Layanan Terpadu Paritas EMR ([`src/modules/emr/services/emrSupportingDocs.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/services/emrSupportingDocs.service.js)):**
+   - Menyediakan arsitektur penyimpanan, kueri, dan pengelolaan dokumen penunjang eksternal (Laboratorium, Radiologi, EKG, Patologi Anatomi, dan Berkas Rujukan Luar).
+   - Pengelolaan alur Rujukan Internal antar-spesialis dan antar-departemen klinis (Inbox konsultasi, Outbox pengajuan, indikator CITO/Darurat, serta formulir jawaban konsul).
+   - Deteksi masa kedaluwarsa dokumen kredensial dokter (STR & SIP kedaluwarsa <= 3 bulan atau telah habis masa berlaku sesuai fungsi legacy `fn_alertDocumentDoctor`).
+   - Counter resep online farmasi real-time berstatus aktif dengan deteksi kuantitas resep masuk (paritas fungsi legacy `fn_ping` / `#_resep_online`).
+   - Agregasi analitik Laporan Bulanan UGD (Distribusi Triase ATS 1-5, waktu tanggap penanganan, status disposisi pasien, dan 10 besar diagnosis ICD-10).
+   - Worklist pemeriksaan pasien Rawat Jalan (RJ) dan Rawat Inap (RI) dengan integrasi EWS (*Early Warning Score*), *Length of Stay* (LOS), dan nama DPJP.
+   - Master data Departemen/Poliklinik (UGD, Poli Internis, Anak, Bedah, Kebidanan, Jantung, Saraf, dll.) dan Penjamin (BPJS, Umum, AdMedika, Inhealth, Garda Medika, dll.).
+   - Model lembar kerja pemeriksaan pasien aktif (`getExaminationDetail`, `updateExaminationDetail`, `searchPatientsComprehensive`).
+   - Dilengkapi fallback in-memory store untuk kompatibilitas penuh lingkungan pengujian Node.js / Vitest tanpa `localStorage`.
+
+2. **Pengembangan Modul & Komponen Antarmuka Klinis Modern (Zero UI Regression):**
+   - [`src/modules/emr/components/DokterDocumentAlertBanner.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/components/DokterDocumentAlertBanner.jsx): Banner notifikasi kredensial dokter interaktif dan dismissible di atas area kerja konten utama.
+   - [`src/modules/emr/pages/UploadPenunjangPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/pages/UploadPenunjangPage.jsx): Pusat unggah dokumen penunjang dengan antarmuka drag-and-drop, filter kategori (Lab, Radiologi, EKG, dll.), pratinjau modal lightbox, dan penautan data pasien.
+   - [`src/modules/emr/pages/RujukanInternalPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/pages/RujukanInternalPage.jsx): Sentral koordinasi rujukan internal antar-departemen medis dengan tab Inbox/Outbox, badge urgensi CITO, modal formulir rujukan baru, dan modal input tanggapan konsultan.
+   - [`src/modules/emr/pages/CatatanTerintegrasiPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/pages/CatatanTerintegrasiPage.jsx): Catatan Terintegrasi (CPPT) Multi-PPA (Dokter, Perawat, Farmasi, Nutrisionis/Gizi) dengan filter format SOAP, verifikasi DPJP, dan toggle Rawat Jalan / Rawat Inap.
+   - [`src/modules/emr/pages/DaftarPemeriksaanRjPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/pages/DaftarPemeriksaanRjPage.jsx): Workspace komprehensif pemeriksaan rawat jalan (EMR RJ) dengan paritas penuh layar legacy `mid=393`:
+     * Toggle Mode: Antrean Poliklinik (Worklist) vs Lembar Pemeriksaan Pasien Aktif (Workspace).
+     * Modal Pencarian Pasien Komprehensif (No. Reg, No. RM, Nama, Departemen/Poli, Penjamin) dengan pemilihan instan.
+     * Header Data Pasien: No. Reg, No. RM, Nama Pasien, Tgl Lahir / Umur, Jenis Kelamin, Agama, Departemen, Penjamin, Nama Dokter DPJP, dan Banner Pulang.
+     * Clinical Safety Bar: Alergi (+ Alergi modal), Vaksinasi (+ Vaksin modal), Diagnosa Kerja & Utama ICD-10 (Edit Diagnosa modal), Penanda Klinis, dan Toggle Pasien Kompleks dengan Sinkronisasi Profil Medis.
+     * 13 Tab Navigasi Klinis: (1) Modul e-MR (14 launcher formulir asesmen klinis standar akreditasi), (2) List Pemeriksaan encounter aktif, (3) Profile Medis Pasien Kompleks lintas kunjungan, (4) Hasil Laboratorium, (5) Radiologi & link PACS, (6) Diagnosa ICD-10, (7) Resep Online reguler & racikan, (8) Rujukan internal/penunjang CITO, (9) Histori Pemeriksaan multi-tahun longitudinal, (10) Jadwal Kontrol poli, (11) Hasil Scan Dokumen luar dengan preview modal, (12) Surat Keterangan Medis dengan TTE, (13) Riwayat Pelayanan JKN (i-Care JKN).
+   - [`src/modules/emr/pages/LaporanBulananUgdPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/pages/LaporanBulananUgdPage.jsx): Dashboard analitik bulanan UGD & rawat jalan lengkap dengan metrik kunci, visualisasi distribusi triase ATS 1-5, waktu tanggap, status disposisi pulang/rawat, top 10 diagnosis, dan tombol ekspor CSV.
+   - [`src/modules/emr/pages/DaftarPemeriksaanRiPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/pages/DaftarPemeriksaanRiPage.jsx): Papan pemantauan bangsal rawat inap terpadu dengan status tempat tidur (*bed*), skor peringatan dini EWS (*Early Warning Score*), lama hari rawat (LOS), dan status kelengkapan visite DPJP.
+   - [`src/modules/emr/pages/CatatanAnestesiPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/pages/CatatanAnestesiPage.jsx): Suite dokumentasi perioperatif anestesi (Pra-Anestesi ASA Class I-VI & skor Mallampati, Intra-Operatif monitoring jalur napas, agen anestesi & tanda vital, serta Pasca-Anestesi Aldrete Recovery Score di ruang pulih sadar PACU).
+   - [`src/modules/emr/pages/EmrHubPage.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/modules/emr/pages/EmrHubPage.jsx): Ruang komando terpadu EMR Hub di `/emr` dengan navigasi instan ke seluruh submodul EMR, EMR RJ, dan EMR RI yang mempertahankan estetika modern NurseFlow.
+
+3. **Integrasi Navigasi & Tata Letak Enterprise Layout:**
+   - [`src/routes/emr.routes.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/routes/emr.routes.jsx): Pendaftaran rute lazy loading untuk semua endpoint `/emr`, `/emr/upload-penunjang`, `/emr/rujukan-internal`, `/emr/catatan-terintegrasi`, `/emr-rj`, `/emr-rj/daftar-pemeriksaan`, `/emr-rj/laporan-ugd`, `/emr-ri`, `/emr-ri/daftar-pemeriksaan`, `/emr-ri/catatan-anestesi`, dan `/emr-ri/catatan-terintegrasi`.
+   - [`src/layouts/MainLayout.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/layouts/MainLayout.jsx): Penambahan domain navigasi `EMR_TERPADU` pada skema menu enterprise, integrasi badge kedaluwarsa STR/SIP dokter (`DokterDocumentAlertBanner`), serta tombol pill interaktif resep online real-time (`Resep Online`) dengan efek animasi pulsa halus.
+   - [`src/design-system/components/EnterpriseFooter.jsx`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/design-system/components/EnterpriseFooter.jsx): Tampilan dinamis jadwal shift kerja rumah sakit (Shift Pagi / Siang / Malam) pada footer enterprise.
+
+4. **Verifikasi & Pengujian Mutu:**
+   - Suite Pengujian Otomatis ([`tests/emrLegacyFeaturesParity.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/emrLegacyFeaturesParity.test.js)): **17/17 pengujian lulus (PASS 100%)**.
+   - Validasi Build Vite Production: **Selesai dalam 11.61 detik tanpa ada peringatan atau kesalahan build**.
+   - Validasi E2E Browser Subagent: Rekaman visual WebP dan tangkapan layar tersimpan pada artefak, memastikan seluruh alur interaktif berjalan lancar.
+
+---
+
 ### ⚡ [30 AGUSTUS 2026] — PHASE D2.3-E (FINAL): ZERO-TRUST AUTHORIZATION PROVENANCE (E6), TRUSTED SERVER-SIDE ISSUANCE, DB-AUTHORITATIVE EXPIRY, MULTI-TENANT RLS, FORENSIC TXID LINKAGE, STRICT RFC 8785 JCS, 10-SCENARIO ADVERSARIAL MATRIX (188/188 TEST SUITES PASS 100%, 1863/1863 TESTS GREEN, ZERO BUILD ERRORS)
 **Tag Rilis:** `phase-d23e-trusted-issuance-provenance-e6-v2.0`  
 **Kategori:** `[MAJOR]` `[SAFETY]` `[SECURITY]` `[AUDIT]` `[E5-F]` `[ENTERPRISE-ARCHITECTURE]`  

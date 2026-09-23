@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-08-29T17:37:15.209Z",
-  "filesScanned": 637,
-  "filesWithDebt": 332,
+  "timestamp": "2026-09-23T08:08:20.798Z",
+  "filesScanned": 647,
+  "filesWithDebt": 341,
   "classification": {
-    "nonCanonicalDebt": 3229,
-    "canonicalLiteralDebt": 1031
+    "nonCanonicalDebt": 3457,
+    "canonicalLiteralDebt": 1073
   },
   "metrics": {
-    "hardcodedColors": 673,
+    "hardcodedColors": 738,
     "hardcodedSpacing": 70,
-    "hardcodedTypography": 3389,
+    "hardcodedTypography": 3594,
     "hardcodedRadius": 21,
     "hardcodedElevation": 107,
-    "totalDebtPoints": 4260
+    "totalDebtPoints": 4530
   },
   "top10DebtFiles": [
     {
@@ -38,6 +38,15 @@
       "colors": 25,
       "spacing": 0,
       "typography": 56,
+      "radius": 0,
+      "elevation": 0,
+      "total": 81
+    },
+    {
+      "file": "modules/emr/pages/DaftarPemeriksaanRjPage.jsx",
+      "colors": 31,
+      "spacing": 0,
+      "typography": 50,
       "radius": 0,
       "elevation": 0,
       "total": 81
@@ -70,6 +79,15 @@
       "total": 60
     },
     {
+      "file": "modules/emr/components/CPPTWorkspace.jsx",
+      "colors": 2,
+      "spacing": 0,
+      "typography": 47,
+      "radius": 0,
+      "elevation": 0,
+      "total": 49
+    },
+    {
       "file": "modules/inventory/components/MutasiBarangTab.jsx",
       "colors": 0,
       "spacing": 0,
@@ -79,31 +97,13 @@
       "total": 49
     },
     {
-      "file": "modules/admin/pages/AdminHubPage.jsx",
-      "colors": 8,
+      "file": "layouts/MainLayout.jsx",
+      "colors": 19,
       "spacing": 0,
-      "typography": 36,
-      "radius": 1,
-      "elevation": 1,
-      "total": 46
-    },
-    {
-      "file": "modules/dashboard/components/OperationalCockpitLiveTelemetry.jsx",
-      "colors": 0,
-      "spacing": 0,
-      "typography": 46,
+      "typography": 27,
       "radius": 0,
       "elevation": 0,
       "total": 46
-    },
-    {
-      "file": "modules/patient/styles/Patients.css",
-      "colors": 13,
-      "spacing": 10,
-      "typography": 2,
-      "radius": 2,
-      "elevation": 18,
-      "total": 45
     }
   ]
 }

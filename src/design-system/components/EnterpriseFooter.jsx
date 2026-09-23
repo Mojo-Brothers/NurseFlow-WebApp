@@ -1,14 +1,21 @@
 import React from 'react';
+import { emrSupportingDocsService } from '../../modules/emr/services/emrSupportingDocs.service.js';
 
 export default function EnterpriseFooter() {
   const syncTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const shiftInfo = emrSupportingDocsService.getCurrentHospitalShift();
 
   return (
     <footer className="w-full bg-slate-900 border-t border-slate-800 text-slate-400 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 text-[11px] font-mono mt-auto">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
           <span>CORE ONLINE • REALTIME WEBSOCKET ACTIVE</span>
+        </span>
+        <span className="text-slate-600">|</span>
+        <span className="flex items-center gap-1.5 font-bold">
+          <span className={`w-2 h-2 rounded-full ${shiftInfo.color.replace('text-', 'bg-')}`}></span>
+          <span className={shiftInfo.color}>{shiftInfo.label}</span>
         </span>
         <span className="text-slate-600">|</span>
         <span>SATUSEHAT FHIR R4: <strong className="text-slate-200">CONNECTED</strong></span>
@@ -26,3 +33,4 @@ export default function EnterpriseFooter() {
     </footer>
   );
 }
+
