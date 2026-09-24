@@ -34,10 +34,12 @@ import commandCenterRoutes from './routes/commandCenter.routes.js';
 
 import { observabilityMiddleware } from './middlewares/observabilityMiddleware.js';
 import { correlationIdMiddleware } from './middlewares/correlationId.middleware.js';
+import { tenantMiddleware } from './middlewares/tenantMiddleware.js';
 import { problemDetailsMiddleware } from './middlewares/problemDetails.middleware.js';
 import { PROBLEM_TYPES } from './contracts/problemDetails.contract.js';
 import { healthCheckService } from './services/healthCheck.service.js';
 import { metricsService } from './services/metrics.service.js';
+import { enforceEnvironmentGuard } from './config/envValidator.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +49,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(correlationIdMiddleware);
 app.use(observabilityMiddleware);
+app.use(tenantMiddleware);
 
 // Security Headers Interceptor
 app.use((req, res, next) => {
@@ -126,6 +129,7 @@ app.use((req, res) => {
 app.use(problemDetailsMiddleware);
 
 if (process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1].includes('server'))) {
+  enforceEnvironmentGuard(process.env);
   app.listen(PORT, () => {
     console.log(`[NurseFlow API Gateway] Listening on http://localhost:${PORT}`);
   });

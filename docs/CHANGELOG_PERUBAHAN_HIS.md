@@ -20,6 +20,141 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 
 ## 📅 LOG RIWAYAT PERUBAHAN (CHRONOLOGICAL UPDATE LOG)
 
+### 🛡️ [24 SEPTEMBER 2026] — P0-2A CANONICAL AUTHORIZATION DECISION CONTRACT REMEDIATION (REMEDIATION COMPLETE)
+**Tag Rilis:** `stage1-p02a-canonical-decision-contract-remediation`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[ENHANCEMENT]` `[FIX]`  
+**Status Evidence:** 🟢 **`REMEDIATION COMPLETE / AWAITING INDEPENDENT RE-VERIFICATION. SINKRONISASI KONTRAK KANONIKAL KEPUTUSAN OTORISASI (P0-2A) BERHASIL DISELESAIKAN SECARA TUNTAS. MEMBENTUK SINGLE SOURCE OF TRUTH (SSOT) DALAM AUTHORIZATIONDECISION.CONTRACT.JS, MEREKONSILIASI POSTGRESQL CHECK CONSTRAINT CHK_CLINICAL_AUTH_DECISION MELALUI MIGRASI 076 (TEPAT 23 PERSISTABLE DECISIONS == 23 DATABASE ACCEPTED DECISIONS), MENERAPKAN FAIL-CLOSED SYSTEM SAFETY PADA DENIED_AUDIT_PERSISTENCE_FAILURE TANPA LOOP REKURSIF, MENUTUP ANOMALI EVALUASI DAN PERSISTENSI BREAK-THE-GLASS (BTG), MEMBUKTIKAN 8 SKENARIO MASTER ENGINE EVALUATEAUTHORIZATION() ZERO-MOCK PADA BASIS DATA NYATA, SERTA LOLOS PENGUJIAN REPLAY MIGRATION 001 HINGGA 076 DENGAN ON_ERROR_STOP=1 PADA BASIS DATA DISPOSABLE (100% EKUIVALEN KATALOG & VERIFIKASI OBJECT-LEVEL). TIDAK ADA SCOPE CREEP / TIDAK MEMULAI P0-2B.`**
+
+1. **Pembuatan Single Source of Truth (SSOT) Kontrak Keputusan Otorisasi (`server/contracts/authorizationDecision.contract.js`):**
+   - Mendefinisikan 24 kode keputusan kanonikal dalam `AUTHORIZATION_DECISIONS`.
+   - Mengelompokkan keputusan ke dalam 5 kelas semantik: `CLINICAL_AUTHORIZATION`, `SYSTEM_SAFETY`, `SYSTEM_ERROR`, `RESERVED`, dan `LEGACY`.
+   - Menetapkan metadata tiap kode (`isPersistable`, `auditDestinations`, `classification`, `description`).
+   - Memisahkan secara eksplisit: 23 keputusan persistable (`clinical_authorization_logs`) dan 1 status safety murni sistem non-persistable (`DENIED_AUDIT_PERSISTENCE_FAILURE` yang tidak pernah dikirim ke database untuk menghindari loop rekursif).
+   - Menyediakan fungsi utilitas kontraktual: `getPersistableDecisions()`, `isDecisionPersistable(decision)`, `getDecisionMetadata(decision)`, dan `isValidDecision(decision)`.
+
+2. **Remediasi Skema Basis Data Melalui Migrasi Baru (`database/migrations/076_reconcile_authorization_decision_taxonomy.sql`):**
+   - Memperbarui CHECK constraint `chk_clinical_auth_decision` pada tabel `clinical_authorization_logs` agar menerima tepat 23 keputusan persistable:
+     `AUTHORIZED`, `AUTHORIZED_BREAK_THE_GLASS`, `DENIED_AUTHENTICATION_REQUIRED`, `DENIED_TENANT_MISSING`, `DENIED_TENANT_MISMATCH`, `DENIED_SYSTEM_ADMIN_CLINICAL_RESTRICTION`, `DENIED_PERMISSION_MISSING`, `DENIED_CREDENTIAL_MISSING`, `DENIED_CREDENTIAL_EXPIRED`, `DENIED_CREDENTIAL_REVOKED`, `DENIED_STAFF_INACTIVE`, `DENIED_NO_PRIVILEGE`, `DENIED_PRIVILEGE_EXPIRED`, `DENIED_WRONG_UNIT`, `DENIED_NOT_ON_DUTY`, `DENIED_NOT_ATTENDING_PROVIDER`, `DENIED_RESOURCE_NOT_FOUND`, `DENIED_SEPARATION_OF_DUTIES`, `DENIED_BTG_UNAUTHORIZED`, `DENIED_BTG_INVALID_REASON`, `DENIED_ROLE_FORBIDDEN`, `DENIED_SESSION_INVALIDATED`, `DENIED_SYSTEM_ERROR`.
+   - Menjamin keselarasan matematis: `application persistable decisions == database accepted decisions` (23 == 23).
+   - Migrasi dieksekusi dan diverifikasi pada basis data operasional tanpa error.
+
+3. **Remediasi Layanan Runtime & Penegakan Kontrak SSOT:**
+   - [`server/services/clinicalAudit.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/clinicalAudit.service.js): Menambahkan validasi guard `isDecisionPersistable(decision)` sebelum persistensi database. Menolak perekaman status unpersistable / safety state.
+   - [`server/services/authorizationDecision.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/authorizationDecision.service.js): Mengganti seluruh string literal keputusan dengan `AUTHORIZATION_DECISIONS.*`. Memperbaiki penanganan kegagalan audit (`DENIED_AUDIT_PERSISTENCE_FAILURE`) menjadi fail-closed tanpa loop rekursif. Memperbaiki guard `requiredCredentialType` agar tidak memicu error `null.toUpperCase()`.
+   - [`server/services/resourceAuthorization.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/resourceAuthorization.service.js): Menyelaraskan seluruh evaluasi tenant, BTG (`AUTHORIZED_BREAK_THE_GLASS`, `DENIED_BTG_UNAUTHORIZED`, `DENIED_BTG_INVALID_REASON`), pencarian resource (`DENIED_RESOURCE_NOT_FOUND`), dan care-team dengan konstanta kanonikal.
+   - [`server/services/clinicalCredential.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/clinicalCredential.service.js): Menyelaraskan keputusan kredensial/privilese dan memproteksi parsing `credentialType` terhadap nilai null.
+   - [`server/services/separationOfDuties.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/separationOfDuties.service.js) & [`server/middlewares/clinicalAuthorization.middleware.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/middlewares/clinicalAuthorization.middleware.js): Mengganti literal string dengan konstanta SSOT `AUTHORIZATION_DECISIONS`.
+
+4. **Uji Integrasi End-to-End Master Engine Tanpa Mock (`tests/p02a_security_database_integration.test.js`):**
+   - Menambahkan suite pengujian komprehensif memanggil `authorizationDecisionService.evaluateAuthorization()` langsung terhadap PostgreSQL:
+     * Test 1: Normal ALLOW -> `AUTHORIZED`, verifikasi row di `clinical_authorization_logs`.
+     * Test 2: Normal DENY -> `DENIED_PERMISSION_MISSING`, verifikasi row di `clinical_authorization_logs`.
+     * Test 3: BTG ALLOW -> `AUTHORIZED_BREAK_THE_GLASS`, verifikasi row di `clinical_authorization_logs` dan row `break_glass_audit_ledger` (`outcome: GRANTED`).
+     * Test 4: BTG Unauthorized -> `DENIED_BTG_UNAUTHORIZED`, verifikasi audit log tersimpan dan tidak ada row di `break_glass_audit_ledger`.
+     * Test 5: BTG Invalid Reason -> `DENIED_BTG_INVALID_REASON`, verifikasi audit log tersimpan dan tidak ada row di `break_glass_audit_ledger`.
+     * Test 6: Resource Not Found -> `DENIED_RESOURCE_NOT_FOUND`, verifikasi audit log tersimpan.
+     * Test 7: Audit Persistence Failure -> `DENIED_AUDIT_PERSISTENCE_FAILURE`, verifikasi fail-closed dan zero recursive loop (audit service hanya dipanggil tepat 1 kali).
+     * Test 8: Decision Taxonomy Coverage -> Menginspeksi definition `chk_clinical_auth_decision` dari PostgreSQL catalog `pg_constraint`, mencocokkan tepat 23 persistable decisions dengan runtime contract, dan memastikan status safety non-persistable tidak pernah dimasukkan ke basis data.
+   - Hasil pengujian: 65/65 passed (26 foundation tests + 39 database integration tests).
+
+5. **Verifikasi Replay Migrasi Bersih (`scratch/verify_clean_migration_replay.js`):**
+   - Menjalankan replay 76 migrasi (001 -> 076) dengan flag `ON_ERROR_STOP=1` pada database PostgreSQL kosong `disposable_migration_replay_db`.
+   - Hasil: 76/76 migrasi lolos tanpa error, 100% ekuivalen katalog dengan `nurseflow_enterprise_his` (212 tabel, 3296 kolom, 714 indeks).
+   - Verifikasi object-level mendalam terhadap `chk_clinical_auth_decision`, foreign keys, nullability, dan indeks pada `clinical_authorization_logs` serta `break_glass_audit_ledger` menghasilkan status `EXACT MATCH`. Status: `PASS`.
+
+---
+
+### 🛡️ [24 SEPTEMBER 2026] — P0-2A FORENSIC BLOCKER REMEDIATION (REMEDIATION COMPLETE)
+**Tag Rilis:** `stage1-p02a-forensic-blocker-remediation`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[ENHANCEMENT]` `[GOVERNANCE]`  
+**Status Evidence:** 🟢 **`P0-2A FORENSIC BLOCKER REMEDIATION BERHASIL DISELESAIKAN SECARA TUNTAS & DIVERIFIKASI DENGAN 103/103 TEST SUITE PASS (TERMASUK 31 ZERO-MOCK DATABASE INTEGRATION TEST DAN REPRODUKSI REPLAY 75 MIGRATION PADA CLEAN DISPOSABLE POSTGRESQL DB). SELURUH 5 BLOCKER FORENSIK DITUTUP: (1) CLINICAL AUDIT FK USER_ID DIREMEDIASI MERUJUK AUTH_USERS(ID) DISERTAI SAFE FALLBACK DAN CASE D FAIL-CLOSED AUDIT FAILURE, (2) ZERO MOCK PADA INTEGRATION TEST DIBUKTIKAN DENGAN FIXTURE NYATA DI POSTGRESQL (13 KASUS SIP/STR/PRIVILEGE), (3) BREAK-THE-GLASS DI-HARDEN DENGAN PERMISSION KHUSUS CLINICAL_BREAK_GLASS, ALASAN WAJIB NON-BOILERPLATE (MIN 10 KARAKTER), DAN PENCATATAN KE BREAK_GLASS_AUDIT_LEDGER TANPA MEM-BYPASS TENANT ISOLATION ATAU SOD, (4) DISKONEKSI IDENTITAS DPJP LEGACY (DOC-01) DIREMEDIASI MENGGUNAKAN TABEL NORMALISASI PRACTITIONER_LEGACY_MAPPINGS PADA DATABASE, (5) PEMBUKTIAN REPRODUKSI MIGRATION 001 HINGGA 075 MENGHASILKAN 100% KATALOG EKUIVALEN (212 TABEL, 3296 KOLOM, 714 INDEKS). TIDAK ADA SCOPE CREEP / TIDAK MEMULAI P0-2B.`**
+
+1. **Remediasi Basis Data & Migrasi (`database/migrations/075_remediate_p02a_authorization_blockers.sql`):**
+   - Mengubah foreign key `clinical_authorization_logs.user_id` dari `enterprise_users(id)` ke `auth_users(id) ON DELETE SET NULL`.
+   - Mengubah foreign key `clinical_staff_profiles.user_id` ke `auth_users(id) ON DELETE SET NULL`.
+   - Melonggarkan batasan NOT NULL dan melepaskan FK pada `break_glass_audit_ledger` (`patient_id`, `encounter_id`, `client_ip`, `practitioner_id`, `practitioner_name`, `practitioner_role`) untuk mendukung BTG pada resource/order in-memory; menambahkan kolom `actor_user_id`, `resource_type`, `resource_id`, `action_code`, `correlation_id`, `outcome`, dan `reason`.
+   - Membuat tabel normalisasi pemetaan dokter legacy: `practitioner_legacy_mappings (id, tenant_id, legacy_identifier, canonical_practitioner_id, canonical_staff_id, practitioner_id, staff_id)`.
+   - Menginjeksikan fixture data kanonikal untuk pengujian security tanpa mock: dr. Siti Wijaya (`c0000000-0000-0000-0000-000000000001`, SIP & STR aktif), dr. Expired (`c0000000-0000-0000-0000-000000000002`), dr. Revoked (`c0000000-0000-0000-0000-000000000003`), dr. Inactive (`c0000000-0000-0000-0000-000000000004`), dr. Expired Privilege (`c0000000-0000-0000-0000-000000000005`), serta Clinician Tenant B (`c0000000-0000-0000-0000-000000000006`).
+
+2. **Remediasi Komponen Layanan & Otorisasi:**
+   - [`src/shared/constants/roles.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/shared/constants/roles.js): Menambahkan permission `'CLINICAL_BREAK_GLASS'` ke `CLINICAL_PERMISSIONS` dan `ROLE_PERMISSIONS_MATRIX` untuk peran klinis (`ROLE_DOCTOR_DPJP`, `ROLE_DOCTOR_EMERGENCY`, `ROLE_NURSE`).
+   - [`server/services/clinicalAudit.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/clinicalAudit.service.js): Memperluas sanitasi redaksi sensitif (`password`, `jwt`, `token`, `secret`, `authorization`, `bearer`, `cookie`, `accesstoken`, `refreshtoken`, `sip`, `str`). Menerapkan penanganan aman jika aktor tidak ditemukan di `auth_users` (menghindari orphan identity dan pencatatan audit tidak hilang).
+   - [`server/services/resourceAuthorization.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/resourceAuthorization.service.js): Memvalidasi batas isolasi tenant sebelum evaluasi BTG; mewajibkan permission `CLINICAL_BREAK_GLASS` dan alasan darurat yang valid (min 10 karakter, menolak boilerplate seperti "BTG" atau "emergency"); menyimpan log terdedikasi ke `break_glass_audit_ledger`; meresolusikan string ID DPJP legacy (`DOC-01`) ke UUID praktisi kanonikal via `practitioner_legacy_mappings`.
+   - [`server/services/authorizationDecision.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/authorizationDecision.service.js): Meneruskan konteks alasan BTG dan correlation ID; menerapkan Case D fail-closed semantics (`DENIED_AUDIT_PERSISTENCE_FAILURE`) jika keputusan `isAuthorized === true` namun pencatatan audit ke basis data gagal.
+   - [`server/middlewares/clinicalAuthorization.middleware.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/middlewares/clinicalAuthorization.middleware.js): Mendukung ekstraksi alasan BTG dari header `x-break-the-glass-reason` maupun body request.
+
+3. **Uji Forensik & Verifikasi Replay Migrasi:**
+   - [`tests/p02a_security_database_integration.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/p02a_security_database_integration.test.js): 31 integration test tanpa mock terhadap PostgreSQL (13 skenario kredensial, 8 skenario BTG, 6 skenario DPJP legacy, 4 skenario audit trail).
+   - [`scratch/verify_clean_migration_replay.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/verify_clean_migration_replay.js): Skrip pembuktian replay dari migrasi 001 hingga 075 pada basis data disposable `disposable_migration_replay_db`. Hasil: 75/75 sukses (0 gagal), 100% ekuivalen katalog dengan `nurseflow_enterprise_his` (212 tabel, 3296 kolom, 714 indeks). Status Reproducibility: `PROVEN`.
+   - [`docs/governance/P0-2A_FORENSIC_BLOCKER_REMEDIATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/P0-2A_FORENSIC_BLOCKER_REMEDIATION.md): Laporan tata kelola remediasi forensik komprehensif.
+
+---
+
+### 🔍 [24 SEPTEMBER 2026] — P0-2A INDEPENDENT FORENSIC VERIFICATION GATE
+**Tag Rilis:** `stage1-gate-p02a-independent-forensic-verification`  
+**Kategori:** `[DOCS]` `[SECURITY]` `[GOVERNANCE]`  
+**Status Evidence:** 🟡 **`P0-2A INDEPENDENT FORENSIC VERIFICATION GATE: PARTIALLY VERIFIED. SELURUH 10 KONDISI BLOCKING DINYATAKAN PASS (TIDAK ADA MIGRATION DRIFT / MIGRATION 074 REPRODUCIBLE 100%, SUPER ADMIN CLINICAL BYPASS BERHASIL DIHAPUS, TENANT ANTI-SPOOFING AKTIF, FAIL-CLOSED AKTIF, JWT PROD GUARD AKTIF). NAMUN STATUS DIKLASIFIKASIKAN SEBAGAI PARTIALLY VERIFIED KARENA: (1) ZERO ENDPOINT HTTP ENFORCEMENT PADA ROUTE EXPRESS KARENA DIJADWALKAN PADA P0-2B, (2) BREAK-THE-GLASS (BTG) MEMERLUKAN HARDENING ROLE GATE DAN ALASAN WAJIB, (3) 6 KONTROLLER LEGACY MASIH MEMILIKI FALLBACK DEFAULT_TENANT_ID SEBELUM MIGRASI P0-2B, DAN (4) DEBT-P0-009 TOKEN REVOCATION BELUM DIIMPLEMENTASIKAN. GERBANG P0-2B DITAHAN SEMENTARA MENUNGGU KEPUTUSAN TATA KELOLA.`**
+
+1. **Berkas Audit Baru:**
+   - [`docs/governance/P0-2A_INDEPENDENT_FORENSIC_VERIFICATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/P0-2A_INDEPENDENT_FORENSIC_VERIFICATION.md): Laporan investigasi forensik menyeluruh 23 dimensi kepatuhan P0-2A terhadap basis data PostgreSQL, Express pipeline, audit trail, anti-spoofing, dan mitigasi risiko bypass.
+
+---
+
+### 🛡️ [24 SEPTEMBER 2026] — P0-2A PRODUCTION-GRADE AUTHORIZATION FOUNDATION REMEDIATION COMPLETE
+**Tag Rilis:** `stage1-slice-p02a-authorization-foundation-remediation`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[ENHANCEMENT]` `[GOVERNANCE]`  
+**Status Evidence:** 🟢 **`P0-2A PRODUCTION-GRADE AUTHORIZATION FOUNDATION REMEDIATION BERHASIL DISELESAIKAN SECARA LENGKAP & DIVERIFIKASI DENGAN 26/26 SUITE TEST PASS (DIMENSI 1 SAMPAI 9). TELAH DIBANGUN SATU ARSITEKTUR OTORISASI KANONIKAL TUNGGAL (AUTHORIZATION CONTEXT, TENANT BOUNDARY, SUPER ADMIN CLINICAL RESTRICTION, RUNTIME SIP/STR CREDENTIAL VERIFICATION, RESOURCE CARE-TEAM OWNERSHIP, SEPARATION OF DUTIES REGISTRY, FORENSIC AUDIT TRAIL, SERTA PRODUCTION JWT FAIL-FAST STARTUP GUARD). TIDAK ADA MIGRASI MASSAL 142 ENDPOINT (RULE 1 DITAATI). TIDAK ADA BYPASS SUPER ADMIN PADA AKSI KLINIS (RULE 2 DITAATI). ZERO CLIENT TENANT TRUST & ZERO DEFAULT TENANT UUID FALLBACK (RULE 3 & 4 DITAATI). BASIS DATA DIPERBARUI DENGAN MIGRATION 074 PADA TABEL CLINICAL_AUTHORIZATION_LOGS. DOKUMEN TATA KELOLA P0-2A_AUTHORIZATION_FOUNDATION_IMPLEMENTATION.MD DAN P0-2A_AUTHORIZATION_MATRIX.MD TELAH DIRATIFIKASI RESMI.`**
+
+1. **Komponen Arsitektur Baru:**
+   - [`server/contracts/authorizationContext.contract.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/contracts/authorizationContext.contract.js): Kontrak tunggal `AuthorizationContext` berbasis identitas token tepercaya dengan validasi anti-spoofing client headers/body.
+   - [`server/services/clinicalCredential.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/clinicalCredential.service.js): Layanan verifikasi runtime izin praktik klinis (SIP/STR) dan kewenangan klinis (SPK/RKK) ke PostgreSQL (`clinical_staff_profiles`, `staff_credentials`, `master_practitioners`).
+   - [`server/services/resourceAuthorization.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/resourceAuthorization.service.js): Layanan otorisasi kepemilikan resource, isolasi lintas tenant (`assertResourceTenant`), assignment DPJP dokter penanggung jawab pelayanan, dan protokol darurat Break-The-Glass.
+   - [`server/services/separationOfDuties.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/separationOfDuties.service.js): Mesin aturan Separation of Duties (Four-Eyes Principle): melarang dokter peresep melakukan dispensing obat sendiri, melarang dokter pemesan memvalidasi hasil lab sendiri, dan melarang perawat menjadi saksi pemberian obat keras dirinya sendiri.
+   - [`server/services/clinicalAudit.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/clinicalAudit.service.js): Layanan pencatatan audit trail forensik ke PostgreSQL `clinical_authorization_logs` dengan sanitasi otomatis (redaksi password, token, dan cryptographic secret).
+   - [`server/services/authorizationDecision.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/authorizationDecision.service.js): Master decision engine terpusat mengevaluasi 8 lapisan otorisasi secara deterministik fail-closed.
+   - [`server/middlewares/clinicalAuthorization.middleware.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/middlewares/clinicalAuthorization.middleware.js): Middleware Express kanonikal siap konsumsi untuk migrasi modul di tahap P0-2B.
+
+2. **Perbaikan & Pengerasan Komponen yang Ada:**
+   - [`server/middlewares/tenantMiddleware.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/middlewares/tenantMiddleware.js): Dihapus trust header client, dihapus fallback default UUID `00000000-0000-0000-0000-000000000001`, dipasang anti-spoofing rejection HTTP 403 `TENANT_MISMATCH`.
+   - [`server/middlewares/rbacMiddleware.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/middlewares/rbacMiddleware.js): Dihapus bypass `isSuperAdmin` pada `requireRole()`; administrator sistem tidak dapat lagi mengakses endpoint peran klinis secara otomatis.
+   - [`src/core/security/rbacGuard.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/core/security/rbacGuard.service.js) & [`src/shared/constants/roles.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/shared/constants/roles.js): Didefinisikan himpunan `CLINICAL_PERMISSIONS`. Wildcard `*` Super Admin secara tegas dilarang mencocokkan izin klinis apa pun.
+   - [`src/core/security/jwtSecurity.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/src/core/security/jwtSecurity.service.js): Dihapus fallback static string `JWT_SECRET` di lingkungan produksi. Wajib menggunakan `process.env.JWT_SECRET` minimal 32 karakter dan bukan placeholder.
+   - [`server/server.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/server.js): Dipasang `tenantMiddleware` secara global dan `enforceEnvironmentGuard(process.env)` saat startup server agar fail-fast jika konfigurasi tidak aman.
+   - [`server/middlewares/idempotency.middleware.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/middlewares/idempotency.middleware.js): Dihapus fallback tenant UUID default; ditolak dengan HTTP 403 `TENANT_CONTEXT_MISSING` jika tenant tidak ada.
+
+3. **Migrasi Basis Data:**
+   - [`database/migrations/074_harden_authorization_audit_and_privileging.sql`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/database/migrations/074_harden_authorization_audit_and_privileging.sql): Memperluas kolom `authorization_decision` ke `VARCHAR(100)`, merelaksasi `staff_id` menjadi NULLable agar penolakan aktor non-staf dapat diaudit, menambah kolom `user_id`, `actor_id`, `action_code`, `resource_type`, `resource_id`, `correlation_id`, dan memperluas check constraint `chk_clinical_auth_decision`.
+
+4. **Verifikasi Pengujian & Regresi:**
+   - 26 focused tests pada [`tests/p02a_authorization_foundation.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/p02a_authorization_foundation.test.js) PASS 100%.
+   - 69 total tests lulus verifikasi regresi penuh di seluruh 6 suite tes keamanan (`authHttpRoutes`, `zeroTrustSecurityGate0A`, `p02a_authorization_foundation`, `tenantFoundation`, `environmentValidation`, `rbac`).
+
+---
+
+### 🛡️ [24 SEPTEMBER 2026] — P0-2 FINAL FORENSIC AUTHORIZATION BASELINE GATE & P0-1 CONSISTENCY RATIFICATION
+**Tag Rilis:** `stage1-slice-p02-authorization-baseline-ready`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[GOVERNANCE]` `[AUDIT]`  
+**Status Evidence:** 🟢 **`P0-2 FINAL FORENSIC AUTHORIZATION BASELINE SELESAI & DIRATIFIKASI: P0-2 BASELINE STATUS = READY FOR IMPLEMENTATION. MEMETAKAN SECARA FORENSIK MEKANISME AKTUAL OTORISASI AKSI, SUMBER DAYA, DAN TENANT DI SELURUH REPOSITORI NURSEFLOW. MENGINVENTARISASI 142 ENDPOINT REST AKTIF GATEWAY (7 PUBLIC, 21 PERMISSION_AUTHORIZED, 14 ROLE_AUTHORIZED, 100 AUTHENTICATED_ONLY, 0 CLINICALLY_AUTHORIZED, 0 RESOURCE_AUTHORIZED). MENGIDENTIFIKASI 28 AKSI KLINIS BERISIKO TINGGI (HIGH-RISK CLINICAL ACTIONS). MEREKONSILIASI DEBT-P0-005 (SUPER ADMIN CLINICAL SEPARATION OF DUTIES) DENGAN BUKTI KODE RBACGUARD.SERVICE.JS:20 (*) DAN RBACMIDDLEWARE.JS:104 (ISSUPERADMIN) SEBAGAI CLINICAL SECURITY & GOVERNANCE DEBT YANG WAJIB DITUTUP SEBELUM CLINICAL PILOT/PRODUKSI. MEMBUKTIKAN KESENJANGAN MASTER DATA (100% DOKTER PUNYA SIP) VS RUNTIME (0% CONTROLLER CEK SIP) SEBAGAI DEBT-P0-006. MENGUNGKAP TENANTMIDDLEWARE.JS TIDAK TERPASANG DI SERVER.JS (DEBT-P0-007) DAN KETIADAAN RESOURCE CARE-TEAM OWNERSHIP GUARD (DEBT-P0-008). MEMBUKTIKAN SEC-RISK-001 BAHWA VALIDATEENVIRONMENT BELUM DIPANGGIL SAAT STARTUP SERVER.JS SEHINGGA FALLBACK JWT_SECRET AKTIF DI PRODUKSI JIKA ENV KOSONG. MENETAPKAN TARGET ARSITEKTUR 9 LAPISAN, URUTAN IMPLEMENTASI BERBASIS DEPENDENSI (ZERO CODING), DAN ACCEPTANCE CRITERIA TERUKUR. SELURUH TEMUAN DAN HUTANG RESMI TERCATAT LENGKAP DALAM DOKUMEN TATA KELOLA P0-2_SECURITY_AUTHORIZATION_BASELINE.MD.`**
+
+1. **Penerbitan Dokumen Baseline Otorisasi & Konsistensi Resmi:**
+   - [`docs/governance/P0-1_CLOSURE_CONSISTENCY_AUDIT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/P0-1_CLOSURE_CONSISTENCY_AUDIT.md) — Audit Konsistensi Penutupan P0-1 (Option B — Conditioned Closure Terbukti).
+   - [`docs/governance/P0-2_SECURITY_AUTHORIZATION_BASELINE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/governance/P0-2_SECURITY_AUTHORIZATION_BASELINE.md) — Dokumen Baseline Forensik Keamanan & Otorisasi P0-2 Lengkap (18 Bagian).
+2. **Authoritative Debt Register Diperbarui:**
+   - `DEBT-P0-001`: Distributed Token Revocation (In-memory Set/Map, state lost on restart/multi-instance).
+   - `DEBT-P0-002`: Distributed Rate Limiter (In-memory Map, state divided/reset).
+   - `DEBT-P0-003`: Granular RBAC Route Guarding (100 endpoint authenticated-only).
+   - `DEBT-P0-004`: Regression Test Stabilization (Sprint D2.3 unapplied migration 067 & CSSD date-drift fixture).
+   - `DEBT-P0-005`: Super Admin Clinical Separation of Duties (CRITICAL — Must be closed before clinical pilot).
+   - `DEBT-P0-006`: Runtime Clinical Credential Enforcement (0% clinical controllers verify SIP/STR at runtime).
+   - `DEBT-P0-007`: Multi-Tenant Data Isolation Binding (tenantMiddleware unmounted in server.js, UUID fallback risks).
+   - `DEBT-P0-008`: Resource Ownership & Care-Team Guard (No doctor-to-patient assignment check).
+   - `DEBT-P0-009`: Session Invalidation on Account Status / Password Change.
+   - `DEBT-P0-010`: Clinical Forensic Audit Trail Fragmentation (High-risk actions missing from clinical_authorization_logs).
+   - `SEC-RISK-001`: Production JWT Secret Fallback & Missing Startup Fail-Fast Guard.
+3. **Status Gerbang:** `P0-2 BASELINE STATUS: READY FOR IMPLEMENTATION`.
+
+---
+
 ### 🏆 [23 SEPTEMBER 2026] — P0-1 FINAL CLOSURE AUDIT: RATIFIED UNDER OPTION B (CONDITIONAL CLOSURE)
 **Tag Rilis:** `stage1-slice-p01-final-closure-option-b`  
 **Kategori:** `[MAJOR]` `[SECURITY]` `[GOVERNANCE]` `[AUDIT]`  

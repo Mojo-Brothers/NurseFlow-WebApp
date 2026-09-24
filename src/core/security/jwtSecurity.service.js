@@ -6,7 +6,28 @@
 
 import crypto from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'NurseFlow_Enterprise_HIS_HMAC_Secret_2026_Secure_Key';
+export const getJwtSecret = () => {
+  const secret = process.env.JWT_SECRET;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction) {
+    if (!secret || secret.trim() === '') {
+      throw new Error('FATAL CONFIGURATION ERROR: JWT_SECRET environment variable is strictly required in production.');
+    }
+    if (secret.length < 32) {
+      throw new Error('FATAL CONFIGURATION ERROR: JWT_SECRET must be at least 32 characters in production.');
+    }
+    const lower = secret.toLowerCase();
+    if (['nurseflow_enterprise_his_hmac_secret', 'secret', 'default', 'changeme', 'password'].some(p => lower.includes(p))) {
+      throw new Error('FATAL CONFIGURATION ERROR: Insecure placeholder JWT_SECRET detected in production.');
+    }
+    return secret;
+  }
+
+  // Non-production fallback (development/test)
+  return secret || 'NurseFlow_Enterprise_HIS_HMAC_Secret_2026_Secure_Key';
+};
+
 const TOKEN_BLACKLIST_KEY = 'nurseflow_token_blacklist';
 const SERVER_TOKEN_BLACKLIST = new Set();
 
@@ -76,8 +97,9 @@ export const jwtSecurityService = {
     const refreshBody = base64UrlEncode(JSON.stringify(refreshPayload));
 
     // Real Cryptographic HMAC-SHA256 signature
-    const accessSignature = signHmacSha256(`${header}.${accessBody}`, JWT_SECRET);
-    const refreshSignature = signHmacSha256(`${header}.${refreshBody}`, JWT_SECRET);
+    const secret = getJwtSecret();
+    const accessSignature = signHmacSha256(`${header}.${accessBody}`, secret);
+    const refreshSignature = signHmacSha256(`${header}.${refreshBody}`, secret);
 
     return {
       accessToken: `${header}.${accessBody}.${accessSignature}`,
@@ -95,7 +117,8 @@ export const jwtSecurityService = {
    * - Issuer validation
    * - Blacklist revocation check
    */
-  verifyToken: (token, customSecret = JWT_SECRET) => {
+  verifyToken: (token, customSecret = null) => {
+    const secret = customSecret || getJwtSecret();
     if (!token || typeof token !== 'string') {
       return { valid: false, error: 'Token tidak ditemukan' };
     }
@@ -121,7 +144,7 @@ export const jwtSecurityService = {
 
     // 2. Cryptographic Signature Verification (Constant-Time)
     try {
-      const expectedSignature = signHmacSha256(`${headerB64}.${payloadB64}`, customSecret);
+      const expectedSignature = signHmacSha256(`${headerB64}.${payloadB64}`, secret);
       const providedSigBuf = Buffer.from(signatureB64, 'utf8');
       const expectedSigBuf = Buffer.from(expectedSignature, 'utf8');
 

@@ -64,5 +64,41 @@ export const authenticateJwt = (req, res, next) => {
   }
 
   req.user = verification.payload;
+
+  // Build authoritative server-side AuthorizationContext & validate tenant anti-spoofing
+  try {
+    if (verification.payload.tenantId) {
+      req.tenantId = verification.payload.tenantId;
+      req.tenant = Object.freeze({
+        tenantId: verification.payload.tenantId,
+        branchId: verification.payload.branchId || 'BRANCH-MAIN-CAMPUS',
+        resolvedAt: new Date().toISOString()
+      });
+      if (typeof res.setHeader === 'function') {
+        res.setHeader('X-Tenant-ID', verification.payload.tenantId);
+      }
+    }
+    req.authContext = createAuthorizationContext(verification.payload, req);
+  } catch (err) {
+    if (err.code === 'TENANT_MISMATCH' || err.statusCode === 403) {
+      if (typeof res.setHeader === 'function') {
+        res.setHeader('Content-Type', 'application/problem+json');
+        res.setHeader('X-Correlation-ID', correlationId);
+      }
+      return res.status(403).json({
+        success: false,
+        statusCode: 403,
+        error: 'TENANT_MISMATCH',
+        type: PROBLEM_TYPES.AUTHORIZATION_ERROR,
+        title: 'Tenant Spoofing Detected',
+        status: 403,
+        detail: err.message,
+        instance: req.originalUrl || req.path,
+        correlationId,
+        code: 'TENANT_MISMATCH'
+      });
+    }
+  }
+
   return next();
 };

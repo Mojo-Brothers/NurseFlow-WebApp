@@ -30,7 +30,10 @@ export const requirePermission = (requiredPermission) => {
       });
     }
 
-    const hasAccess = rbacGuardService.hasPermission(req.user.role, requiredPermission);
+    const userRoles = Array.isArray(req.user.roles) && req.user.roles.length > 0 
+      ? req.user.roles 
+      : (req.user.role ? [req.user.role] : []);
+    const hasAccess = rbacGuardService.hasPermission(userRoles, requiredPermission);
     if (!hasAccess) {
       if (typeof res.setHeader === 'function') {
         res.setHeader('Content-Type', 'application/problem+json');
@@ -101,8 +104,7 @@ export const requireRole = (allowedRoles = []) => {
     }
 
     const userRoles = Array.isArray(req.user.roles) ? req.user.roles : [userRole];
-    const isSuperAdmin = userRoles.includes('ROLE_SUPER_ADMIN') || userRoles.includes('ADMIN');
-    const hasRole = isSuperAdmin || allowedRoles.some(r => {
+    const hasRole = allowedRoles.some(r => {
       if (userRoles.includes(r) || userRole === r) return true;
       if (r === 'DOCTOR' && (userRoles.includes('ROLE_DOCTOR_DPJP') || userRoles.includes('ROLE_DOCTOR_EMERGENCY'))) return true;
       if (r === 'NURSE' && userRoles.includes('ROLE_NURSE')) return true;
@@ -110,7 +112,7 @@ export const requireRole = (allowedRoles = []) => {
       if (r === 'LAB_ANALYST' && userRoles.includes('ROLE_LAB_ANALYST')) return true;
       if (r === 'RADIOGRAPHER' && userRoles.includes('ROLE_RADIOGRAPHER')) return true;
       if (r === 'CASHIER' && userRoles.includes('ROLE_CASHIER')) return true;
-      if (r === 'ADMIN' && (userRoles.includes('ROLE_SUPER_ADMIN') || userRoles.includes('ROLE_IT_ADMIN'))) return true;
+      if (r === 'ADMIN' && (userRoles.includes('ROLE_SUPER_ADMIN') || userRoles.includes('ROLE_IT_ADMIN') || userRoles.includes('ADMIN'))) return true;
       return false;
     });
 

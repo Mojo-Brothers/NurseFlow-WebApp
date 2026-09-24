@@ -21,7 +21,22 @@ export const idempotencyMiddleware = (operationName = null) => {
 
     const trimmedKey = idempotencyKey.trim();
     const correlationId = req.correlationId || req.headers['x-correlation-id'] || `CORR-${Date.now()}`;
-    const tenantId = req.tenantId || req.user?.tenantId || '00000000-0000-0000-0000-000000000001';
+    const tenantId = req.tenantId || req.user?.tenantId;
+    if (!tenantId) {
+      if (typeof res.setHeader === 'function') {
+        res.setHeader('Content-Type', 'application/problem+json');
+        res.setHeader('X-Correlation-ID', correlationId);
+      }
+      return res.status(403).json({
+        type: PROBLEM_TYPES.AUTHORIZATION_ERROR,
+        title: 'Tenant Context Missing',
+        status: 403,
+        detail: 'Operasi idempoten memerlukan konteks tenant yang terotentikasi.',
+        instance: req.originalUrl || req.path,
+        correlationId,
+        code: 'TENANT_CONTEXT_MISSING'
+      });
+    }
     const actorId = req.user?.userId || req.user?.id || req.user?.email || 'ANONYMOUS';
     const operation = operationName || `${req.method} ${req.baseUrl || ''}${req.path || ''}`;
 

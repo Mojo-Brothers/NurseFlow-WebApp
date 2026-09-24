@@ -3,22 +3,41 @@
  * Standards: JCI MOI / ISO 27001 Security Access Control Matrix
  */
 
-import { ENTERPRISE_ROLES, ROLE_PERMISSIONS_MATRIX } from '../../shared/constants/roles.js';
+import { ENTERPRISE_ROLES, ROLE_PERMISSIONS_MATRIX, CLINICAL_PERMISSIONS, isClinicalPermission } from '../../shared/constants/roles.js';
 
-export { ENTERPRISE_ROLES, ROLE_PERMISSIONS_MATRIX };
+export { ENTERPRISE_ROLES, ROLE_PERMISSIONS_MATRIX, CLINICAL_PERMISSIONS, isClinicalPermission };
 
 export const rbacGuardService = {
   /**
-   * Check whether a role has permission against the SSOT matrix.
-   * Never fallback to super admin on unknown role!
+   * Check whether a role (or array of roles) has permission against the SSOT matrix.
+   * Super Administrator wildcard '*' NEVER matches clinical permissions!
    */
-  hasPermission: (userRole, requiredPermission) => {
-    if (!userRole || typeof userRole !== 'string') return false;
+  hasPermission: (userRoleOrRoles, requiredPermission) => {
+    if (!userRoleOrRoles || !requiredPermission) return false;
 
-    const roleDef = ROLE_PERMISSIONS_MATRIX[userRole];
-    if (!roleDef) return false;
-    if (roleDef.permissions.includes('*')) return true;
-    return roleDef.permissions.includes(requiredPermission);
+    const roles = Array.isArray(userRoleOrRoles) ? userRoleOrRoles : [userRoleOrRoles];
+    const isClinical = isClinicalPermission(requiredPermission);
+
+    for (const role of roles) {
+      if (typeof role !== 'string') continue;
+      const roleDef = ROLE_PERMISSIONS_MATRIX[role];
+      if (!roleDef) continue;
+
+      // Super Admin wildcard '*' handling: System Admin authority != Clinical authority
+      if (roleDef.permissions.includes('*')) {
+        if (!isClinical) {
+          return true;
+        }
+        // Super Admin wildcard does NOT grant clinical permissions
+        continue;
+      }
+
+      if (roleDef.permissions.includes(requiredPermission)) {
+        return true;
+      }
+    }
+
+    return false;
   },
 
   getAllRoles: () => Object.entries(ROLE_PERMISSIONS_MATRIX).map(([id, val]) => ({
