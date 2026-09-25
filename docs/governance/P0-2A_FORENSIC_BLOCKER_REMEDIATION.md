@@ -90,9 +90,9 @@ Security tests in `p02a_authorization_foundation.test.js` mocked `clinicalCreden
 | 8 | Missing STR | No STR row in `staff_credentials` | `DENIED_CREDENTIAL_MISSING` | **PROVEN** |
 | 9 | Inactive Clinical Staff | `clinical_staff_profiles.is_active = false` | `DENIED_STAFF_INACTIVE` | **PROVEN** |
 | 10 | Expired Privilege | `clinical_privileges.effective_until < NOW()` | `DENIED_PRIVILEGE_EXPIRED` | **PROVEN** |
-| 11 | Revoked Privilege | `privilege_status = 'REVOKED'` | `DENIED_PRIVILEGE_REVOKED` | **PROVEN** |
+| 11 | Revoked Privilege | `privilege_status = 'REVOKED'` | `DENIED_NO_PRIVILEGE` | **PROVEN** |
 | 12 | Wrong Tenant Credential | Clinician tenant `Tenant B` vs Context `Tenant A` | `DENIED_TENANT_MISMATCH` | **PROVEN** |
-| 13 | Cross-Practitioner Credential | Credential ID belonging to dr. Siti passed for another doctor | `DENIED_STAFF_MISMATCH` | **PROVEN** |
+| 13 | Cross-Practitioner Credential | Credential ID belonging to dr. Siti passed for another doctor | `DENIED_CREDENTIAL_MISSING` | **PROVEN** |
 
 ---
 
@@ -106,12 +106,12 @@ Previously, any authenticated user sending the HTTP header `x-break-the-glass: t
    - Added `'CLINICAL_BREAK_GLASS'` to `CLINICAL_PERMISSIONS` in `src/shared/constants/roles.js`.
    - Granted ONLY to appropriate clinical roles: `ROLE_DOCTOR_DPJP`, `ROLE_DOCTOR_EMERGENCY`, `ROLE_NURSE`.
    - Denied to administrative and non-emergency roles: `ROLE_SUPER_ADMIN`, `ROLE_IT_ADMIN`, `ROLE_PHARMACIST`, `ROLE_LAB_TECHNICIAN`, `ROLE_RADIOLOGIST`.
-   - Actors lacking `CLINICAL_BREAK_GLASS` are denied with `DENIED_BREAK_THE_GLASS_PERMISSION_REQUIRED`.
+   - Actors lacking `CLINICAL_BREAK_GLASS` are denied with `DENIED_BTG_UNAUTHORIZED`.
 2. **Mandatory Meaningful Emergency Justification:**
    - Rejected `undefined`, `null`, empty string `""`, and whitespace-only `"   "`.
    - Enforced a minimum length of 10 characters.
    - Prohibited uninformative boilerplate terms: `"BTG"`, `"emergency"`, `"override"`, `"darurat"`, `"urgent"`, `"test"`.
-   - Missing or trivial reasons are denied with `DENIED_BREAK_THE_GLASS_REASON_MANDATORY`.
+   - Missing or trivial reasons are denied with `DENIED_BTG_INVALID_REASON`.
 3. **Dedicated Forensic Ledger Persistence (`break_glass_audit_ledger`):**
    - In `resourceAuthorization.service.js`, every approved BTG event persists a dedicated record into `break_glass_audit_ledger`:
      - `actor_user_id`: Authenticated user UUID (`auth_users.id`)

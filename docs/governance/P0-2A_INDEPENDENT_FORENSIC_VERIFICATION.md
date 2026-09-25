@@ -162,8 +162,8 @@ Inspected [`server/services/clinicalCredential.service.js`](file:///c:/ALL%20DAT
   - `revoked_at IS NULL`
   - `valid_to >= NOW()` (evaluation date check)
   - Matches requested `credentialType` ('SIP' or 'STR').
-- **Failure Decisions:** Correctly returns `DENIED_CREDENTIAL_NOT_FOUND`, `DENIED_CREDENTIAL_EXPIRED`, `DENIED_CREDENTIAL_REVOKED`, `DENIED_CREDENTIAL_INACTIVE`.
-- **Live Database Disconnect:** In the seed database, all 98 rows in `clinical_staff_profiles` have `user_id = NULL`. Furthermore, `master_credentials` has 0 rows. In live runtime, any credential query for an authenticated user will evaluate to `DENIED_CREDENTIAL_NOT_FOUND` (failing closed).
+- **Failure Decisions:** Correctly returns `DENIED_CREDENTIAL_MISSING`, `DENIED_CREDENTIAL_EXPIRED`, `DENIED_CREDENTIAL_REVOKED`, `DENIED_STAFF_INACTIVE`.
+- **Live Database Disconnect:** In the seed database, all 98 rows in `clinical_staff_profiles` have `user_id = NULL`. Furthermore, `master_credentials` has 0 rows. In live runtime, any credential query for an authenticated user will evaluate to `DENIED_CREDENTIAL_MISSING` (failing closed).
 
 ---
 
@@ -206,7 +206,7 @@ Inspected BTG logic across [`resourceAuthorization.service.js:109-116`](file:///
 | Super Admin Restriction | Enforced (`DENIED_SYSTEM_ADMIN_CLINICAL_RESTRICTION`) | Enforced (`DENIED_SYSTEM_ADMIN_CLINICAL_RESTRICTION`) |
 | Role Check | Enforced (`DENIED_ROLE_FORBIDDEN`) | Enforced (`DENIED_ROLE_FORBIDDEN`) |
 | Permission Check | Enforced (`DENIED_PERMISSION_MISSING`) | Enforced (`DENIED_PERMISSION_MISSING`) |
-| Clinical Credential | Enforced (`DENIED_CREDENTIAL_NOT_FOUND`) | Enforced (`DENIED_CREDENTIAL_NOT_FOUND`) |
+| Clinical Credential | Enforced (`DENIED_CREDENTIAL_MISSING`) | Enforced (`DENIED_CREDENTIAL_MISSING`) |
 | Clinical Privilege | Enforced (`DENIED_NO_PRIVILEGE`) | Enforced (`DENIED_NO_PRIVILEGE`) |
 | **Resource Ownership** | Enforced (Must be attending DPJP) | **BYPASSED (`AUTHORIZED_BREAK_THE_GLASS`)** |
 | **Care Team Assignment**| Enforced (Must be assigned to encounter) | **BYPASSED (`AUTHORIZED_BREAK_THE_GLASS`)** |
