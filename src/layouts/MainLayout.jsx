@@ -128,6 +128,7 @@ const ENTERPRISE_NAV_SCHEMA = [
     icon: 'admin_panel_settings',
     items: [
       { name: 'JCI Forensic Audit Trail', path: '/audit-trail', icon: 'security' },
+      { name: 'Project Governance & Control', path: '/engineering/governance', icon: 'policy' },
       { name: 'Bed Management Center', path: '/bed-management', icon: 'single_bed' },
       { name: 'Kredensial & Hak Klinis', path: '/staff-privileges', icon: 'badge' },
       { name: 'Master Data Terpadu (18 Modul)', path: '/master-data', icon: 'dataset' },

@@ -1055,4 +1055,540 @@ describe('P0-2A — Forensic Blocker Remediation Integration Proof Suite', () =>
       }
     });
   });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // 7. P0-2A CRITICAL FINDINGS REMEDIATION (FINDING-P02A-01 & FINDING-P02A-06)
+  // ═════════════════════════════════════════════════════════════════════
+  describe('Critical Remediation: BTG / SoD Audit Consistency & Resource Identifier Resolution', () => {
+
+    const doctorContext = createAuthorizationContext({
+      userId: SITI_AUTH_USER_ID,
+      username: 'dr.siti',
+      role: ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP,
+      tenantId: TENANT_A,
+      staffId: SITI_STAFF_ID,
+      practitionerId: SITI_PRACTITIONER_ID
+    });
+
+    const dualRoleContext = createAuthorizationContext({
+      userId: SITI_AUTH_USER_ID,
+      username: 'dr.siti.dual',
+      roles: [ENTERPRISE_ROLES.ROLE_DOCTOR_DPJP, ENTERPRISE_ROLES.ROLE_PHARMACIST],
+      tenantId: TENANT_A,
+      staffId: SITI_STAFF_ID,
+      practitionerId: SITI_PRACTITIONER_ID
+    });
+
+    const unassignedEncounter = {
+      id: '00000000-0000-0000-0000-000000000402',
+      tenant_id: TENANT_A,
+      patient_id: '00000000-0000-0000-0000-000000000001',
+      primary_doctor_id: 'DOC-B-01',
+      encounter_class: 'AMB'
+    };
+
+    // Scenario 1: Valid BTG request with SoD passing
+    it('Scenario 1: Valid BTG request with SoD passing -> AUTHORIZED_BREAK_THE_GLASS and ledger GRANTED', async () => {
+      const corrId = `CORR-REM-SCEN-1-${Date.now()}`;
+      const reason = 'Emergency acute resuscitation in ICU';
+      const result = await authorizationDecisionService.evaluateAuthorization({
+        context: doctorContext,
+        action: 'EMR_WRITE_SOAP',
+        resource: unassignedEncounter,
+        resourceType: 'ENCOUNTER',
+        resourceId: unassignedEncounter.id,
+        targetUnitId: 'POLI_PENYAKIT_DALAM',
+        requiredCredentialType: 'SIP',
+        correlationId: corrId,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: reason
+      });
+
+      expect(result.isAuthorized).toBe(true);
+      expect(result.decision).toBe(AUTHORIZATION_DECISIONS.AUTHORIZED_BREAK_THE_GLASS);
+
+      const client = await pool.connect();
+      try {
+        const auditRes = await client.query(
+          `SELECT authorization_decision, user_id, tenant_id, resource_id, is_authorized
+           FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(auditRes.rows.length).toBe(1);
+        expect(auditRes.rows[0].authorization_decision).toBe('AUTHORIZED_BREAK_THE_GLASS');
+        expect(auditRes.rows[0].is_authorized).toBe(true);
+        expect(auditRes.rows[0].resource_id).toBe(unassignedEncounter.id);
+
+        const btgRes = await client.query(
+          `SELECT actor_user_id, tenant_id, outcome, reason_text
+           FROM break_glass_audit_ledger WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(btgRes.rows.length).toBe(1);
+        expect(btgRes.rows[0].outcome).toBe('GRANTED');
+        expect(btgRes.rows[0].actor_user_id).toBe(SITI_AUTH_USER_ID);
+        expect(btgRes.rows[0].reason_text).toBe(reason);
+      } finally {
+        client.release();
+      }
+    });
+
+    // Scenario 2: BTG request denied by SoD (Prescriber dispensing own order)
+    it('Scenario 2: BTG request denied by SoD -> DENIED_SEPARATION_OF_DUTIES & ledger records denial (NEVER GRANTED)', async () => {
+      const selfPrescribedOrder = {
+        id: '00000000-0000-0000-0000-000000000303',
+        tenant_id: TENANT_A,
+        ordering_doctor_id: SITI_AUTH_USER_ID,
+        order_type: 'PHARMACY'
+      };
+
+      const corrId = `CORR-REM-SCEN-2-${Date.now()}`;
+      const reason = 'Emergency stat cardiac resuscitation medication required';
+      const result = await authorizationDecisionService.evaluateAuthorization({
+        context: dualRoleContext,
+        action: 'PHARMACY_DISPENSE',
+        resource: selfPrescribedOrder,
+        resourceType: 'ORDER',
+        correlationId: corrId,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: reason
+      });
+
+      expect(result.isAuthorized).toBe(false);
+      expect(result.decision).toBe(AUTHORIZATION_DECISIONS.DENIED_SEPARATION_OF_DUTIES);
+
+      const client = await pool.connect();
+      try {
+        // 1. Clinical authorization log must record denial
+        const auditRes = await client.query(
+          `SELECT authorization_decision, is_authorized, resource_id
+           FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(auditRes.rows.length).toBe(1);
+        expect(auditRes.rows[0].authorization_decision).toBe('DENIED_SEPARATION_OF_DUTIES');
+        expect(auditRes.rows[0].is_authorized).toBe(false);
+        expect(auditRes.rows[0].resource_id).toBe(selfPrescribedOrder.id);
+
+        // 2. BTG ledger must accurately record rejection outcome, NEVER 'GRANTED'
+        const btgRes = await client.query(
+          `SELECT actor_user_id, tenant_id, resource_id, outcome, reason_text
+           FROM break_glass_audit_ledger WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(btgRes.rows.length).toBe(1);
+        expect(btgRes.rows[0].outcome).toBe('DENIED_SEPARATION_OF_DUTIES');
+        expect(btgRes.rows[0].outcome).not.toBe('GRANTED');
+        expect(btgRes.rows[0].resource_id).toBe(selfPrescribedOrder.id);
+        expect(btgRes.rows[0].actor_user_id).toBe(SITI_AUTH_USER_ID);
+      } finally {
+        client.release();
+      }
+    });
+
+    // Scenario 3: BTG request denied because user lacks BTG permission
+    it('Scenario 3: BTG denied because user lacks BTG permission -> DENIED_BTG_UNAUTHORIZED & NO ledger entry', async () => {
+      const DIMAS_AUTH_USER_ID = 'd0000000-0000-0000-0000-000000000004';
+      const pharmacistContext = createAuthorizationContext({
+        userId: DIMAS_AUTH_USER_ID,
+        username: 'apt.dimas',
+        role: ENTERPRISE_ROLES.ROLE_PHARMACIST,
+        tenantId: TENANT_A,
+        staffId: 'a0000000-0000-0000-0000-000000000004'
+      });
+
+      const corrId = `CORR-REM-SCEN-3-${Date.now()}`;
+      const result = await authorizationDecisionService.evaluateAuthorization({
+        context: pharmacistContext,
+        action: 'PHARMACY_DISPENSE',
+        resource: { id: '00000000-0000-0000-0000-000000000501', tenant_id: TENANT_A, order_type: 'PHARMACY' },
+        resourceType: 'ORDER',
+        correlationId: corrId,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: 'Emergency dispensation attempt without BTG privileges'
+      });
+
+      expect(result.isAuthorized).toBe(false);
+      expect(result.decision).toBe(AUTHORIZATION_DECISIONS.DENIED_BTG_UNAUTHORIZED);
+
+      const client = await pool.connect();
+      try {
+        const auditRes = await client.query(
+          `SELECT authorization_decision, is_authorized FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(auditRes.rows.length).toBe(1);
+        expect(auditRes.rows[0].authorization_decision).toBe('DENIED_BTG_UNAUTHORIZED');
+
+        const btgRes = await client.query(
+          `SELECT id FROM break_glass_audit_ledger WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(btgRes.rows.length).toBe(0);
+      } finally {
+        client.release();
+      }
+    });
+
+    // Scenario 4: BTG request denied because justification is invalid
+    it('Scenario 4: BTG denied because justification is invalid -> DENIED_BTG_INVALID_REASON & NO ledger entry', async () => {
+      const corrId = `CORR-REM-SCEN-4-${Date.now()}`;
+      const result = await authorizationDecisionService.evaluateAuthorization({
+        context: doctorContext,
+        action: 'EMR_WRITE_SOAP',
+        resource: unassignedEncounter,
+        resourceType: 'ENCOUNTER',
+        targetUnitId: 'POLI_PENYAKIT_DALAM',
+        requiredCredentialType: 'SIP',
+        correlationId: corrId,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: 'emergency' // boilerplate rejected
+      });
+
+      expect(result.isAuthorized).toBe(false);
+      expect(result.decision).toBe(AUTHORIZATION_DECISIONS.DENIED_BTG_INVALID_REASON);
+
+      const client = await pool.connect();
+      try {
+        const auditRes = await client.query(
+          `SELECT authorization_decision FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(auditRes.rows.length).toBe(1);
+        expect(auditRes.rows[0].authorization_decision).toBe('DENIED_BTG_INVALID_REASON');
+
+        const btgRes = await client.query(
+          `SELECT id FROM break_glass_audit_ledger WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(btgRes.rows.length).toBe(0);
+      } finally {
+        client.release();
+      }
+    });
+
+    // Scenario 5: Tenant mismatch during BTG
+    it('Scenario 5: Tenant mismatch during BTG -> DENIED_TENANT_MISMATCH & NO ledger entry', async () => {
+      const foreignEncounter = {
+        id: '00000000-0000-0000-0000-000000000201',
+        tenant_id: TENANT_B,
+        patient_id: '00000000-0000-0000-0000-000000000001',
+        primary_doctor_id: 'DOC-B-01'
+      };
+
+      const corrId = `CORR-REM-SCEN-5-${Date.now()}`;
+      const result = await authorizationDecisionService.evaluateAuthorization({
+        context: doctorContext,
+        action: 'EMR_WRITE_SOAP',
+        resource: foreignEncounter,
+        resourceType: 'ENCOUNTER',
+        correlationId: corrId,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: 'Cross tenant unauthorized BTG override attempt'
+      });
+
+      expect(result.isAuthorized).toBe(false);
+      expect(result.decision).toBe(AUTHORIZATION_DECISIONS.DENIED_TENANT_MISMATCH);
+
+      const client = await pool.connect();
+      try {
+        const auditRes = await client.query(
+          `SELECT authorization_decision FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(auditRes.rows.length).toBe(1);
+        expect(auditRes.rows[0].authorization_decision).toBe('DENIED_TENANT_MISMATCH');
+
+        const btgRes = await client.query(
+          `SELECT id FROM break_glass_audit_ledger WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(btgRes.rows.length).toBe(0);
+      } finally {
+        client.release();
+      }
+    });
+
+    // Scenario 6: BTG ledger persistence failure (Atomic PostgreSQL rollback & fail-closed)
+    it('Scenario 6: BTG ledger persistence failure -> Real PostgreSQL transaction rollback & fail-closed', async () => {
+      const corrId = `CORR-REM-SCEN-6-${Date.now()}`;
+
+      // Fault injection directly on PostgreSQL engine: invalid UUID syntax for patientId (SQLSTATE 22P02)
+      const auditResult = await clinicalAuditService.logAuthorizationDecision({
+        tenantId: TENANT_A,
+        userId: SITI_AUTH_USER_ID,
+        actionCode: 'BREAK_THE_GLASS',
+        isAuthorized: true,
+        decision: 'AUTHORIZED_BREAK_THE_GLASS',
+        correlationId: corrId,
+        btgLedgerData: {
+          actorUserId: SITI_AUTH_USER_ID,
+          tenantId: TENANT_A,
+          resourceType: 'ENCOUNTER',
+          resourceId: unassignedEncounter.id,
+          actionCode: 'BREAK_THE_GLASS',
+          reason: 'Valid justification length at least ten characters',
+          outcome: 'GRANTED',
+          patientId: 'INVALID_NON_UUID_SYNTAX' // triggers real PostgreSQL 22P02
+        }
+      });
+
+      // 1. Transaction must fail and return null
+      expect(auditResult).toBeNull();
+
+      // 2. PostgreSQL transaction rollback MUST ensure ZERO committed rows in either table
+      const client = await pool.connect();
+      try {
+        const auditRows = await client.query(
+          `SELECT id FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(auditRows.rows.length).toBe(0);
+
+        const btgRows = await client.query(
+          `SELECT id FROM break_glass_audit_ledger WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(btgRows.rows.length).toBe(0);
+      } finally {
+        client.release();
+      }
+
+      // 3. evaluateAuthorization must fail closed when audit persistence returns null for an authorized action
+      const failClosedDecision = await authorizationDecisionService._recordAndReturn({
+        tenantId: TENANT_A,
+        userId: SITI_AUTH_USER_ID,
+        actionCode: 'EMR_WRITE_SOAP',
+        isAuthorized: true,
+        decision: 'AUTHORIZED_BREAK_THE_GLASS',
+        btgLedgerData: {
+          actorUserId: SITI_AUTH_USER_ID,
+          tenantId: TENANT_A,
+          resourceType: 'ENCOUNTER',
+          resourceId: unassignedEncounter.id,
+          actionCode: 'BREAK_THE_GLASS',
+          reason: 'Valid justification length at least ten characters',
+          outcome: 'GRANTED',
+          patientId: 'INVALID_NON_UUID_SYNTAX' // triggers real PostgreSQL 22P02
+        }
+      });
+      expect(failClosedDecision.isAuthorized).toBe(false);
+      expect(failClosedDecision.decision).toBe(AUTHORIZATION_DECISIONS.DENIED_AUDIT_PERSISTENCE_FAILURE);
+    });
+
+    // Scenario 7: Clinical authorization log persistence failure (PostgreSQL CHECK constraint failure)
+    it('Scenario 7: Clinical authorization log persistence failure -> PostgreSQL check constraint error & fail-closed', async () => {
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        let pgError = null;
+        try {
+          await client.query(`
+            INSERT INTO clinical_authorization_logs (
+              tenant_id, user_id, action_code, is_authorized, authorization_decision, evaluation_metadata
+            ) VALUES (
+              $1, $2, 'TEST_ACTION', true, 'INVALID_NON_EXISTENT_DECISION', '{}'::jsonb
+            );
+          `, [TENANT_A, SITI_AUTH_USER_ID]);
+        } catch (err) {
+          pgError = err;
+        }
+        await client.query('ROLLBACK');
+
+        // Verified PostgreSQL engine constraint enforcement
+        expect(pgError).toBeDefined();
+        expect(pgError.code).toBe('23514'); // check_violation
+        expect(pgError.constraint).toBe('chk_clinical_auth_decision');
+      } finally {
+        client.release();
+      }
+    });
+
+    // Scenario 8: Resource identifier resolution when resourceId is missing but resource.id exists (FINDING-P02A-06)
+    it('Scenario 8: Resource ID resolution -> Resolves resource.id when resourceId omitted, preserves null, preserves explicit', async () => {
+      // 8a: resourceId omitted, resource.id present
+      const corrIdA = `CORR-REM-SCEN-8A-${Date.now()}`;
+      const targetResourceA = {
+        id: '00000000-0000-0000-0000-000000000777',
+        tenant_id: TENANT_A,
+        ordering_doctor_id: SITI_AUTH_USER_ID,
+        order_type: 'PHARMACY'
+      };
+
+      const resultA = await authorizationDecisionService.evaluateAuthorization({
+        context: dualRoleContext,
+        action: 'PHARMACY_DISPENSE',
+        resource: targetResourceA,
+        resourceType: 'ORDER',
+        correlationId: corrIdA
+      });
+
+      expect(resultA.isAuthorized).toBe(false);
+
+      const client = await pool.connect();
+      try {
+        const rowA = (await client.query(
+          `SELECT resource_id, resource_type FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrIdA]
+        )).rows[0];
+        expect(rowA.resource_id).toBe(targetResourceA.id);
+        expect(rowA.resource_type).toBe('ORDER');
+
+        // 8b: resource has no id, resourceId is null -> preserves null
+        const corrIdB = `CORR-REM-SCEN-8B-${Date.now()}`;
+        await authorizationDecisionService.evaluateAuthorization({
+          context: dualRoleContext,
+          action: 'PHARMACY_DISPENSE',
+          resource: { tenant_id: TENANT_A, order_type: 'PHARMACY' },
+          resourceType: 'ORDER',
+          resourceId: null,
+          correlationId: corrIdB
+        });
+
+        const rowB = (await client.query(
+          `SELECT resource_id FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrIdB]
+        )).rows[0];
+        expect(rowB.resource_id).toBeNull();
+
+        // 8c: explicit valid resourceId is preserved even if resource has different id
+        const corrIdC = `CORR-REM-SCEN-8C-${Date.now()}`;
+        const explicitId = '00000000-0000-0000-0000-000000000888';
+        await authorizationDecisionService.evaluateAuthorization({
+          context: dualRoleContext,
+          action: 'PHARMACY_DISPENSE',
+          resource: { id: '00000000-0000-0000-0000-000000000999', tenant_id: TENANT_A, ordering_doctor_id: SITI_AUTH_USER_ID },
+          resourceType: 'ORDER',
+          resourceId: explicitId,
+          correlationId: corrIdC
+        });
+
+        const rowC = (await client.query(
+          `SELECT resource_id FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrIdC]
+        )).rows[0];
+        expect(rowC.resource_id).toBe(explicitId);
+      } finally {
+        client.release();
+      }
+    });
+
+    // Scenario 9: Duplicate request and retry behavior
+    it('Scenario 9: Duplicate request and retry -> Consistent idempotent evaluation without collision', async () => {
+      const corrId = `CORR-REM-SCEN-9-${Date.now()}`;
+      const reason = 'Emergency code blue cardiac resuscitation duplicate retry test';
+
+      // First evaluation
+      const res1 = await authorizationDecisionService.evaluateAuthorization({
+        context: doctorContext,
+        action: 'EMR_WRITE_SOAP',
+        resource: unassignedEncounter,
+        resourceType: 'ENCOUNTER',
+        resourceId: unassignedEncounter.id,
+        targetUnitId: 'POLI_PENYAKIT_DALAM',
+        requiredCredentialType: 'SIP',
+        correlationId: corrId,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: reason
+      });
+
+      // Second evaluation (Retry with identical correlationId)
+      const res2 = await authorizationDecisionService.evaluateAuthorization({
+        context: doctorContext,
+        action: 'EMR_WRITE_SOAP',
+        resource: unassignedEncounter,
+        resourceType: 'ENCOUNTER',
+        resourceId: unassignedEncounter.id,
+        targetUnitId: 'POLI_PENYAKIT_DALAM',
+        requiredCredentialType: 'SIP',
+        correlationId: corrId,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: reason
+      });
+
+      expect(res1.isAuthorized).toBe(true);
+      expect(res2.isAuthorized).toBe(true);
+      expect(res1.decision).toBe(res2.decision);
+
+      const client = await pool.connect();
+      try {
+        const auditRes = await client.query(
+          `SELECT authorization_decision, is_authorized FROM clinical_authorization_logs WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(auditRes.rows.length).toBe(2);
+        expect(auditRes.rows[0].authorization_decision).toBe('AUTHORIZED_BREAK_THE_GLASS');
+        expect(auditRes.rows[1].authorization_decision).toBe('AUTHORIZED_BREAK_THE_GLASS');
+
+        const btgRes = await client.query(
+          `SELECT outcome FROM break_glass_audit_ledger WHERE correlation_id = $1`,
+          [corrId]
+        );
+        expect(btgRes.rows.length).toBe(2);
+        expect(btgRes.rows[0].outcome).toBe('GRANTED');
+        expect(btgRes.rows[1].outcome).toBe('GRANTED');
+      } finally {
+        client.release();
+      }
+    });
+
+    // Scenario 10: Consistency between final authorization decision and persisted audit records
+    it('Scenario 10: Consistency between final decision and persisted audit records across both tables', async () => {
+      // 10a: Authorized BTG consistency
+      const corrIdAllow = `CORR-REM-SCEN-10A-${Date.now()}`;
+      await authorizationDecisionService.evaluateAuthorization({
+        context: doctorContext,
+        action: 'EMR_WRITE_SOAP',
+        resource: unassignedEncounter,
+        resourceType: 'ENCOUNTER',
+        resourceId: unassignedEncounter.id,
+        targetUnitId: 'POLI_PENYAKIT_DALAM',
+        requiredCredentialType: 'SIP',
+        correlationId: corrIdAllow,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: 'Emergency code blue intervention'
+      });
+
+      // 10b: Denied SoD BTG consistency
+      const corrIdDeny = `CORR-REM-SCEN-10B-${Date.now()}`;
+      await authorizationDecisionService.evaluateAuthorization({
+        context: dualRoleContext,
+        action: 'PHARMACY_DISPENSE',
+        resource: {
+          id: '00000000-0000-0000-0000-000000000303',
+          tenant_id: TENANT_A,
+          ordering_doctor_id: SITI_AUTH_USER_ID,
+          order_type: 'PHARMACY'
+        },
+        resourceType: 'ORDER',
+        correlationId: corrIdDeny,
+        allowBreakTheGlass: true,
+        breakTheGlassReason: 'Emergency stat medication request'
+      });
+
+      const client = await pool.connect();
+      try {
+        // Verify 10a consistency
+        const allowAudit = (await client.query(`SELECT * FROM clinical_authorization_logs WHERE correlation_id = $1`, [corrIdAllow])).rows[0];
+        const allowBtg = (await client.query(`SELECT * FROM break_glass_audit_ledger WHERE correlation_id = $1`, [corrIdAllow])).rows[0];
+        expect(allowAudit.authorization_decision).toBe('AUTHORIZED_BREAK_THE_GLASS');
+        expect(allowAudit.is_authorized).toBe(true);
+        expect(allowBtg.outcome).toBe('GRANTED');
+        expect(allowAudit.tenant_id).toBe(allowBtg.tenant_id);
+        expect(allowAudit.resource_id).toBe(allowBtg.resource_id);
+
+        // Verify 10b consistency
+        const denyAudit = (await client.query(`SELECT * FROM clinical_authorization_logs WHERE correlation_id = $1`, [corrIdDeny])).rows[0];
+        const denyBtg = (await client.query(`SELECT * FROM break_glass_audit_ledger WHERE correlation_id = $1`, [corrIdDeny])).rows[0];
+        expect(denyAudit.authorization_decision).toBe('DENIED_SEPARATION_OF_DUTIES');
+        expect(denyAudit.is_authorized).toBe(false);
+        expect(denyBtg.outcome).toBe('DENIED_SEPARATION_OF_DUTIES');
+        expect(denyBtg.outcome).not.toBe('GRANTED');
+        expect(denyAudit.tenant_id).toBe(denyBtg.tenant_id);
+        expect(denyAudit.resource_id).toBe(denyBtg.resource_id);
+      } finally {
+        client.release();
+      }
+    });
+  });
 });

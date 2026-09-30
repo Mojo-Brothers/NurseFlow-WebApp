@@ -51,6 +51,7 @@ export const clinicalAuditService = {
    * @param {string} [params.denialReason] - Human-readable denial explanation
    * @param {string} [params.correlationId] - Distributed trace / request correlation ID
    * @param {Object} [params.evaluationMetadata] - Contextual metadata
+   * @param {Object} [params.btgLedgerData] - Optional payload for atomic break_glass_audit_ledger persistence
    * @returns {Promise<Object>} Inserted log record
    */
   async logAuthorizationDecision({
@@ -67,7 +68,8 @@ export const clinicalAuditService = {
     decision,
     denialReason = null,
     correlationId = null,
-    evaluationMetadata = {}
+    evaluationMetadata = {},
+    btgLedgerData = null
   }) {
     if (!tenantId) {
       structuredLoggerService.warn('AUDIT_LOG_MISSING_TENANT', { decision, actionCode });
@@ -87,6 +89,8 @@ export const clinicalAuditService = {
       const pool = postgresPoolService.getPool();
       const client = await pool.connect();
       try {
+        await client.query('BEGIN');
+
         const query = `
           INSERT INTO clinical_authorization_logs (
             tenant_id,
@@ -125,12 +129,19 @@ export const clinicalAuditService = {
           JSON.stringify(cleanMetadata)
         ];
 
+        let auditLogRow = null;
+
+        // Use PostgreSQL SAVEPOINT so that any FK fallback does not abort the outer transaction block
+        await client.query('SAVEPOINT audit_savepoint');
         try {
           const result = await client.query(query, values);
-          return result.rows[0];
+          await client.query('RELEASE SAVEPOINT audit_savepoint');
+          auditLogRow = result.rows[0];
         } catch (insertErr) {
           // If FK violation on user_id or staff_id (e.g. unknown actor ID), record safely with nullified FK to ensure forensic audit of the rejection is NOT lost
           if (insertErr.code === '23503') {
+            await client.query('ROLLBACK TO SAVEPOINT audit_savepoint');
+            await client.query('RELEASE SAVEPOINT audit_savepoint');
             structuredLoggerService.warn('AUDIT_LOG_UNKNOWN_ACTOR_FK_FALLBACK', { userId, staffId, tenantId, detail: insertErr.detail });
             const safeValues = [...values];
             safeValues[1] = null; // nullify staff_id to satisfy FK constraint
@@ -138,10 +149,70 @@ export const clinicalAuditService = {
             const safeMetadata = { ...cleanMetadata, unverified_actor_id: userId, unverified_staff_id: staffId, fk_rejection: true };
             safeValues[13] = JSON.stringify(safeMetadata);
             const fallbackRes = await client.query(query, safeValues);
-            return fallbackRes.rows[0];
+            auditLogRow = fallbackRes.rows[0];
+          } else {
+            throw insertErr;
           }
-          throw insertErr;
         }
+
+        // Atomically persist to break_glass_audit_ledger if BTG ledger data is provided
+        let btgLedgerRow = null;
+        if (btgLedgerData) {
+          const btgQuery = `
+            INSERT INTO break_glass_audit_ledger (
+              actor_user_id,
+              tenant_id,
+              resource_type,
+              resource_id,
+              action_code,
+              reason,
+              reason_text,
+              correlation_id,
+              outcome,
+              patient_id,
+              encounter_id,
+              created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+            RETURNING id, outcome;
+          `;
+
+          const rawReason = btgLedgerData.reasonText || btgLedgerData.reason || denialReason || 'Emergency clinical action';
+          const validReason = (rawReason && rawReason.trim().length >= 10)
+            ? rawReason.trim()
+            : 'Emergency Break-The-Glass Protocol Invoked';
+
+          const btgValues = [
+            String(btgLedgerData.actorUserId || userId || actorId || 'UNKNOWN_ACTOR'),
+            String(btgLedgerData.tenantId || tenantId),
+            String(btgLedgerData.resourceType || resourceType || 'ENCOUNTER'),
+            String(btgLedgerData.resourceId || resourceId || 'UNKNOWN'),
+            String(btgLedgerData.actionCode || actionCode || 'BREAK_THE_GLASS'),
+            validReason,
+            validReason,
+            correlationId,
+            String(btgLedgerData.outcome || (isAuthorized ? 'GRANTED' : decision)),
+            btgLedgerData.patientId || null,
+            btgLedgerData.encounterId || null
+          ];
+
+          const btgRes = await client.query(btgQuery, btgValues);
+          btgLedgerRow = btgRes.rows[0];
+        }
+
+        await client.query('COMMIT');
+
+        return {
+          ...auditLogRow,
+          btgLedgerId: btgLedgerRow ? btgLedgerRow.id : null,
+          btgOutcome: btgLedgerRow ? btgLedgerRow.outcome : null
+        };
+      } catch (txErr) {
+        try {
+          await client.query('ROLLBACK');
+        } catch (rbErr) {
+          // Ignore rollback error
+        }
+        throw txErr;
       } finally {
         client.release();
       }

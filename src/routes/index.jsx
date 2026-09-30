@@ -9,6 +9,7 @@ import { pharmacyRoutes } from './pharmacy.routes';
 import { adminRoutes } from './admin.routes';
 import { patientRoutes } from './patient.routes';
 import { enterpriseRoutes } from './enterprise.routes';
+import { governanceRoutes } from './governance.routes';
 import { useAuth } from '../contexts/useAuth';
 
 import ClinicalLoadingSpinner from '../components/ui/ClinicalLoadingSpinner';
@@ -29,6 +30,7 @@ function AuthRedirector({ children }) {
 
 export const router = createBrowserRouter([
   ...authRoutes,
+  ...governanceRoutes(Wrap),
   {
     children: [
       {

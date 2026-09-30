@@ -37,7 +37,8 @@ export const resourceAuthorizationService = {
     resourceId = null,
     allowBreakTheGlass = false,
     breakTheGlassReason = null,
-    correlationId = null
+    correlationId = null,
+    deferLedgerPersistence = false
   }) {
     if (!context || !context.tenantId) {
       return {
@@ -145,15 +146,41 @@ export const resourceAuthorizationService = {
       }
 
       // Rule C3: Persist dedicated forensic BTG ledger entry
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const rawPatientId = targetResource.patient_id || targetResource.patientId || null;
+      const patientId = (typeof rawPatientId === 'string' && uuidRegex.test(rawPatientId)) ? rawPatientId : null;
+      const rawEncounterId = (resourceType === 'ENCOUNTER') ? (targetResource.id || resourceId) : (targetResource.encounter_id || null);
+      const encounterId = (typeof rawEncounterId === 'string' && uuidRegex.test(rawEncounterId)) ? rawEncounterId : null;
+
+      const btgDetails = {
+        actorUserId: context.actorId,
+        tenantId: context.tenantId,
+        resourceType,
+        resourceId: String(targetResource.id || resourceId || 'UNKNOWN'),
+        actionCode: action || 'BREAK_THE_GLASS',
+        reason: cleanReason,
+        reasonText: cleanReason,
+        correlationId,
+        patientId,
+        encounterId
+      };
+
+      // If deferred, skip immediate DB insertion so authorizationDecisionService can atomically persist after SoD
+      if (deferLedgerPersistence) {
+        return {
+          isAuthorized: true,
+          decision: AUTHORIZATION_DECISIONS.AUTHORIZED_BREAK_THE_GLASS,
+          reason: `Emergency Break-The-Glass protocol validated: ${cleanReason}`,
+          resourceTenantId,
+          btgDetails
+        };
+      }
+
+      // Standalone caller fallback (preserves direct unit-test compatibility)
       try {
         const pool = postgresPoolService.getPool();
         const client = await pool.connect();
         try {
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          const rawPatientId = targetResource.patient_id || targetResource.patientId || null;
-          const patientId = (typeof rawPatientId === 'string' && uuidRegex.test(rawPatientId)) ? rawPatientId : null;
-          const rawEncounterId = (resourceType === 'ENCOUNTER') ? (targetResource.id || resourceId) : (targetResource.encounter_id || null);
-          const encounterId = (typeof rawEncounterId === 'string' && uuidRegex.test(rawEncounterId)) ? rawEncounterId : null;
           const btgQuery = `
             INSERT INTO break_glass_audit_ledger (
               actor_user_id,
@@ -201,7 +228,8 @@ export const resourceAuthorizationService = {
         isAuthorized: true,
         decision: AUTHORIZATION_DECISIONS.AUTHORIZED_BREAK_THE_GLASS,
         reason: `Emergency Break-The-Glass protocol granted: ${cleanReason}`,
-        resourceTenantId
+        resourceTenantId,
+        btgDetails
       };
     }
 

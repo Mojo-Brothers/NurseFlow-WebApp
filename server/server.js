@@ -31,6 +31,7 @@ import appointmentRoutes from './routes/appointment.routes.js';
 import enterpriseInventoryRoutes from './routes/enterpriseInventory.routes.js';
 import satusehatStudioRoutes from './routes/satusehatStudio.routes.js';
 import commandCenterRoutes from './routes/commandCenter.routes.js';
+import governanceRoutes from './routes/governance.routes.js';
 
 import { observabilityMiddleware } from './middlewares/observabilityMiddleware.js';
 import { correlationIdMiddleware } from './middlewares/correlationId.middleware.js';
@@ -105,6 +106,7 @@ app.use('/api/v1/appointments', appointmentRoutes);
 app.use('/api/v1/inventory', enterpriseInventoryRoutes);
 app.use('/api/v1/satusehat', satusehatStudioRoutes);
 app.use('/api/v1/command-center', commandCenterRoutes);
+app.use('/api/v1/governance', governanceRoutes);
 app.use('/api/v1', medicationKnowledgeRoutes);
 app.use('/api/v1', cdssRoutes);
 app.use('/dicomweb', dicomwebRoutes);

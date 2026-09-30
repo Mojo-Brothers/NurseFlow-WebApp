@@ -147,10 +147,16 @@ export const authorizationDecisionService = {
     allowBreakTheGlass = false,
     breakTheGlassReason = null
   }) {
+    // Resolve resource identifier if resourceId is absent but resource.id exists (FINDING-P02A-06)
+    const rawResId = resourceId || (resource && (resource.id || resource.resourceId)) || null;
+    const effectiveResourceId = rawResId !== null && rawResId !== undefined ? String(rawResId) : null;
+    const rawResType = resourceType || (resource && (resource.resourceType || resource.resource_type)) || null;
+    const effectiveResourceType = rawResType !== null && rawResType !== undefined ? String(rawResType) : null;
+
     const evalMetadata = {
       action,
-      resourceType,
-      resourceId,
+      resourceType: effectiveResourceType,
+      resourceId: effectiveResourceId,
       procedureCode,
       actorRoles: context?.roles || [],
       evaluatedAt: new Date().toISOString()
@@ -163,6 +169,8 @@ export const authorizationDecisionService = {
           tenantId: context?.tenantId || null,
           userId: context?.actorId || null,
           actionCode: action,
+          resourceType: effectiveResourceType,
+          resourceId: effectiveResourceId,
           isAuthorized: false,
           decision: AUTHORIZATION_DECISIONS.DENIED_AUTHENTICATION_REQUIRED,
           denialReason: 'Actor identity is missing or unauthenticated',
@@ -171,153 +179,184 @@ export const authorizationDecisionService = {
         });
       }
 
-    // ─── STAGE 2: TENANT MEMBERSHIP CHECK ───
-    if (!context.tenantId) {
-      return this._recordAndReturn({
-        tenantId: null,
-        userId: context.actorId,
-        actionCode: action,
-        isAuthorized: false,
-        decision: AUTHORIZATION_DECISIONS.DENIED_TENANT_MISSING,
-        denialReason: 'Authenticated actor lacks a valid tenant context',
-        correlationId,
-        metadata: evalMetadata
-      });
-    }
-
-    // ─── STAGE 3: SUPER ADMIN CLINICAL RESTRICTION ───
-    // System Administration != Clinical Authority
-    const isClinical = isClinicalPermission(action);
-    const hasOnlyAdminRoles = context.roles.every(r => ['ROLE_SUPER_ADMIN', 'ROLE_IT_ADMIN', 'ADMIN'].includes(r));
-
-    if (isClinical && hasOnlyAdminRoles) {
-      return this._recordAndReturn({
-        tenantId: context.tenantId,
-        userId: context.actorId,
-        actionCode: action,
-        isAuthorized: false,
-        decision: AUTHORIZATION_DECISIONS.DENIED_SYSTEM_ADMIN_CLINICAL_RESTRICTION,
-        denialReason: 'System administrators do not possess clinical practice authority or prescribing privileges.',
-        correlationId,
-        metadata: { ...evalMetadata, violationType: 'SUPER_ADMIN_CLINICAL_BYPASS_ATTEMPT' }
-      });
-    }
-
-    // ─── STAGE 4: PERMISSION CHECK ───
-    const hasPerm = this.hasPermission(context, action);
-    if (!hasPerm) {
-      return this._recordAndReturn({
-        tenantId: context.tenantId,
-        userId: context.actorId,
-        actionCode: action,
-        isAuthorized: false,
-        decision: AUTHORIZATION_DECISIONS.DENIED_PERMISSION_MISSING,
-        denialReason: `Actor role(s) [${context.roles.join(', ')}] lack required permission '${action}'`,
-        correlationId,
-        metadata: evalMetadata
-      });
-    }
-
-    // ─── STAGE 5: CLINICAL CREDENTIAL (SIP/STR) RUNTIME VERIFICATION ───
-    if (isClinical && requiredCredentialType) {
-      const credResult = await clinicalCredentialService.verifyCredential({
-        staffId: context.staffId,
-        userId: context.actorId,
-        tenantId: context.tenantId,
-        credentialType: requiredCredentialType
-      });
-
-      if (!credResult.isEligible) {
+      // ─── STAGE 2: TENANT MEMBERSHIP CHECK ───
+      if (!context.tenantId) {
         return this._recordAndReturn({
-          tenantId: context.tenantId,
+          tenantId: null,
           userId: context.actorId,
-          staffId: context.staffId,
           actionCode: action,
+          resourceType: effectiveResourceType,
+          resourceId: effectiveResourceId,
           isAuthorized: false,
-          decision: credResult.decision || AUTHORIZATION_DECISIONS.DENIED_CREDENTIAL_MISSING,
-          denialReason: credResult.reason || `Clinician lacks valid, active ${requiredCredentialType} credential`,
-          correlationId,
-          metadata: { ...evalMetadata, credentialVerification: credResult }
-        });
-      }
-      evalMetadata.credentialVerified = credResult.credentialNumber;
-    }
-
-    // ─── STAGE 6: CLINICAL PRIVILEGE CHECK (IF PROCEDURE SPECIFIED) ───
-    if (procedureCode && procedureCode !== 'N/A') {
-      const privResult = await this.hasClinicalPrivilege(context, procedureCode, targetUnitId);
-      if (!privResult.isAuthorized) {
-        return this._recordAndReturn({
-          tenantId: context.tenantId,
-          userId: context.actorId,
-          staffId: context.staffId,
-          actionCode: action,
-          procedureCode,
-          targetUnitId,
-          isAuthorized: false,
-          decision: privResult.decision || AUTHORIZATION_DECISIONS.DENIED_NO_PRIVILEGE,
-          denialReason: privResult.reason || `Practitioner has no clinical privilege for procedure [${procedureCode}]`,
+          decision: AUTHORIZATION_DECISIONS.DENIED_TENANT_MISSING,
+          denialReason: 'Authenticated actor lacks a valid tenant context',
           correlationId,
           metadata: evalMetadata
         });
       }
-    }
 
-    // ─── STAGE 7: RESOURCE OWNERSHIP & CARE-TEAM ACCESS ───
-    if (resource || resourceId) {
-      const resAccess = await resourceAuthorizationService.verifyResourceAccess({
-        context,
+      // ─── STAGE 3: SUPER ADMIN CLINICAL RESTRICTION ───
+      // System Administration != Clinical Authority
+      const isClinical = isClinicalPermission(action);
+      const hasOnlyAdminRoles = context.roles.every(r => ['ROLE_SUPER_ADMIN', 'ROLE_IT_ADMIN', 'ADMIN'].includes(r));
+
+      if (isClinical && hasOnlyAdminRoles) {
+        return this._recordAndReturn({
+          tenantId: context.tenantId,
+          userId: context.actorId,
+          actionCode: action,
+          resourceType: effectiveResourceType,
+          resourceId: effectiveResourceId,
+          isAuthorized: false,
+          decision: AUTHORIZATION_DECISIONS.DENIED_SYSTEM_ADMIN_CLINICAL_RESTRICTION,
+          denialReason: 'System administrators do not possess clinical practice authority or prescribing privileges.',
+          correlationId,
+          metadata: { ...evalMetadata, violationType: 'SUPER_ADMIN_CLINICAL_BYPASS_ATTEMPT' }
+        });
+      }
+
+      // ─── STAGE 4: PERMISSION CHECK ───
+      const hasPerm = this.hasPermission(context, action);
+      if (!hasPerm) {
+        return this._recordAndReturn({
+          tenantId: context.tenantId,
+          userId: context.actorId,
+          actionCode: action,
+          resourceType: effectiveResourceType,
+          resourceId: effectiveResourceId,
+          isAuthorized: false,
+          decision: AUTHORIZATION_DECISIONS.DENIED_PERMISSION_MISSING,
+          denialReason: `Actor role(s) [${context.roles.join(', ')}] lack required permission '${action}'`,
+          correlationId,
+          metadata: evalMetadata
+        });
+      }
+
+      // ─── STAGE 5: CLINICAL CREDENTIAL (SIP/STR) RUNTIME VERIFICATION ───
+      if (isClinical && requiredCredentialType) {
+        const credResult = await clinicalCredentialService.verifyCredential({
+          staffId: context.staffId,
+          userId: context.actorId,
+          tenantId: context.tenantId,
+          credentialType: requiredCredentialType
+        });
+
+        if (!credResult.isEligible) {
+          return this._recordAndReturn({
+            tenantId: context.tenantId,
+            userId: context.actorId,
+            staffId: context.staffId,
+            actionCode: action,
+            resourceType: effectiveResourceType,
+            resourceId: effectiveResourceId,
+            isAuthorized: false,
+            decision: credResult.decision || AUTHORIZATION_DECISIONS.DENIED_CREDENTIAL_MISSING,
+            denialReason: credResult.reason || `Clinician lacks valid, active ${requiredCredentialType} credential`,
+            correlationId,
+            metadata: { ...evalMetadata, credentialVerification: credResult }
+          });
+        }
+        evalMetadata.credentialVerified = credResult.credentialNumber;
+      }
+
+      // ─── STAGE 6: CLINICAL PRIVILEGE CHECK (IF PROCEDURE SPECIFIED) ───
+      if (procedureCode && procedureCode !== 'N/A') {
+        const privResult = await this.hasClinicalPrivilege(context, procedureCode, targetUnitId);
+        if (!privResult.isAuthorized) {
+          return this._recordAndReturn({
+            tenantId: context.tenantId,
+            userId: context.actorId,
+            staffId: context.staffId,
+            actionCode: action,
+            procedureCode,
+            targetUnitId,
+            resourceType: effectiveResourceType,
+            resourceId: effectiveResourceId,
+            isAuthorized: false,
+            decision: privResult.decision || AUTHORIZATION_DECISIONS.DENIED_NO_PRIVILEGE,
+            denialReason: privResult.reason || `Practitioner has no clinical privilege for procedure [${procedureCode}]`,
+            correlationId,
+            metadata: evalMetadata
+          });
+        }
+      }
+
+      // ─── STAGE 7: RESOURCE OWNERSHIP & CARE-TEAM ACCESS ───
+      let btgDetails = null;
+      if (resource || effectiveResourceId) {
+        const resAccess = await resourceAuthorizationService.verifyResourceAccess({
+          context,
+          action,
+          resource,
+          resourceType: effectiveResourceType,
+          resourceId: effectiveResourceId,
+          allowBreakTheGlass,
+          breakTheGlassReason,
+          correlationId,
+          deferLedgerPersistence: true
+        });
+
+        if (!resAccess.isAuthorized) {
+          return this._recordAndReturn({
+            tenantId: context.tenantId,
+            userId: context.actorId,
+            staffId: context.staffId,
+            actionCode: action,
+            resourceType: effectiveResourceType,
+            resourceId: effectiveResourceId,
+            isAuthorized: false,
+            decision: resAccess.decision,
+            denialReason: resAccess.reason,
+            correlationId,
+            metadata: evalMetadata
+          });
+        }
+
+        if (resAccess.btgDetails) {
+          btgDetails = resAccess.btgDetails;
+        }
+      }
+
+      // ─── STAGE 8: SEPARATION OF DUTIES (SOD) CHECK ───
+      const sodResult = separationOfDutiesService.evaluateSoD({
+        actorId: context.actorId,
         action,
-        resource,
-        resourceType,
-        resourceId,
-        allowBreakTheGlass,
-        breakTheGlassReason,
-        correlationId
+        targetResource: resource,
+        transactionContext
       });
 
-      if (!resAccess.isAuthorized) {
+      if (!sodResult.satisfiesSoD) {
+        // If a BTG override was requested and validated in Stage 7, record its rejection in BTG ledger with actual outcome:
+        const btgLedgerData = btgDetails ? {
+          ...btgDetails,
+          outcome: sodResult.decision
+        } : null;
+
         return this._recordAndReturn({
           tenantId: context.tenantId,
           userId: context.actorId,
           staffId: context.staffId,
           actionCode: action,
-          resourceType,
-          resourceId,
+          resourceType: effectiveResourceType,
+          resourceId: effectiveResourceId,
           isAuthorized: false,
-          decision: resAccess.decision,
-          denialReason: resAccess.reason,
+          decision: sodResult.decision,
+          denialReason: sodResult.reason,
           correlationId,
-          metadata: evalMetadata
+          metadata: { ...evalMetadata, sodRule: sodResult.ruleId },
+          btgLedgerData
         });
       }
-    }
-
-    // ─── STAGE 8: SEPARATION OF DUTIES (SOD) CHECK ───
-    const sodResult = separationOfDutiesService.evaluateSoD({
-      actorId: context.actorId,
-      action,
-      targetResource: resource,
-      transactionContext
-    });
-
-    if (!sodResult.satisfiesSoD) {
-      return this._recordAndReturn({
-        tenantId: context.tenantId,
-        userId: context.actorId,
-        staffId: context.staffId,
-        actionCode: action,
-        resourceType,
-        resourceId,
-        isAuthorized: false,
-        decision: sodResult.decision,
-        denialReason: sodResult.reason,
-        correlationId,
-        metadata: { ...evalMetadata, sodRule: sodResult.ruleId }
-      });
-    }
 
       // ─── STAGE 9: AUTHORIZED — PERSIST FORENSIC AUDIT ───
+      const isBtg = Boolean(allowBreakTheGlass && btgDetails);
+      const finalDecision = isBtg ? AUTHORIZATION_DECISIONS.AUTHORIZED_BREAK_THE_GLASS : AUTHORIZATION_DECISIONS.AUTHORIZED;
+
+      const btgLedgerData = isBtg ? {
+        ...btgDetails,
+        outcome: 'GRANTED'
+      } : null;
+
       return await this._recordAndReturn({
         tenantId: context.tenantId,
         userId: context.actorId,
@@ -325,13 +364,14 @@ export const authorizationDecisionService = {
         actionCode: action,
         procedureCode,
         targetUnitId,
-        resourceType,
-        resourceId,
+        resourceType: effectiveResourceType,
+        resourceId: effectiveResourceId,
         isAuthorized: true,
-        decision: allowBreakTheGlass ? AUTHORIZATION_DECISIONS.AUTHORIZED_BREAK_THE_GLASS : AUTHORIZATION_DECISIONS.AUTHORIZED,
+        decision: finalDecision,
         denialReason: null,
         correlationId,
-        metadata: evalMetadata
+        metadata: evalMetadata,
+        btgLedgerData
       });
     } catch (err) {
       return await this._recordAndReturn({
@@ -341,8 +381,8 @@ export const authorizationDecisionService = {
         actionCode: action,
         procedureCode,
         targetUnitId,
-        resourceType,
-        resourceId,
+        resourceType: effectiveResourceType,
+        resourceId: effectiveResourceId,
         isAuthorized: false,
         decision: AUTHORIZATION_DECISIONS.DENIED_SYSTEM_ERROR,
         denialReason: `Authorization evaluation failed closed due to internal error: ${err.message}`,
@@ -368,7 +408,8 @@ export const authorizationDecisionService = {
     decision,
     denialReason = null,
     correlationId = null,
-    metadata = {}
+    metadata = {},
+    btgLedgerData = null
   }) {
     let auditResult = null;
     let auditError = null;
@@ -392,7 +433,8 @@ export const authorizationDecisionService = {
           decision,
           denialReason,
           correlationId,
-          evaluationMetadata: metadata
+          evaluationMetadata: metadata,
+          btgLedgerData
         });
       } catch (err) {
         auditError = err;
