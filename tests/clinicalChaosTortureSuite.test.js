@@ -486,7 +486,7 @@ describe('⚡ SPRINT 3L: Clinical Chaos Engineering Suite (Fail-Closed Concurren
     it('should verify live PostgreSQL connection status, table health, and zero deadlocks', async () => {
       const psqlPath = 'C:\\Program Files\\PostgreSQL\\16\\bin\\psql.exe';
       const user = 'postgres';
-      const password = process.env.POSTGRES_PASSWORD || 'Rfvtgb12@';
+      const password = process.env.POSTGRES_PASSWORD || '';
       const database = 'nurseflow_enterprise_his';
 
       let telemetry = { conns: 1, locks: 0, tables: 163 };

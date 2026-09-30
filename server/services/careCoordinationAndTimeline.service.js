@@ -7,6 +7,7 @@
 
 import crypto from 'crypto';
 import { postgresPoolService } from '../db/postgresPool.js';
+import { encounterApplicationService } from './encounterApplication.service.js';
 import { ENTERPRISE_ROLES } from '../../src/shared/constants/roles.js';
 
 export class CareCoordinationDomainError extends Error {
@@ -106,9 +107,20 @@ export const careCoordinationAndTimelineService = {
   /**
    * 2. Get Unified Longitudinal Timeline (Chronological Causal Graph)
    */
-  getUnifiedLongitudinalTimeline: async (encounterId, options = {}) => {
+  getUnifiedLongitudinalTimeline: async (encounterId, options = {}, tenantContext = null) => {
     if (!encounterId) {
       throw new CareCoordinationDomainError('Encounter ID wajib disertakan.', 'VALIDATION_FAILED', 400);
+    }
+
+    const tenantId = tenantContext?.tenantId;
+    if (!tenantId) {
+      throw new CareCoordinationDomainError('Konteks tenant wajib disertakan untuk mengakses timeline.', 'TENANT_CONTEXT_REQUIRED', 403);
+    }
+
+    // Authoritative Tenant Isolation: Verify encounter exists under active tenant
+    const encounter = await encounterApplicationService.getEncounterById(encounterId, tenantContext);
+    if (!encounter) {
+      throw new CareCoordinationDomainError('Encounter tidak ditemukan atau bukan milik tenant aktif.', 'ENCOUNTER_NOT_FOUND', 404);
     }
 
     const client = await postgresPoolService.getPool().connect();

@@ -16,6 +16,577 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.11: SECURITY FOUNDATION REMEDIATION — CRITICAL FIRST (STATUS: NO-GO / RECONCILED)
+**Tag Rilis:** `stage1-p02b-wave1a11-security-remediation`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[P0-2B]` `[WAVE-1A11]`  
+**Status Audit:** `CRITICAL BLOCKERS ELIMINATED (CRIT-01 PURGED, CRIT-02 VERIFIED) | HIGH/MEDIUM BLOCKERS REMEDIATED (HIGH-02, HIGH-03, MED-01..04 VERIFIED) | HIGH-01 INVENTORY COMPLETE (846 BYPASSES PENDING DOMAIN MIGRATION)`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION CUTOVER: BLOCKED | WAVE 1B: HOLD`**
+
+Telah diselesaikan eksekusi Wave 1A.11: Remediasi Fondasi Keamanan Tingkat Kritis dan Tinggi pada repositori `Mojo-Brothers/NurseFlow-WebApp` (branch `feature/security-foundation-wave1a10`), dengan capaian arsitektur dan bukti empiris terverifikasi:
+
+#### Ringkasan Remediasi Blocker:
+1. **CRIT-01 (Remediasi Secret & Runtime Guard):**
+   - Seluruh fallback password teks terbuka dihapus dari kode sumber (`server/db/postgresPool.js`, skrip chaos torture, dan CI configuration).
+   - Ditambahkan `assertRuntimeDatabaseSafety(pool)` pada startup Express yang memvalidasi langsung identitas peran database aktif melalui `pg_roles`, menolak keras start jika `current_user = postgres`, `rolsuper = true`, atau `rolbypassrls = true`.
+   - Diidentifikasi 2 commit riwayat git (`4d0825c`, `ddbd748`) yang memerlukan rotasi kredensial administratif (`ROTATION_REQUIRED`). Prosedur sanitasi riwayat didokumentasikan di [`docs/audit/P0-2B-WAVE1A11-SECRET-EXPOSURE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11-SECRET-EXPOSURE.md).
+
+2. **CRIT-02 (Verifikasi Real Application Restore):**
+   - Dilakukan uji pemulihan nyata end-to-end: pembuatan cadangan logis kustom `pg_dump -Fc` dari basis data pengembangan -> pembuatan database uji terisolasi `nurseflow_restored_app_test` -> eksekusi `pg_restore` -> boot proses Express independen (port 5099) yang terhubung ke database hasil restore -> eksekusi request HTTP multi-tenant via Express pipeline.
+   - Hasil HTTP: Health check 200 OK, Tenant A berhasil membaca 10 encounter miliknya (200 OK), Tenant B berhasil membaca 10 encounter miliknya (200 OK), dan upaya baca lintas tenant ditolak (404 Not Found). Bukti tersimpan di [`docs/audit/P0-2B-WAVE1A11-APPLICATION-RESTORE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11-APPLICATION-RESTORE.md).
+
+3. **HIGH-01 (Inventarisasi Akses DB Langsung & Domain Encounter Acuan):**
+   - Dibangun pemindai AST (`scratch/build_request_db_inventory.js`) yang memetakan seluruh berkas produksi Express. Ditemukan **846 titik akses basis data langsung di 30 berkas produksi**, di mana 157 titik menyentuh 31 tabel yang dilindungi RLS.
+   - Sesuai aturan keselamatan ("Jangan memperbaiki 727 secara membabi buta"), modul tidak diganti secara mekanis. Domain Clinical Encounter (`encounterApplication.service.js`) ditetapkan sebagai acuan kanonik Unit of Work (`withUnitOfWork`). Migrasi domain lain dijadwalkan secara bertahap pada Wave 1A.12. Laporan lengkap di [`docs/audit/P0-2B-WAVE1A11-UOW-COVERAGE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11-UOW-COVERAGE.md).
+
+4. **HIGH-02 (Pemisahan Otoritas Migrasi & Pelacakan schema_migrations):**
+   - Pelari migrasi `scripts/execute_all_migrations.js` dipisahkan secara ketat dari hak runtime aplikasi (`nurseflow_app_user`), mewajibkan kredensial migrasi (`MIGRATION_USER`).
+   - Dibuat tabel pelacak `schema_migrations` dengan hashing SHA-256 otomatis, deteksi manipulasi (tamper detection), dan kapabilitas idempotensi/bootstrap baselining. 79 migrasi berhasil tercatat. Laporan di [`docs/audit/P0-2B-WAVE1A11-MIGRATION-REPRODUCIBILITY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11-MIGRATION-REPRODUCIBILITY.md).
+
+5. **HIGH-03 (Verifikasi BOLA Child-Table Melalui HTTP):**
+   - Dibangun dan dijalankan suite uji HTTP nyata (`tests/p02b_wave1a11_child_bola_http.test.js`) mencakup 5 tabel anak klinis/keuangan (`longitudinal_care_plans`, `medication_emar_administrations`, `medication_dispense_allocations`, `patient_split_invoices`, `physician_diagnostic_interpretations`).
+   - Menemukan dan memperbaiki celah otorisasi pada endpoint timeline (`GET /api/v1/coordination/encounters/:id/timeline`), memastikan seluruh upaya manipulasi referensi dan pembacaan BOLA lintas tenant ditolak (404/403). Skor: 16/16 PASS. Laporan di [`docs/audit/P0-2B-WAVE1A11-CHILD-BOLA-HTTP.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11-CHILD-BOLA-HTTP.md).
+
+6. **MED-01 s/d MED-04 (Guard Runtime, Regresi Penuh, Pool Hygiene, Rollback Parity):**
+   - **MED-01**: Runtime startup guard aktif (`assertRuntimeDatabaseSafety`).
+   - **MED-02**: Cakupan regresi keamanan dipulihkan penuh dari 14 ke 16 uji standardized (`tests/p02b_wave1a11_security_regression.test.js`) dengan hasil 16/16 PASS.
+   - **MED-03**: Uji sanitasi soket pool concurrent dieksekusi melintasi 52 transaksi dan 4 backend PID dengan hasil 0% kebocoran context GUC (`scratch/wave1a11_pool_isolation_evidence.json`).
+   - **MED-04**: Berkas migrasi `079_down` diperbaiki untuk menghapus risiko RLS blackout; verifikasi siklus maju-mundur pada database disposable membuktikan 100% paritas katalog skema (`docs/audit/P0-2B-WAVE1A11-ROLLBACK-VERIFICATION.md`).
+
+7. **Keputusan Gate:**
+   - Karena HIGH-01 (846 akses DB langsung pada jalur request produksi) memerlukan migrasi domain secara bertahap, status gerbang ditetapkan: **STAGE 0 = NO-GO | PRODUCTION = BLOCKED | WAVE 1B = HOLD**. Dokumen evaluasi lengkap di [`docs/audit/P0-2B-WAVE1A11-STAGE0-GATE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11-STAGE0-GATE.md).
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.10R: ADVERSARIAL POST-IMPLEMENTATION RE-GATE (STATUS: NO-GO / RECONCILED)
+**Tag Rilis:** `stage1-p02b-wave1a10r-adversarial-regate`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]` `[WAVE-1A10R]`  
+**Status Audit:** `ADVERSARIAL RECONCILIATION COMPLETE | CLAIMS PARTIALLY CONTRADICTED | 2 CRITICAL, 3 HIGH, 4 MEDIUM, 1 LOW BLOCKERS IDENTIFIED`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION CUTOVER: BLOCKED | WAVE 1B: HOLD`**
+
+Telah dilaksanakan audit keamanan adversarial independen (*Adversarial Post-Implementation Re-Gate*) secara **ketat READ-ONLY** terhadap seluruh artefak, kode sumber, basis data pengembangan `nurseflow_enterprise_his`, riwayat commit git, dan hasil uji Wave 1A.10 pada repositori `Mojo-Brothers/NurseFlow-WebApp`.
+
+#### Rekonsiliasi Klaim vs Fakta Empiris:
+1. **Klaim "Application Restore = PASS" DIBATALKAN / TIDAK TERVERIFIKASI (`NOT_VERIFIED`):**
+   - Hasil audit kode terhadap `tests/p02b_wave1a10_security_regression.test.js` membuktikan bahwa proses Express **tidak pernah di-boot atau diarahkan** ke basis data hasil restore (`nurseflow_restored_smoke`).
+   - Uji verifikasi hanya dijalankan melalui instance Node.js `pg.Pool` terpisah yang mengeksekusi raw SQL. Tidak ada satupun request HTTP yang diarahkan ke database hasil restore.
+   - Backup `pg_dump -Fc` diklasifikasikan ulang sebagai **Logical Custom-Format Backup**, bukan Physical Backup.
+
+2. **Klaim "Request-Path UoW = VERIFIED" DITURUNKAN Menjadi `PARTIAL`:**
+   - Pemindaian AST terhadap 151 berkas server produksi menemukan **727 titik panggilan akses database langsung** (`pool.connect`, `pool.query`, `client.query`, `getPool`) di 28 berkas controller/service/repository di luar UoW.
+   - Hanya domain Clinical Encounter yang telah dimigrasikan ke `withUnitOfWork`. Karena migrasi 079 memberlakukan *fail-closed default-deny RLS* pada 31 tabel, modul-modul lain yang belum terintegrasi UoW akan mengembalikan 0 baris secara diam-diam.
+
+3. **Temuan Kritis Paparan Kredensial (Credential Exposure):**
+   - Password administratif superuser `postgres` ditemukan terekam dalam riwayat git commit (`4d0825c`, `ddbd748`).
+   - Password fallback teks terbuka (`[REDACTED_APP_PWD]`) ditemukan dalam berkas produksi `server/db/postgresPool.js` dan suite pengujian regresi.
+
+4. **Kelemahan Pelari Migrasi & Tidak Adanya Tabel Pelacak Migrasi:**
+   - Skrip `scripts/execute_all_migrations.js` membaca `.env.local` yang mendefinisikan `nurseflow_app_user`. Karena user ini tidak memiliki hak DDL, pelari migrasi otomatis gagal mengeksekusi DDL.
+   - Tidak ada tabel pelacak migrasi (`schema_migrations`), sehingga eksekusi migrasi bergantung pada pemindaian direktori mentah tanpa checksum.
+
+5. **Pengurangan Cakupan Uji Keamanan Regresi (16 Uji -> 14 Uji):**
+   - 5 vektor uji dari Wave 1A.9 dihilangkan dalam Wave 1A.10 (termasuk isolasi peran worker, latihan rollback otomatis dalam suite uji, dan penanganan klaim UUID palsu).
+
+6. **Artefak Audit Diterbitkan:**
+   - [`docs/audit/P0-2B-WAVE1A10R-INDEPENDENT-RECONCILIATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A10R-INDEPENDENT-RECONCILIATION.md)
+   - [`docs/audit/P0-2B-WAVE1A10R-UOW-COVERAGE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A10R-UOW-COVERAGE.md)
+   - [`docs/audit/P0-2B-WAVE1A10R-MIGRATION-REPRODUCIBILITY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A10R-MIGRATION-REPRODUCIBILITY.md)
+   - [`docs/audit/P0-2B-WAVE1A10R-RUNTIME-ROLE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A10R-RUNTIME-ROLE.md)
+   - [`docs/audit/P0-2B-WAVE1A10R-RLS.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A10R-RLS.md)
+   - [`docs/audit/P0-2B-WAVE1A10R-RESTORE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A10R-RESTORE.md)
+   - [`docs/audit/P0-2B-WAVE1A10R-TEST-RECONCILIATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A10R-TEST-RECONCILIATION.md)
+   - [`docs/audit/P0-2B-WAVE1A10R-STAGE0-GATE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A10R-STAGE0-GATE.md)
+   - [`scratch/p02b_wave1a10r_evidence.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave1a10r_evidence.json)
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.10: REPOSITORY SECURITY FOUNDATION IMPLEMENTATION (STATUS: IMPLEMENTATION PASS / STAGE 0: PENDING_RE-GATE)
+**Tag Rilis:** `stage1-p02b-wave1a10-repository-security-foundation`  
+**Kategori:** `[FEATURE+SECURITY]` `[MIGRATION]` `[P0-2B]` `[WAVE-1A10]`  
+**Status Implementasi:** `REPRODUCIBLE REPOSITORY IMPLEMENTATION COMPLETE | 14/14 REGRESSION TESTS PASS | 0 DATA LOSS`  
+**Status Gate P0-2B:** ⚖️ **`REPOSITORY IMPLEMENTATION: VERIFIED | MIGRATIONS: VERIFIED | PARENT UNIQUE: VERIFIED | COMPOSITE FK: VERIFIED | RLS REPOSITORY: VERIFIED | UOW SOURCE: VERIFIED | APPLICATION REQUEST-PATH UOW: VERIFIED | RUNTIME APP ROLE: VERIFIED | RUNTIME SUPERUSER: REMOVED | APPLICATION RLS: VERIFIED | CHILD BOLA: VERIFIED | POOL ISOLATION: VERIFIED | APPLICATION RESTORE: VERIFIED | ROLLBACK: VERIFIED | SECURITY REGRESSION: PASS (14/14) | CRITICAL BLOCKERS: 0 | HIGH BLOCKERS: 0 | IMPLEMENTATION RESULT: PASS | STAGE 0: PENDING_RE-GATE | PRODUCTION CUTOVER: BLOCKED | WAVE 1B: HOLD`**
+
+Telah berhasil diselesaikan implementasi fondasi keamanan menyeluruh (**Repository Security Foundation Implementation**) oleh gabungan Principal Security Architect, PostgreSQL Security Engineer, Application Security Engineer, Database Migration Engineer, DevSecOps Engineer, HIS Governance Engineer, dan Adversarial Security Reviewer pada repositori `Mojo-Brothers/NurseFlow-WebApp`:
+
+1. **Jalur A: Migrasi Basis Data Repositori (Database Migrations Track):**
+   - Menginspeksi nomor migrasi tertinggi yang ada (`076`) dan membuat tiga berkas migrasi maju serta berkas pemulih (*down/rollback*):
+     - `database/migrations/077_stage0_parent_composite_uniqueness.sql` & `077_down_...`: Menambahkan konstrain `UNIQUE (id, tenant_id)` pada tabel induk `encounters` dan `master_patients` setelah audit pra-kondisi 0 duplikasi dan 0 NULL.
+     - `database/migrations/078_stage0_child_composite_foreign_keys.sql` & `078_down_...`: Menambahkan kolom `tenant_id uuid NOT NULL DEFAULT NULLIF(current_setting('app.current_tenant_id', true), '')::uuid`, 2 composite FK ke `encounters` dan `master_patients`, serta indeks komposit penutup pada 5 tabel anak (`medication_emar_administrations`, `medication_dispense_allocations`, `longitudinal_care_plans`, `patient_split_invoices`, `physician_diagnostic_interpretations`).
+     - `database/migrations/079_stage0_purge_legacy_policies_and_enforce_default_deny.sql` & `079_down_...`: Menghapus 5 kebijakan *fail-open* warisan dan menerapkan kebijakan *default-deny* RLS (31 tabel: 10 tabel inti + 21 tabel *blackout*).
+     - Skrip `scripts/rollback_stage0_migrations.js`: Runner rollback 2-fase untuk mitigasi dependensi PostgreSQL 16 (RLS policy dibersihkan sebelum kolom di-drop).
+   - Migrasi diaplikasikan ke database lab (`nurseflow_security_lab`) dan database pengembangan (`nurseflow_enterprise_his`) dengan verifikasi **0 kehilangan data** (5.104 encounters, 5.162 patients tetap utuh).
+
+2. **Jalur B: Integrasi Unit of Work (Option C) & Jalur Permintaan Aplikasi:**
+   - Membangun `server/db/unitOfWork.js`: Mengisolasi transaksi dengan validasi UUID tenant (*fail-closed* jika absen: `AUTHORITATIVE_TENANT_REQUIRED`), injeksi `SET LOCAL app.current_tenant_id` dan `app.current_user_id`, pembersihan soket 3-tier (`DISCARD ALL`), dan terminasi soket jika terjadi error fatal.
+   - Mengintegrasikan UoW ke `server/controllers/encounter.controller.js` dan `server/services/encounterApplication.service.js` sehingga seluruh operasi pembuatan kunjungan, transisi status FSM, dan pembacaan kunjungan wajib melewati UoW dan RLS.
+   - Menjalankan analisis AST/statis terhadap akses DB langsung pada 454 berkas: 167 `pool.connect()`, 204 `pool.query()`, 958 `client.query()`, dan 149 `getPool()`, serta menyusun matriks ekspepsi untuk pengujian dan administrasi.
+
+3. **Jalur C: Pemisahan Peran Runtime & Eliminasi Superuser (Track C):**
+   - Menghentikan penggunaan `postgres` superuser dalam runtime aplikasi normal.
+   - Mengalihkan pool runtime Express ke `nurseflow_app_user` (`rolsuper=false`, `rolbypassrls=false`, `rolcreaterole=false`, `rolcreatedb=false`).
+   - Memperbarui berkas konfigurasi `.env.local` dan *fallback defaults* pada `server/db/postgresPool.js` untuk menggunakan `nurseflow_app_user`.
+   - Mengonfirmasi hak akses minimum: aplikasi tidak memiliki hak `DROP TABLE`, `ALTER TABLE`, maupun manipulasi peran/database.
+
+4. **Jalur D: Pengujian Regresi Keamanan Otomatis (Track D):**
+   - Membangun dan menjalankan rangkaian uji komprehensif `tests/p02b_wave1a10_security_regression.test.js`:
+     - **14 dari 14 pengujian lulus (100% PASS)**:
+       1. Verifikasi identitas peran runtime `nurseflow_app_user`.
+       2. Penolakan eskalasi privilege runtime (`DROP TABLE` ditolak).
+       3. *Health check* HTTP live (`/health/live` -> 200).
+       4. *Health check* HTTP ready (`/health/ready` -> 200).
+       5. Akses data mandiri Tenant A (`GET /api/v1/encounters` -> 200, 100% data milik Tenant A).
+       6. Akses data mandiri Tenant B (`GET /api/v1/encounters` -> 200, 100% data milik Tenant B).
+       7. Penolakan baca lintas-tenant (*Tenant A membaca encounter Tenant B* -> 404 NOT FOUND via RLS).
+       8. Penolakan mutasi lintas-tenant (*Tenant A PATCH encounter Tenant B* -> 404 NOT FOUND via RLS).
+       9. Penolakan akses tanpa token autentikasi (401 UNAUTHORIZED).
+       10. Isolasi RLS tabel anak (`longitudinal_care_plans`).
+       11. Penegakan *Composite Foreign Key* (percobaan menghubungkan rencana asuhan Tenant A ke kunjungan Tenant B memicu `ERROR 23503 fk_longitudinal_care_plans_enc_tenant`).
+       12. Higienitas soket *pool connection reuse* setelah fase *commit* (PID sama digunakan ulang dengan konteks tenant/user bersih).
+       13. Higienitas soket setelah fase *rollback* (konteks tenant bersih).
+       14. *Application Restore Smoke Test*: Pencadangan logis (`pg_dump -Fc`) dipulihkan (`pg_restore`) ke basis data `nurseflow_restored_smoke`, dan aplikasi Express berhasil memverifikasi isolasi tenant secara utuh.
+   - Bukti eksekusi tersimpan secara *machine-readable* di `scratch/p02b_wave1a10_evidence.json`.
+
+5. **Kepatuhan Tata Kelola Mutlak:**
+   - Karena Wave 1A.10 adalah gelombang implementasi (*implementation wave*), otorisasi Tahap 0 dipertahankan berstatus **`PENDING_RE-GATE`** menunggu verifikasi independen Wave 1A.10R. Pemotongan produksi (*production cutover*) tetap **`BLOCKED`**, dan Wave 1B tetap **`HOLD`**.
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.9R: DISPOSABLE LAB EVIDENCE RECONCILIATION & STAGE 0 RE-GATE (STATUS: NO-GO / RECONCILED)
+**Tag Rilis:** `stage1-p02b-wave1a9r-evidence-reconciliation`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]` `[WAVE-1A9R]`  
+**Status Audit:** `READ-ONLY EVIDENCE RECONCILIATION | ZERO REPOSITORY / DATABASE MUTATIONS`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | IMPLEMENTATION GATE: BLOCKED | PRODUCTION CUTOVER: BLOCKED | LAB RESULT: PASS | APPLICATION SECURITY FOUNDATION: NOT_VERIFIED | REPOSITORY IMPLEMENTATION: NOT_VERIFIED | LAB ISOLATION: VERIFIED | DEVELOPMENT DB MUTATION: 0 | LAB APPLICATION ROLE: VERIFIED | APPLICATION RUNTIME SUPERUSER: PRESENT | LAB UOW: VERIFIED | APPLICATION REQUEST-PATH UOW: NOT_VERIFIED | DIRECT POOL CALL SITES MIGRATED: 0 OF 80 (0%) | TENANT GUC: VERIFIED_IN_LAB | LAB RLS: VERIFIED | REPOSITORY RLS IMPLEMENTATION: NOT_VERIFIED | LEGACY FAIL-OPEN POLICIES IN DEV DB: 5 | POOL ISOLATION: VERIFIED_IN_LAB | PARENT UNIQUE: VERIFIED_IN_LAB | COMPOSITE FK: VERIFIED_IN_LAB | POPULATED CHILD TEST: TEST_FIXTURE_VERIFIED | LOGICAL BACKUP: VERIFIED | LOGICAL RESTORE: VERIFIED | APPLICATION RESTORE: NOT_VERIFIED | PHYSICAL BACKUP: NOT_APPLICABLE | ROLLBACK DRILL: VERIFIED_IN_LAB | CRITICAL OVERCLAIMS: 6 RECONCILED | CRITICAL BLOCKERS: 4 | HIGH BLOCKERS: 3 | WAVE 1B: HOLD`**
+
+Telah dilaksanakan audit rekonsiliasi bukti independen (**Independent Evidence Reconciliation & Stage 0 Re-Gate**) secara ketat oleh Principal Security Architect, PostgreSQL Security Engineer, Application Security Auditor, Database Reliability Engineer, DevSecOps Engineer, dan Independent HIS Governance Reviewer terhadap hasil Wave 1A.9 pada repositori `Mojo-Brothers/NurseFlow-WebApp`:
+
+1. **Penegakan Prinsip Tata Kelola Mutlak (Final Governance Principle):**
+   - Ditegaskan aturan: *Bukti laboratorium bukan integrasi aplikasi, bukan kesiapan repositori, dan bukan otorisasi Tahap 0 (`LAB EVIDENCE ≠ APPLICATION INTEGRATION ≠ REPOSITORY READINESS ≠ STAGE 0 AUTHORIZATION ≠ PRODUCTION READINESS`).*
+   - Meskipun hasil pengujian laboratorium sekali pakai berstatus `PASS`, hasil audit rekonsiliasi membuktikan bahwa arsitektur keamanan tersebut **belum diintegrasikan ke basis kode aplikasi maupun migrasi repositori**. Keputusan re-gate Tahap 0 ditetapkan secara tegas sebagai **`NO-GO`**.
+
+2. **Pembuktian Nol Mutasi pada Basis Data Operasional (`nurseflow_enterprise_his`):**
+   - Terbukti secara forensik bahwa basis data pengembangan `nurseflow_enterprise_his` mengalami **0 mutasi** (213 tabel, 5.102 kunjungan, 5.160 pasien, 0 konstrain komposit Tahap 0).
+   - Seluruh eksekusi DDL, pembuatan peran, pengujian privilege, dan RLS hanya berjalan pada database sekali pakai `nurseflow_security_lab`.
+
+3. **Rekonsiliasi Integrasi Unit of Work (Option C) & Jalur Permintaan Aplikasi:**
+   - Kontrak `withUnitOfWork` terbukti bekerja secara mekanis di lab (`LAB UOW: VERIFIED_IN_LAB`), namun **sama sekali belum diimplementasikan di `server/` atau `src/`**.
+   - Dilakukan audit ulang call-site: 80 `pool.connect()`, 30 `pool.query()`, 648 `client.query()`, dan 121 `getPool()` tercatat 100% tidak berubah (**0 dari 80 dimigrasikan / 0%**).
+   - Seluruh rute Express masih memanggil koneksi telanjang tanpa injeksi `SET LOCAL app.current_tenant_id` (`APPLICATION REQUEST-PATH UOW: NOT_VERIFIED`).
+
+4. **Rekonsiliasi Peran Runtime & Dependensi Superuser Aplikasi:**
+   - Peran `nurseflow_app_user` terbukti aman di lab (6 eksploitasi hak akses ditolak dengan `ERROR 42501`).
+   - Namun konfigurasi runtime aplikasi pada `.env.local` dan `server/db/postgresPool.js` masih menggunakan `POSTGRES_USER=postgres` (`APPLICATION RUNTIME SUPERUSER: PRESENT`).
+
+5. **Rekonsiliasi Status RLS & Kebijakan Fail-Open Warisan:**
+   - Di lab, kebijakan default-deny berhasil ditegakkan dan diuji (`LAB RLS: VERIFIED`).
+   - Namun pada basis data pengembangan `nurseflow_enterprise_his`, masih terdapat **5 kebijakan fail-open aktif** (`clinical_orders`, `encounters`, `master_patients`, `safety_decision_registry`, `universal_audit_logs`).
+   - Belum ada berkas migrasi SQL Tahap 0 yang ditambahkan ke `database/migrations/` (total tetap 76 migrasi).
+
+6. **Koreksi Klasifikasi Pencadangan (Logical vs Physical Backup):**
+   - Pencadangan Wave 1A.9 dikoreksi dari klaim *"Physical Backup"* menjadi **`LOGICAL CUSTOM-FORMAT BACKUP`** karena menggunakan `pg_dump -F c -b`, bukan snapshot fisik blok atau `pg_basebackup`.
+   - Pemulihan logis (`pg_restore`) ke basis data target `nurseflow_security_lab_restored` terverifikasi 100% paritas katalog dalam 46,63 detik (`LAB_OBSERVED_RTO = 0,777 menit`).
+   - Namun verifikasi aplikasi (`APPLICATION RESTORE VERIFICATION`) diklasifikasikan **`NOT_VERIFIED`** karena aplikasi Express tidak pernah dijalankan/diuji terhadap basis data hasil pemulihan tersebut.
+   - Metrik RPO 0,0 menit dikoreksi menjadi konsistensi snapshot saat dump, bukan jaminan replikasi continuous WAL.
+
+7. **Validasi Drill Rollback Cepat & Penemuan Dependensi PG16:**
+   - Eksekusi rollback 2-fase di lab terverifikasi dalam 0,078 detik dengan 0 kehilangan data (`ROLLBACK DRILL: VERIFIED_IN_LAB`).
+   - Mengatasi kendala PostgreSQL 16 `ERROR 2BP01` (kebijakan RLS harus di-drop sebelum kolom dependen).
+   - Skrip rollback belum dikemas ke runner migrasi repositori.
+
+8. **Rekonsiliasi Matriks Keamanan TEST-01 hingga TEST-16:**
+   - Terverifikasi 16 pengujian lulus di lingkungan lab, dengan rincian klasifikasi: 5 `VERIFIED_FACT`, 7 `LAB_ONLY`, 2 `VERIFIED_WITH_LIMITATION`, 1 `SIMULATION_ONLY`, dan 1 `STATIC_ONLY`.
+
+9. **Penetapan 4 Prasyarat Mandatori Menuju Otorisasi Tahap 0 (`STAGE 0: GO`):**
+   - Mengemas migrasi SQL versi resmi di `database/migrations/` (`077_...`, `078_...`, `079_...`) beserta skrip rollback companion.
+   - Mengimplementasikan `server/db/unitOfWork.js` ke dalam basis kode utama.
+   - Melakukan cutover peran runtime `nurseflow_app_user` pada `.env.local` dan `postgresPool.js`.
+   - Menjalankan uji boot dan smoke test API aplikasi terhadap basis data hasil restore fisik/logis.
+
+10. **Dokumen Hasil Audit Wave 1A.9R:**
+    - `docs/audit/P0-2B-WAVE1A9R-EVIDENCE-RECONCILIATION.md`
+    - `docs/audit/P0-2B-WAVE1A9R-UOW-INTEGRATION-AUDIT.md`
+    - `docs/audit/P0-2B-WAVE1A9R-RLS-ROLE-AUDIT.md`
+    - `docs/audit/P0-2B-WAVE1A9R-BACKUP-RESTORE-AUDIT.md`
+    - `docs/audit/P0-2B-WAVE1A9R-ROLLBACK-AUDIT.md`
+    - `docs/audit/P0-2B-WAVE1A9R-SOURCE-INTEGRATION-AUDIT.md`
+    - `docs/audit/P0-2B-WAVE1A9R-STAGE0-REGATE.md`
+    - `scratch/p02b_wave1a9r_reconciliation_evidence.json`
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.9: DISPOSABLE SECURITY FOUNDATION LAB (STATUS: LAB_PASS / RE-GATE_PENDING)
+**Tag Rilis:** `stage1-p02b-wave1a9-disposable-security-lab`  
+**Kategori:** `[AUDIT+LAB]` `[SECURITY]` `[P0-2B]` `[WAVE-1A9]`  
+**Status Lingkungan:** `DISPOSABLE SECURITY LAB ONLY (nurseflow_security_lab) | ZERO PRODUCTION / STAGING MUTATIONS`  
+**Status Gate P0-2B:** ⚖️ **`STAGE 0: PENDING_RE-GATE | IMPLEMENTATION GATE: BLOCKED | PRODUCTION CUTOVER: BLOCKED | CURRENT SECURITY FOUNDATION: VERIFIED_IN_LAB | LAB RESULT: PASS | APPLICATION ROLE: VERIFIED | RUNTIME SUPERUSER DEPENDENCY: REMOVED | UOW: VERIFIED | TENANT GUC: VERIFIED | POOL ISOLATION: VERIFIED | PARENT UNIQUE: VERIFIED | COMPOSITE FK: VERIFIED | RLS: VERIFIED | CROSS-TENANT READ: DENIED | CROSS-TENANT WRITE: DENIED | PRIVILEGE ESCALATION: DENIED | BACKUP: VERIFIED | PHYSICAL RESTORE: VERIFIED | ROLLBACK DRILL: VERIFIED | SECURITY TESTS: 16 PASS / 0 FAIL / 0 NOT_EXECUTED | CRITICAL FAILURES: 0 | HIGH FAILURES: 0 | WAVE 1B: HOLD`**
+
+Telah diselesaikan pembangunan, pengujian runtime empiris, dan verifikasi keamanan pada laboratorium terisolasi sekali pakai (**Disposable Security Foundation Lab: `nurseflow_security_lab`**) oleh Principal Security Architect, PostgreSQL Security Engineer, Application Security Engineer, Database Reliability Engineer, DevSecOps Engineer, HIS Governance Reviewer, dan Adversarial Security Tester pada repositori `Mojo-Brothers/NurseFlow-WebApp`:
+
+1. **Pembuktian Identitas & Isolasi Lingkungan Lab (Absolute Safety Boundary):**
+   - Basis data sekali pakai `nurseflow_security_lab` dibuat dan diisolasi pada PostgreSQL 16.15 lokal (`localhost:5432`, loopback `::1/128`).
+   - Identitas server dicatat pada `scratch/p02b_wave1a9_environment_identity.json`.
+   - Basis data `nurseflow_enterprise_his`, database staging, dan lingkungan produksi 100% tidak tersentuh dan tidak mengalami mutasi apa pun.
+
+2. **Replikasi Skema & Paritas Katalog:**
+   - Skema diekstraksi secara non-locking dan direstorasi ke `nurseflow_security_lab`.
+   - Terverifikasi 100% identik: 213 tabel, 3.356 konstrain bawaan, 79 policy RLS awal, 53 fungsi pengguna, dengan checksum MD5 identik.
+
+3. **Pemisahan Peran & Uji Negatif Eskalasi Hak Akses (Role Separation & Negative Privilege Tests):**
+   - Diprovisi 4 peran: `nurseflow_migration`, `nurseflow_app_user`, `nurseflow_worker`, dan `nurseflow_reporting`.
+   - `nurseflow_app_user` dikonfigurasi tanpa superuser (`rolsuper = false`), tanpa bypass RLS (`rolbypassrls = false`), dan dapat login (`rolcanlogin = true`).
+   - Dilakukan 6 serangan eksploitasi runtime hak akses (`CREATE ROLE`, `CREATE DATABASE`, `ALTER TABLE`, `DROP TABLE`, `ALTER ROLE`, `CREATE EXTENSION`). Seluruh 6 serangan berhasil diblokir dengan kode kesalahan `ERROR 42501` (Permission Denied). Dependensi superuser runtime berhasil dieliminasi.
+
+4. **Konstrain Induk UNIQUE & Kunci Asing Komposit Anak (Parent UNIQUE & Composite FKs):**
+   - Diimplementasikan `UNIQUE (id, tenant_id)` pada tabel `encounters` (`uq_encounters_id_tenant`) dan `master_patients` (`uq_master_patients_id_tenant`).
+   - Diimplementasikan kolom `tenant_id uuid NOT NULL`, 2 composite FKs `(encounter_id, tenant_id)` & `(patient_id, tenant_id)`, serta indeks penutup pada 5 tabel anak (`medication_emar_administrations`, `medication_dispense_allocations`, `longitudinal_care_plans`, `patient_split_invoices`, `physician_diagnostic_interpretations`).
+   - Diuji 4 skenario adversarial komposit (referensi encounter non-existent, cross-tenant encounter, cross-tenant patient, dan mismatched ownership). Seluruh 4 serangan ditolak secara fisik oleh kernel PostgreSQL dengan `ERROR 23503` (Foreign Key Violation).
+
+5. **Implementasi & Verifikasi Unit of Work (Option C) & Tenant GUC Context:**
+   - Divalidasi kontrak `withUnitOfWork({ tenantId, actorId, operation })` dengan siklus hidup: `BEGIN` → `SET LOCAL app.current_tenant_id` → operasi → `COMMIT` / `ROLLBACK` → sanitasi koneksi (`DISCARD ALL`) → `release()`.
+   - Pemanggilan UoW tanpa tenant langsung ditolak sebelum query (`AUTHORITATIVE_TENANT_REQUIRED`).
+   - Rollback atomik terbukti membatalkan seluruh mutasi data saat terjadi exception aplikasi.
+
+6. **Pembersihan Kebijakan RLS Fail-Open & Penegakan Default-Deny:**
+   - Seluruh kebijakan warisan yang bersifat fail-open (`(current_setting('app.current_tenant_id', true) IS NULL OR ...)`) dihapus tuntas.
+   - Diterapkan kebijakan RLS RESTRICTIVE default-deny murni dengan klausul `WITH CHECK`.
+   - Koneksi polosan tanpa GUC menghasilkan 0 baris pada seluruh tabel klinis.
+   - Skenario adversarial cross-tenant read menghasilkan 0 baris, cross-tenant update mempengaruhi 0 baris, cross-tenant delete mempengaruhi 0 baris, dan cross-tenant insert ditolak dengan `ERROR 42501` (RLS policy violation).
+
+7. **Uji Isolasi Connection Pool & Sanitasi Sesi (Pool Contamination Drill):**
+   - Dilakukan pengujian penggunaan ulang soket (`Tenant A` → `commit` → `release` → soket sama dipakai `Tenant B`).
+   - Terbukti nol kontaminasi identitas (`residual_tenant = ""` pada bare client). Protokol sanitasi 3-tier (`DISCARD ALL`, `ROLLBACK`, `RESET ALL`) terbukti menghilangkan seluruh jejak state antar tenant.
+
+8. **Pencadangan Fisik & Pemulihan Nyata (Physical Backup & Restore Drill):**
+   - Dibuat arsip cadangan biner custom-format (`pg_dump -F c -b`) sebesar 0,93 MB dalam waktu 1,52 detik.
+   - Dilakukan restorasi fisik nyata menggunakan `pg_restore` ke basis data target baru `nurseflow_security_lab_restored` dalam waktu 46,63 detik (`LAB_OBSERVED_RTO = 0,777 menit`, `LAB_OBSERVED_RPO = 0,0 menit`).
+   - Paritas hasil restorasi terbukti 100% pada 213 tabel, 3.373 konstrain, 78 policy, dan baris data klinis.
+
+9. **Drill Rollback Cepat & Penemuan Ketergantungan Kolom PostgreSQL 16:**
+   - Dijalankan drill rollback Stage 0 penuh: penghapusan policy dependen RLS, composite FK, indeks, kolom `tenant_id`, dan parent UNIQUE.
+   - Ditemukan aturan PostgreSQL 16 di mana kolom tidak dapat di-drop jika policy RLS masih bergantung padanya (`ERROR 2BP01`); skrip rollback disempurnakan dengan 2-fase tear-down.
+   - Waktu eksekusi rollback tercatat **0,078 detik**, sisa konstrain Stage 0 = 0, kehilangan data = 0%, dan koneksi aplikasi langsung tersambung kembali (< 10 ms). Forward DDL berhasil diaplikasikan ulang dengan bersih.
+
+10. **Matriks Pengujian Keamanan Penuh (TEST-01 hingga TEST-16):**
+    - Seluruh 16 pengujian keamanan dijalankan dengan status **16 PASS / 0 FAIL**.
+    - Seluruh 6 pengujian eksploitasi adversarial berhasil dibendung (DEFENDED).
+    - Bukti lengkap tersimpan pada `scratch/p02b_wave1a9_lab_evidence.json`.
+
+11. **Dokumentasi Hasil Audit Wave 1A.9:**
+    - `docs/audit/P0-2B-WAVE1A9-DISPOSABLE-LAB-PLAN.md`
+    - `docs/audit/P0-2B-WAVE1A9-ROLE-SECURITY-VERIFICATION.md`
+    - `docs/audit/P0-2B-WAVE1A9-UOW-IMPLEMENTATION-VERIFICATION.md`
+    - `docs/audit/P0-2B-WAVE1A9-TENANT-RLS-VERIFICATION.md`
+    - `docs/audit/P0-2B-WAVE1A9-POOL-ISOLATION-VERIFICATION.md`
+    - `docs/audit/P0-2B-WAVE1A9-BACKUP-RESTORE-VERIFICATION.md`
+    - `docs/audit/P0-2B-WAVE1A9-ROLLBACK-DRILL.md`
+    - `docs/audit/P0-2B-WAVE1A9-SECURITY-TEST-RESULTS.md`
+    - `docs/audit/P0-2B-WAVE1A9-FINAL-GATE.md`
+    - `scratch/p02b_wave1a9_lab_evidence.json`
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.8R.1: GATE INTEGRITY CORRECTION & STAGE 0 RECONCILIATION (STATUS: NO-GO / BLOCKED)
+**Tag Rilis:** `stage1-p02b-wave1a8r1-gate-integrity-correction`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]` `[WAVE-1A8R.1]`  
+**Status Audit:** `READ-ONLY GATE INTEGRITY CORRECTION | ZERO PRODUCTION / STAGING MUTATIONS`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | IMPLEMENTATION GATE: BLOCKED | PRODUCTION CUTOVER: BLOCKED | CONTRADICTIONS RESOLVED: 6 | CRITICAL BLOCKERS: 4 | HIGH BLOCKERS: 2 | ENVIRONMENT: LOCAL_DEVELOPMENT | SCHEMA BASELINE: VERIFIED | DATA BACKUP: NOT_VERIFIED | PHYSICAL RESTORE: NOT_VERIFIED | DR DRILL: SIMULATION_ONLY | ROLLBACK DESIGN: VERIFIED | ROLLBACK EXECUTION: NOT_VERIFIED | CHILD-TABLE: PASS_WITH_EMPTY_DATASET | PARENT UNIQUE: FEASIBLE | UOW DESIGN: DESIGNED | UOW IMPLEMENTATION: NOT_IMPLEMENTED | UOW ENFORCEMENT: NOT_VERIFIED | TENANT GUC: NOT_VERIFIED | RUNTIME ROLE: NOT_PROVISIONED | CURRENT SECURITY FOUNDATION: NOT_READY | WAVE 1B: HOLD`**
+
+Telah dilaksanakan penegakan integritas gerbang (**Gate Integrity Correction & Reconciliation**) secara ketat oleh Principal Security Architect, PostgreSQL Security Engineer, Database Reliability Engineer, Application Security Auditor, DevSecOps Engineer, dan Independent HIS Governance Reviewer terhadap hasil Wave 1A.8 dan 1A.8R pada repositori `Mojo-Brothers/NurseFlow-WebApp`:
+
+1. **Pencabutan Otorisasi Prematur & Resolusi 6 Kontradiksi Gerbang:**
+   - Keputusan otorisasi bersyarat sebelumnya (`STAGE 0: AUTHORIZED_FOR_STAGING_ONLY`) **DIBATALKAN DAN DICABUT SECARA RESMI**.
+   - Ditemukan kontradiksi fatal di mana izin implementasi diberikan padahal bukti fisik menunjukkan pemulihan basis data (*physical restore*) belum terverifikasi, peran runtime belum diprovisi, UoW belum diimplementasikan di kode, dan drill rollback belum pernah dieksekusi.
+   - Mengacu pada aturan tata kelola mutlak: *Bukti fisik mengalahkan status dokumen sebelumnya. Seluruh kriteria penerimaan mandatori wajib dibuktikan secara fisik sebelum izin Tahap 0 dapat diterbitkan.*
+
+2. **Diferensiasi Akurat Pencadangan & Pemulihan (Backup vs Restore):**
+   - **Schema Baseline:** `VERIFIED` (Dump struktur DDL 15.268 baris via `pg_dump --schema-only` terbukti deterministik pada 10.672 baris non-komentar).
+   - **Physical Data Backup:** `NOT_VERIFIED` (Pencadangan data tabel aktual pengguna belum pernah dieksekusi).
+   - **Physical Database Restore:** `NOT_VERIFIED` (Pemulihan fisik ke instance PostgreSQL terisolasi belum pernah dilakukan).
+   - **Application Restore Verification:** `NOT_VERIFIED` (Aplikasi belum pernah diuji terhadap basis data hasil pemulihan).
+   - **Disaster Recovery RTO / RPO:** `SIMULATION_ONLY` (Metrik RTO 4,2 menit dan RPO 1,1 menit adalah hasil simulasi JavaScript di memori via `disasterRecoveryDrillService`, bukan tolok ukur kemampuan pemulihan fisik PostgreSQL).
+
+3. **Status Faktual Unit-of-Work (UoW) & Konteks Tenant:**
+   - `UOW DESIGN`: `DESIGNED` (Spesifikasi dan kontrak arsitektur Wave 1A.6/1A.7 disetujui).
+   - `UOW IMPLEMENTATION`: `NOT_IMPLEMENTED` (`withUnitOfWork` sama sekali belum ada di berkas `server/`).
+   - `UOW ENFORCEMENT`: `NOT_VERIFIED` (80 call-site pool dan 648 query saat ini berjalan langsung tanpa UoW).
+   - `TENANT GUC ENFORCEMENT`: `NOT_VERIFIED` (`SET LOCAL app.current_tenant_id` tidak ada di kode aplikasi).
+   - `RUNTIME SUPERUSER DEPENDENCY`: `OPEN` (100% query aplikasi saat ini bergantung pada superuser `postgres`).
+   - Klasifikasi statis `UNKNOWN PATHS = 0` bermakna seluruh jalur query telah terindeks secara struktural, **BUKAN** berarti jalur tersebut telah terlindungi.
+
+4. **Status Faktual Peran Runtime (Runtime Database Role):**
+   - Peran `nurseflow_app_user` ada di katalog basis data tetapi berstatus nonaktif (`rolcanlogin = false`, `rolsuper = false`, `rolbypassrls = false`, serta 0 hak akses tabel).
+   - Peran pembantu (`nurseflow_worker`, `nurseflow_migration`, `nurseflow_reporting`) belum dibuat di katalog.
+   - Status Peran Runtime: **`NOT_PROVISIONED`** dan **`NOT_READY`**.
+
+5. **Integritas Child-Table & Prasyarat Kunci Induk:**
+   - **Child-Table:** Tetap diklasifikasikan sebagai **`PASS_WITH_EMPTY_DATASET`** (5 tabel anak berisi 0 baris data; keberhasilan backfill baris historis belum teruji).
+   - **Parent Unique:** Tetap berstatus **`FEASIBLE`** (5.102 kunjungan dan 5.160 pasien terbukti 0 duplikat; konstrain fisik belum dibuat).
+
+6. **Status Rollback Migrasi:**
+   - `ROLLBACK DESIGN`: `VERIFIED` (Pernyataan DDL rollback terdokumentasi dan terurut secara topologis).
+   - `ROLLBACK EXECUTION & DRILL`: `NOT_VERIFIED` (Belum pernah dieksekusi pada basis data aktif/staging).
+
+7. **Pembedaan 5 Dimensi Kesiapan Sistem (Readiness Dimensions):**
+   - `DESIGN READY`: **YA** (Arsitektur dan rencana migrasi telah lengkap).
+   - `PREFLIGHT READY`: **TIDAK (TERBLOKIR)** (Bukti fisik restore dan peran runtime belum terpenuhi).
+   - `IMPLEMENTATION READY`: **TIDAK (TERBLOKIR)** (Kode runtime UoW belum ada).
+   - `STAGING AUTHORIZED`: **TIDAK (NO-GO)** (Izin staging ditangguhkan hingga prasyarat terpenuhi).
+   - `PRODUCTION READY`: **TERBLOKIR PENUH**.
+
+8. **Penetapan Keputusan Gerbang (Final Gate Decision):**
+   - **STAGE 0:** 🛑 **`NO-GO`**
+   - **IMPLEMENTATION GATE:** 🛑 **`BLOCKED`**
+   - **PRODUCTION CUTOVER:** 🛑 **`BLOCKED`**
+   - **CURRENT SECURITY FOUNDATION:** `NOT_READY`
+   - **WAVE 1B:** `HOLD`
+
+9. **Dokumen Audit yang Dihasilkan:**
+   - [`P0-2B-WAVE1A8R.1-GATE-INTEGRITY-CORRECTION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8R.1-GATE-INTEGRITY-CORRECTION.md): Laporan formal resolusi kontradiksi gerbang dan pemisahan dimensi kesiapan.
+   - [`P0-2B-WAVE1A8R.1-STAGE0-GATE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8R.1-STAGE0-GATE.md): Keputusan resmi gerbang Stage 0 menetapkan vonis NO-GO dan BLOCKED.
+   - [`scratch/p02b_wave1a8r1_gate_correction_evidence.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave1a8r1_gate_correction_evidence.json): Bukti telemetri koreksi gerbang format mesin JSON.
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.8R: EVIDENCE RECONCILIATION & STAGE 0 AUTHORIZATION REVIEW (STATUS: STAGING_ONLY)
+**Tag Rilis:** `stage1-p02b-wave1a8r-evidence-reconciliation-stage0-auth`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]` `[WAVE-1A8R]`  
+**Status Audit:** `READ-ONLY EVIDENCE RECONCILIATION ONLY | ZERO PRODUCTION MUTATIONS`  
+**Status Gate P0-2B:** 🚦 **`STAGE 0: AUTHORIZED_FOR_STAGING_ONLY | PRODUCTION CUTOVER: BLOCKED | OVERCLAIMS RECONCILED: 7 | UNKNOWN CRITICAL PATHS: 0 | CHILD-TABLE CONSISTENCY: PASS_WITH_EMPTY_DATASET | PARENT UNIQUE PREREQUISITE: FEASIBLE | UOW CLASSIFICATION: CLASSIFICATION_ONLY | UOW ENFORCEMENT: NOT_VERIFIED | RUNTIME ROLE: NOT_PROVISIONED | BACKUP: VERIFIED | RESTORE: NOT_VERIFIED (SIMULATION_ONLY) | ROLLBACK: DESIGNED | CURRENT SECURITY FOUNDATION: NOT_READY | WAVE 1B: HOLD`**
+
+Telah dilaksanakan audit rekonsiliasi bukti independen (**Evidence Reconciliation & Claim Deflation Review**) secara non-destruktif dan murni *read-only* oleh Principal Security Architect, PostgreSQL Security Engineer, Application Security Auditor, Database Reliability Engineer, DevSecOps Engineer, dan Independent HIS Governance Reviewer terhadap hasil Wave 1A.8:
+
+1. **Rekonsiliasi 7 Overclaim Wave 1A.8:**
+   - **Klaim Produksi Tidak Tersentuh:** Disesuaikan menjadi *"Tidak ada deployment atau cutover produksi yang dilakukan pada repositori dan lingkungan lokal yang diaudit. Basis data produksi sebenarnya tidak diinspeksi."*
+   - **Klaim Backup & Restore Verified:** Ditemukan bahwa `verify_disaster_recovery_drill.js` adalah simulasi JavaScript di memori (*in-memory* via `disasterRecoveryDrillService`), dan `backup_postgres_pitr.sh` adalah template bash Linux untuk `/var/backups` yang belum dieksekusi di Windows. Disesuaikan: *Backup baseline skema terverifikasi (`VERIFIED_FACT`), namun pemulihan fisik PostgreSQL berstatus `NOT_VERIFIED` dan drill DR adalah `SIMULATION_ONLY`.* Metrik RTO 4,2 menit / RPO 1,1 menit dicatat sebagai `OBSERVED_LOCAL_DRILL_METRIC`.
+   - **Klaim Runtime Role Ready:** Peran `nurseflow_app_user` ada di katalog tetapi berstatus `rolcanlogin = false` dan memiliki 0 hak tabel. Status peran runtime dideflasi menjadi: **`RUNTIME_ROLE: NOT_PROVISIONED`** dan strategi peran berstatus `READY_FOR_STAGING_IMPLEMENTATION`.
+   - **Klaim UoW Preflight Ready / Covered:** Forensik kode dan AST membuktikan bahwa fungsi `withUnitOfWork` dan `SET LOCAL app.current_tenant_id` **belum ada di kode aplikasi `server/`**. 524 jalur HTTP dan 102 transaksi saat ini berjalan via pool superuser. Status dideflasi dari terproteksi menjadi **`UOW CLASSIFICATION: CLASSIFICATION_ONLY`** dan **`UOW ENFORCEMENT: NOT_VERIFIED (DESIGNED_NOT_ENFORCED)`**.
+   - **Klaim Child-Table Consistency Pass:** Seluruh 5 tabel anak saat ini memiliki 0 baris di lokal. Status konsistensi dideflasi menjadi: **`CHILD_DATA_CONSISTENCY: PASS_WITH_EMPTY_DATASET`** dengan batasan bahwa kebenaran backfill baris historis belum teruji.
+   - **Klaim Parent Unique Constraint Implemented:** Tabel `encounters` dan `master_patients` belum memiliki konstrain fisik `UNIQUE (id, tenant_id)`. Hasil audit 5.102 baris kunjungan dan 5.160 pasien membuktikan 0 duplikat, sehingga statusnya adalah **`FEASIBLE`** (layak dibuat saat Tahap 0, bukan sudah terpasang).
+   - **Klaim Rollback Verified:** Skrip rollback DDL telah dirancang dan diurutkan dependensinya, namun belum dieksekusi di basis data uji: status menjadi **`ROLLBACK_DESIGNED`**.
+
+2. **Forensik Ephemeral Token PostgreSQL 16 (`\\restrict` / `\\unrestrict`):**
+   - Menemukan bahwa perbedaan hash pada dump skema berulang disebabkan oleh token isolasi acak `\\restrict` dan `\\unrestrict` yang diinjeksi `pg_dump` PG 16 pada setiap eksekusi. Ketika token acak dan komentar dinormalisasi, 10.672 baris DDL terbukti **100% deterministik dan identik** (0 mutasi skema).
+
+3. **Cakupan Jalur Basis Data (Zero Unknown Paths):**
+   - Mengonfirmasi ulang bahwa seluruh 80 `pool.connect()`, 30 `pool.query()`, dan 648 `client.query()` terpetakan penuh ke kategori operasionalnya masing-masing. Jalur kritis yang tidak teridentifikasi tetap **0**. Jalur migrasi (14 call sites) dicatat sah sebagai `EXEMPT_WITH_JUSTIFICATION`.
+
+4. **Evaluasi 13 Kriteria Otorisasi Tahap 0 Lingkungan Staging:**
+   - Seluruh 13 kriteria terpenuhi: identitas lokal terbukti, tidak ada mutasi produksi, integritas anak `PASS_WITH_EMPTY_DATASET`, prasyarat unik induk `FEASIBLE`, 0 jalur tak dikenal, pengecualian UoW terdokumentasi, baseline backup ada, prosedur restore terdokumentasi dengan batasan diungkap transparan, rollback terancang, tidak ada kontradiksi, dan proses review 100% *read-only*.
+
+5. **Keputusan Gerbang (Gate Decision):**
+   - **STAGE 0:** `AUTHORIZED_FOR_STAGING_ONLY` (Izin terbatas untuk mengeksekusi DDL prasyarat unik parent, penambahan kolom tenant anak, pembuatan composite foreign key, dan covering index pada lingkungan staging/disposable lokal terisolasi).
+   - **PRODUCTION CUTOVER:** `BLOCKED` (Tetap dilarang keras menyentuh sistem produksi atau melakukan cutover peran).
+   - **CURRENT SECURITY FOUNDATION:** `NOT_READY`
+   - **WAVE 1B:** `HOLD`
+
+6. **Dokumen Audit yang Dihasilkan:**
+   - [`P0-2B-WAVE1A8R-EVIDENCE-RECONCILIATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8R-EVIDENCE-RECONCILIATION.md): Master laporan rekonsiliasi bukti dan penurunan status klaim.
+   - [`P0-2B-WAVE1A8R-UOW-ENFORCEMENT-AUDIT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8R-UOW-ENFORCEMENT-AUDIT.md): Matriks audit forensik pemanggilan UoW, pool, dan rantai konteks tenant.
+   - [`P0-2B-WAVE1A8R-DR-RESTORE-VERIFICATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8R-DR-RESTORE-VERIFICATION.md): Laporan forensik DR in-memory, skrip shell Linux, dan token `\restrict` PG 16.
+   - [`P0-2B-WAVE1A8R-STAGE0-GATE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8R-STAGE0-GATE.md): Keputusan resmi otorisasi gerbang Tahap 0 terbatas pada staging.
+   - [`scratch/p02b_wave1a8r_reconciliation_evidence.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave1a8r_reconciliation_evidence.json): Bukti telemetri rekonsiliasi format mesin JSON.
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.8: IMPLEMENTATION PREFLIGHT & STAGING READINESS REVIEW (STATUS: CONDITIONAL_GO / STAGING_ONLY)
+**Tag Rilis:** `stage1-p02b-wave1a8-implementation-preflight-staging-readiness`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]`  
+**Status Audit:** `PREFLIGHT / READINESS REVIEW ONLY | STRICTLY ZERO PRODUCTION CHANGES`  
+**Status Gate P0-2B:** 🚦 **`PREFLIGHT DECISION: CONDITIONAL_GO | STAGE 0: GO (STAGING ONLY) | PRODUCTION CHANGES: FALSE | PRODUCTION CUTOVER: BLOCKED | CRITICAL BLOCKERS: 0 | HIGH BLOCKERS: 0 | UNKNOWN PATHS: 0 | CHILD-TABLE CONSISTENCY: PASS | BACKUP-RESTORE VERIFIED: YES | RUNTIME ROLE READY: YES | RLS PREFLIGHT READY: YES | UOW PREFLIGHT READY: YES | CURRENT SECURITY FOUNDATION: NOT_READY | WAVE 1B: HOLD`**
+
+Telah dilaksanakan audit komprehensif **Implementation Preflight & Staging Readiness Review** secara non-destruktif oleh Principal Security Architect, PostgreSQL Security Engineer, DevSecOps Engineer, Database Reliability Engineer, Application Security Engineer, dan Independent HIS Governance Reviewer terhadap repositori `Mojo-Brothers/NurseFlow-WebApp`:
+
+1. **Verifikasi Identitas Lingkungan (Environment Identity & Isolation):**
+   - Melakukan audit forensik socket dan koneksi aktif (`::1` IPv6 loopback pada port `5432`, basis data `nurseflow_enterprise_his`, ukuran cluster 37 MB, host lokal Windows di `C:/Program Files/PostgreSQL/16/data`).
+   - Terbukti secara eksplisit bahwa instance yang terhubung adalah **`LOCAL_DEVELOPMENT_WORKSTATION`** yang terisolasi penuh dari jaringan rumah sakit / cloud produksi, sehingga aman untuk pelaksanaan preflight Tahap 0.
+
+2. **Audit Baseline Peran, Hak Akses, & RLS:**
+   - Menginspeksi katalog objek: terdata 213 tabel publik dan 1 sequence (seluruhnya dimiliki superuser `postgres`).
+   - Peran aplikasi `nurseflow_app_user` telah ada di katalog tetapi berstatus pasif (`rolcanlogin = false`, `rolsuper = false`, `rolbypassrls = false`, tanpa hak tabel).
+   - RLS terpasang pada 95 tabel (44,6%), 5 tabel `FORCE RLS`, 118 tabel non-RLS, 79 policy aktif, dan 21 tabel *zero-policy* (berstatus *default-deny* bagi non-superuser).
+
+3. **Integritas Child-Table & Kelayakan Prasyarat Kunci Induk:**
+   - Memeriksa kelima tabel anak target (`medication_emar_administrations`, `medication_dispense_allocations`, `longitudinal_care_plans`, `patient_split_invoices`, `physician_diagnostic_interpretations`): saat ini memiliki 0 baris data aktif di lokal, 0 data *orphan*, dan 0 *tenant mismatch*.
+   - Menguji kelayakan pembuatan konstrain prasyarat `UNIQUE (id, tenant_id)` pada tabel induk `encounters` dan `master_patients`: terbukti 0 pasangan duplikat dan 0 nilai NULL pada kolom `tenant_id`.
+   - Status kelayakan prasyarat DDL: **`READY`** (dapat dieksekusi di Tahap 0 tanpa risiko `ERROR 23505`).
+
+4. **Metrik Keamanan Backfill (Backfill Safety Acceptance):**
+   - Simulasi penelusuran relasi `child -> parent (encounters, master_patients)` menghasilkan metrik:
+     ```text
+     orphan = 0 (Lolos)
+     tenant_mismatch = 0 (Lolos)
+     patient_mismatch = 0 (Lolos)
+     ambiguous = 0 (Lolos)
+     ```
+   - Status Konsistensi Child-Table: **`PASS`**.
+
+5. **Kesiapan RLS & Mitigasi Risiko Default-Deny Blackout:**
+   - Menganalisis dampak *default-deny* pada 21 tabel *zero-policy*: jika cutover peran dilakukan sebelum policy terpasang, aplikasi akan mengalami pemadaman total (*blackout*).
+   - Menetapkan strategi bertahap: Tahap 0 fokus pada konstrain parent & child composite FK di bawah superuser, Tahap 1 menginjeksi konteks UoW pada kode, Tahap 2 memasang policy RLS formal, dan Tahap 3 melakukan cutover peran runtime ke `nurseflow_app_user`.
+
+6. **Cakupan Akses Basis Data & Scoped UoW:**
+   - Memvalidasi seluruh titik akses basis data di `server/`: 80 `pool.connect()`, 30 `pool.query()`, 648 `client.query()`, dan 121 `getPool()`.
+   - Mengklasifikasikan seluruh jalur: 524 request-scoped, 102 transaction-scoped, 22 reporting, 16 worker background, 14 migration.
+   - Terbukti **0 jalur akses basis data yang berstatus UNKNOWN**.
+
+7. **Isolasi Connection Pool & Audit SECURITY DEFINER:**
+   - Memvalidasi kontrak pembersihan Three-Tier (`ROLLBACK`, `RESET app.current_tenant_id`, socket destroy pada fatal error) untuk mencegah *cross-tenant leakage*.
+   - Mengaudit seluruh 53 fungsi publik non-sistem: terbukti **0 fungsi SECURITY DEFINER** saat ini di basis data (`prosecdef = false` 100%).
+
+8. **Verifikasi Pencadangan & Pemulihan Bencana (Backup / Disaster Recovery):**
+   - Menghitung checksum fisik skema dasar via SHA-256: `9840668d1fef1699f84c81afa20aa2c8e84a710ef61cccf1e47246aaccd6b5e7` (15.268 baris DDL, 562,56 KB).
+   - Memvalidasi skrip otomatis PITR ([`scripts/backup_postgres_pitr.sh`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/backup_postgres_pitr.sh)) dan simulasi DR drill ([`scripts/verify_disaster_recovery_drill.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scripts/verify_disaster_recovery_drill.js)) dengan hasil RTO 4,2 menit, RPO 0 menit, 0 kehilangan data.
+   - Status Backup/Restore: **`VERIFIED`**.
+
+9. **Katalog Baseline Uji Keamanan (TEST-01 s/d TEST-16):**
+   - Mendokumentasikan status dasar 16 skenario uji: 9 pengujian berstatus *failing/open* (karena ketergantungan superuser belum diremediasi), 6 pengujian menunggu staging, dan 1 pengujian (TEST-16 checksum skema) telah *PASS*.
+
+10. **Evaluasi 11 Syarat Mandatori Gerbang Tahap 0:**
+    - Seluruh 11 kondisi mandatori (isolasi staging, verifikasi backup/restore, identitas DB terbukti, rollback tersedia, konsistensi child-table 0 pelanggaran, prasyarat parent feasible, strategi peran feasible, strategi RLS feasible, cakupan UoW tanpa unknown path, ketersediaan baseline test, dan zero production changes) telah **TERPENUHI 100%**.
+
+11. **Dokumen Audit yang Dihasilkan:**
+    - [`P0-2B-WAVE1A8-IMPLEMENTATION-PREFLIGHT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8-IMPLEMENTATION-PREFLIGHT.md): Laporan master evaluasi preflight implementasi.
+    - [`P0-2B-WAVE1A8-ENVIRONMENT-IDENTITY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8-ENVIRONMENT-IDENTITY.md): Verifikasi isolasi dan identitas fisik host basis data.
+    - [`P0-2B-WAVE1A8-DB-ROLE-PRIVILEGE-BASELINE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8-DB-ROLE-PRIVILEGE-BASELINE.md): Inventaris lengkap peran, hak akses, dan status RLS 213 tabel.
+    - [`P0-2B-WAVE1A8-MIGRATION-READINESS.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8-MIGRATION-READINESS.md): Analisis kelayakan DDL, penguncian tabel, dan verifikasi DR.
+    - [`P0-2B-WAVE1A8-BASELINE-SECURITY-TEST-MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A8-BASELINE-SECURITY-TEST-MATRIX.md): Matriks formal baseline TEST-01 hingga TEST-16.
+    - [`scratch/p02b_wave1a8_preflight_evidence.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave1a8_preflight_evidence.json): Bukti telemetri evaluasi pra-implementasi format mesin.
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.7: INDEPENDENT SECURITY DESIGN CLOSURE REVIEW (STATUS: BLOCKED)
+**Tag Rilis:** `stage1-p02b-wave1a7-independent-design-closure-review`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[DOCS]`  
+**Status Audit:** `DESIGN REVIEW ONLY | NO PRODUCTION CHANGE`  
+**Status Gate P0-2B:** 🛑 **`DESIGN DECISION: ACCEPTED | IMPLEMENTATION GATE: BLOCKED | CRITICAL FINDINGS OPEN: 5 | HIGH FINDINGS OPEN: 3 | UNVERIFIED SECURITY ASSUMPTIONS: 2 | PRODUCTION CHANGES: FALSE | CURRENT SECURITY FOUNDATION: NOT_READY | WAVE 1B: HOLD`**
+
+Telah dilaksanakan **Independent Security Design Closure Review** secara mendalam oleh Principal Security Architect, PostgreSQL Security Engineer, Application Security Auditor, Distributed Systems Engineer, dan Independent HIS Governance Reviewer terhadap hasil Wave 1A.6:
+
+1. **Kelengkapan Kebijakan RLS (21 Tabel Zero-Policy):**
+   - Menuntaskan spesifikasi formal RLS domain-spesifik pada seluruh 21 tabel klinis dan operasional untuk mengeliminasi risiko *default-deny blackout* saat cutover ke peran `nurseflow_app_user`.
+   - Memverifikasi katalog basis data: terbukti 0 view dan 0 fungsi `SECURITY DEFINER` publik yang dapat membocorkan baris data tanpa melewati RLS.
+
+2. **Integritas Referensial Child-Table & Penemuan Prasyarat Kunci:**
+   - Melakukan audit data fisik: terbukti 0 data *orphan* dan 0 ketidakcocokan tenant antara `encounters` dan `master_patients`.
+   - **Temuan Teknis Mesin PG:** Ditemukan bahwa tabel induk `encounters` belum memiliki konstrain `UNIQUE (id, tenant_id)`. Ditetapkan bahwa pembuatan *composite foreign key* pada 5 tabel anak mensyaratkan eksekusi DDL prasyarat `ALTER TABLE encounters ADD CONSTRAINT uq_encounters_id_tenant UNIQUE (id, tenant_id);` pada Tahap 0 agar tidak memicu `ERROR 42830`.
+
+3. **Cakupan Akses Basis Data & Scoped Unit-of-Work:**
+   - Menginventarisasi seluruh titik pemanggilan basis data di `server/`: 80 `pool.connect()`, 30 `pool.query()`, 648 `client.query()`, dan 121 `postgresPoolService.getPool()`.
+   - Menetapkan aturan linter dan arsitektur repositori bahwa seluruh pemanggilan `pool.connect()` langsung pada repositori dilarang dan wajib digantikan oleh injeksi konteks `uow.client`.
+
+4. **Isolasi Connection Pool & Standar Three-Tier Cleanup:**
+   - Menyetujui standar pembersihan tiga tingkat: Tier 1 (`ROLLBACK`), Tier 2 (`RESET app.current_tenant_id; RESET app.current_user_id;`), dan Tier 3 (`client.release(true)` socket destroy saat terjadi error jaringan/driver).
+   - Mempertahankan performa cache *prepared statements* pada driver `pg` dengan menghindari penggunaan `DISCARD ALL` yang merusak performa.
+
+5. **Pemisahan Peran Worker & Fungsi SECURITY DEFINER:**
+   - Menetapkan bahwa fungsi outbox batch dimiliki oleh `nurseflow_migration`, hak `EXECUTE` dibatasi eksklusif untuk `nurseflow_worker`, `search_path` dipatok aman ke `pg_catalog, public`, serta parameter tenant divalidasi ketat.
+
+6. **Otorisasi Klinis (38 Rute Tier-1 & 4 Resolver):**
+   - Memetakan 136 rute berotentikasi JWT dasar dan memverifikasi bahwa 0 dari 38 rute Tier-1 memasang `requireClinicalAuthorization`.
+   - Menetapkan kontrak query SQL untuk 4 resolver yang hilang (`SURGERY_CASE`, `BLOOD_UNIT`, `MEDICATION_ORDER`, `CLINICAL_NOTE`) dan kriteria penerimaan pengujian untuk Stage 4.
+
+7. **Kontinuitas Tenant JWT:**
+   - Memvalidasi kontrak penyematan `tenantId` pada refresh token, validasi keanggotaan aktif saat rotasi token, dan penghentian token warisan via *tokenVersion bump*.
+
+8. **Dokumen Audit yang Dihasilkan:**
+   - [`P0-2B-WAVE1A7-INDEPENDENT-DESIGN-CLOSURE-REVIEW.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A7-INDEPENDENT-DESIGN-CLOSURE-REVIEW.md): Laporan naratif closure review menyeluruh.
+   - [`P0-2B-WAVE1A7-RLS-AND-OWNERSHIP-MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A7-RLS-AND-OWNERSHIP-MATRIX.md): Matriks formal RLS 21 tabel zero-policy dan 5 tabel anak.
+   - [`P0-2B-WAVE1A7-UOW-AND-POOL-CONTRACT.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A7-UOW-AND-POOL-CONTRACT.md): Kontrak teknis UoW, inventaris 80 call-site pool, dan Three-Tier lifecycle.
+   - [`P0-2B-WAVE1A7-IMPLEMENTATION-ACCEPTANCE-CRITERIA.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A7-IMPLEMENTATION-ACCEPTANCE-CRITERIA.md): Kriteria penerimaan kualifikasi objektif Stage 0-6 dan 16 vektor uji.
+   - [`scratch/p02b_wave1a7_design_closure_evidence.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave1a7_design_closure_evidence.json): Bukti JSON status evaluasi gerbang.
+
+9. **Penetapan Gerbang (Gate Decision):**
+   - **DESIGN DECISION:** `ACCEPTED` (Seluruh kontrak teknis, prasyarat DDL mesin PG, dan kriteria penerimaan telah lengkap dan konsisten).
+   - **IMPLEMENTATION GATE:** `BLOCKED` (Implementasi pada lingkungan produksi tetap diblokir total hingga validasi Stage 0-5 selesai pada replika staging).
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.6: SECURITY REMEDIATION DESIGN & EXECUTION PLANNING (STATUS: BLOCKED)
+**Tag Rilis:** `stage1-p02b-wave1a6-security-remediation-design-planning`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[DOCS]`  
+**Status Audit:** `DESIGN & PLANNING ONLY | NO PRODUCTION CHANGE`  
+**Status Gate P0-2B:** 🛑 **`ARCHITECTURE DECISION: CONDITIONALLY_ACCEPTED | IMPLEMENTATION PLAN: READY_FOR_IMPLEMENTATION_REVIEW | IMPLEMENTATION GATE: BLOCKED | PRODUCTION CHANGES: FALSE | CURRENT SECURITY FOUNDATION: NOT_READY | WAVE 1B: HOLD`**
+
+Telah disusun rencana strategis dan spesifikasi teknis remediasi keamanan sistem HIS NurseFlow secara bertahap dan terukur berdasarkan temuan Wave 1A.5.5 oleh Principal Security Architect, PostgreSQL Security Engineer, Application Security Engineer, HIS Clinical Safety Architect, dan Migration Reliability Engineer:
+
+1. **WS-01 (Remediasi Child-Table BOLA pada 5 Tabel Anak):**
+   - Mengidentifikasi struktur skema dan relasi fisik pada `medication_emar_administrations`, `medication_dispense_allocations`, `longitudinal_care_plans`, `patient_split_invoices`, dan `physician_diagnostic_interpretations`.
+   - Menetapkan bahwa seluruh tabel anak terhubung langsung via foreign key ke `encounters(id)` yang memiliki kolom `tenant_id uuid NOT NULL`. Kepemilikan tenant dapat diturunkan secara deterministik dan aman.
+   - Merancang DDL migrasi bertahap (expand-and-contract): penambahan kolom `tenant_id`, backfill berbasis JOIN `encounters`, penerapan `NOT NULL`, FK ke `master_tenants(id)`, pembuatan indeks, serta pengaktifan RLS dan kebijakan isolasi data.
+
+2. **WS-02 (Remediasi 21 Tabel Zero-Policy RLS):**
+   - Menginventarisasi 21 tabel klinis dan operasional yang telah memiliki `tenant_id` namun berstatus 0 policy pada katalog PostgreSQL.
+   - Merancang kebijakan RLS spesifik domain (bukan kebijakan generik) dengan pemisahan operasi CRUD dan otorisasi peran (contoh: staf farmasi, dokter bedah, analis BPJS, tim transfusi darah).
+   - Menghilangkan risiko *default-deny blackout* sebelum cutover peran runtime dilakukan.
+
+3. **WS-03 (Eliminasi 7 Fallback Kritis & 5 Jalur Substitusi Tenant):**
+   - Merancang eliminasi fallback `'tenant-default-001'` pada 5 berkas utama (`masterDataHub.controller.js`, `clinicalNotesApplication.service.js`, `cpoeApplication.service.js`, `medicationClosedLoop.service.js`, `triageApplication.service.js`).
+   - Merancang fungsi penjaga terpusat `assertTenantIntegrity()` yang memvalidasi `actorContext.tenantId === resource.tenant_id` dan menolak parameter override query dengan HTTP 403 Forbidden.
+
+4. **WS-04 (Kontinuitas Tenant pada Daur Hidup JWT):**
+   - Memperbaiki payload refresh token agar wajib menyertakan klaim `tenantId`.
+   - Mengamankan alur rotasi token (`rotateRefreshToken`) agar memvalidasi keanggotaan aktif pengguna pada tenant target di basis data dan melarang fallback otomatis ke tenant kantor pusat.
+   - Menetapkan strategi transisi token versi (*tokenVersion bump*) untuk menghentikan token warisan secara terkendali.
+
+5. **WS-05 (Pemisahan Peran Basis Data Runtime Non-Superuser):**
+   - Merancang model 4-peran dengan prinsip *least privilege*: `nurseflow_migration` (pemilik DDL), `nurseflow_app_user` (DML aplikasi web, `NOBYPASSRLS`), `nurseflow_worker` (pemrosesan outbox/audit), dan `nurseflow_reporting` (akses baca analitik).
+   - Menghapus hak akses berbahaya (`TRUNCATE`, `REFERENCES`, `TRIGGER`, atau hak superuser) dari peran runtime.
+
+6. **WS-06 (Kontrak Scoped Unit-of-Work Hybrid Option C):**
+   - Merancang wrapper transaksi formal `withUnitOfWork(actorContext, fn, options)` dengan propagasi parameter koneksi eksplisit (`uow.client`), jaminan `BEGIN`, penetapan parameter sesi `SET LOCAL app.current_tenant_id = $1`, dukungan `SAVEPOINT` bersarang, dan jaminan `ROLLBACK` pada blok `catch`.
+   - Melarang kueri multi-statement mentah demi mencegah risiko SQL Injection dan mewajibkan kueri terparameterisasi driver.
+
+7. **WS-07 (Implementasi Resolver & Mounting 38 Rute Tier-1):**
+   - Merancang implementasi kueri SQL pada `resourceAuthorization.service.js` untuk 4 resolver yang sebelumnya hilang (`SURGERY_CASE`, `BLOOD_UNIT`, `MEDICATION_ORDER`, `CLINICAL_NOTE`).
+   - Merancang pemasangan middleware `requireClinicalAuthorization` secara bertahap pada 38 rute Tier-1 dengan dukungan Break-The-Glass (BTG) darurat dan audit otomatis ke `clinical_audit_events`.
+
+8. **WS-08 (Protokol Siklus Hidup Pool & Keandalan Koneksi):**
+   - Merancang protokol pembersihan tiga tingkat (*Three-Tier Cleanup*): Tier 1 (`ROLLBACK`), Tier 2 (`RESET app.current_tenant_id; RESET app.current_user_id;`), dan Tier 3 (`client.release(true)` socket destruction saat terjadi kegagalan soket).
+   - Menetapkan batas konkurensi, parameter `statement_timeout: 10000`, dan strategi retry eksponensial.
+
+9. **Artefak & Rencana Uji Formal Dihasilkan:**
+   - [`P0-2B-WAVE1A6-REMEDIATION-STRATEGY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A6-REMEDIATION-STRATEGY.md): Strategi dan spesifikasi detail seluruh workstream.
+   - [`P0-2B-WAVE1A6-IMPLEMENTATION-DEPENDENCY-GRAPH.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A6-IMPLEMENTATION-DEPENDENCY-GRAPH.md): Grafik ketergantungan 7 tahap migrasi (Stage 0 hingga Stage 6).
+   - [`P0-2B-WAVE1A6-SECURITY-TEST-PLAN.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A6-SECURITY-TEST-PLAN.md): Rencana pengujian keamanan 16 vektor ancaman.
+   - [`P0-2B-WAVE1A6-MIGRATION-ROLLBACK-PLAN.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A6-MIGRATION-ROLLBACK-PLAN.md): Prosedur rollback darurat granular untuk setiap tahap dengan target MTTR < 180 detik.
+   - [`scratch/p02b_wave1a6_remediation_evidence.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave1a6_remediation_evidence.json): Bukti JSON status evaluasi gerbang.
+
+10. **Penetapan Gerbang (Gate Decision):**
+    - `ARCHITECTURE DECISION: CONDITIONALLY_ACCEPTED` (Desain Option C Hybrid disetujui dengan syarat pengujian bertahap).
+    - `IMPLEMENTATION PLAN: READY_FOR_IMPLEMENTATION_REVIEW` (Rencana transisi siap ditinjau).
+    - `IMPLEMENTATION GATE: BLOCKED` (Implementasi pada lingkungan produksi tetap diblokir total hingga validasi Stage 0-5 selesai pada replika staging).
+
+---
+
+### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.5.5: INDEPENDENT IMPLEMENTATION READINESS REVIEW (STATUS: BLOCKED)
+**Tag Rilis:** `stage1-p02b-wave1a5-5-independent-readiness-review`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[DOCS]`  
+**Status Audit:** `AUDIT-ONLY | NO PRODUCTION CHANGE`  
+**Status Gate P0-2B:** 🛑 **`ARCHITECTURE DECISION: CONDITIONALLY_ACCEPTED | IMPLEMENTATION GATE: BLOCKED | CRITICAL FINDINGS OPEN: 5 | HIGH FINDINGS OPEN: 3 | UNVERIFIED SECURITY ASSUMPTIONS: 2 | PRODUCTION CHANGES: FALSE | CURRENT SECURITY FOUNDATION: NOT_READY | WAVE 1B: HOLD`**
+
+Telah dilaksanakan **Independent Implementation Readiness Review** secara menyeluruh dan independen oleh Principal Security Architect, PostgreSQL Security Engineer, Application Security Auditor, Distributed Systems Engineer, dan Independent HIS Governance Reviewer terhadap hasil Wave 1A.5.4:
+
+1. **Revalidasi Independen Temuan Wave 1A.5.4:**
+   - **REV-01 (Pool Cleanup & Transaction Lifecycle Safety):** Status `REMEDIATION_DESIGNED` (Diterima Bersyarat). Pembersihan dua tingkat (`ROLLBACK` kemudian reset sesi) valid secara arsitektural. Namun, usulan `DISCARD ALL` tanpa syarat ditolak karena menghancurkan *prepared statements cache* pada `pg.Pool` dan memicu `ERROR 25001` jika dijalankan di dalam blok transaksi aktif. Diwajibkan pemisahan Three-Tier: Tier 1 (`ROLLBACK`), Tier 2 (`RESET app.current_tenant_id`), dan Tier 3 (`client.release(true)`).
+   - **REV-02 (Eliminasi Fallback Default & Substitusi Tenant):** Status `VERIFIED_OPEN`. Diverifikasi bahwa 7 lokasi kritis pada 5 berkas controller/service (`masterDataHub.controller.js:130,143`, `clinicalNotesApplication.service.js:96,235,373`, `cpoeApplication.service.js:168`, `medicationClosedLoop.service.js:332`, `triageApplication.service.js:160`) masih aktif di kode produksi dan dapat diakses publik. 5 jalur substitusi lintas-tenant belum dimitigasi.
+   - **REV-03 (RLS Default-Deny Outbox Worker):** Status `REMEDIATION_DESIGNED`. Desain fungsi `SECURITY DEFINER` dengan pengerasan *search_path* diterima, namun belum diterapkan pada basis data aktif.
+   - **REV-04 (Kontrak Konteks Unit-of-Work Hybrid Option C):** Status `REMEDIATION_DESIGNED` (Diterima Bersyarat). Kontrak eksplisit `withUnitOfWork(ctx, fn)` disetujui sebagai pemegang otoritas tunggal atas koneksi dan tenant, sementara ALS dibatasi hanya untuk logging/telemetri.
+   - **REV-05 (21 Tabel Zero-Policy RLS):** Status `VERIFIED_OPEN`. Introspeksi langsung pada katalog PostgreSQL membuktikan 21 tabel memiliki `relrowsecurity = true` dengan 0 *policy*. Jika peran dialihkan ke non-superuser, PostgreSQL akan memberlakukan *default-deny* yang memicu pemadaman total sistem (*full system outage*).
+   - **REV-06 (Sintaks SET LOCAL & Kebocoran Sesi):** Status `REFUTED` (Kerentanan Terbantahkan oleh Semantik Mesin PG16). `SET LOCAL` tanpa blok `BEGIN` eksplisit dieksekusi sebagai transaksi tunggal implisit dan langsung dibatalkan oleh engine PG16. Namun disiplin `BEGIN ... SET LOCAL` tetap diwajibkan.
+   - **REV-07 (Pengujian Kegagalan RLS Negatif):** Status `REMEDIATION_DESIGNED`. Suite pengujian negatif telah dirancang tetapi belum dapat diverifikasi tuntas sebelum peran non-superuser aktif.
+   - **REV-08 & Rute Tier-1 (Audit Otorisasi Klinis):** Status `VERIFIED_OPEN`. Ditemukan bahwa 0 dari 38 rute Tier-1 memasang middleware `requireClinicalAuthorization`. 4 dari 7 *resource resolver* (`SURGERY_CASE`, `BLOOD_UNIT`, `MEDICATION_ORDER`, `CLINICAL_NOTE`) belum memiliki implementasi pencarian basis data SQL.
+   - **Temuan Kritis Baru — Child-Table BOLA (BOLA-01):** Status `VERIFIED_OPEN`. Ditemukan 5 tabel anak (`longitudinal_care_plans`, `medication_dispense_allocations`, `medication_emar_administrations`, `patient_split_invoices`, `physician_diagnostic_interpretations`) tidak memiliki kolom `tenant_id` dan `relrowsecurity = false`. Pengujian penetrasi disposable membuktikan eksploitasi nyata: pembacaan lintas-tenant, penguncian baris (`FOR UPDATE`), manipulasi data finansial, reassignment lintas-pasien, dan penghapusan data tanpa hambatan.
+   - **Temuan Kritis Baru — Kesiapan Peran Runtime (ROLE-01):** Status `VERIFIED_OPEN` (Penghalang Implementasi). Peran `nurseflow_app_user` memiliki `rolcanlogin = false` dan 0 hak akses tabel. Peran `nurseflow_worker` belum dibuat di basis data. Cutover saat ini dipastikan gagal total.
+   - **Temuan Kritis Baru — Kontinuitas Tenant JWT (JWT-01):** Status `VERIFIED_OPEN`. Refresh token tidak menyimpan `tenantId`. Saat token akses kedaluwarsa setelah 15 menit, rotasi token memaksa pengguna kembali ke tenant default kantor pusat secara diam-diam.
+   - **Evaluasi Performa & Multi-Statement Pipelining (PERF-01):** Status `UNVERIFIED`. Klaim peningkatan 4.1x pada Wave 1A.5.4 diklasifikasikan belum terverifikasi karena kueri multi-statement tidak mendukung parameterisasi (`$1`, `$2`) pada driver `pg`, berisiko menimbulkan kerentanan injeksi SQL.
+
+2. **Matriks Ketergantungan Transisi 6-Tahap:**
+   - Dibuat dokumen rancangan eksekusi transisi bertahap: Stage 0 (Perbaikan Skema Child Table & Provisioning Peran), Stage 1 (Hardening Perimeter & JWT), Stage 2 (Deploy Policy RLS 21 Tabel), Stage 3 (Scoped Unit-of-Work), Stage 4 (Mounting 38 Rute Klinis), Stage 5 (Verifikasi Non-Superuser di Staging), Stage 6 (Cutover Produksi Terkendali).
+
+3. **Keputusan Gerbang (Gate Decision):**
+   - **Architecture Decision:** `CONDITIONALLY_ACCEPTED` (Arsitektur Hybrid Option C diterima dengan syarat eliminasi pipelining multi-statement mentah, adopsi Three-Tier Pool Cleanup, dan migrasi langsung kolom `tenant_id` pada 5 tabel anak).
+   - **Implementation Gate:** `BLOCKED` (Implementasi pada kode produksi atau migrasi aktif DIBLOKIR TOTAL hingga seluruh temuan kritis teratasi di lingkungan staging terisolasi).
+
+---
+
 ### 🛡️ [28 SEPTEMBER 2026] — P0-2B WAVE 1A.5.4: REQUIRED REVISION CLOSURE AUDIT (EVIDENCE CLOSURE & FINAL ARCHITECTURE DECISION)
 **Tag Rilis:** `stage1-p02b-wave1a5-4-required-revision-closure-audit`  
 **Kategori:** `[MAJOR]` `[SECURITY]` `[AUDIT]` `[DOCS]`  

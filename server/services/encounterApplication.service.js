@@ -2,10 +2,11 @@
  * NurseFlow Enterprise HIS 2026 — Master Encounter Application Service
  * Domain Authority: Episodes of Care & Clinical Encounters FSM
  * Standards: HL7 FHIR R4 (Encounter & EpisodeOfCare), JCI Patient Journey Documentation, ACID Transactions
+ * Security Foundation: Authoritative Unit of Work (Option C) & Multi-Tenant Isolation
  */
 
 import crypto from 'crypto';
-import { postgresPoolService } from '../db/postgresPool.js';
+import { withUnitOfWork } from '../db/unitOfWork.js';
 
 export class EncounterDomainError extends Error {
   constructor(message, code = 'ENCOUNTER_DOMAIN_ERROR', statusCode = 400, details = []) {
@@ -73,7 +74,7 @@ export const encounterApplicationService = {
   },
 
   /**
-   * Create New Clinical Encounter & Episode of Care (ACID Transaction)
+   * Create New Clinical Encounter & Episode of Care (ACID Transaction via Authoritative UoW)
    */
   createEncounter: async ({
     patientId,
@@ -88,7 +89,7 @@ export const encounterApplicationService = {
     bedId = null,
     bedNumber = null,
     chiefComplaint = 'Pemeriksaan Rutin'
-  }, actor = {}, clientIp = '127.0.0.1', correlationId = `CORR-${Date.now()}`) => {
+  }, actor = {}, clientIp = '127.0.0.1', correlationId = `CORR-${Date.now()}`, tenantContext = null) => {
     if (!patientId) {
       throw new EncounterDomainError('Patient ID wajib disertakan untuk membuat Encounter.', 'VALIDATION_FAILED', 400, [{ field: 'patientId' }]);
     }
@@ -96,14 +97,11 @@ export const encounterApplicationService = {
       throw new EncounterDomainError('Dokter Penanggung Jawab (DPJP) wajib ditentukan.', 'VALIDATION_FAILED', 400, [{ field: 'primaryDoctorId' }]);
     }
 
-    const pool = postgresPoolService.getPool();
-    const client = await pool.connect();
+    const tenantId = tenantContext?.tenantId || actor?.tenantId;
 
-    try {
-      await client.query('BEGIN ISOLATION LEVEL READ COMMITTED;');
-
+    return await withUnitOfWork({ tenantId, actorId: actor.userId || actor.id, userRole: actor.role }, async ({ client, query }) => {
       // 1. Verify Patient Exists in Master Patient Index
-      const patientCheck = await client.query('SELECT id, mrn, full_name FROM master_patients WHERE id = $1 LIMIT 1;', [patientId]);
+      const patientCheck = await query('SELECT id, mrn, full_name, tenant_id FROM master_patients WHERE id = $1 LIMIT 1;', [patientId]);
       if (patientCheck.rows.length === 0) {
         throw new EncounterDomainError(`Pasien dengan ID ${patientId} tidak ditemukan di Master Patient Index.`, 'PATIENT_NOT_FOUND', 404);
       }
@@ -137,7 +135,7 @@ export const encounterApplicationService = {
           ) RETURNING *;
         `;
 
-        await client.query(insertEpisodeQuery, [
+        await query(insertEpisodeQuery, [
           activeEpisodeId,
           episodeNumber,
           patient.id,
@@ -176,7 +174,7 @@ export const encounterApplicationService = {
         ) RETURNING *;
       `;
 
-      const encounterResult = await client.query(insertEncounterQuery, [
+      const encounterResult = await query(insertEncounterQuery, [
         encounterId,
         encounterNumber,
         activeEpisodeId,
@@ -222,7 +220,7 @@ export const encounterApplicationService = {
         );
       `;
 
-      await client.query(auditQuery, [
+      await query(auditQuery, [
         crypto.randomUUID(),
         actor.userId || 'USR-REG-001',
         actor.username || actor.fullName || 'Petugas Admisi / Klinisi',
@@ -238,65 +236,64 @@ export const encounterApplicationService = {
         now
       ]);
 
-      // 5. COMMIT TRANSACTION
-      await client.query('COMMIT;');
-
       return {
         ...createdEncounter,
         patientName: patient.full_name,
         mrn: patient.mrn,
         auditSignature: signatureHash
       };
-    } catch (err) {
-      await client.query('ROLLBACK;');
-      throw err;
-    } finally {
-      client.release();
-    }
+    });
   },
 
   /**
-   * Transition Encounter Status FSM (ACID Transaction)
+   * Transition Encounter Status FSM (ACID Transaction via Authoritative UoW)
    */
   transitionEncounterStatus: async ({
     encounterId,
     nextStatus,
-    reason = 'Proses pelayanan klinis berlangsung',
+    reason = 'Protokol Pelayanan Klinis Standar',
     dischargeDisposition = null
-  }, actor = {}, clientIp = '127.0.0.1', correlationId = `CORR-${Date.now()}`) => {
-    const pool = postgresPoolService.getPool();
-    const client = await pool.connect();
+  }, actor = {}, clientIp = '127.0.0.1', correlationId = `CORR-${Date.now()}`, tenantContext = null) => {
+    if (!encounterId) {
+      throw new EncounterDomainError('Encounter ID wajib disertakan.', 'VALIDATION_FAILED', 400, [{ field: 'encounterId' }]);
+    }
+    if (!nextStatus) {
+      throw new EncounterDomainError('Next Status wajib disertakan.', 'VALIDATION_FAILED', 400, [{ field: 'nextStatus' }]);
+    }
 
-    try {
-      await client.query('BEGIN ISOLATION LEVEL READ COMMITTED;');
+    const tenantId = tenantContext?.tenantId || actor?.tenantId;
 
-      // 1. Lock Encounter Row
-      const encRes = await client.query('SELECT * FROM encounters WHERE id = $1 FOR UPDATE;', [encounterId]);
-      if (encRes.rows.length === 0) {
+    return await withUnitOfWork({ tenantId, actorId: actor.userId || actor.id, userRole: actor.role }, async ({ query }) => {
+      // 1. Lock encounter row with FOR UPDATE
+      const encResult = await query(
+        'SELECT * FROM encounters WHERE id = $1 FOR UPDATE;',
+        [encounterId]
+      );
+      if (encResult.rows.length === 0) {
         throw new EncounterDomainError(`Encounter dengan ID ${encounterId} tidak ditemukan.`, 'ENCOUNTER_NOT_FOUND', 404);
       }
-
-      const encounter = encRes.rows[0];
+      const encounter = encResult.rows[0];
       const currentStatus = encounter.status;
 
-      // 2. Validate FSM State Transition Invariant
-      const allowedNext = ENCOUNTER_FSM_TRANSITIONS[currentStatus] || [];
-      if (!allowedNext.includes(nextStatus)) {
+      // 2. Validate FSM State Machine
+      const allowedTransitions = ENCOUNTER_FSM_TRANSITIONS[currentStatus] || [];
+      if (!allowedTransitions.includes(nextStatus)) {
         throw new EncounterDomainError(
-          `Transisi status Encounter ilegal: Dari '${currentStatus}' ke '${nextStatus}' tidak diizinkan oleh Clinical FSM.`,
-          'CLINICAL_INVALID_STATE_TRANSITION',
-          400,
-          [{ currentStatus, requestedStatus: nextStatus, allowedNext }]
+          `Transisi status tidak valid: dari '${currentStatus}' ke '${nextStatus}'. Alur yang diizinkan: [${allowedTransitions.join(', ')}]`,
+          'INVALID_STATE_TRANSITION',
+          422,
+          [{ currentStatus, nextStatus, allowedTransitions }]
         );
       }
 
+      // 3. Update Status
       const now = new Date();
-      const isTerminal = ['DISCHARGED', 'COMPLETED', 'CLOSED', 'CANCELLED'].includes(nextStatus);
+      const isTerminal = ['COMPLETED', 'DISCHARGED', 'CLOSED', 'CANCELLED'].includes(nextStatus);
 
-      // 3. Update Encounter Record
       const updateQuery = `
-        UPDATE encounters SET 
-          status = $1,
+        UPDATE encounters 
+        SET 
+          status = $1, 
           updated_at = $2,
           end_time = CASE WHEN $3 THEN $2 ELSE end_time END,
           discharge_disposition = COALESCE($4, discharge_disposition)
@@ -304,7 +301,7 @@ export const encounterApplicationService = {
         RETURNING *;
       `;
 
-      const updateResult = await client.query(updateQuery, [
+      const updateResult = await query(updateQuery, [
         nextStatus,
         now,
         isTerminal,
@@ -339,7 +336,7 @@ export const encounterApplicationService = {
         );
       `;
 
-      await client.query(auditQuery, [
+      await query(auditQuery, [
         crypto.randomUUID(),
         actor.userId || 'USR-CLINICIAN-001',
         actor.username || actor.fullName || 'Tenaga Medis',
@@ -356,68 +353,65 @@ export const encounterApplicationService = {
         now
       ]);
 
-      await client.query('COMMIT;');
-
       return {
         ...updatedEncounter,
         previousStatus: currentStatus,
         auditSignature: signatureHash
       };
-    } catch (err) {
-      await client.query('ROLLBACK;');
-      throw err;
-    } finally {
-      client.release();
-    }
+    });
   },
 
   /**
-   * Search / List Encounters directly from PostgreSQL
+   * Search / List Encounters directly from PostgreSQL via Authoritative UoW
    */
-  getEncounters: async (filters = {}) => {
-    const pool = postgresPoolService.getPool();
-    let sql = `
-      SELECT e.*, p.full_name as patient_name, p.mrn, p.nik
-      FROM encounters e
-      JOIN master_patients p ON e.patient_id = p.id
-      WHERE 1=1
-    `;
-    const params = [];
-    let idx = 1;
+  getEncounters: async (filters = {}, tenantContext = null) => {
+    const tenantId = tenantContext?.tenantId || filters.tenantId;
+    return await withUnitOfWork({ tenantId, isolationLevel: 'READ COMMITTED' }, async ({ query }) => {
+      let sql = `
+        SELECT e.*, p.full_name as patient_name, p.mrn, p.nik
+        FROM encounters e
+        JOIN master_patients p ON e.patient_id = p.id
+        WHERE 1=1
+      `;
+      const params = [];
+      let idx = 1;
 
-    if (filters.patientId) {
-      sql += ` AND e.patient_id = $${idx++}`;
-      params.push(filters.patientId);
-    }
-    if (filters.status) {
-      sql += ` AND e.status = $${idx++}`;
-      params.push(filters.status);
-    }
-    if (filters.encounterClass) {
-      sql += ` AND e.encounter_class = $${idx++}`;
-      params.push(filters.encounterClass);
-    }
+      if (filters.patientId) {
+        sql += ` AND e.patient_id = $${idx++}`;
+        params.push(filters.patientId);
+      }
+      if (filters.status) {
+        sql += ` AND e.status = $${idx++}`;
+        params.push(filters.status);
+      }
+      if (filters.encounterClass) {
+        sql += ` AND e.encounter_class = $${idx++}`;
+        params.push(filters.encounterClass);
+      }
 
-    sql += ` ORDER BY e.created_at DESC LIMIT $${idx++} OFFSET $${idx++};`;
-    params.push(filters.limit || 50, filters.offset || 0);
+      sql += ` ORDER BY e.created_at DESC LIMIT $${idx++} OFFSET $${idx++};`;
+      params.push(filters.limit || 50, filters.offset || 0);
 
-    const res = await pool.query(sql, params);
-    return res.rows;
+      const res = await query(sql, params);
+      return res.rows;
+    });
   },
 
   /**
-   * Get Single Encounter Detail
+   * Get Single Encounter Detail via Authoritative UoW
    */
-  getEncounterById: async (id) => {
-    const pool = postgresPoolService.getPool();
-    const sql = `
-      SELECT e.*, p.full_name as patient_name, p.mrn, p.nik, ep.episode_number, ep.episode_type
-      FROM encounters e
-      JOIN master_patients p ON e.patient_id = p.id
-      JOIN episodes_of_care ep ON e.episode_id = ep.id
-      WHERE e.id = $1 LIMIT 1;
-    `;
-    const res = await pool.query(sql, [id]);
-    return res.rows[0] || null;
+  getEncounterById: async (id, tenantContext = null) => {
+    const tenantId = tenantContext?.tenantId;
+    return await withUnitOfWork({ tenantId, isolationLevel: 'READ COMMITTED' }, async ({ query }) => {
+      const sql = `
+        SELECT e.*, p.full_name as patient_name, p.mrn, p.nik, ep.episode_number, ep.episode_type
+        FROM encounters e
+        JOIN master_patients p ON e.patient_id = p.id
+        JOIN episodes_of_care ep ON e.episode_id = ep.id
+        WHERE e.id = $1 LIMIT 1;
+      `;
+      const res = await query(sql, [id]);
+      return res.rows[0] || null;
+    });
   }
 };

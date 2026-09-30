@@ -31,7 +31,7 @@ export const validateEnvironment = (env = process.env) => {
   // 1. Mandatory Variables for Server Operation
   const requiredVars = ['PORT'];
   if (isProduction) {
-    requiredVars.push('JWT_SECRET', 'DATABASE_URL', 'POSTGRES_PASSWORD');
+    requiredVars.push('JWT_SECRET', 'POSTGRES_PASSWORD');
   }
 
   for (const varName of requiredVars) {
@@ -41,7 +41,18 @@ export const validateEnvironment = (env = process.env) => {
     }
   }
 
-  // 2. Placeholder Secret Detection in Production
+  // 2. Superuser Runtime Protection Guard
+  const dbUser = env.POSTGRES_USER || '';
+  if (dbUser.toLowerCase() === 'postgres') {
+    errors.push('CRITICAL_SECURITY_VIOLATION: POSTGRES_USER cannot be configured as "postgres". Application runtime must use least-privilege role (nurseflow_app_user).');
+  }
+
+  const dbUrl = env.DATABASE_URL || '';
+  if (dbUrl.includes('://postgres:') || dbUrl.includes('://postgres@')) {
+    errors.push('CRITICAL_SECURITY_VIOLATION: DATABASE_URL cannot connect using superuser "postgres". Application runtime must use least-privilege role (nurseflow_app_user).');
+  }
+
+  // 3. Placeholder Secret Detection in Production
   if (isProduction && env.JWT_SECRET) {
     const jwtVal = env.JWT_SECRET.toLowerCase();
     if (PLACEHOLDER_PATTERNS.some(pattern => jwtVal.includes(pattern))) {
@@ -70,3 +81,47 @@ export const enforceEnvironmentGuard = (env = process.env) => {
   }
   return result;
 };
+
+/**
+ * Validates the physical connected database role identity after establishing connection.
+ * Guarantees that even if environment configuration was forged or defaulted,
+ * an active superuser or bypassrls session will immediately fail closed.
+ * 
+ * @param {import('pg').Pool} targetPool
+ * @returns {Promise<{safe: boolean, roleName: string, rolsuper: boolean, rolbypassrls: boolean}>}
+ */
+export async function assertRuntimeDatabaseSafety(targetPool) {
+  if (!targetPool || typeof targetPool.connect !== 'function') {
+    throw new Error('assertRuntimeDatabaseSafety requires a valid pg.Pool instance');
+  }
+
+  const client = await targetPool.connect();
+  try {
+    const res = await client.query(`
+      SELECT 
+        current_user as current_user,
+        session_user as session_user,
+        r.rolsuper as rolsuper,
+        r.rolbypassrls as rolbypassrls
+      FROM pg_roles r 
+      WHERE r.rolname = current_user;
+    `);
+
+    if (res.rows.length === 0) {
+      throw new Error('FATAL_SECURITY_ERROR: Current database role not found in pg_roles catalog.');
+    }
+
+    const { current_user: roleName, rolsuper, rolbypassrls } = res.rows[0];
+
+    if (roleName === 'postgres' || rolsuper || rolbypassrls) {
+      const violation = `FATAL_SECURITY_VIOLATION: Application runtime cannot operate with superuser or bypassrls privileges. Detected role: ${roleName} (rolsuper=${rolsuper}, rolbypassrls=${rolbypassrls}). Halting process.`;
+      console.error(`\n🚨 [RUNTIME ROLE GUARD] ${violation}\n`);
+      throw new Error(violation);
+    }
+
+    return { safe: true, roleName, rolsuper, rolbypassrls };
+  } finally {
+    client.release();
+  }
+}
+

@@ -6,6 +6,7 @@
 import crypto from 'crypto';
 import { postgresPoolService } from './postgresPool.js';
 import { structuredLoggerService } from '../services/structuredLogger.service.js';
+import { withUnitOfWork } from './unitOfWork.js';
 
 export const ISOLATION_LEVELS = {
   READ_COMMITTED: 'READ COMMITTED',
@@ -152,6 +153,12 @@ class TransactionManager {
 
     try {
       await client.query(`BEGIN ISOLATION LEVEL ${isolationLevel};`);
+      if (options.tenantId) {
+        await client.query("SELECT set_config('app.current_tenant_id', $1, true);", [String(options.tenantId).trim()]);
+      }
+      if (options.actorId) {
+        await client.query("SELECT set_config('app.current_user_id', $1, true);", [String(options.actorId).trim()]);
+      }
       const result = await callback(txContext);
       await client.query('COMMIT;');
       return result;
@@ -166,9 +173,21 @@ class TransactionManager {
       }
       throw error;
     } finally {
+      try {
+        await client.query('DISCARD ALL;');
+      } catch (_) {}
       client.release();
     }
+  }
+
+  /**
+   * Execute an authoritative Unit of Work bound to a specific tenant context.
+   */
+  async withUnitOfWork(options, callback) {
+    return withUnitOfWork(options, callback);
   }
 }
 
 export const transactionManager = new TransactionManager();
+export { withUnitOfWork } from './unitOfWork.js';
+

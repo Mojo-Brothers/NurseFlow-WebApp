@@ -39,8 +39,8 @@ import { tenantMiddleware } from './middlewares/tenantMiddleware.js';
 import { problemDetailsMiddleware } from './middlewares/problemDetails.middleware.js';
 import { PROBLEM_TYPES } from './contracts/problemDetails.contract.js';
 import { healthCheckService } from './services/healthCheck.service.js';
-import { metricsService } from './services/metrics.service.js';
-import { enforceEnvironmentGuard } from './config/envValidator.js';
+import { enforceEnvironmentGuard, assertRuntimeDatabaseSafety } from './config/envValidator.js';
+import { pool } from './db/postgresPool.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -132,9 +132,16 @@ app.use(problemDetailsMiddleware);
 
 if (process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1].includes('server'))) {
   enforceEnvironmentGuard(process.env);
-  app.listen(PORT, () => {
-    console.log(`[NurseFlow API Gateway] Listening on http://localhost:${PORT}`);
-  });
+  assertRuntimeDatabaseSafety(pool)
+    .then(() => {
+      app.listen(PORT, () => {
+        console.log(`[NurseFlow API Gateway] Listening on http://localhost:${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Fatal startup failure:', err.message);
+      process.exit(1);
+    });
 }
 
 export { app };

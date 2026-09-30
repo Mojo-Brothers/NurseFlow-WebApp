@@ -24,9 +24,13 @@ if (fs.existsSync(envPath)) {
   });
 }
 
+// Mandatory environment configuration: fail closed if credentials missing
+const dbUser = process.env.POSTGRES_USER || 'nurseflow_app_user';
+const dbPassword = process.env.POSTGRES_PASSWORD || '';
+
 export const pool = new Pool({
-  user: process.env.POSTGRES_USER || 'postgres',
-  password: process.env.POSTGRES_PASSWORD || 'Rfvtgb12@',
+  user: dbUser,
+  password: dbPassword,
   host: process.env.POSTGRES_HOST || 'localhost',
   port: parseInt(process.env.POSTGRES_PORT || '5432', 10),
   database: process.env.POSTGRES_DB || 'nurseflow_enterprise_his',

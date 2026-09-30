@@ -18,7 +18,7 @@ import { adtEngine } from '../src/core/services/adtEngine.service.js';
 
 const psqlPath = process.env.PSQL_PATH || 'C:\\Program Files\\PostgreSQL\\16\\bin\\psql.exe';
 const dbUser = process.env.POSTGRES_USER || 'postgres';
-const dbPassword = process.env.POSTGRES_PASSWORD || 'Rfvtgb12@';
+const dbPassword = process.env.POSTGRES_PASSWORD || '';
 const dbName = process.env.POSTGRES_DB || 'nurseflow_enterprise_his';
 
 console.log('='.repeat(95));

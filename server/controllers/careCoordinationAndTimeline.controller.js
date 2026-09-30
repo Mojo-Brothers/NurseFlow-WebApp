@@ -21,9 +21,14 @@ export const careCoordinationAndTimelineController = {
     const timestamp = new Date().toISOString();
 
     try {
+      const tenantContext = {
+        tenantId: req.tenantId || req.user?.tenantId,
+        actorId: req.user?.userId || req.user?.id
+      };
       const result = await careCoordinationAndTimelineService.getUnifiedLongitudinalTimeline(
         req.params.encounterId,
-        req.query
+        req.query,
+        tenantContext
       );
 
       return res.status(200).json({
