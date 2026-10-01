@@ -1,18 +1,18 @@
 {
-  "timestamp": "2026-09-23T08:08:20.798Z",
-  "filesScanned": 647,
-  "filesWithDebt": 341,
+  "timestamp": "2026-10-01T08:52:20.833Z",
+  "filesScanned": 662,
+  "filesWithDebt": 352,
   "classification": {
-    "nonCanonicalDebt": 3457,
-    "canonicalLiteralDebt": 1073
+    "nonCanonicalDebt": 3509,
+    "canonicalLiteralDebt": 1109
   },
   "metrics": {
     "hardcodedColors": 738,
     "hardcodedSpacing": 70,
-    "hardcodedTypography": 3594,
+    "hardcodedTypography": 3682,
     "hardcodedRadius": 21,
     "hardcodedElevation": 107,
-    "totalDebtPoints": 4530
+    "totalDebtPoints": 4618
   },
   "top10DebtFiles": [
     {

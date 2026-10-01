@@ -2,6 +2,9 @@
  * NurseFlow Enterprise HIS 2026 — Master Triage Controller
  * Domain: Emergency Triage Assessment (ATS / ESI) & Response SLA Tracking
  * Standards: Canonical JSON Response Envelope ({ data, meta } / { error, meta })
+ *
+ * P0-2B WAVE 1B.1 — UoW Pilot: actor object now carries tenantId (from req.user or fallback)
+ * for all service calls that require withUnitOfWork tenant gate.
  */
 
 import { triageApplicationService, TriageDomainError } from '../services/triageApplication.service.js';
@@ -17,10 +20,23 @@ export const triageController = {
     const timestamp = new Date().toISOString();
 
     try {
-      const actor = req.user || {
-        userId: 'USR-NURSE-001',
-        username: 'perawat_igd',
-        role: 'ROLE_NURSE'
+      const resolvedTenantId = req.tenantId || req.user?.tenantId;
+      if (!resolvedTenantId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'TENANT_CONTEXT_REQUIRED',
+            message: 'Konteks tenant wajib disertakan dalam request.'
+          },
+          meta: { requestId, correlationId, timestamp }
+        });
+      }
+
+      const actor = {
+        userId: req.user?.userId || req.user?.id || 'USR-NURSE-001',
+        username: req.user?.username || req.user?.fullName || 'perawat_igd',
+        role: req.user?.role || 'ROLE_NURSE',
+        tenantId: resolvedTenantId
       };
       const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
 
@@ -70,10 +86,23 @@ export const triageController = {
     const timestamp = new Date().toISOString();
 
     try {
-      const actor = req.user || {
-        userId: 'USR-DOC-EMER-001',
-        username: 'dokter_igd',
-        role: 'ROLE_DOCTOR_EMERGENCY'
+      const resolvedTenantId = req.tenantId || req.user?.tenantId;
+      if (!resolvedTenantId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'TENANT_CONTEXT_REQUIRED',
+            message: 'Konteks tenant wajib disertakan dalam request.'
+          },
+          meta: { requestId, correlationId, timestamp }
+        });
+      }
+
+      const actor = {
+        userId: req.user?.userId || req.user?.id || 'USR-DOC-EMER-001',
+        username: req.user?.username || req.user?.fullName || 'dokter_igd',
+        role: req.user?.role || 'ROLE_DOCTOR_EMERGENCY',
+        tenantId: resolvedTenantId
       };
       const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
 
@@ -120,7 +149,27 @@ export const triageController = {
     const timestamp = new Date().toISOString();
 
     try {
-      const triage = await triageApplicationService.getTriageByEncounterId(req.params.encounterId);
+      const resolvedTenantId = req.tenantId || req.user?.tenantId;
+      if (!resolvedTenantId) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'TENANT_CONTEXT_REQUIRED',
+            message: 'Konteks tenant wajib disertakan dalam request.'
+          },
+          meta: { requestId, correlationId, timestamp }
+        });
+      }
+
+      const actor = {
+        userId: req.user?.userId || req.user?.id || 'USR-READ-001',
+        username: req.user?.username || req.user?.fullName || 'staff_igd',
+        role: req.user?.role || 'ROLE_NURSE',
+        tenantId: resolvedTenantId
+      };
+
+      // Pass actor as second param — required by UoW-wrapped read path
+      const triage = await triageApplicationService.getTriageByEncounterId(req.params.encounterId, actor);
       if (!triage) {
         return res.status(404).json({
           success: false,
@@ -139,10 +188,11 @@ export const triageController = {
         meta: { requestId, correlationId, timestamp }
       });
     } catch (err) {
-      return res.status(500).json({
+      const statusCode = err.statusCode || (err instanceof TriageDomainError ? 400 : 500);
+      return res.status(statusCode).json({
         success: false,
         error: {
-          code: 'TRIAGE_FETCH_ERROR',
+          code: err.code || 'TRIAGE_FETCH_ERROR',
           message: err.message,
           details: []
         },

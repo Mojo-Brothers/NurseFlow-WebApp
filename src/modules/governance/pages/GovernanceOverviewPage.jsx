@@ -47,11 +47,11 @@ export default function GovernanceOverviewPage() {
   const securityChain = [
     { id: 'jwt', label: 'JWT Cryptography', status: 'PARTIAL', desc: 'HS256 with constant-time check' },
     { id: 'principal', label: 'Principal Identity', status: 'VERIFIED', desc: 'Claims extraction & roles' },
-    { id: 'tenant_id', label: 'Tenant Identity', status: 'BLOCKED', desc: '38 Hardcoded fallback UUIDs' },
-    { id: 'db_ctx', label: 'Database Context', status: 'BLOCKED', desc: 'Pool leak on uncommitted release' },
-    { id: 'runtime_role', label: 'Runtime DB Role', status: 'BLOCKED', desc: 'Running as postgres SUPERUSER' },
-    { id: 'rls', label: 'Fail-Closed RLS', status: 'NOT_READY', desc: '21 Zero-policy, 5 fail-open tables' },
-    { id: 'resource_own', label: 'Resource Ownership', status: 'BLOCKED', desc: '5 Child table endpoints BOLA' },
+    { id: 'tenant_id', label: 'Tenant Identity', status: 'VERIFIED', desc: 'Fail-closed extraction; 0 fallback UUIDs' },
+    { id: 'db_ctx', label: 'Database Context', status: 'CONTAINED', desc: 'Pool lease safe release; 156 paths await UoW' },
+    { id: 'runtime_role', label: 'Runtime DB Role', status: 'VERIFIED', desc: 'nurseflow_app_user (Non-superuser, 0 TRUNCATE)' },
+    { id: 'rls', label: 'Fail-Closed RLS', status: 'CONTAINED', desc: '100 Tables RLS active; 100/100 policies (0 fail-open)' },
+    { id: 'resource_own', label: 'Resource Ownership', status: 'VERIFIED', desc: 'Child table parent joins verified in 1A.11 suite' },
     { id: 'privilege', label: 'Clinical Privilege', status: 'NOT_ENFORCED', desc: '0/38 Routes mount clinical auth' },
     { id: 'sod', label: 'Separation of Duties', status: 'NOT_ENFORCED', desc: 'Service exists; 0 route calls' },
     { id: 'btg', label: 'Break-The-Glass', status: 'NOT_ENFORCED', desc: 'Ledger designed; 0 route calls' },
@@ -101,8 +101,8 @@ export default function GovernanceOverviewPage() {
             </div>
             <h2 className="text-2xl font-black text-white tracking-tight">{project.currentGate.name}</h2>
             <p className="text-sm text-slate-300 max-w-3xl leading-relaxed">
-              Adversarial review telah selesai. Verdict arsitektural: <strong className="text-cyan-400">{project.currentGate.verdict}</strong>. 
-              Dilarang memulai implementasi produksi sebelum 8 revisi wajib diselesaikan.
+              Forensic containment & migration baseline review: <strong className="text-cyan-400">{project.currentGate.verdict}</strong>. 
+              Fondasi hak akses & isolasi tenant terkendali. Menunggu migrasi Unit-of-Work per domain (Batch 1: EMPI & CPOE).
             </p>
           </div>
 

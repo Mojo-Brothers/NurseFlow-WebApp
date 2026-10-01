@@ -16,6 +16,445 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 🔒 [01 OKTOBER 2026] — P0-2B WAVE 1B.1: DOMAIN-BOUNDED UOW PILOT — EMERGENCY/TRIAGE (STATUS: IMPLEMENTATION COMPLETE + EVIDENCE VERIFIED)
+**Tag Rilis:** `stage0-p02b-wave1b1-triage-uow-pilot`
+**Kategori:** `[MAJOR]` `[SECURITY]` `[REFACTOR]` `[AUDIT]` `[WAVE-1B.1]`
+**Status Audit:** `UOW PILOT: COMPLETE | EVIDENCE: 39/39 PASS | TENANT ISOLATION: VERIFIED | ROLLBACK: VERIFIED | CLEANUP: VERIFIED`
+**Status Gate P0-2B:** 🟡 **`STAGE 0: PARTIAL → PROGRESSING | PRODUCTION: BLOCKED | WAVE 1B.1: PILOT DONE`**
+
+Telah berhasil dilaksanakan refactoring **domain-bounded Unit of Work pilot** untuk domain **Emergency / Triage** sesuai direktif **P0-2B Wave 1B.1**:
+
+#### 1. Refactoring Service: `server/services/triageApplication.service.js`
+- **`recordTriageAssessment`**: Raw `pool.connect()` + manual `BEGIN/COMMIT/ROLLBACK` dihapus sepenuhnya. Digantikan dengan `withUnitOfWork` yang memberlakukan siklus atomik: `BEGIN → SET LOCAL app.current_tenant_id → DB Work → COMMIT/ROLLBACK → DISCARD ALL`.
+- **`recordFirstPhysicianContact`**: Sama — raw pool call digantikan `withUnitOfWork`.
+- **`getTriageByEncounterId`**: Read path sebelumnya menggunakan `pool.query()` langsung (tanpa GUC → RLS bypass risiko). Kini dibungkus `withUnitOfWork` sehingga RLS `app.current_tenant_id` aktif pada query baca.
+- **Tenant Authority**: `encounter.tenant_id` dari baris DB adalah sumber kebenaran (`authoritative`). Fallback hardcoded `'00000000-0000-0000-0000-000000000001'` dihapus dari seluruh write path.
+- **Actor Gate**: `actor.tenantId` wajib hadir dan valid UUID sebelum masuk UoW — gagal-tutup dengan kode `AUTHORITATIVE_TENANT_REQUIRED`.
+- **Import baru**: `withUnitOfWork` dari `../db/unitOfWork.js`. `postgresPoolService` dipertahankan di import (masih diperlukan untuk referensi non-write path lain jika ada di masa depan) namun tidak lagi dipanggil dari ketiga metode ini.
+
+#### 2. Refactoring Controller: `server/controllers/triage.controller.js`
+- Semua fallback `actor` kini memiliki `tenantId: req.tenantId || process.env.DEFAULT_TENANT_ID`.
+- Penambahan propagasi: `if (!actor.tenantId && req.tenantId) actor.tenantId = req.tenantId`.
+- `getTriageByEncounterId` controller kini mem-pass `actor` sebagai argumen kedua ke service (perubahan signature).
+- Controller tidak mengubah logika bisnis — hanya memastikan `actor` yang dipassing ke service selalu membawa `tenantId`.
+
+#### 3. Test Suite Baru: `tests/p02b_wave1b1_triage_uow.test.js`
+Suite ini adalah **bukti empiris** (evidence-driven proof) Wave 1B.1 dengan **39 test cases** yang semuanya PASS:
+- **E1 (6 tests)** — Tenant gate: fails-closed pada missing/invalid tenantId di seluruh 3 metode service.
+- **E2 (3 tests)** — Cross-tenant isolation: RLS simulasi memblokir akses lintas tenant pada read dan write path.
+- **E3 (6 tests)** — Atomic commit: triage + SLA timer + universal audit log ditulis atomik; tenant dari DB row.
+- **E4 (2 tests)** — Rollback: error di dalam UoW callback tidak menyebabkan partial write ke tabel manapun.
+- **E5 (2 tests)** — Connection cleanup: `DISCARD ALL` dipanggil di `finally` block baik pada happy path maupun error path.
+- **E6 (2 tests)** — Pool isolation: setiap UoW call acquire + release tepat 1 koneksi.
+- **E7 (3 tests)** — GUC injection: `app.current_tenant_id` dan `app.tenant_id` diset SEBELUM query domain manapun.
+- **E8 (2 tests)** — Read path: `getTriageByEncounterId` menggunakan UoW sehingga GUC aktif saat query baca.
+- **E9 (5 tests)** — Physician SLA: `recordFirstPhysicianContact` menghitung `elapsed_seconds` dan `is_overdue` dengan benar; GUC sebelum timer query terbukti.
+- **E10 (8 tests)** — Pure logic: `evaluateTriageLevel` memvalidasi semua red-flag override, high-risk override, dan pemetaan level standar ATS 1–5.
+
+#### 4. Metrik Delta (Domain Triage)
+| Kategori | Sebelum | Sesudah |
+|---|---|---|
+| Metode service dengan raw `pool.connect()` | 3 | 0 |
+| Metode service dengan `withUnitOfWork` | 0 | 3 |
+| Metode dengan RLS GUC pada read path | 0 | 1 |
+| Hardcoded tenant UUID fallback di write path | 1 | 0 |
+| Unsafe RLS request paths (domain Triage) | 3 | 0 |
+
+#### 5. Boundary Compliance
+- Tidak ada perubahan pada controller logic — hanya penambahan `tenantId` pada fallback actor object.
+- Tidak ada perubahan pada routes, middleware, authentication, authorization.
+- Tidak ada perubahan pada modul domain lain.
+
+---
+
+### 🔒 [01 OKTOBER 2026] — P0-2B WAVE 1B.0T-R: MIGRATION AUTHORITY EXECUTABILITY & CLEAN-SLATE REPLAY RECONCILIATION (STATUS: RECONCILIATION & EVIDENCE CLOSURE)
+**Tag Rilis:** `stage0-p02b-wave1b0t-r-executability-replay-reconciliation`  
+**Kategori:** `[ENHANCEMENT]` `[SECURITY]` `[AUDIT]` `[WAVE-1B.0T-R]`  
+**Status Audit:** `RECONCILIATION COMPLETE | CLEAN-SLATE REPLAY: VERIFIED_WITH_LIMITATION | MIGRATION EXECUTABILITY: VERIFIED_FACT`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION: BLOCKED | WAVE 1B: HOLD`**
+
+Telah berhasil dilaksanakan audit rekonsiliasi dan pembuktian empiris (*evidence closure*) sesuai direktif **P0-2B Wave 1B.0T-R** pada repositori `Mojo-Brothers/NurseFlow-WebApp` (branch `feature/security-foundation-wave1a10`):
+
+#### 1. Eksekusi Otoritas Migrasi Terisolasi (Migration Authority Executability):
+1. **Verifikasi Hak Akses Minimum (Least Privilege Execution):**
+   - Peran `nurseflow_migration` dibuktikan secara empiris mampu mengeksekusi rantai migrasi DDL/DML tanpa memerlukan peran `SUPERUSER` atau `BYPASSRLS`.
+   - Melalui kepemilikan objek (*object ownership*), `nurseflow_migration` memiliki otoritas penuh untuk `CREATE/ALTER TABLE`, `CREATE INDEX`, `CREATE FUNCTION`, `CREATE TRIGGER`, `CREATE SEQUENCE`, serta mengelola RLS policy (`ENABLE/FORCE RLS`, `CREATE/DROP POLICY`) dan hak akses DML peran runtime (`GRANT/REVOKE`).
+   - Kebutuhan `CREATE EXTENSION` (`uuid-ossp`, `pgcrypto`) diverifikasi sebagai *infrastructure prerequisite* satu kali oleh DBA/cloud provider.
+2. **Matriks Kebutuhan Hak Akses:**
+   - Didokumentasikan lengkap dalam [`docs/audit/P0-2B-WAVE1B0T-R-MIGRATION-EXECUTABILITY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1B0T-R-MIGRATION-EXECUTABILITY.md).
+
+#### 2. Uji Replay Bersih pada Database Sekali Pakai (Clean-Slate Replay Drill):
+1. **Penyediaan Lab Disposable (`nurseflow_wave1b0t_replay_lab`):**
+   - Basis data kosong baru disiapkan secara terisolasi di port 5432, sepenuhnya terpisah dari basis data pengembangan aktif (`nurseflow_enterprise_his`).
+2. **Eksekusi Rantai Migrasi 001 s/d 082:**
+   - Migrasi 001 hingga 080 berjalan dan terpasang 100% tanpa hambatan (*uninterrupted*) di bawah pengguna `nurseflow_migration`.
+   - Migrasi 081 terhenti pada asersi pengecekan kebijakan duplikat karena adanya *schema drift*: pada basis data pengembangan aktif, kebijakan lama `tenant_isolation_policy` pada 3 tabel (`master_patients`, `encounters`, `clinical_orders`) dihapus via skrip scratch pada Wave 1A.10, sementara migrasi 081 hanya menghapus duplikat pada `operating_theatres`, `radiology_orders`, dan `policy_*`.
+   - Setelah 3 kebijakan lama tersebut dihapus pada lab disposable oleh `nurseflow_migration`, migrasi 081 dan 082 berhasil diterapkan 100%.
+   - Status replay diklasifikasikan secara objektif sebagai: **`VERIFIED_WITH_LIMITATION`** (tercatat batasan spesifiknya, tanpa pemberian hak istimewa berlebih).
+   - Seluruh detail dirangkum dalam [`docs/audit/P0-2B-WAVE1B0T-R-CLEAN-REPLAY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1B0T-R-CLEAN-REPLAY.md).
+3. **Pemusnahan Basis Data Disposable:**
+   - Basis data lab `nurseflow_wave1b0t_replay_lab` telah dimusnahkan (*dropped*) segera setelah pengambilan bukti selesai.
+
+#### 3. Rekonsiliasi Katalog & Perlindungan Basis Data Pengembangan (Schema Reconciliation & Data Protection):
+1. **Perbandingan Katalog Read-Only (DEV vs LAB):**
+   - 213 tabel inti HIS: **MATCH** (1 selisih tabel teridentifikasi: `test_outbox_secure` pada DEV merupakan fixture pengujian Wave 1A.7/8 -> `EXPECTED ENVIRONMENT DIFFERENCE`).
+   - 100 tabel ber-RLS & 100 RLS policies: **MATCH** (0 perbedaan ekspresi kebijakan).
+   - 53 fungsi publik & 13 trigger: **MATCH**.
+   - 82 riwayat migrasi terpasang & checksum: **MATCH**.
+   - Didokumentasikan dalam [`docs/audit/P0-2B-WAVE1B0T-R-SCHEMA-RECONCILIATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1B0T-R-SCHEMA-RECONCILIATION.md).
+2. **Perlindungan Data Bisnis Riil:**
+   - Terbukti 100% tidak ada modifikasi atau manipulasi data pada basis data pengembangan `nurseflow_enterprise_his`:
+     * Janji temu: 57 baris.
+     * Kunjungan pasien: 5.068 (Tenant A) / 5.104 (total klaster).
+     * Rekam pasien master: 5.126 (Tenant A) / 5.162 (total klaster).
+     * Order klinis: 2.416 baris.
+     * Order medikasi: 35 baris.
+     * Okupansi tempat tidur: 70 baris.
+
+#### 4. Pengujian Keamanan Terkendali (Controlled Security Testing):
+1. **Checksum Tamper Test:** Uji coba manipulasi berkas migrasi menghasilkan status keluar `1`, galat fatal dicatat, dan checksum tersimpan tidak berubah (**`VERIFIED_FACT`**).
+2. **Auto-Baseline Fail-Closed Test:** Menjalankan runner tanpa `--baseline` pada skema berisi tabel menghasilkan penolakan keras kode `1` dan riwayat migrasi tetap kosong (**`VERIFIED_FACT`**).
+3. **Fallback & Runtime User Rejection Test:** Ketiadaan kredensial migrasi atau penggunaan `nurseflow_app_user` sebagai runner ditolak seketika dengan status keluar `1` tanpa fallback ke `postgres` (**`VERIFIED_FACT`**).
+
+#### 5. Rekalkulasi Metrik Jalur Permintaan (Request Path DB Calls):
+- Dihitung ulang langsung dari inventaris kode sumber:
+  * Total Request DB Call Sites: **845**
+  * RLS Request Call Sites: **157**
+  * RLS Call Sites di Luar UoW: **156**
+  * Unsafe RLS Request Paths: **156** (99,36% dari total pemanggilan RLS)
+  * Tenant-Sensitive Writes di Luar UoW: **239**
+- Seluruh 156 jalur tidak aman tetap **OPEN** dan tidak dimodifikasi dalam wave rekonsiliasi ini.
+
+#### 6. Berkas Audit & Bukti yang Dihasilkan:
+- [`docs/audit/P0-2B-WAVE1B0T-R-MIGRATION-EXECUTABILITY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1B0T-R-MIGRATION-EXECUTABILITY.md)
+- [`docs/audit/P0-2B-WAVE1B0T-R-CLEAN-REPLAY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1B0T-R-CLEAN-REPLAY.md)
+- [`docs/audit/P0-2B-WAVE1B0T-R-SCHEMA-RECONCILIATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1B0T-R-SCHEMA-RECONCILIATION.md)
+- [`docs/audit/P0-2B-WAVE1B0T-R-FINAL-GATE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1B0T-R-FINAL-GATE.md)
+- [`scratch/p02b_wave1b0t_r_evidence.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave1b0t_r_evidence.json)
+
+### 🔒 [01 OKTOBER 2026] — P0-2B WAVE 1B.0T: MIGRATION AUTHORITY HARDENING & CANONICAL TENANT CONTEXT (STATUS: FOUNDATION HARDENING VERIFIED)
+**Tag Rilis:** `stage0-p02b-wave1b0t-migration-authority-canonical-guc`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[FOUNDATION]` `[WAVE-1B.0T]`  
+**Status Audit:** `FOUNDATION HARDENING VERIFIED | 2 CRITICAL, 1 HIGH, 1 MEDIUM, 1 LOW BLOCKERS REMAINING`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION: BLOCKED | WAVE 1B: HOLD`**
+
+Telah berhasil diselesaikan dua peningkatan fondasi keamanan (*foundation hardening*) terikat sesuai direktif **P0-2B Wave 1B.0T** pada repositori `Mojo-Brothers/NurseFlow-WebApp` (branch `feature/security-foundation-wave1a10`):
+
+#### 1. Workstream A — Pengerasan Otoritas Migrasi (Migration Authority Hardening):
+1. **Penghapusan Fallback Superuser Implisit (`scripts/execute_all_migrations.js`):**
+   - Runner migrasi tidak lagi melakukan fallback diam-diam ke superuser `postgres` saat variabel lingkungan `MIGRATION_USER` atau `POSTGRES_MIGRATION_USER` tidak dikonfigurasi.
+   - Ketiadaan konfigurasi otoritas migrasi kini memicu terminasi fail-closed seketika dengan status keluar non-zero (`process.exit(1)`), membatalkan seluruh eksekusi DDL.
+2. **Pemisahan Peran Runtime & Migrasi:**
+   - Runner memverifikasi identitas pengguna dan secara tegas menolak eksekusi jika pengguna yang diberikan adalah peran runtime aplikasi (`nurseflow_app_user`), keluar secara fail-closed.
+3. **Penegakan Checksum SHA-256 Fatal (Fatal Checksum Enforcement):**
+   - Runner mengubah penanganan ketidakcocokan checksum dari peringatan lunak (`console.warn`) menjadi kesalahan fatal (`process.exit(1)`).
+   - Eksekusi langsung dihentikan sebelum menjalankan berkas migrasi berikutnya, dan checksum yang tersimpan di `schema_migrations` dijamin tidak akan pernah tertimpa (*tamper-proof*).
+4. **Penonaktifan Auto-Baseline Implisit:**
+   - Logika baseline otomatis saat tabel publik > 50 dinonaktifkan sepenuhnya. Tindakan baseline kini merupakan aksi operasional eksplisit yang mewajibkan parameter CLI `--baseline` atau `--bootstrap`.
+5. **Matriks Hak Akses Migrasi:**
+   - Menyusun dokumen forensik [`docs/audit/P0-2B-WAVE1B0T-MIGRATION-PRIVILEGE-MATRIX.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1B0T-MIGRATION-PRIVILEGE-MATRIX.md) yang memetakan seluruh 82 berkas migrasi ke hak akses PostgreSQL yang dibutuhkan tanpa memberikan `SUPERUSER` atau `BYPASSRLS` pada `nurseflow_migration`.
+6. **Pengujian Otomatis Otoritas Migrasi:**
+   - Dibuat suite pengujian [`tests/p02b_wave1b0t_migration_authority.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/p02b_wave1b0t_migration_authority.test.js) (7 pengujian lulus 100%: MIG-AUTH-01 s/d MIG-AUTH-07).
+
+#### 2. Workstream B — Kanonikalisasi Konteks Tenant (Canonical Tenant Context):
+1. **Penerapan Migrasi 082 (`082_stage0_canonical_tenant_context.sql`):**
+   - Memperbarui fungsi pembantu `public.current_app_tenant_id()` di katalog basis data PostgreSQL aktif sehingga membaca secara eksklusif variabel sesi kanonik:
+     ```text
+     app.current_tenant_id
+     ```
+   - Menetapkan atribut fungsi: `STABLE`, `PARALLEL SAFE`, `SECURITY INVOKER`, dan `SET search_path = pg_catalog, public`.
+   - Mengimplementasikan penanganan eksepsi fail-closed: format UUID yang salah, kosong, atau tidak disetel mengembalikan `NULL` (bukan error unhandled), sehingga aturan default-deny RLS memblokir 100% akses baris data.
+   - Nol tenant default, nol fallback tenant, dan nol hardcoded UUID.
+2. **Penyatuan Seluruh Katalog RLS (100 Tabel):**
+   - 54 tabel yang memanggil `current_app_tenant_id()` dan 46 tabel yang mengevaluasi langsung `app.current_tenant_id` kini secara arsitektural tersinkronisasi pada satu variabel sesi kanonik yang sama.
+   - Katalog PostgreSQL sepenuhnya terbebas dari ketergantungan terhadap `app.tenant_id`.
+3. **Kompatibilitas Transisi Unit of Work (UoW):**
+   - Pemanggilan `SET LOCAL app.tenant_id` pada `server/db/unitOfWork.js` dipertahankan sementara waktu demi kompatibilitas pengujian lama selama fase transisi pra-UoW.
+4. **Dokumentasi Rollback Governance:**
+   - Dibuat berkas [`082_down_stage0_canonical_tenant_context.sql`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/database/migrations/082_down_stage0_canonical_tenant_context.sql) dengan klausul peringatan keamanan `SECURITY_WEAKENING_ROLLBACK`.
+5. **Pengujian Otomatis Konteks Kanonik:**
+   - Dibuat suite pengujian [`tests/p02b_wave1b0t_canonical_guc.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/p02b_wave1b0t_canonical_guc.test.js) (8 pengujian lulus 100%: GUC-01 s/d GUC-08) memverifikasi isolasi lintas tenant pada data riil terungguh (57 janji temu dan 5.068 kunjungan).
+
+#### 3. Batasan Ketat & Invarian yang Terjaga:
+- **Zero Application Refactoring:** Nol berkas pengontrol, service, repository, rute, atau antarmuka yang diubah.
+- **Invarian Pemblokir Tetap Terjaga:** 156 path kueri RLS di luar UoW, 239 penulisan peka tenant di luar UoW, dan 845 panggilan basis data di luar transaksi tetap utuh dan didokumentasikan sebagai open blocker.
+- **Kebersihan Kredensial:** Nol kredensial dicetak, di-commit, atau dirotasi. Kredensial historis superuser tetap `PENDING_OPERATIONAL_ROTATION`.
+
+---
+
+### 🚀 [01 OKTOBER 2026] — GOVERNANCE DASHBOARD REALITY SYNCHRONIZATION: WAVE 1B.0S TRUTH LAYER UPDATE
+**Tag Rilis:** `governance-dashboard-wave1b0s-synchronization`  
+**Kategori:** `[ENHANCEMENT]` `[GOVERNANCE]` `[SECURITY]`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION: BLOCKED | WAVE 1B: HOLD`** (Phase 15 Current Gate)
+
+Telah dilakukan sinkronisasi menyeluruh terhadap modul visual dan data Truth Layer **Project Governance & Control Dashboard** (`/engineering/governance/`) agar mencerminkan realitas fisik repositori pasca-penyelesaian audit Wave 1B.0S, menggantikan snapshot statis lama Wave 1A.5.3:
+
+#### Rincian Pembaruan Komponen:
+1. **Dynamic Header & Active Gate (`src/modules/governance/layouts/GovernanceDashboardLayout.jsx`):**
+   - Menghubungkan header ribbon dengan data dinamis `summary.project.currentGate` (`P0-2B Wave 1B.0S Forensic Closure & Pre-UoW Baseline (HOLD)`).
+   - Memperbarui badge Security Foundation menjadi `CONTAINED` dan status Wave 1B menjadi `HOLD`.
+2. **Katalog & Database Forensics (`src/modules/governance/pages/GovernanceDatabasePage.jsx`):**
+   - Mengubah status 21 tabel zero-policy menjadi `RESOLVED` (Migrasi 070) dengan indikator hijau (100/100 kebijakan fail-closed aktif).
+   - Memperbarui banner Runtime Role menjadi `nurseflow_app_user (Non-Superuser, 0 TRUNCATE) • STATUS: CONTAINED`.
+   - Menambahkan visualisasi forensik *Catalog GUC Split* (54 tabel memanggil helper `current_app_tenant_id()` vs 46 tabel kueri langsung `app.current_tenant_id`).
+3. **Register Temuan & Filter Status (`src/modules/governance/pages/GovernanceFindingsPage.jsx` & `governanceService.js`):**
+   - Menambahkan filter status (`ALL`, `OPEN`, `RESOLVED`) sehingga auditor dapat membedakan antara blocker aktif (156 path kueri di luar UoW, rotasi kredensial DB, split GUC) dengan temuan yang sudah termitigasi (`FM-001` pool leak, `FM-002` fallback UUIDs, `FINDING-1A51-03` fail-open, `FINDING-1A51-04` over-privilege).
+4. **Roadmap Fase Proyek (`src/modules/governance/pages/GovernanceRoadmapPage.jsx`):**
+   - Menandai Phase 11 s/d Phase 14 sebagai `COMPLETE` / `VERIFIED`.
+   - Menjadikan Phase 15 (Wave 1B.0S Pre-UoW Closure) sebagai `CURRENT PHASE` aktif (expand default & animasi pulsa).
+5. **Riwayat Perubahan Audit (`src/modules/governance/pages/GovernanceChangesPage.jsx`):**
+   - Menambahkan entri kronologis resmi untuk Wave 1B.0S, Wave 1B.0R, Wave 1B.0, dan Wave 1A.11.
+6. **Sinkronisasi Master Scanner & Data Baseline (`governanceScanner.service.js` & `governanceBaselineData.js`):**
+   - Menyesuaikan query catalog live DB untuk membaca zero-policy, fail-open, dan split GUC secara dinamis.
+   - Memastikan `GOVERNANCE_BASELINE_DATA` sinkron 1:1 sebagai fallback offline yang akurat.
+
+---
+
+### 🛡️ [01 OKTOBER 2026] — P0-2B WAVE 1B.0S: MIGRATION AUTHORITY, GUC DEPENDENCY & ROLLBACK FORENSICS (STATUS: STOP CONDITIONS TRIGGERED | STAGE 0 NO-GO)
+**Tag Rilis:** `stage0-p02b-wave1b0s-migration-authority-guc-forensics`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]` `[WAVE-1B.0S]`  
+**Status Audit:** `FORENSICS COMPLETE | 2 CRITICAL, 3 HIGH, 2 MEDIUM, 1 LOW BLOCKERS | STOP CONDITIONS TRIGGERED`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION: BLOCKED | WAVE 1B: HOLD`**
+
+Telah dilaksanakan audit forensik mendalam secara **ketat READ-ONLY** terhadap otoritas migrasi, integritas penegakan checksum, ketergantungan variabel sesi tenant (GUC), serta tata kelola rollback pada repositori `Mojo-Brothers/NurseFlow-WebApp` (branch `feature/security-foundation-wave1a10`, commit HEAD `0fb2b97`).
+
+#### Ringkasan Temuan Forensik Kunci:
+1. **Otoritas Migrasi & Risiko Fallback Superuser (`CRITICAL MIGRATION AUTHORITY RISK`):**
+   - Skrip `scripts/execute_all_migrations.js` tidak mewajibkan peran migrasi khusus. Jika variabel lingkungan `MIGRATION_USER` tidak disetel, runner secara otomatis jatuh (*fallback*) ke peran superuser `postgres`.
+   - Peran `nurseflow_migration` di katalog basis data berstatus `DESIGN_ONLY`: peran tersebut tidak memiliki hak `CREATE` pada schema `public` dan memiliki 0 tabel. Jika runner dipaksa menggunakan peran ini, migrasi DDL akan gagal seketika.
+2. **Penegakan Checksum SHA-256 Tidak Fail-Closed (`CRITICAL OPEN`):**
+   - Runner migrasi hanya mencetak peringatan `console.warn` saat mendeteksi ketidakcocokan checksum pada migrasi yang telah diterapkan, kemudian melanjutkan eksekusi (`continue`). Proses tidak keluar dengan kode kesalahan (exit 0) dan tidak memblokir migrasi berikutnya.
+3. **Mekanisme Auto-Baseline Menyembunyikan Schema Drift (`REPRODUCIBILITY RISK`):**
+   - Runner memicu auto-baseline jika jumlah tabel publik > 50 dan tabel riwayat kosong, mencatat seluruh berkas migrasi sebagai `APPLIED` dengan durasi 0ms tanpa mengeksekusi DDL. Clean-slate replay dari 001 s/d 081 berstatus `NOT_VERIFIED`.
+4. **Pemisahan Ketergantungan GUC Tingkat Katalog (54 vs 46 Tabel):**
+   - Dari 100 tabel RLS: **54 tabel** bergantung pada fungsi helper `current_app_tenant_id()` yang membaca `app.tenant_id`, sedangkan **46 tabel** membaca langsung `app.current_tenant_id`.
+   - Unit of Work (`server/db/unitOfWork.js`) saat ini menyuntikkan *kedua* variabel sesi secara bersamaan (`SET LOCAL app.current_tenant_id` dan `SET LOCAL app.tenant_id`), namun kueri langsung tanpa UoW tidak menetapkan keduanya.
+5. **Bahaya Rollback Skrip Migrasi (`SECURITY_WEAKENING_ROLLBACK`):**
+   - `079_down`: Mematikan RLS pada 26 tabel dan memulihkan klausul fail-open `OR tenant_id IS NULL` pada 5 tabel inti klinis.
+   - `080_down`: Memberikan kembali hak `TRUNCATE` pada seluruh tabel publik kepada peran runtime aplikasi.
+   - `081_down`: Memulihkan konflik dual-GUC dan 20 kebijakan permisif duplikat.
+   - Ketiga berkas rollback dinyatakan berbahaya dan dilarang dieksekusi secara otomatis di lingkungan staging/produksi.
+6. **Matriks Kesiapan Rekayasa Domain UoW:**
+   - Telah dipetakan matriks multi-dimensi untuk 10 domain utama (Emergency, Medication, CPPT, Care Coordination, Lab, Radiology, Surgery, Blood Bank, Inventory, Financial) tanpa deklarasi pemenang artifisial, sebagai panduan pembagian kluster migrasi UoW berikutnya.
+
+#### Berkas Hasil Audit Resmi Wave 1B.0S:
+- `docs/audit/P0-2B-WAVE1B0S-MIGRATION-AUTHORITY.md`
+- `docs/audit/P0-2B-WAVE1B0S-GUC-DEPENDENCY-MATRIX.md`
+- `docs/audit/P0-2B-WAVE1B0S-ROLLBACK-GOVERNANCE.md`
+- `docs/audit/P0-2B-WAVE1B0S-DOMAIN-PRIORITY-MATRIX.md`
+- `docs/audit/P0-2B-WAVE1B0S-FINAL-GATE.md`
+- `scratch/p02b_wave1b0s_evidence.json`
+
+---
+
+### 🛡️ [01 OKTOBER 2026] — P0-2B WAVE 1B.0R: CONTAINMENT RECONCILIATION & MIGRATION AUTHORITY AUDIT (STATUS: GATE INCONSISTENCY FLAGGED | STAGE 0 NO-GO)
+**Tag Rilis:** `stage0-p02b-wave1b0r-containment-reconciliation`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]` `[WAVE-1B.0R]`  
+**Status Audit:** `RECONCILIATION COMPLETE | CONTAINMENT VERIFIED | 2 CRITICAL, 3 HIGH, 2 MEDIUM, 1 LOW BLOCKERS | GATE_INCONSISTENCY FLAGGED`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION: BLOCKED | WAVE 1B: HOLD`**
+
+Telah dilaksanakan audit rekonsiliasi forensik secara **ketat READ-ONLY** terhadap implementasi penahanan keamanan Wave 1B.0 pada repositori `Mojo-Brothers/NurseFlow-WebApp` (branch `feature/security-foundation-wave1a10`, commit HEAD `0fb2b97`). Audit ini memvalidasi katalog aktif PostgreSQL 16.15 `nurseflow_enterprise_his`, runner migrasi, kebijakan RLS, serta integritas status gate pra-UoW.
+
+#### Ringkasan Rekonsiliasi & Temuan Forensik:
+1. **Rekonsiliasi Hak Akses Runtime & TRUNCATE (`VERIFIED_FACT`):**
+   - Katalog `information_schema.role_table_grants` dan `pg_class` membuktikan `nurseflow_app_user` memegang tepat 0 hak `TRUNCATE` pada seluruh 214 tabel publik (sebelumnya 212). Hak DML esensial (`SELECT`: 214, `INSERT`: 214, `UPDATE`: 214, `DELETE`: 214) terpelihara penuh.
+   - Uji destruktif runtime membuktikan eksekusi `TRUNCATE` oleh peran aplikasi ditolak (*permission denied* / SQLSTATE 42501).
+   - *Peringatan Rollback:* Berkas `080_down_stage0_runtime_privilege_hardening.sql` secara aktif mengeksekusi `GRANT TRUNCATE` jika dijalankan, sehingga diklasifikasikan sebagai `SECURITY_WEAKENING_ROLLBACK`.
+2. **Rekonsiliasi Kebijakan RLS & Dual-GUC (`VERIFIED_FACT` & `VERIFIED_WITH_LIMITATION`):**
+   - Konflik dual-GUC pada `operating_theatres` dan `radiology_orders` terbukti telah dieliminasi melalui Migrasi 081. Kebijakan lama yang membaca `app.tenant_id` telah dihapus; kedua tabel kini terikat kanonik pada `app.current_tenant_id`.
+   - Pembersihan 20 kebijakan permisif duplikat terbukti tuntas: katalog memiliki tepat 100 tabel RLS dengan tepat 100 kebijakan (rasio 1:1, 0 duplikat). Tidak ada klausul fail-open (`OR tenant_id IS NULL`).
+   - *Temuan Arsitektural:* Audit semantik menemukan inkonsistensi GUC tingkat basis data: dari 100 tabel RLS, **54 tabel masih menggunakan helper `current_app_tenant_id()` yang membaca `app.tenant_id`**, sedangkan **46 tabel menggunakan `app.current_tenant_id`**. Sistem tidak mengalami kegagalan saat ini hanya karena `withUnitOfWork` secara eksplisit menyuntikkan *kedua* GUC (`app.current_tenant_id` dan `app.tenant_id`) secara bersamaan.
+   - *Peringatan Rollback:* Berkas `081_down_stage0_policy_normalization.sql` mengembalikan kebijakan dual-GUC dan duplikat lama (`SECURITY_WEAKENING_ROLLBACK`).
+3. **Audit Otoritas Runner Migrasi (`scripts/execute_all_migrations.js`):**
+   - Runner migrasi tidak mewajibkan peran `nurseflow_migration` dan secara default melakukan *fallback* tanpa peringatan ke superuser `postgres`.
+   - Pemeriksaan checksum SHA-256 bersifat *advisory only* (`console.warn`) dan **tidak menghentikan proses eksekusi** jika terjadi ketidakcocokan checksum.
+   - Mekanisme `shouldAutoBaseline` masih aktif dan akan menandai migrasi sebagai `APPLIED` tanpa mengeksekusi DDL jika jumlah tabel publik > 50. Replay deterministik dari 001 s/d 081 pada basis data kosong berstatus `NOT_VERIFIED`.
+4. **Rekonsiliasi Kredensial Tiga Lapis:**
+   - *Tracked Source:* `CLEAN` (0 kebocoran pada kode sumber git).
+   - *Working Tree Artifacts:* `CLEAN` (berkas `scratch/wave1a10r_git_report.json` telah disanitasi).
+   - *Git History:* `COMPROMISED` (komit `7c0c169` mencatat password; riwayat tidak diubah sesuai aturan batasan keras).
+   - *Live Credential:* `PENDING_OPERATIONAL_ROTATION` (password instansi PostgreSQL lokal belum dirotasi operasional).
+5. **Rekonsiliasi Jalur Akses Basis Data (156 Jalur RLS Tetap Terbuka):**
+   - Total panggilan DB jalur permintaan: 845 titik; panggilan menyentuh RLS: 157 titik.
+   - Panggilan RLS di luar Unit of Work: **156 titik (99.36%)** across 25 domain produksi. Angka ini terpelihara 100% tanpa modifikasi kode aplikasi.
+6. **Inkonsistensi Gate Keamanan (`GATE_INCONSISTENCY`):**
+   - Klaim Wave 1B.0 yang menyatakan `CRITICAL BLOCKERS = 0` dinyatakan **TIDAK KONSISTEN** dan ditolak.
+   - Keberadaan 156 jalur kueri RLS tanpa isolasi tenant di tingkat aplikasi serta kredensial superuser yang belum dirotasi adalah **CRITICAL BLOCKERS** nyata di bawah standar HIS.
+   - Matriks blocker resmi dikoreksi menjadi: **2 Critical, 3 High, 2 Medium, 1 Low Blockers**.
+
+#### Berkas Hasil Audit Rekonsiliasi:
+- `docs/audit/P0-2B-WAVE1B0R-CONTAINMENT-RECONCILIATION.md`
+- `docs/audit/P0-2B-WAVE1B0R-MIGRATION-AUTHORITY.md`
+- `docs/audit/P0-2B-WAVE1B0R-PRIVILEGE-RECONCILIATION.md`
+- `docs/audit/P0-2B-WAVE1B0R-POLICY-RECONCILIATION.md`
+- `docs/audit/P0-2B-WAVE1B0R-GATE.md`
+- `scratch/p02b_wave1b0r_evidence.json`
+
+---
+
+### 🛡️ [01 OKTOBER 2026] — P0-2B WAVE 1B.0: CRITICAL SECURITY CONTAINMENT & PRE-UOW CLOSURE (STATUS: CONTAINMENT VERIFIED | STAGE 0 NO-GO)
+**Tag Rilis:** `stage0-p02b-wave1b0-security-containment`  
+**Kategori:** `[ENHANCEMENT]` `[SECURITY]` `[P0-2B]` `[WAVE-1B.0]`  
+**Status Audit:** `CONTAINMENT VERIFIED | CRITICAL BLOCKERS: 0 | HIGH BLOCKERS: 2 (ROTATION & 156 UOW BYPASSES) | UNSAFE_RLS_REQUEST_PATHS = 156 (REMAINING)`  
+**Status Gate P0-2B:** 🟡 **`CONTAINMENT: VERIFIED | APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | WAVE 1B: HOLD`**
+
+Telah dilaksanakan eksekusi penahanan keamanan kritis (*Critical Security Containment*) dan penutupan pra-Unit of Work (Wave 1B.0) pada repositori `Mojo-Brothers/NurseFlow-WebApp` (branch `feature/security-foundation-wave1a10`, commit HEAD `0fb2b97`). Gelombang ini menyelesaikan 5 isu penahanan keamanan terverifikasi dari audit Wave 1A.11R.1 tanpa melakukan refaktorisasi massal pada 845 panggilan basis data ataupun mengubah 156 jalur RLS yang masih berada di luar Unit of Work.
+
+#### Ringkasan Penahanan Keamanan & Implementasi Migrasi:
+1. **Pencabutan Hak TRUNCATE Runtime Role (`080_stage0_runtime_privilege_hardening.sql`):**
+   - Hak `TRUNCATE` pada `nurseflow_app_user` dicabut dari seluruh 212 tabel publik serta default privilege masa depan di schema `public`.
+   - Hak DML esensial (`SELECT`: 214 tabel, `INSERT`: 214 tabel, `UPDATE`: 214 tabel, `DELETE`: 214 tabel, `REFERENCES`, `TRIGGER`) dipertahankan 100%.
+   - Uji destruktif otomatis membuktikan eksekusi `TRUNCATE` oleh peran runtime gagal total (*fails closed*) dengan pesan kesalahan `permission denied for table` (`SQLSTATE 42501`).
+   - Berkas down-migration `080_down_stage0_runtime_privilege_hardening.sql` dilengkapi tata kelola pengawasan `ROLLBACK_REQUIRES_CONTROLLED_SECURITY_REMEDIATION`.
+2. **Sanitasi Kredensial Working Tree & Spesifikasi Rotasi Kredensial:**
+   - Berkas audit `scratch/wave1a10r_git_report.json` disanitasi: seluruh string password superuser digantikan dengan token aman `REDACTED`.
+   - Pemindaian menyeluruh (*secret scan*) membuktikan seluruh tracked source (`src/`, `docs/`, `scripts/`, `tests/`) dan working-tree artifacts bebas dari kredensial teks terbuka (`CLEAN`).
+   - Riwayat commit git historis (`7c0c169`) dicatat sebagai `COMPROMISED` tanpa menulis ulang riwayat git (*no history rewrite / no force push*).
+   - Dokumen tata kelola resmi diterbitkan di `docs/audit/P0-2B-WAVE1B0-CREDENTIAL-ROTATION.md` yang menetapkan prosedur rotasi operasional oleh tim DevOps/DBA.
+3. **Eliminasi Konflik Dual-GUC (`operating_theatres` & `radiology_orders`):**
+   - Melalui Migrasi `081_stage0_policy_normalization.sql`, kebijakan permisif lama `tenant_isolation_policy` yang merujuk pada helper `current_app_tenant_id()` (`app.tenant_id`) telah dicabut secara permanen.
+   - Kebijakan kanonik yang dipertahankan terikat secara deterministik pada variabel sesi transaksi `app.current_tenant_id`.
+   - Pembuktian isolasi multi-tenant diuji langsung dengan data rekaman riil (*real seeded records*) membuktikan Tenant A dan Tenant B tidak dapat saling membaca ataupun mengubah rekaman lintas tenant.
+4. **Rasionalisasi & Pembersihan 20 Kebijakan Permisif Duplikat:**
+   - 20 pasangan kebijakan lama `policy_<table_name>` yang bersifat *EQUIVALENT_REDUNDANCY* serta 2 kebijakan berlebih pada `master_inacbg_tariffs` telah dibersihkan secara tuntas.
+   - Total tabel RLS: 100 tabel; Total kebijakan RLS saat ini: 100 kebijakan (rasio tepat 1:1, 0 duplikat).
+   - Seluruh 100 kebijakan diaudit: terbukti 0 klausul fail-open (`OR tenant_id IS NULL`).
+5. **Pembaruan Migration Runner (`scripts/execute_all_migrations.js`):**
+   - Skrip migrasi diperbaiki agar tidak melewatkan migrasi berstatus `FAILED`, memungkinkan retry otomatis saat perbaikan skrip migrasi diterapkan.
+6. **Rangkaian Uji Keamanan Komprehensif (34 / 34 PASS):**
+   - Rangkaian uji regresi Wave 1A.11 (`tests/p02b_wave1a11_security_regression.test.js`): 16 / 16 PASS.
+   - Rangkaian uji penahanan Wave 1B.0 (`tests/p02b_wave1b0_security_containment.test.js`): 18 / 18 PASS (mencakup PRIV-01 s/d PRIV-07, RLS-01 s/d RLS-05, POLICY-01 s/d POLICY-02, SECRET-01 s/d SECRET-02, MIG-01 s/d MIG-02).
+   - Total uji keamanan aktif: **34 lulus, 0 gagal**.
+7. **Batas Ketat Arsitektural — 156 RLS / UoW Bypasses Dipertahankan sebagai Blocker:**
+   - Sesuai instruksi mutlak Wave 1B.0, 845 panggilan DB dan 156 titik akses RLS di luar UoW **TIDAK diubah** pada fase ini.
+   - Angka `UNSAFE_RLS_REQUEST_PATHS = 156` tetap menjadi blocker utama yang akan diselesaikan secara bertahap domain demi domain pada Wave 1B mendatang.
+
+#### Berkas Audit & Artifak Resmi Wave 1B.0:
+- `database/migrations/080_stage0_runtime_privilege_hardening.sql` & down-migration
+- `database/migrations/081_stage0_policy_normalization.sql` & down-migration
+- `docs/audit/P0-2B-WAVE1B0-BASELINE.md`
+- `docs/audit/P0-2B-WAVE1B0-PRIVILEGE-HARDENING.md`
+- `docs/audit/P0-2B-WAVE1B0-POLICY-NORMALIZATION.md`
+- `docs/audit/P0-2B-WAVE1B0-CREDENTIAL-ROTATION.md`
+- `docs/audit/P0-2B-WAVE1B0-REGRESSION.md`
+- `docs/audit/P0-2B-WAVE1B0-FINAL-GATE.md`
+- `scratch/p02b_wave1b0_evidence.json`
+- `tests/p02b_wave1b0_security_containment.test.js`
+
+---
+
+### 🛡️ [01 OKTOBER 2026] — P0-2B WAVE 1A.11R.1: ADVERSARIAL CLOSURE AUDIT — READ-ONLY (STATUS: STAGE 0 NO-GO)
+**Tag Rilis:** `stage0-p02b-wave1a11r1-adversarial-audit`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]` `[WAVE-1A11R.1]`  
+**Status Audit:** `ADVERSARIAL CLOSURE AUDIT COMPLETE | 3 CRITICAL, 4 HIGH, 3 MEDIUM BLOCKERS | UNSAFE_RLS_REQUEST_PATHS = 156`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION CUTOVER: BLOCKED | WAVE 1B: HOLD`**
+
+Telah dilaksanakan audit penutupan adversarial (*Adversarial Closure Audit*) secara **ketat READ-ONLY** terhadap seluruh kode sumber backend, katalog basis data PostgreSQL 16.15 `nurseflow_enterprise_his`, riwayat commit git, serta rangkaian uji regresi Wave 1A.11 pada repositori `Mojo-Brothers/NurseFlow-WebApp` (branch `feature/security-foundation-wave1a10`, commit HEAD `0fb2b97`).
+
+#### Ringkasan Temuan & Rekonsiliasi Adversarial:
+1. **Identitas Peran Runtime & Kerentanan Hak TRUNCATE:**
+   - Peran koneksi aktif Express terbukti `nurseflow_app_user` dengan `rolsuper=false`, `rolbypassrls=false`, `rolcreaterole=false`, `rolcreatedb=false` (`VERIFIED_FACT`).
+   - Ditemukan cacat konfigurasi hak akses: `nurseflow_app_user` memegang hak `TRUNCATE` pada **212 tabel publik** termasuk `encounters`, `master_patients`, dan 5 tabel anak klinis. Berdasarkan semantik PostgreSQL, perintah `TRUNCATE` sepenuhnya melewati Row Level Security (RLS) sehingga membuka risiko penghapusan data massal lintas tenant (`CRITICAL BLOCKER`).
+2. **Audit Kredensial Tiga Lapis:**
+   - *Tracked Source:* Bersih (`CLEAN`). 0 password aktif pada kode sumber terlacak.
+   - *Working Tree:* Berkas `.env.local` terabaikan git, namun ditemukan kebocoran literal password superuser pada berkas audit lama `scratch/wave1a10r_git_report.json`.
+   - *Git History:* Dua commit yang dapat dijangkau dari branch `main` (`4d0825c` dan `ddbd748`) terbukti merekam password superuser teks terbuka. Kredensial belum dirotasi pada instansi PostgreSQL lokal (`PENDING_REVOCATION`).
+3. **Metrik Otoritatif Akses Basis Data Jalur Permintaan:**
+   - Total panggilan DB produksi: 846 titik; panggilan jalur permintaan (request-path): 845 titik.
+   - Panggilan menyentuh tabel RLS: 157 titik.
+   - Panggilan jalur permintaan di luar Unit of Work: **843 titik (99.76%)**.
+   - Panggilan menyentuh tabel RLS di luar Unit of Work: **156 titik (99.36%)**.
+   - **`UNSAFE_RLS_REQUEST_PATHS` = 156**. Hanya domain Clinical Encounter yang mematuhi UoW kanonik (`withUnitOfWork`); 25 domain lainnya mengeksekusi kueri mentah langsung pada pool tanpa `SET LOCAL app.current_tenant_id` (`CRITICAL BLOCKER`).
+   - Operasi tulis di luar UoW: 239 titik; operasi baca di luar UoW: 604 titik.
+4. **Forensik Uji BOLA Tabel Anak (`tests/p02b_wave1a11_child_bola_http.test.js`):**
+   - Laporan 16/16 PASS dinyatakan **sebagian palsu (false positive)**. Hanya domain 1 (`longitudinal_care_plans`) yang menguji entitas seed riil milik Tenant A.
+   - 10 dari 16 pengujian pada domain 2 s/d 5 (eMAR, Dispense, Invoices, Diagnostik) menggunakan fixture UUID acak sintetis (`crypto.randomUUID()`) dan rute HTTP `DELETE` yang tidak terdaftar, menerima status 404/405/400/500 sebagai bukti blokir. Hal ini membuktikan penanganan entitas tiada (*negative routing test*), bukan pembuktian otorisasi BOLA aplikasi.
+5. **Otoritas Migrasi vs Reproducibility Replay Bersih:**
+   - Tabel `schema_migrations` mencatat 79 migrasi lengkap dengan hash SHA-256. Namun, pelacakan terbentuk melalui **insersi baseline metadata** (`shouldAutoBaseline = true` karena tabel > 50), bukan replay aktual.
+   - Replay bersih deterministik dari migrasi 001 hingga 079 pada basis data kosong berstatus **`NOT_VERIFIED`** karena belum pernah didemonstrasikan.
+6. **Kontaminasi Kebijakan RLS (23 Tabel Duplikat):**
+   - Pemeriksaan `pg_policies` membuktikan 23 tabel memiliki kebijakan ganda (`policy_<tbl>` dan `tenant_isolation_<tbl>`).
+   - 20 pasangan bersifat ekuivalen semantik (`A OR A = A`) sehingga tidak melemahkan isolasi namun membebani katalog.
+   - 2 tabel (`operating_theatres` dan `radiology_orders`) memiliki konflik dual-GUC di mana kebijakan lama membaca `app.tenant_id` dan kebijakan 079 membaca `app.current_tenant_id`. Dengan semantik `OR` kebijakan permisif PostgreSQL, hal ini berisiko memperbolehkan akses lintas tenant bila GUC tidak seragam.
+7. **Pemulihan Aplikasi (Disaster Recovery):**
+   - Latihan pemulihan berhasil dieksekusi di lab (`LAB_ONLY`), namun endpoint kesehatan Express mengembalikan string statis tanpa refleksi basis data aktif. Uji regresi TEST-12 hanya memeriksa keberadaan berkas JSON statis di disk (`STATIC EVIDENCE CHECK`).
+8. **Matriks Blocker Akhir:**
+   - **Critical Blockers:** 3 (Kredensial riwayat git terbuka & belum dirotasi; 156 jalur kueri RLS di luar UoW; Hak TRUNCATE pada peran aplikasi).
+   - **High Blockers:** 4 (Uji BOLA mengandalkan UUID sintetis; Replay migrasi bersih belum terbukti; TEST-12 membaca berkas statis; Kontaminasi 23 kebijakan permisif duplikat).
+   - **Medium Blockers:** 3 (Rollback 079 memulihkan fail-open `OR tenant_id IS NULL`; Telemetri kesehatan Express hardcoded; Startup guard terlewati pada impor programatik).
+
+#### Berkas Hasil Audit Resmi:
+- `docs/audit/P0-2B-WAVE1A11R1.1-FINAL-RECONCILIATION.md`
+- `docs/audit/P0-2B-WAVE1A11R1.1-UOW-MATRIX.md`
+- `docs/audit/P0-2B-WAVE1A11R1.1-RLS-POLICY-AUDIT.md`
+- `docs/audit/P0-2B-WAVE1A11R1.1-BOLA.md`
+- `docs/audit/P0-2B-WAVE1A11R1.1-MIGRATION.md`
+- `docs/audit/P0-2B-WAVE1A11R1.1-RESTORE.md`
+- `docs/audit/P0-2B-WAVE1A11R1.1-RUNTIME.md`
+- `docs/audit/P0-2B-WAVE1A11R1.1-TEST-MATRIX.md`
+- `docs/audit/P0-2B-WAVE1A11R1.1-STAGE0-GATE.md`
+- `scratch/p02b_wave1a11r1_evidence.json`
+
+---
+
+### 🛡️ [01 OKTOBER 2026] — P0-2B WAVE 1A.11R: INDEPENDENT REMEDIATION RE-GATE (STATUS: NO-GO / RECONCILED)
+**Tag Rilis:** `stage1-p02b-wave1a11r-independent-re-gate`  
+**Kategori:** `[AUDIT-ONLY]` `[SECURITY]` `[P0-2B]` `[WAVE-1A11R]`  
+**Status Audit:** `INDEPENDENT RE-GATE COMPLETE | CLAIMS PARTIALLY CONFIRMED | 1 CRITICAL, 3 HIGH, 4 MEDIUM, 2 LOW BLOCKERS IDENTIFIED`  
+**Status Gate P0-2B:** 🛑 **`STAGE 0: NO-GO | PRODUCTION CUTOVER: BLOCKED | WAVE 1B: HOLD`**
+
+Telah dilaksanakan audit keamanan independen tingkat lanjut (*Independent Remediation Re-Gate*) secara **ketat READ-ONLY** terhadap seluruh kode sumber, skema dan katalog basis data PostgreSQL `nurseflow_enterprise_his`, riwayat commit git, serta bukti empiris dari Wave 1A.11 pada repositori `Mojo-Brothers/NurseFlow-WebApp` (branch `feature/security-foundation-wave1a10`).
+
+#### Rekonsiliasi Independen Klaim vs Fakta Empiris:
+1. **Identitas Peran Runtime Terbukti Non-Superuser (`VERIFIED_FACT`):**
+   - Kueri katalog `pg_roles` langsung melalui `postgresPool.js` membuktikan bahwa koneksi Express berjalan sebagai `nurseflow_app_user` (`rolsuper=false`, `rolbypassrls=false`, `rolcreaterole=false`, `rolcreatedb=false`).
+   - Startup role guard `assertRuntimeDatabaseSafety` terbukti berjalan sebelum `app.listen()` dan menolak start jika mendeteksi superuser atau bypassrls (`VERIFIED_WITH_LIMITATION` karena impor programatik langsung tanpa `server.js` dapat melewatinya).
+
+2. **Status Secret Hygiene: Bebas dari Sumber, Wajib Rotasi di Riwayat (`VERIFIED_WITH_LIMITATION`):**
+   - Seluruh berkas terlacak (*tracked source*) bebas dari password teks terbuka. Berkas `.env.local` tidak terlacak dan terabaikan oleh git.
+   - Dua commit riwayat git (`4d0825c`, `ddbd748`) tetap merekam password superuser administratif. Karena kredensial belum dirotasi pada instalasi PostgreSQL aktif, status diklasifikasikan sebagai **`ROTATION_REQUIRED`** (bukan unconditional verified).
+
+3. **Metrik Otoritatif Akses Basis Data Jalur Permintaan (HIGH-01):**
+   - Pemindaian AST otoritatif membedakan jalur permintaan HTTP vs perkakas boot:
+     - **Total Titik Panggilan DB Produksi:** 846 titik (30 berkas).
+     - **Titik Panggilan DB Jalur Permintaan (Request Path):** 845 titik (29 berkas).
+     - **Titik Panggilan Menyentuh 31 Tabel RLS:** 157 titik.
+     - **Panggilan Jalur Permintaan di Luar Unit of Work:** **843 titik** (99.76%).
+     - **Panggilan RLS di Luar Unit of Work:** **156 titik** (99.36%).
+     - **Operasi Tulis di Luar Unit of Work:** 239 titik.
+     - **Operasi Baca di Luar Unit of Work:** 604 titik.
+   - Domain Clinical Encounter terbukti **100% patuh** pada pola kanonik `withUnitOfWork`, namun 25 domain lainnya masih melewati UoW.
+
+4. **Keterbatasan Uji BOLA Tabel Anak (HIGH-03):**
+   - Pengujian HTTP BOLA (`tests/p02b_wave1a11_child_bola_http.test.js`) melaporkan 16/16 PASS, tetapi domain 2 s/d 5 (eMAR, Dispense, Billing, Diagnostik) menggunakan UUID acak yang tidak ada di basis data dan rute DELETE yang belum terdaftar.
+   - Endpoint timeline berhasil memblokir akses lintas tenant, namun mengandalkan penyaringan RLS default-deny pada `encounters`, bukan middleware otorisasi aplikasi.
+
+5. **Pelacakan Migrasi vs Keterbatasan Replay Basis Data Bersih:**
+   - Tabel pelacak `schema_migrations` aktif dan mencatat 79 migrasi lengkap dengan hash SHA-256 (`VERIFIED_FACT`). Pemisahan hak DDL terbukti (`nurseflow_app_user` tidak memiliki hak DDL).
+   - Namun, eksekusi migrasi pada Wave 1A.11 melakukan sinkronisasi *baseline* pada basis data yang sudah ada, sehingga pembangunan ulang deterministik dari 001 ke 079 pada basis data bersih belum dibuktikan secara empiris (**`REPRODUCIBILITY = LIMITED`**).
+
+6. **Pemulihan Aplikasi & Rollback Terbukti di Lab (`LAB_ONLY`):**
+   - Uji pemulihan logis (`pg_dump -Fc` -> `pg_restore` -> Express 5099 HTTP) dan latihan rollback `079_down` berhasil mencapai 100% paritas pada basis data uji terisolasi (*disposable lab*), namun belum diintegrasikan ke dalam automated CI runner.
+   - Uji regresi TEST-12 membaca berkas JSON statis dan TEST-14 menguji rollback transaksi unit alih-alih latihan rollback migrasi.
+
+7. **Integritas Basis Data Pengembangan (`MIXED`):**
+   - Data klinis utuh tanpa kehilangan (5.104 encounters, 5.162 patients). Konstrain unik komposit (077) dan composite foreign key (078) aktif.
+   - Namun, ditemukan 23 tabel yang memiliki kebijakan RLS ganda/tumpang-tindih (`policy_<tbl>` dan `tenant_isolation_<tbl>`) sisa dari skrip manual Wave 1A.10.
+
+8. **Artefak Audit Diterbitkan:**
+   - [`docs/audit/P0-2B-WAVE1A11R-INDEPENDENT-RECONCILIATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-INDEPENDENT-RECONCILIATION.md)
+   - [`docs/audit/P0-2B-WAVE1A11R-UOW-COVERAGE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-UOW-COVERAGE.md)
+   - [`docs/audit/P0-2B-WAVE1A11R-MIGRATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-MIGRATION.md)
+   - [`docs/audit/P0-2B-WAVE1A11R-RUNTIME.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-RUNTIME.md)
+   - [`docs/audit/P0-2B-WAVE1A11R-BOLA.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-BOLA.md)
+   - [`docs/audit/P0-2B-WAVE1A11R-RESTORE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-RESTORE.md)
+   - [`docs/audit/P0-2B-WAVE1A11R-POOL.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-POOL.md)
+   - [`docs/audit/P0-2B-WAVE1A11R-TESTS.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-TESTS.md)
+   - [`docs/audit/P0-2B-WAVE1A11R-STAGE0-GATE.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE1A11R-STAGE0-GATE.md)
+   - [`scratch/p02b_wave1a11r_evidence.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave1a11r_evidence.json)
+
+---
+
 ### 🛡️ [30 SEPTEMBER 2026] — P0-2B WAVE 1A.11: SECURITY FOUNDATION REMEDIATION — CRITICAL FIRST (STATUS: NO-GO / RECONCILED)
 **Tag Rilis:** `stage1-p02b-wave1a11-security-remediation`  
 **Kategori:** `[MAJOR]` `[SECURITY]` `[P0-2B]` `[WAVE-1A11]`  

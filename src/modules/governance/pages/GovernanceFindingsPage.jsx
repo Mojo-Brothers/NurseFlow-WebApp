@@ -9,12 +9,14 @@ export default function GovernanceFindingsPage() {
   const [search, setSearch] = useState('');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [domainFilter, setDomainFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   const loadFindings = async () => {
     setLoading(true);
     const list = await governanceService.getFindings({
       severity: severityFilter,
       domain: domainFilter,
+      status: statusFilter,
       search
     });
     setFindings(list);
@@ -23,7 +25,7 @@ export default function GovernanceFindingsPage() {
 
   useEffect(() => {
     loadFindings();
-  }, [severityFilter, domainFilter, search]);
+  }, [severityFilter, domainFilter, statusFilter, search]);
 
   const domains = ['ALL', 'TENANT_ISOLATION', 'DATABASE_ACCESS', 'ROLE_SECURITY', 'AUTHORIZATION', 'DATA_INTEGRITY', 'CONNECTION_POOL', 'APPLICATION_SECURITY', 'IDENTITY_SECURITY'];
 
@@ -35,7 +37,7 @@ export default function GovernanceFindingsPage() {
           <span>Findings & Failure-Modes Register</span>
         </h2>
         <p className="text-xs text-slate-400">
-          Daftar temuan audit keamanan resmi dari Wave 1A.5.1, 1A.5.2, dan 1A.5.3 beserta dampak dan rencana remediasi.
+          Daftar temuan audit keamanan resmi dari Wave 1A hingga Wave 1B.0S beserta status mitigasi, dampak klinis, dan rencana remediasi.
         </p>
       </div>
 
@@ -52,7 +54,20 @@ export default function GovernanceFindingsPage() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
+          <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs">
+            <span className="text-slate-500 text-[11px]">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-transparent text-white font-medium focus:outline-none"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="OPEN">Open (Blockers)</option>
+              <option value="RESOLVED">Resolved / Mitigated</option>
+            </select>
+          </div>
+
           <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs">
             <span className="text-slate-500 text-[11px]">Severity:</span>
             <select
@@ -95,6 +110,7 @@ export default function GovernanceFindingsPage() {
         <div className="space-y-4">
           {findings.map((f) => {
             const sev = SEVERITY_COLORS[f.severity] || SEVERITY_COLORS.INFO;
+            const isResolved = f.status === 'RESOLVED';
             return (
               <div
                 key={f.id}
@@ -110,7 +126,11 @@ export default function GovernanceFindingsPage() {
                       {f.domain}
                     </span>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded font-bold uppercase bg-amber-500/10 text-amber-400 border border-amber-500/30">
+                  <span className={`text-[10px] px-2.5 py-0.5 rounded font-bold uppercase border ${
+                    isResolved 
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                  }`}>
                     STATUS: {f.status}
                   </span>
                 </div>

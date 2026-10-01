@@ -76,17 +76,23 @@ export default function GovernanceDashboardLayout() {
           <div className="flex items-center flex-wrap gap-2 md:gap-3 text-xs">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60">
               <span className="text-slate-400">Current Gate:</span>
-              <span className="font-semibold text-amber-400">P0-2B Wave 1A.5.3 (HOLD)</span>
+              <span className="font-semibold text-amber-400">
+                {summary?.project?.currentGate?.name || 'P0-2B Wave 1B.0S (HOLD)'}
+              </span>
             </div>
 
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
-              <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
-              <span className="font-semibold">Security Foundation: NOT_READY</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-teal-500/10 border border-teal-500/20 text-teal-400">
+              <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+              <span className="font-semibold">
+                Security Foundation: {summary?.project?.securityStatus?.foundation || 'CONTAINED'}
+              </span>
             </div>
 
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
               <span>Wave 1B:</span>
-              <span className="font-bold text-orange-400">HOLD</span>
+              <span className="font-bold text-orange-400">
+                {summary?.project?.securityStatus?.wave1bStatus || 'HOLD'}
+              </span>
             </div>
 
             <button

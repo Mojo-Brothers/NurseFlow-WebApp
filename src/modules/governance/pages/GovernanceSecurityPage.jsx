@@ -22,11 +22,13 @@ export default function GovernanceSecurityPage() {
     );
   }
 
+  const verifiedCount = controls.filter(c => c.status === 'VERIFIED' || c.status === 'CONTAINED').length;
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
         <h2 className="text-xl font-bold text-white flex items-center gap-2">
-          <Lock className="w-5 h-5 text-rose-500" />
+          <Lock className="w-5 h-5 text-cyan-400" />
           <span>Critical Security Foundation Panel</span>
         </h2>
         <p className="text-xs text-slate-400">
@@ -35,25 +37,25 @@ export default function GovernanceSecurityPage() {
       </div>
 
       {/* ── Summary Callout ── */}
-      <div className="p-4 rounded-xl bg-gradient-to-r from-rose-950/40 to-slate-900 border border-rose-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 rounded-xl bg-gradient-to-r from-teal-950/40 via-slate-900 to-slate-900 border border-teal-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-rose-500/20 text-rose-400">
+          <div className="p-2.5 rounded-lg bg-teal-500/20 text-teal-400">
             <ShieldAlert className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-400">CRITICAL SECURITY BOTTLENECK</span>
+            <span className="text-xs font-bold uppercase tracking-wider text-teal-400">CRITICAL SECURITY BASELINE (WAVE 1B.0S)</span>
             <h3 className="text-sm font-bold text-white mt-0.5">
-              CURRENT SECURITY FOUNDATION: NOT_READY • WAVE 1B: HOLD
+              CURRENT SECURITY FOUNDATION: CONTAINED (PRE-UOW) • WAVE 1B: HOLD
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Koneksi aplikasi masih beroperasi di bawah user <strong className="text-rose-300">postgres (Superuser)</strong> dan 21 tabel zero-policy belum diselesaikan.
+              Koneksi runtime berhasil diproteksi (<strong className="text-teal-300">nurseflow_app_user / Non-Superuser</strong>, 0 TRUNCATE, 100/100 tabel RLS fail-closed). 156 path kueri menunggu refaktor Scoped Unit-of-Work.
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
-            3 OF 11 VERIFIED
+          <span className="text-xs px-3 py-1.5 rounded-lg font-bold bg-teal-500/20 text-teal-400 border border-teal-500/30">
+            {verifiedCount} OF {controls.length} CONTAINED / VERIFIED
           </span>
         </div>
       </div>

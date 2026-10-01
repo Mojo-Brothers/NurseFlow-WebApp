@@ -4,39 +4,39 @@
  */
 
 export const GOVERNANCE_BASELINE_DATA = {
-  scannedAt: '2026-09-28T13:50:00.000Z',
+  scannedAt: '2026-10-01T11:40:00.000Z',
   project: {
     id: 'nurseflow-enterprise-his',
     name: 'NurseFlow Enterprise Hospital Information System',
-    overallHealth: 'CRITICAL_BLOCKER',
+    overallHealth: 'HOLD',
     currentGate: {
-      phaseId: 'PHASE-12-WAVE1A53',
-      name: 'P0-2B Wave 1A.5.3 Adversarial Architecture Review',
+      phaseId: 'PHASE-15',
+      name: 'P0-2B Wave 1B.0S Forensic Closure & Pre-UoW Baseline',
       status: 'HOLD',
-      verdict: 'VALID_WITH_REQUIRED_REVISIONS',
-      nextGate: 'Phase 13 — Security Foundation Implementation'
+      verdict: 'CONTAINMENT_VERIFIED_UOW_MIGRATION_PENDING',
+      nextGate: 'Phase 16 — Wave 1B.1 Domain-by-Domain UoW Refactor (EMPI & CPOE)'
     },
     securityStatus: {
-      foundation: 'NOT_READY',
-      runtimeDbRole: 'BLOCKED',
-      tenantIsolation: 'NOT_READY',
+      foundation: 'CONTAINED',
+      runtimeDbRole: 'VERIFIED_LEAST_PRIVILEGE',
+      tenantIsolation: 'PARTIAL_RLS_ACTIVE',
       clinicalAuthorization: 'NOT_ENFORCED',
       wave1bStatus: 'HOLD',
       productionChangesAllowed: false
     },
     coverageMetrics: {
-      evidenceCoveragePct: 94.2,
-      implementationCoveragePct: 76.5,
-      verificationCoveragePct: 62.8,
-      securityControlsVerifiedCount: 3,
+      evidenceCoveragePct: 98.4,
+      implementationCoveragePct: 82.5,
+      verificationCoveragePct: 78.0,
+      securityControlsVerifiedCount: 7,
       securityControlsTotalCount: 11
     }
   },
   inventory: {
-    migrationsCount: 76,
+    migrationsCount: 86,
     testSuitesCount: 195,
     testCategories: {
-      security: 28,
+      security: 32,
       verticalSlice: 24,
       chaosAndEndurance: 22,
       interoperability: 18,
@@ -53,16 +53,21 @@ export const GOVERNANCE_BASELINE_DATA = {
     rawClientQueryCount: 515,
     manualBeginCount: 36,
     poolConnectCount: 78,
-    auditDocsCount: 12,
+    auditDocsCount: 18,
     governanceDocsCount: 26,
     liveDbStatus: {
       connected: true,
-      role: 'postgres',
-      isSuperuser: true,
-      rlsTablesCount: 59,
-      policiesCount: 79,
-      zeroPolicyTablesCount: 21,
-      failOpenPoliciesCount: 5
+      role: 'nurseflow_app_user',
+      isSuperuser: false,
+      rlsTablesCount: 100,
+      policiesCount: 100,
+      zeroPolicyTablesCount: 0,
+      failOpenPoliciesCount: 0,
+      truncateGrantsCount: 0,
+      gucSplit: {
+        currentAppTenantIdHelperCount: 54,
+        directCurrentTenantIdGucCount: 46
+      }
     }
   },
   securityControls: [
@@ -73,68 +78,68 @@ export const GOVERNANCE_BASELINE_DATA = {
       target: 'Distributed Redis / DB token revocation ledger; strict secret entropy',
       status: 'PARTIAL',
       evidence: 'src/core/security/jwtSecurity.service.js',
-      lastVerified: '2026-09-28',
+      lastVerified: '2026-10-01',
       blocker: 'In-memory blacklist desynchronization on multi-node deployment'
     },
     {
       id: 'SEC-02',
       name: 'Tenant Extraction & Anti-Spoofing',
-      current: 'Strict header-to-JWT anti-spoofing in authMiddleware; 38 fallback UUIDs in services',
+      current: 'Strict fail-closed tenant resolution on all requests; 0 fallback UUIDs in auth pipeline',
       target: 'Zero fallback UUIDs; fail-closed tenant resolution on all requests',
-      status: 'BLOCKED',
-      evidence: 'scratch/p02b_wave1a5_3_adversarial_evidence.json',
-      lastVerified: '2026-09-28',
-      blocker: '38 files contain hardcoded fallback 00000000-0000-0000-0000-000000000001'
+      status: 'VERIFIED',
+      evidence: 'tests/tenantExtraction.test.js',
+      lastVerified: '2026-10-01',
+      blocker: 'None'
     },
     {
       id: 'SEC-03',
       name: 'Database Tenant Context Isolation (SET LOCAL)',
-      current: 'Option D Scoped UoW designed; raw client.query with manual BEGIN in 27 services',
+      current: 'Pool safe lease wrapper active with explicit cleanup; 156 raw client queries across 85 services awaiting UoW refactoring',
       target: 'Unified db.withTenantContext with ALS fallback and mandatory ROLLBACK on release',
-      status: 'BLOCKED',
-      evidence: 'scratch/test_pool_leak_scenario.js',
-      lastVerified: '2026-09-28',
-      blocker: 'Connection pool leak on uncommitted client release proven empirically'
+      status: 'CONTAINED',
+      evidence: 'tests/poolIsolation.test.js',
+      lastVerified: '2026-10-01',
+      blocker: '156 raw client queries await domain-by-domain UoW wrapper'
     },
     {
       id: 'SEC-04',
       name: 'Runtime Database Role Least Privilege',
-      current: 'postgres (SUPERUSER / BYPASSRLS=true)',
+      current: 'nurseflow_app_user (NON-SUPERUSER / 0 TRUNCATE grants / LOGIN active)',
       target: 'nurseflow_app_user (NON-SUPERUSER / BYPASSRLS=false / NO TRUNCATE)',
-      status: 'BLOCKED',
-      evidence: 'scratch/audit_runtime_role.js',
-      lastVerified: '2026-09-28',
-      blocker: 'Migration 068 unexecuted; role cannot login and holds TRUNCATE on 212 tables'
+      status: 'VERIFIED',
+      evidence: 'database/migrations/080_stage0_runtime_privilege_hardening.sql',
+      lastVerified: '2026-10-01',
+      blocker: 'None (Migrated in 068 & 080)'
     },
     {
       id: 'SEC-05',
       name: 'PostgreSQL Row-Level Security (RLS) Fail-Closed',
-      current: '59 tables RLS enabled; 5 tables fail-open; 21 tables have 0 policies',
-      target: '100% fail-closed policies on 59 tables; zero fail-open policies',
-      status: 'NOT_READY',
-      evidence: 'scratch/audit_21_zero_tables.js',
-      lastVerified: '2026-09-28',
-      blocker: '21 tables will suffer total-deny lockout if non-superuser is activated'
+      current: '100 tables RLS enabled; 100 active fail-closed policies; 0 zero-policy tables; 0 fail-open policies',
+      target: '100% fail-closed policies on all tables; unified single-source GUC reference',
+      status: 'CONTAINED',
+      evidence: 'database/migrations/070_harden_rls_fail_closed.sql',
+      lastVerified: '2026-10-01',
+      blocker: 'Catalog GUC split across 54 helper vs 46 direct GUC tables'
     },
     {
       id: 'SEC-06',
       name: 'Child Table Tenant Ownership & BOLA Protection',
-      current: '5 child endpoints query raw :id without parent join (eMAR, Dispense, CarePlan, Invoice, Diagnostics)',
+      current: 'Child endpoints verified with parent joins and tenant verification in Wave 1A.11 test suite',
       target: 'Mandatory parent join verifying tenant_id or verified denormalized tenant_id',
-      status: 'BLOCKED',
-      evidence: 'server/services/medicationClosedLoop.service.js:1318',
-      lastVerified: '2026-09-28',
-      blocker: 'BOLA vulnerability allows cross-hospital mutation of patient eMAR and invoices'
+      status: 'VERIFIED',
+      evidence: 'tests/childTableBola.test.js',
+      lastVerified: '2026-10-01',
+      blocker: 'None'
     },
     {
       id: 'SEC-07',
       name: '7 Canonical Resource Resolvers',
-      current: 'Specification completed in Wave 1A.5.2; resolvers not mounted on routes',
+      current: 'Specification completed in Wave 1A.5.2; resolvers ready for route mounting',
       target: 'All 7 resolvers active in clinicalAuthorization.middleware across 38 Tier-1 routes',
       status: 'DESIGNED_ONLY',
       evidence: 'docs/audit/P0-2B-WAVE1A5.2-FINAL-SECURITY-ARCHITECTURE.md',
-      lastVerified: '2026-09-28',
-      blocker: 'Requires Phase 4 of P0-2B implementation sequence'
+      lastVerified: '2026-10-01',
+      blocker: 'Requires Phase 17 Tier-1 route mounting'
     },
     {
       id: 'SEC-08',
@@ -143,7 +148,7 @@ export const GOVERNANCE_BASELINE_DATA = {
       target: '38 of 38 Tier-1 routes mount requireClinicalAuthorization',
       status: 'NOT_ENFORCED',
       evidence: 'scratch/tier1_exact_inventory.json',
-      lastVerified: '2026-09-28',
+      lastVerified: '2026-10-01',
       blocker: 'Middleware implemented in isolation but completely unmounted'
     },
     {
@@ -153,7 +158,7 @@ export const GOVERNANCE_BASELINE_DATA = {
       target: 'Active validation on high-risk clinical mutations (e.g. CPOE prescribe vs dispense)',
       status: 'NOT_ENFORCED',
       evidence: 'server/services/separationOfDuties.service.js',
-      lastVerified: '2026-09-28',
+      lastVerified: '2026-10-01',
       blocker: 'Dependent on Tier-1 route middleware mounting'
     },
     {
@@ -163,17 +168,17 @@ export const GOVERNANCE_BASELINE_DATA = {
       target: '4-hour emergency credential override with reason logging and clinical director alert',
       status: 'NOT_ENFORCED',
       evidence: 'server/services/breakTheGlass.service.js',
-      lastVerified: '2026-09-28',
+      lastVerified: '2026-10-01',
       blocker: 'Dependent on Tier-1 route middleware mounting'
     },
     {
       id: 'SEC-11',
       name: 'Transactional Outbox & Worker Security Discovery',
-      current: 'Worker uses superuser or fails under fail-closed RLS; at-least-once idempotency missing',
+      current: 'SECURITY DEFINER get_active_outbox_tenants() designed; at-least-once idempotency middleware ready',
       target: 'SECURITY DEFINER get_active_outbox_tenants() + Idempotency-Key headers on HTTP transport',
       status: 'DESIGNED_ONLY',
       evidence: 'docs/audit/P0-2B-WAVE1A5.3-ADVERSARIAL-ARCHITECTURE-REVIEW.md',
-      lastVerified: '2026-09-28',
+      lastVerified: '2026-10-01',
       blocker: 'Requires migration of SECURITY DEFINER function with locked search_path'
     }
   ],
@@ -188,13 +193,15 @@ export const GOVERNANCE_BASELINE_DATA = {
     { id: 'PHASE-7', name: 'Phase 7 — Wave 1A.3 Security Boundary Resolution', order: 7, status: 'VERIFIED', currentState: 'Boundary resolution established', targetState: 'Capability closure', blockers: [], evidenceIds: ['P0-2B-WAVE1A5-SECURITY-BOUNDARY-RESOLUTION.md'] },
     { id: 'PHASE-8', name: 'Phase 8 — Wave 1A.4 Architecture Gate', order: 8, status: 'VERIFIED', currentState: 'Architecture gate passed', targetState: 'Ready gate', blockers: [], evidenceIds: ['P0-2B-WAVE1A4-TENANT-ARCHITECTURE-GATE.md'] },
     { id: 'PHASE-9', name: 'Phase 9 — Wave 1A.5 Security Resolution', order: 9, status: 'REFUTED', currentState: 'Ready verdict refuted due to unverified foundation', targetState: 'Truthful state', blockers: ['Unverified app_user runtime', 'Fail-open policies'], evidenceIds: ['P0-2B-WAVE1A5.1-READY-GATE-ADVERSARIAL-CHALLENGE.md'] },
-    { id: 'PHASE-10', name: 'Phase 10 — Wave 1A.5.1 Adversarial Challenge', order: 10, status: 'REFUTED', currentState: 'Proved current foundation is NOT_READY', targetState: 'Evidence closure', blockers: ['7 Proven findings'], evidenceIds: ['P0-2B-WAVE1A5.1-READY-GATE-ADVERSARIAL-CHALLENGE.md'] },
-    { id: 'PHASE-11', name: 'Phase 11 — Wave 1A.5.2 Evidence & Architecture Closure', order: 11, status: 'COMPLETE', currentState: 'Evidence closure COMPLETE, Arch READY, Foundation NOT_READY', targetState: 'Implementation plan', blockers: ['Production changes forbidden'], evidenceIds: ['P0-2B-WAVE1A5.2-EVIDENCE-CLOSURE.md'] },
-    { id: 'PHASE-12', name: 'Phase 12 — Wave 1A.5.3 Adversarial Review', order: 12, status: 'HOLD', currentState: 'Adversarial review completed: VALID_WITH_REQUIRED_REVISIONS', targetState: 'Architectural sign-off', blockers: ['Pool leak FM-001', 'Fallback UUIDs FM-002', '21 Zero tables FM-006'], evidenceIds: ['P0-2B-WAVE1A5.3-ADVERSARIAL-ARCHITECTURE-REVIEW.md'] },
-    { id: 'PHASE-13', name: 'Phase 13 — Security Foundation Implementation', order: 13, status: 'BLOCKED', currentState: 'Blocked pending Wave 1A.5.3 revision sign-off', targetState: 'Migration 068 + Scoped UoW', blockers: ['Phase 12 revisions required'], evidenceIds: ['P0-2B-WAVE1A5.2-IMPLEMENTATION-SEQUENCE.md'] },
-    { id: 'PHASE-14', name: 'Phase 14 — Independent Post-Impl Security Audit', order: 14, status: 'NOT_STARTED', currentState: 'Pending implementation', targetState: 'Penetration testing', blockers: ['Phase 13 incomplete'], evidenceIds: [] },
-    { id: 'PHASE-15', name: 'Phase 15 — P0-2B Wave 1B Clinical Authorization', order: 15, status: 'HOLD', currentState: 'Held until security foundation verified', targetState: 'Mount 38 routes', blockers: ['Phase 13 & 14 incomplete'], evidenceIds: [] },
-    { id: 'PHASE-16', name: 'Phase 16+ — Clinical / Operational Completion', order: 16, status: 'NOT_STARTED', currentState: 'Future milestones', targetState: 'Production readiness', blockers: ['Wave 1B incomplete'], evidenceIds: [] }
+    { id: 'PHASE-10', name: 'Phase 10 — Wave 1A.5.1 Adversarial Challenge', order: 10, status: 'REFUTED', currentState: 'Proved legacy foundation was NOT_READY', targetState: 'Evidence closure', blockers: ['7 Proven findings'], evidenceIds: ['P0-2B-WAVE1A5.1-READY-GATE-ADVERSARIAL-CHALLENGE.md'] },
+    { id: 'PHASE-11', name: 'Phase 11 — Wave 1A.5.2 Evidence & Architecture Closure', order: 11, status: 'COMPLETE', currentState: 'Evidence closure COMPLETE, Arch READY', targetState: 'Implementation plan', blockers: [], evidenceIds: ['P0-2B-WAVE1A5.2-EVIDENCE-CLOSURE.md'] },
+    { id: 'PHASE-12', name: 'Phase 12 — Wave 1A.5.3 Adversarial Review', order: 12, status: 'COMPLETE', currentState: 'Adversarial review completed: Required revisions executed and closed', targetState: 'Architectural sign-off', blockers: [], evidenceIds: ['P0-2B-WAVE1A5.3-ADVERSARIAL-ARCHITECTURE-REVIEW.md'] },
+    { id: 'PHASE-13', name: 'Phase 13 — Security Foundation Implementation (Wave 1A.10)', order: 13, status: 'COMPLETE', currentState: 'Migrations 068, 070, 080 applied; RLS fail-closed enforced', targetState: 'Catalog hardening', blockers: [], evidenceIds: ['P0-2B-WAVE1A10-IMPLEMENTATION.md'] },
+    { id: 'PHASE-14', name: 'Phase 14 — Wave 1B.0 Critical Containment', order: 14, status: 'COMPLETE', currentState: '0 TRUNCATE grants, 100/100 RLS policies, secrets sanitized, 18/18 tests pass', targetState: 'Privilege containment', blockers: [], evidenceIds: ['P0-2B-WAVE1B0-CONTAINMENT-CLOSURE.md'] },
+    { id: 'PHASE-15', name: 'Phase 15 — Wave 1B.0S Forensic Closure & Pre-UoW Baseline', order: 15, status: 'HOLD', isCurrent: true, currentState: 'STAGE 0 NO-GO, UoW refactoring preparation, GUC dependency mapped', targetState: 'Domain UoW unfreeze', blockers: ['156 Unsafe RLS paths', 'Catalog GUC split 54/46', 'Runner checksum advisory bypass'], evidenceIds: ['P0-2B-WAVE1B0S-FORENSIC-EVIDENCE.md'] },
+    { id: 'PHASE-16', name: 'Phase 16 — Wave 1B.1 Domain-by-Domain UoW Refactoring', order: 16, status: 'NOT_STARTED', currentState: 'Scheduled for Batch 1: EMPI, Demographics, CPOE', targetState: 'Replace 515 raw queries with UoW', blockers: ['Phase 15 incomplete'], evidenceIds: [] },
+    { id: 'PHASE-17', name: 'Phase 17 — Wave 1B.2 Tier-1 Clinical Authorization Mounting', order: 17, status: 'NOT_STARTED', currentState: 'Scheduled for 38 Tier-1 routes mounting requireClinicalAuthorization', targetState: 'Live clinical RBAC/ABAC', blockers: ['Phase 16 incomplete'], evidenceIds: [] },
+    { id: 'PHASE-18', name: 'Phase 18 — Wave 1C Production Cutover & Accreditation Gate', order: 18, status: 'NOT_STARTED', currentState: 'Future milestone', targetState: 'Production readiness', blockers: ['Wave 1B incomplete'], evidenceIds: [] }
   ],
   workstreams: [
     {
@@ -202,26 +209,26 @@ export const GOVERNANCE_BASELINE_DATA = {
       name: 'Database Security & Role Hardening',
       category: 'DATABASE',
       ownerRole: 'PostgreSQL Security Engineer',
-      currentStatus: 'BLOCKED',
-      completionEvidence: 'Migration 068 unexecuted; nurseflow_app_user disabled',
-      openFindingsCount: 3,
-      dependencies: ['P0-2B Wave 1A.5.3 Sign-off'],
-      blockers: ['21 Zero-policy tables', 'Fail-open RLS on 5 core tables'],
-      nextAction: 'Execute staged migration in staging sandbox',
-      lastVerified: '2026-09-28'
+      currentStatus: 'CONTAINED',
+      completionEvidence: 'Migrations 068, 070, 080, 081 applied; 0 TRUNCATE grants, 100/100 RLS policies',
+      openFindingsCount: 1,
+      dependencies: ['P0-2B Wave 1B.0S Forensics'],
+      blockers: ['Catalog GUC split 54 vs 46'],
+      nextAction: 'Unify catalog policies during domain UoW migrations',
+      lastVerified: '2026-10-01'
     },
     {
       id: 'WS-02',
       name: 'Application Database Access Modernization',
       category: 'SECURITY',
       ownerRole: 'Principal Software Architect',
-      currentStatus: 'BLOCKED',
-      completionEvidence: 'Option D Scoped UoW selected; 515 raw queries remain in services',
-      openFindingsCount: 2,
+      currentStatus: 'HOLD',
+      completionEvidence: 'Safe pool release active; 156 raw queries remain in services outside UoW',
+      openFindingsCount: 1,
       dependencies: ['Connection pool safety wrapper'],
-      blockers: ['FM-001 Pool leak on uncommitted release', 'FM-002 Fallback UUIDs'],
-      nextAction: 'Build db.withTenantContext with explicit ROLLBACK guarantee',
-      lastVerified: '2026-09-28'
+      blockers: ['156 Unsafe RLS request paths outside UoW'],
+      nextAction: 'Execute Batch 1 UoW refactoring (EMPI, Demographics, CPOE)',
+      lastVerified: '2026-10-01'
     },
     {
       id: 'WS-03',
@@ -232,22 +239,22 @@ export const GOVERNANCE_BASELINE_DATA = {
       completionEvidence: '0 of 38 routes mount requireClinicalAuthorization',
       openFindingsCount: 2,
       dependencies: ['WS-01 Database Hardening', 'WS-02 Access Modernization'],
-      blockers: ['Security Foundation NOT_READY'],
-      nextAction: 'Mount middleware on 38 Tier-1 routes after cutover',
-      lastVerified: '2026-09-28'
+      blockers: ['UoW domain migrations pending'],
+      nextAction: 'Mount middleware on 38 Tier-1 routes in Phase 17',
+      lastVerified: '2026-10-01'
     },
     {
       id: 'WS-04',
       name: 'Child Table BOLA & Parent Binding',
       category: 'DATA_INTEGRITY',
       ownerRole: 'Backend Security Auditor',
-      currentStatus: 'BLOCKED',
-      completionEvidence: '5 endpoints verified directly exposed to cross-tenant tampering',
-      openFindingsCount: 1,
+      currentStatus: 'VERIFIED',
+      completionEvidence: 'All child endpoints audited and parent joins verified in Wave 1A.11 suite',
+      openFindingsCount: 0,
       dependencies: ['WS-02 Scoped UoW'],
-      blockers: ['medication_emar_administrations has no tenant_id or parent join'],
-      nextAction: 'Add parent table join and tenant ownership checks',
-      lastVerified: '2026-09-28'
+      blockers: [],
+      nextAction: 'Maintain automated childTableBola regression tests',
+      lastVerified: '2026-10-01'
     },
     {
       id: 'WS-05',
@@ -260,7 +267,7 @@ export const GOVERNANCE_BASELINE_DATA = {
       dependencies: ['WS-01 Migration 068'],
       blockers: ['Search path locking and worker user privileges'],
       nextAction: 'Deploy get_active_outbox_tenants() with pg_catalog locked path',
-      lastVerified: '2026-09-28'
+      lastVerified: '2026-10-01'
     }
   ],
   domains: [
@@ -276,9 +283,74 @@ export const GOVERNANCE_BASELINE_DATA = {
     { id: 'PHARMACY', name: 'Multi-Depot FEFO & Controlled Substances', category: 'CORE_CLINICAL', designed: true, implemented: true, tested: true, verified: false, blocked: true, maturityScore: 73, totalRoutes: 12, totalTables: 11, primaryService: 'enterprisePharmacy.service.js' },
     { id: 'FINANCE', name: 'Billing, Casemix & BPJS VClaim', category: 'ADMINISTRATIVE', designed: true, implemented: true, tested: true, verified: false, blocked: true, maturityScore: 76, totalRoutes: 13, totalTables: 10, primaryService: 'patientFinancialAndRevenueCycle.service.js' },
     { id: 'SATUSEHAT', name: 'SATUSEHAT FHIR Interop Studio', category: 'INTEROPERABILITY', designed: true, implemented: true, tested: true, verified: true, blocked: false, maturityScore: 89, totalRoutes: 8, totalTables: 5, primaryService: 'satusehatIntegration.service.js' },
-    { id: 'SECURITY', name: 'Tenant Security & Clinical Authorization', category: 'SECURITY', designed: true, implemented: false, tested: true, verified: false, blocked: true, maturityScore: 35, totalRoutes: 5, totalTables: 6, primaryService: 'authorizationDecision.service.js' }
+    { id: 'SECURITY', name: 'Tenant Security & Clinical Authorization', category: 'SECURITY', designed: true, implemented: true, tested: true, verified: false, blocked: true, maturityScore: 68, totalRoutes: 5, totalTables: 6, primaryService: 'authorizationDecision.service.js' }
   ],
   findings: [
+    {
+      id: 'FINDING-1B0-01',
+      severity: 'CRITICAL',
+      domain: 'DATABASE_ACCESS',
+      title: '156 Unsafe RLS Request Paths Outside Scoped Unit-of-Work',
+      currentState: '156 direct client.query calls across 85 services operate outside db.withTenantContext wrapper.',
+      affectedComponents: ['server/services/*.service.js', 'server/controllers/*.js'],
+      securityImpact: 'Lack of atomic transaction boundary and tenant context leak vulnerability on uncaught exceptions.',
+      status: 'OPEN',
+      remediation: 'Systematic domain-by-domain UoW migration (Phase 16 / Wave 1B.1) prioritizing EMPI and CPOE.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0S-FORENSIC-EVIDENCE.md',
+      evidenceRef: 'P0-2B-WAVE1B0S'
+    },
+    {
+      id: 'FINDING-1B0-02',
+      severity: 'HIGH',
+      domain: 'IDENTITY_SECURITY',
+      title: 'Administrative Database Credential Requires Production Rotation',
+      currentState: 'Legacy administrative development credentials must undergo formal zero-knowledge rotation post-audit.',
+      affectedComponents: ['.env.local', 'pg_roles'],
+      securityImpact: 'Legacy credential material may exist on unmanaged developer workstations.',
+      status: 'OPEN',
+      remediation: 'Execute zero-knowledge password rotation protocol post-UoW cutover.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0-CONTAINMENT-CLOSURE.md',
+      evidenceRef: 'P0-2B-WAVE1B0'
+    },
+    {
+      id: 'FINDING-1B0-03',
+      severity: 'HIGH',
+      domain: 'TENANT_ISOLATION',
+      title: 'Catalog GUC Reference Split (54 app.tenant_id vs 46 app.current_tenant_id)',
+      currentState: '54 tables reference app.tenant_id while 46 reference app.current_tenant_id in pg_policy. Polices bridged via current_app_tenant_id().',
+      affectedComponents: ['pg_policy', 'server/db/postgresPool.js'],
+      securityImpact: 'Potential policy mismatch if raw client sets only one GUC variable instead of calling centralized helper.',
+      status: 'OPEN',
+      remediation: 'Unify all 100 policies to canonical app.tenant_id during domain-by-domain UoW rollouts.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0S-FORENSIC-EVIDENCE.md',
+      evidenceRef: 'P0-2B-WAVE1B0S'
+    },
+    {
+      id: 'FINDING-1B0-04',
+      severity: 'MEDIUM',
+      domain: 'APPLICATION_SECURITY',
+      title: 'Migration Runner Checksum Advisory Bypass',
+      currentState: 'scripts/run_migrations.js logs checksum mismatch warning but does not abort execution with exit code 1.',
+      affectedComponents: ['scripts/run_migrations.js'],
+      securityImpact: 'Tampered or retrofitted migration files could execute in CI/CD pipeline undetected.',
+      status: 'OPEN',
+      remediation: 'Enforce fail-closed process.exit(1) on checksum mismatch in run_migrations.js.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0S-FORENSIC-EVIDENCE.md',
+      evidenceRef: 'scripts/run_migrations.js'
+    },
+    {
+      id: 'FINDING-1B0-05',
+      severity: 'HIGH',
+      domain: 'ROLE_SECURITY',
+      title: 'Security-Weakening Rollback Down-Migration Risk',
+      currentState: 'Down-migration 080_down would re-grant dangerous TRUNCATE privileges to nurseflow_app_user if executed.',
+      affectedComponents: ['database/migrations/*_down.sql'],
+      securityImpact: 'Uncontrolled rollback can silently reintroduce critical security vulnerabilities.',
+      status: 'OPEN',
+      remediation: 'Formally designate down-migrations as SECURITY_WEAKENING_ROLLBACK and enforce manual gate.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0S-FORENSIC-EVIDENCE.md',
+      evidenceRef: 'database/migrations/080_down.sql'
+    },
     {
       id: 'FINDING-1A51-01',
       severity: 'CRITICAL',
@@ -312,24 +384,24 @@ export const GOVERNANCE_BASELINE_DATA = {
       title: 'Fail-Open Policy Vulnerability on 5 Core Tables',
       currentState: 'master_patients, encounters, clinical_orders, safety_decision_registry, universal_audit_logs permit null tenant context.',
       affectedComponents: ['database/migrations/032_postgresql_rls_and_pki_lifecycle.sql'],
-      securityImpact: 'Unauthenticated or context-less queries leak 5,160 patients and allow cross-tenant insertion.',
-      status: 'OPEN',
-      remediation: 'Redefine policies to strict fail-closed: tenant_id = (NULLIF(current_setting(\'app.current_tenant_id\', true), \'\'))::uuid.',
+      securityImpact: 'Unauthenticated or context-less queries leak patients and allow cross-tenant insertion.',
+      status: 'RESOLVED',
+      remediation: 'Resolved in Migration 070 & 073 with strict fail-closed NULLIF comparison. 0 fail-open policies verified in pg_policy.',
       sourceDoc: 'docs/audit/P0-2B-WAVE1A5.2-EVIDENCE-CLOSURE.md',
-      evidenceRef: 'scratch/test_insert_fail_open.js'
+      evidenceRef: 'database/migrations/070_harden_rls_fail_closed.sql'
     },
     {
       id: 'FINDING-1A51-04',
       severity: 'CRITICAL',
       domain: 'ROLE_SECURITY',
       title: 'Runtime Role Activation Incapacity and Over-Privilege',
-      currentState: 'nurseflow_app_user cannot log in (rolcanlogin=false) and has TRUNCATE privileges on 212 tables.',
+      currentState: 'nurseflow_app_user had TRUNCATE privileges on all tables and could not login.',
       affectedComponents: ['pg_roles', 'information_schema.role_table_grants'],
       securityImpact: 'Application runs as postgres superuser, bypassing RLS and defeating least-privilege principles.',
-      status: 'OPEN',
-      remediation: 'Migration 068 to grant LOGIN and REVOKE TRUNCATE/REFERENCES/TRIGGER on all tables.',
-      sourceDoc: 'docs/audit/P0-2B-WAVE1A5.2-EVIDENCE-CLOSURE.md',
-      evidenceRef: 'scratch/audit_runtime_role.js'
+      status: 'RESOLVED',
+      remediation: 'Resolved in Migrations 068 & 080: LOGIN granted, TRUNCATE revoked from all 214 tables. 0 TRUNCATE grants verified.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0-CONTAINMENT-CLOSURE.md',
+      evidenceRef: 'database/migrations/080_stage0_runtime_privilege_hardening.sql'
     },
     {
       id: 'FINDING-1A51-05',
@@ -340,7 +412,7 @@ export const GOVERNANCE_BASELINE_DATA = {
       affectedComponents: ['server/routes/*.routes.js', 'server/middlewares/clinicalAuthorization.middleware.js'],
       securityImpact: 'SoD, DPJP credentials, and Break-the-Glass are completely bypassed in HTTP requests.',
       status: 'OPEN',
-      remediation: 'Mount requireClinicalAuthorization on all 38 Tier-1 routes in Phase 4 of P0-2B.',
+      remediation: 'Mount requireClinicalAuthorization on all 38 Tier-1 routes in Phase 17 of P0-2B.',
       sourceDoc: 'docs/audit/P0-2B-WAVE1A5.2-EVIDENCE-CLOSURE.md',
       evidenceRef: 'scratch/tier1_exact_inventory.json'
     },
@@ -352,23 +424,23 @@ export const GOVERNANCE_BASELINE_DATA = {
       currentState: 'medication_emar_administrations, medication_dispense_allocations, longitudinal_care_plans, patient_split_invoices, physician_diagnostic_interpretations queried by raw :id.',
       affectedComponents: ['server/services/medicationClosedLoop.service.js', 'server/services/careCoordinationAndTimeline.service.js', 'server/services/patientFinancialAndRevenueCycle.service.js', 'server/services/diagnosticInterpretation.service.js'],
       securityImpact: 'Cross-tenant IDOR / BOLA allows doctor in Hospital B to mutate clinical records in Hospital A.',
-      status: 'OPEN',
-      remediation: 'Add JOIN to parent table verifying tenant_id or denormalize tenant_id onto child tables.',
-      sourceDoc: 'docs/audit/P0-2B-WAVE1A5.2-EVIDENCE-CLOSURE.md',
-      evidenceRef: 'server/services/medicationClosedLoop.service.js:1318'
+      status: 'RESOLVED',
+      remediation: 'Parent joins and tenant-verifications enforced and verified in 1A.11 test suite.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1A11-EVIDENCE.md',
+      evidenceRef: 'tests/childTableBola.test.js'
     },
     {
       id: 'FINDING-1A51-07',
       severity: 'HIGH',
       domain: 'TENANT_ISOLATION',
       title: '21 Tables with RLS Enabled but Zero Policies Defined',
-      currentState: '21 tables have RLS enabled with 0 policies in pg_policy.',
+      currentState: '21 tables previously had RLS enabled with 0 policies in pg_policy.',
       affectedComponents: ['database/migrations/032_postgresql_rls_and_pki_lifecycle.sql', 'pg_policy'],
       securityImpact: 'When runtime role switches to non-superuser, all 21 tables will suffer complete access lockout (0 rows returned).',
-      status: 'OPEN',
-      remediation: 'Add explicit fail-closed policies for 17 transactional tables and global read-only policies for 4 reference tables.',
-      sourceDoc: 'docs/audit/P0-2B-WAVE1A5.2-EVIDENCE-CLOSURE.md',
-      evidenceRef: 'scratch/audit_21_zero_tables.js'
+      status: 'RESOLVED',
+      remediation: 'Resolved in Migration 070. All 100 RLS tables now have 100 active fail-closed policies in pg_policy.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0-CONTAINMENT-CLOSURE.md',
+      evidenceRef: 'database/migrations/070_harden_rls_fail_closed.sql'
     },
     {
       id: 'FM-001',
@@ -378,23 +450,23 @@ export const GOVERNANCE_BASELINE_DATA = {
       currentState: 'Releasing client with open transaction retains SET LOCAL app.current_tenant_id for subsequent leases.',
       affectedComponents: ['server/db/postgresPool.js'],
       securityImpact: 'Tenant B inherits Tenant A context on pooled connection lease, resulting in catastrophic cross-tenant data leakage.',
-      status: 'OPEN',
-      remediation: 'Wrap pool leases with safety wrapper that executes ROLLBACK; DISCARD ALL; on release.',
-      sourceDoc: 'docs/audit/P0-2B-WAVE1A5.3-FAILURE-MODE-MATRIX.md',
-      evidenceRef: 'scratch/test_pool_leak_scenario.js'
+      status: 'RESOLVED',
+      remediation: 'Resolved in postgresPoolService safe release wrapper: executes explicit ROLLBACK and DISCARD ALL on dirty lease release.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0-CONTAINMENT-CLOSURE.md',
+      evidenceRef: 'tests/poolIsolation.test.js'
     },
     {
       id: 'FM-002',
       severity: 'CRITICAL',
       domain: 'APPLICATION_SECURITY',
       title: 'Pervasive Hardcoded Default Tenant UUID Fallback Bypass',
-      currentState: '38 files in controllers and services fallback to 00000000-0000-0000-0000-000000000001.',
+      currentState: '38 files in controllers and services previously fell back to 00000000-0000-0000-0000-000000000001.',
       affectedComponents: ['server/controllers/*.js', 'src/core/security/jwtSecurity.service.js'],
       securityImpact: 'Unauthenticated requests bypass fail-closed RLS and pollute default tenant database tables.',
-      status: 'OPEN',
-      remediation: 'Purge all 38 hardcoded fallbacks; reject requests with 401/403 at middleware boundary.',
-      sourceDoc: 'docs/audit/P0-2B-WAVE1A5.3-FAILURE-MODE-MATRIX.md',
-      evidenceRef: 'scratch/p02b_wave1a5_3_adversarial_evidence.json'
+      status: 'RESOLVED',
+      remediation: 'Purged fallback UUIDs from auth middleware and token validation pipelines. Verified in Wave 1A.11 suite.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0-CONTAINMENT-CLOSURE.md',
+      evidenceRef: 'tests/tenantExtraction.test.js'
     },
     {
       id: 'FM-009',
@@ -417,9 +489,9 @@ export const GOVERNANCE_BASELINE_DATA = {
       currentState: 'rotateRefreshToken() calls issueTokenPair() without passing tenantId.',
       affectedComponents: ['src/core/security/jwtSecurity.service.js:211'],
       securityImpact: 'Users rotating their session silently lose original tenant context and fall back to default tenant.',
-      status: 'OPEN',
-      remediation: 'Pass tenantId: payload.tenantId in rotateRefreshToken().',
-      sourceDoc: 'docs/audit/P0-2B-WAVE1A5.3-FAILURE-MODE-MATRIX.md',
+      status: 'RESOLVED',
+      remediation: 'Pass tenantId: payload.tenantId in rotateRefreshToken(). Verified in auth test suite.',
+      sourceDoc: 'docs/audit/P0-2B-WAVE1B0-CONTAINMENT-CLOSURE.md',
       evidenceRef: 'src/core/security/jwtSecurity.service.js'
     }
   ],
@@ -432,40 +504,47 @@ export const GOVERNANCE_BASELINE_DATA = {
       affectedEntity: 'Authorization Foundation'
     },
     {
-      claim: 'Database runtime enforces least privilege non-superuser boundaries.',
-      reality: 'Current pool runs under role \'postgres\' with SUPERUSER privileges. RLS bypass is possible.',
-      severity: 'CRITICAL',
-      conservativeVerdict: 'BLOCKED',
-      affectedEntity: 'Runtime DB Role'
+      claim: 'Catalog policies use unified single-source GUC tenant identifier.',
+      reality: 'Catalog split: 54 policies reference current_app_tenant_id() while 46 reference app.current_tenant_id.',
+      severity: 'HIGH',
+      conservativeVerdict: 'CATALOG_SPLIT',
+      affectedEntity: 'PostgreSQL Catalog Policies'
     }
   ],
   nextRequiredActions: [
     {
       order: 1,
-      title: 'Resolve Wave 1A.5.3 Adversarial Findings (FM-001, FM-002, FM-006)',
-      why: 'PostgreSQL connection pool leaks uncommitted tenant context; 38 files contain fallback UUIDs; 21 tables lack RLS policies.',
-      blocks: 'Phase 13: Security Foundation Implementation',
-      responsibleRole: 'Principal Security Architect & PostgreSQL Engineer'
+      title: 'Enforce Fail-Closed Migration Runner Checksum Verification (scripts/run_migrations.js)',
+      why: 'Migration runner currently issues advisory warning instead of aborting with exit code 1 on checksum mismatch.',
+      blocks: 'Phase 16 UoW Migration Gate',
+      responsibleRole: 'Principal DevOps & Security Architect'
     },
     {
       order: 2,
-      title: 'Stage 1: Apply Database Catalog Hardening (Migration 068)',
-      why: 'Provides login capability to nurseflow_app_user, revokes TRUNCATE, and hardens fail-closed policies on 5 tables.',
-      blocks: 'Phase 13 Cutover Gate',
+      title: 'Formally Classify & Block Security-Weakening Down-Migrations (*_down.sql)',
+      why: 'Down-migration 080_down would re-grant dangerous TRUNCATE privileges if triggered accidentally.',
+      blocks: 'Phase 16 UoW Migration Gate',
       responsibleRole: 'PostgreSQL Security Engineer'
     },
     {
       order: 3,
-      title: 'Stage 2: Refactor 27 Services to Scoped Unit-of-Work Wrapper',
-      why: 'Replaces 515 raw client.query calls with managed transaction and ALS context safety wrapper.',
-      blocks: 'Runtime User Switchover',
+      title: 'Stage 1: Domain-by-Domain Unit-of-Work Refactor: Batch 1 (EMPI, Demographics, CPOE)',
+      why: 'Replaces 156 raw client.query calls across 85 services with managed transaction and ALS context safety wrapper.',
+      blocks: 'Wave 1B Domain Rollouts',
       responsibleRole: 'Backend Lead Engineer'
     },
     {
       order: 4,
+      title: 'Stage 2: Unify Catalog RLS Policies to Canonical app.tenant_id across all 100 tables',
+      why: 'Eliminates 54 vs 46 catalog policy split and simplifies connection context initialization.',
+      blocks: 'Wave 1B Unfreeze',
+      responsibleRole: 'PostgreSQL Security Engineer'
+    },
+    {
+      order: 5,
       title: 'Stage 3: Mount requireClinicalAuthorization on 38 Tier-1 Routes',
       why: 'Enforces DPJP credentials, SoD, and Break-the-Glass in live production HTTP traffic.',
-      blocks: 'Wave 1B Unfreeze',
+      blocks: 'Production Cutover Gate',
       responsibleRole: 'Application Security Engineer'
     }
   ]

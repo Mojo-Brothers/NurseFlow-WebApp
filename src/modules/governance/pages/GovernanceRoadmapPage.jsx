@@ -5,7 +5,7 @@ import { STATUS_COLORS } from '../../../core/governance/governanceModel.js';
 
 export default function GovernanceRoadmapPage() {
   const [phases, setPhases] = useState([]);
-  const [expandedPhaseId, setExpandedPhaseId] = useState('PHASE-12');
+  const [expandedPhaseId, setExpandedPhaseId] = useState('PHASE-15');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,7 +35,7 @@ export default function GovernanceRoadmapPage() {
           <span>Project Phase Roadmap & Evidence Baseline</span>
         </h2>
         <p className="text-xs text-slate-400">
-          Pelacakan 17 fase evolusi arsitektur NurseFlow. Status diturunkan langsung dari bukti forensik dan keputusan gerbang.
+          Pelacakan evolusi arsitektur NurseFlow dari Phase 0 hingga Production Cutover. Status diturunkan langsung dari bukti forensik dan keputusan gerbang.
         </p>
       </div>
 
@@ -46,7 +46,7 @@ export default function GovernanceRoadmapPage() {
           const statusStyle = STATUS_COLORS[phase.status] || STATUS_COLORS.UNKNOWN;
           const isRefuted = phase.status === 'REFUTED';
           const isBlocked = phase.status === 'BLOCKED';
-          const isCurrent = phase.status === 'HOLD' && phase.id === 'PHASE-12';
+          const isCurrent = phase.isCurrent || (phase.status === 'HOLD' && phase.id === 'PHASE-15');
 
           return (
             <div

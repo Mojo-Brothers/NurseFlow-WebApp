@@ -13,6 +13,9 @@ export const GOVERNANCE_STATUSES = Object.freeze({
   TESTED: 'TESTED',
   VERIFIED: 'VERIFIED',
   RATIFIED: 'RATIFIED',
+  COMPLETE: 'COMPLETE',
+  CONTAINED: 'CONTAINED',
+  RESOLVED: 'RESOLVED',
   BLOCKED: 'BLOCKED',
   HOLD: 'HOLD',
   REFUTED: 'REFUTED',
@@ -23,6 +26,12 @@ export const GOVERNANCE_STATUSES = Object.freeze({
 
 export const STATUS_COLORS = Object.freeze({
   [GOVERNANCE_STATUSES.VERIFIED]: {
+    bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
+    text: 'text-emerald-700 dark:text-emerald-400',
+    border: 'border-emerald-500/30',
+    dot: 'bg-emerald-500'
+  },
+  [GOVERNANCE_STATUSES.RESOLVED]: {
     bg: 'bg-emerald-500/10 dark:bg-emerald-500/20',
     text: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-500/30',
@@ -39,6 +48,12 @@ export const STATUS_COLORS = Object.freeze({
     text: 'text-emerald-700 dark:text-emerald-400',
     border: 'border-emerald-500/30',
     dot: 'bg-emerald-500'
+  },
+  [GOVERNANCE_STATUSES.CONTAINED]: {
+    bg: 'bg-teal-500/10 dark:bg-teal-500/20',
+    text: 'text-teal-700 dark:text-teal-400',
+    border: 'border-teal-500/30',
+    dot: 'bg-teal-500'
   },
   [GOVERNANCE_STATUSES.IMPLEMENTED]: {
     bg: 'bg-blue-500/10 dark:bg-blue-500/20',

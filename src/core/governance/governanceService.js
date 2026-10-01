@@ -81,6 +81,9 @@ class GovernanceService {
     if (filters.domain && filters.domain !== 'ALL') {
       list = list.filter(f => f.domain.toLowerCase().includes(filters.domain.toLowerCase()));
     }
+    if (filters.status && filters.status !== 'ALL') {
+      list = list.filter(f => f.status.toUpperCase() === filters.status.toUpperCase());
+    }
     if (filters.search) {
       const q = filters.search.toLowerCase();
       list = list.filter(f => 

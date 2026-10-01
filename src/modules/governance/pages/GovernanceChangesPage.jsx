@@ -4,6 +4,57 @@ import { History, ShieldAlert, FileText, CheckCircle2, FileCode, Tag } from 'luc
 export default function GovernanceChangesPage() {
   const changelogEntries = [
     {
+      date: '1 Oktober 2026',
+      phase: 'P0-2B Wave 1B.0S',
+      category: '[MAJOR] [SECURITY] [FORENSICS]',
+      tag: 'stage1-p02b-wave1b0s-migration-authority-guc-rollback-forensics',
+      isProductionChange: false,
+      summary: 'Forensik Migration Authority, pemetaan dependensi dual-GUC (54 vs 46 tabel), dan audit risiko rollback down-migration. Mengidentifikasi 156 kueri RLS di luar UoW wrapper dan membuktikan 0 TRUNCATE pada runtime role.',
+      verdict: 'CONTAINMENT: VERIFIED • STAGE 0: NO-GO • PRODUCTION: BLOCKED • WAVE 1B: HOLD',
+      docs: [
+        'docs/audit/P0-2B-WAVE1B0S-FORENSIC-EVIDENCE.md',
+        'scratch/p02b_wave1b0s_evidence.json'
+      ]
+    },
+    {
+      date: '30 September 2026',
+      phase: 'P0-2B Wave 1B.0R',
+      category: '[MAJOR] [SECURITY] [AUDIT]',
+      tag: 'stage1-p02b-wave1b0r-containment-reconciliation',
+      isProductionChange: false,
+      summary: 'Rekonsiliasi independen read-only mitigasi Wave 1B.0. Mengonfirmasi pencabutan total TRUNCATE dari nurseflow_app_user, 100/100 kebijakan RLS (0 fail-open), eliminasi konflik dual-GUC pada operating_theaters dan radiology_examinations.',
+      verdict: 'RECONCILIATION: VERIFIED • CRITICAL BLOCKERS: 0 • HIGH BLOCKERS: 1',
+      docs: [
+        'docs/audit/P0-2B-WAVE1B0R-RECONCILIATION-REPORT.md'
+      ]
+    },
+    {
+      date: '30 September 2026',
+      phase: 'P0-2B Wave 1B.0',
+      category: '[MAJOR] [SECURITY] [CONTAINMENT]',
+      tag: 'stage1-p02b-wave1b0-critical-security-containment',
+      isProductionChange: true,
+      summary: 'Eksekusi migrasi 080 (pencabutan hak TRUNCATE pada 214 tabel dari nurseflow_app_user) dan migrasi 081 (purging dual-GUC permissive policies pada operating_theaters & radiology_examinations). Sanitasi audit artifact secrets. 18/18 test suite pass.',
+      verdict: 'CONTAINMENT IMPLEMENTED • TRUNCATE REVOKED • SECRETS SANITIZED',
+      docs: [
+        'docs/audit/P0-2B-WAVE1B0-CONTAINMENT-CLOSURE.md',
+        'database/migrations/080_stage0_runtime_privilege_hardening.sql',
+        'database/migrations/081_purge_dual_guc_operating_theaters_radiology.sql'
+      ]
+    },
+    {
+      date: '29 September 2026',
+      phase: 'P0-2B Wave 1A.11 / 1A.11R.1',
+      category: '[MAJOR] [SECURITY] [AUDIT]',
+      tag: 'stage1-p02b-wave1a11r1-adversarial-closure-audit',
+      isProductionChange: false,
+      summary: 'Audit independen adversarial terhadap klaim Wave 1A.11. Mengungkap TRUNCATE privileges pada runtime role dan inkonsistensi migration runner checksum, mendorong fase Wave 1B.0 Containment.',
+      verdict: 'STAGE 0: NO-GO • REMEDIATION DIRECTIVE ISSUED',
+      docs: [
+        'docs/audit/P0-2B-WAVE1A11R1-ADVERSARIAL-AUDIT.md'
+      ]
+    },
+    {
       date: '28 September 2026',
       phase: 'P0-2B Wave 1A.5.3',
       category: '[MAJOR] [SECURITY] [AUDIT]',

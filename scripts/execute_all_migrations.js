@@ -35,17 +35,26 @@ if (fs.existsSync(envPath)) {
 
 const psqlPath = process.env.PSQL_PATH || (process.platform === 'win32' ? 'C:\\Program Files\\PostgreSQL\\16\\bin\\psql.exe' : 'psql');
 
-// Phase 2 Remediation: Dedicated Migration Authority Role (never runtime app user)
-const user = process.env.MIGRATION_USER || 
-             process.env.POSTGRES_MIGRATION_USER || 
-             process.env.POSTGRES_ADMIN_USER || 
-             'postgres';
+// Wave 1B.0T Hardening: Dedicated Migration Authority Role (never runtime app user, never silent fallback to superuser)
+const user = process.env.MIGRATION_USER || process.env.POSTGRES_MIGRATION_USER;
+const password = process.env.MIGRATION_PASSWORD || process.env.POSTGRES_MIGRATION_PASSWORD || '';
 
-const password = process.env.MIGRATION_PASSWORD || 
-                 process.env.POSTGRES_MIGRATION_PASSWORD || 
-                 process.env.POSTGRES_ADMIN_PASSWORD || 
-                 process.env.POSTGRES_PASSWORD || 
-                 '';
+if (!user) {
+  console.error('\n❌ MIGRATION AUTHORITY FATAL: Dedicated migration user is not configured.');
+  console.error('   MIGRATION_USER or POSTGRES_MIGRATION_USER environment variable is REQUIRED.');
+  console.error('   Silent fallback to postgres superuser or application runtime user is forbidden.');
+  console.error('   Migration runner exiting FAIL CLOSED with non-zero exit code.\n');
+  process.exit(1);
+}
+
+const runtimeUser = process.env.POSTGRES_USER || 'nurseflow_app_user';
+if (user === runtimeUser || user === 'nurseflow_app_user') {
+  console.error('\n❌ MIGRATION AUTHORITY FATAL: Runtime application user cannot be migration authority.');
+  console.error(`   Attempted execution under: ${user}`);
+  console.error('   Migration authority must be an explicitly designated administrative/migration role.');
+  console.error('   Migration runner exiting FAIL CLOSED with non-zero exit code.\n');
+  process.exit(1);
+}
 
 const host = process.env.POSTGRES_HOST || 'localhost';
 const port = process.env.POSTGRES_PORT || '5432';
@@ -96,10 +105,20 @@ async function runMigrationEngine() {
   const appliedMap = new Map();
   appliedRes.rows.forEach(r => appliedMap.set(r.migration_id, r));
 
-  // Check if database is already provisioned but schema_migrations is empty (Bootstrap condition)
+  // Wave 1B.0T: Implicit auto-baseline is strictly disabled.
+  // Baseline mode can only be enabled via explicit operator CLI flag (--baseline or --bootstrap).
   const tableCountRes = await client.query("SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public';");
   const publicTableCount = parseInt(tableCountRes.rows[0].count, 10);
-  const shouldAutoBaseline = (appliedMap.size === 0 && publicTableCount > 50) || isBaselineMode;
+  
+  if (appliedMap.size === 0 && publicTableCount > 50 && !isBaselineMode) {
+    console.error(`\n❌ MIGRATION ENGINE FATAL: Detected existing database with ${publicTableCount} public tables, but schema_migrations is empty.`);
+    console.error(`   Implicit auto-baseline is DISABLED to prevent silent omission of migrations.`);
+    console.error(`   To explicitly baseline existing tables, an operator must run with: node scripts/execute_all_migrations.js --baseline\n`);
+    await client.end().catch(() => {});
+    process.exit(1);
+  }
+
+  const shouldBaseline = isBaselineMode;
 
   const files = fs.readdirSync(migrationsDir)
     .filter(f => f.endsWith('.sql') && !f.includes('_down'))
@@ -107,8 +126,8 @@ async function runMigrationEngine() {
 
   console.log(`Found ${files.length} migration files in repository.`);
   console.log(`Recorded in tracking table: ${appliedMap.size} migrations.`);
-  if (shouldAutoBaseline) {
-    console.log(`⚡ Existing database with ${publicTableCount} public tables detected. Performing baseline synchronization...\n`);
+  if (shouldBaseline) {
+    console.log(`⚡ Explicit baseline mode active. Recording baseline entries without re-executing DDL...\n`);
   } else {
     console.log('');
   }
@@ -122,9 +141,15 @@ async function runMigrationEngine() {
     const checksum = computeChecksum(filePath);
     const existing = appliedMap.get(file);
 
-    if (existing) {
+    if (existing && existing.status === 'APPLIED') {
       if (existing.checksum !== checksum) {
-        console.warn(`  [${file}] ⚠️ CHECKSUM_MISMATCH: Migration modified after application! Stored: ${existing.checksum.slice(0, 10)}..., Current: ${checksum.slice(0, 10)}...`);
+        console.error(`\n❌ FATAL CHECKSUM MISMATCH in migration [${file}]!`);
+        console.error(`   Stored Checksum : ${existing.checksum}`);
+        console.error(`   Current Checksum: ${checksum}`);
+        console.error(`   Execution halted immediately. No further migrations will be processed.`);
+        console.error(`   Checksum in schema_migrations will NOT be overwritten.`);
+        await client.end().catch(() => {});
+        process.exit(1);
       } else {
         console.log(`  [${file}] ... ⏭️ SKIPPED (Already applied)`);
       }
@@ -132,7 +157,11 @@ async function runMigrationEngine() {
       continue;
     }
 
-    if (shouldAutoBaseline) {
+    if (existing && existing.status === 'FAILED') {
+      console.log(`  [${file}] ... 🔄 RETRYING (Previous attempt failed)`);
+    }
+
+    if (shouldBaseline) {
       // Record baseline entry without re-executing DDL against active database
       await client.query(`
         INSERT INTO schema_migrations (migration_id, checksum, applied_at, execution_time_ms, status)
