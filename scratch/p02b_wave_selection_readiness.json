@@ -1,1122 +1,185 @@
 {
   "metadata": {
-    "documentId": "DOC-AUDIT-P02B-WAVE-SELECTION-READINESS-20261002",
+    "documentId": "DOC-AUDIT-P02B-FINAL-FACTUAL-RECONCILIATION-20261002",
     "date": "2026-10-02",
-    "gitCommit": "5ea4ff33ea40cdbe4d08d0da0a28d1f9ffd5c7d2",
+    "gitCommit": "398b45a96ae234ff6406e232d987d6051c0ee47b",
     "branch": "feature/security-foundation-wave1a10",
     "workingTreeStatus": "CLEAN",
     "productionCodeModified": false,
-    "auditType": "FACTUAL_DECISION_SUPPORT_MATRIX",
-    "targetEnvironment": "nurseflow_security_lab (PostgreSQL 16)"
+    "auditType": "FINAL_FACTUAL_EVIDENCE_RECONCILIATION",
+    "targetEnvironment": "nurseflow_security_lab (PostgreSQL 16)",
+    "finalReconciliationStatus": "VERIFIED"
   },
-  "rlsScopeReconciliation": {
-    "databaseUniverse": {
-      "sourceOfTruth": "PostgreSQL Catalog (pg_class, pg_policies)",
-      "totalRlsTables": 100,
-      "totalActivePolicies": 100,
-      "policyStandardization": "Migration 081 standardized to 1 tenant_isolation_* policy per table"
-    },
-    "stage0ClinicalCore": {
-      "sourceOfTruth": "Stage-0 Inventory Scanner / Migration 079 + 080 + 081",
-      "totalRlsTables": 33,
-      "composition": {
-        "migration079CoreTables": 10,
-        "migration079ZeroPolicyTables": 21,
-        "wave1B1TriageTables": 2
-      },
-      "tableNames": [
-        "encounters",
-        "master_patients",
-        "clinical_orders",
-        "medication_emar_administrations",
-        "medication_dispense_allocations",
-        "physician_diagnostic_interpretations",
-        "patient_split_invoices",
-        "universal_audit_logs",
-        "safety_decision_registry",
-        "longitudinal_care_plans",
-        "triage_assessments",
-        "triage_sla_timers",
-        "blood_bank_billing_reconciliations",
-        "blood_bedside_dual_nurse_verifications",
-        "bpjs_claim_disputes",
-        "bpjs_claim_submissions",
-        "bpjs_vclaim_lifecycle_logs",
-        "casemix_cases",
-        "cssd_instrument_sets",
-        "cssd_sterilization_cycles",
-        "fhir_delivery_outbox",
-        "hemovigilance_incident_investigations",
-        "inacbg_grouping_results",
-        "massive_transfusion_protocols",
-        "master_inacbg_tariffs",
-        "medical_device_implant_recalls",
-        "operating_theatres",
-        "patient_billing_reconciliation",
-        "pharmacy_controlled_substance_logs",
-        "post_anesthesia_aldrete_scores",
-        "radiology_critical_finding_alerts",
-        "surgical_billing_breakdown",
-        "who_surgical_safety_checklists"
-      ]
-    },
-    "nonStage0Tables": {
-      "count": 67,
-      "subsystems": {
-        "operatingTheatresAndSurgery": [
-          "surgery_cases",
-          "surgery_schedules",
-          "operating_rooms",
-          "operating_room_schedules",
-          "surgical_cases",
-          "surgical_clinical_notes",
-          "surgical_implants_tracking",
-          "surgical_safety_checklists",
-          "surgical_teams",
-          "post_op_handoffs",
-          "anesthesia_records"
-        ],
-        "radiologyAndPacs": [
-          "radiology_orders",
-          "radiology_reports",
-          "radiology_studies",
-          "radiology_series",
-          "radiology_instances",
-          "radiology_audit_log"
-        ],
-        "bloodBank": [
-          "blood_transfusion_records",
-          "blood_donor_units",
-          "blood_issue_records",
-          "blood_crossmatch_tests",
-          "blood_storage_temperature_logs",
-          "blood_bedside_verifications",
-          "transfusion_reaction_logs"
-        ],
-        "facilityAndBedManagement": [
-          "bed_occupancies",
-          "bed_transfers",
-          "master_beds",
-          "master_rooms",
-          "master_wards",
-          "master_floors",
-          "master_buildings"
-        ],
-        "appointmentsAndQueue": [
-          "appointments",
-          "appointment_audit_logs",
-          "queue_tickets",
-          "queue_sequences"
-        ],
-        "clinicalCodingAndInacbg": [
-          "inacbg_claims",
-          "bpjs_sep_records",
-          "billing_ledgers",
-          "hospital_invoices"
-        ],
-        "pharmacyAndInventory": [
-          "pharmacy_depots",
-          "pharmacy_warehouses",
-          "pharmacy_dispensing_orders",
-          "pharmacy_inventory_batches",
-          "medication_catalog",
-          "inventory_batches",
-          "inventory_stock_movements",
-          "prescription_dispense_records",
-          "medication_orders"
-        ],
-        "laboratoryAndObservations": [
-          "laboratory_orders",
-          "clinical_observations",
-          "icu_acuity_assessments",
-          "resuscitation_events",
-          "cdss_alerts",
-          "patient_registrations",
-          "episodes_of_care",
-          "soap_notes",
-          "cppt_notes",
-          "patient_allergies"
-        ],
-        "staffAndAdministration": [
-          "enterprise_users",
-          "clinical_staff_profiles",
-          "clinical_privileges",
-          "staff_credentials",
-          "staff_rosters",
-          "shift_assignments",
-          "on_call_schedules",
-          "clinical_authorization_logs",
-          "tenant_satusehat_credentials"
-        ]
-      },
-      "rationale": "Tables were enabled with RLS during feature migrations 009-024 and normalized in 081. Stage-0 backlog specifically scopes the high-risk default-deny clinical core defined in Migration 079."
+  "candidateAMetricReconciliation": {
+    "totalDbCallSites": 35,
+    "rlsCallSitesStage0": 15,
+    "rlsCallSitesOutsideUow": 15,
+    "safeRlsCallSites": 0,
+    "writesOutsideUow": 4,
+    "readsAndTxControlsOutsideUow": 31,
+    "httpEntryPoints": 6,
+    "denominatorExplanation": {
+      "totalVsRls": "Total DB call sites (35) measures all AST query, connection, and transaction invocations in clinicalNotesApplication.service.js. Stage-0 RLS call sites (15) is a strict subset measuring only those invocations that touch the 33 Stage-0 tables (encounters, master_patients, universal_audit_logs). They are not mutually exclusive and must not be summed.",
+      "writesVsReads": "Writes (4) measures INSERT/UPDATE statements on soap_notes, cppt_notes, and universal_audit_logs. Reads & Tx Controls (31) measures SELECT statements, connection acquisitions (getPool, pool.connect), and transaction control statements (BEGIN, COMMIT, ROLLBACK). 4 + 31 = 35 total DB call sites."
     }
   },
-  "candidates": {
-    "A": {
-      "candidateId": "CANDIDATE_A",
-      "name": "Nursing / CPPT",
-      "domain": "Nursing & Multidisciplinary Clinical Progress Notes",
-      "primaryService": "server/services/clinicalNotesApplication.service.js",
-      "controller": "server/controllers/clinicalNotes.controller.js",
-      "routesFile": "server/routes/clinicalNotes.routes.js",
-      "routePrefix": "/api/v1/clinical-notes",
-      "routes": [
-        "POST /soap",
-        "POST /soap/:id/amend",
-        "GET /soap/encounter/:encounterId",
-        "POST /cppt",
-        "PATCH /cppt/:id/verify",
-        "GET /cppt/encounter/:encounterId"
-      ],
-      "metrics": {
-        "totalDbCallSites": 35,
-        "rlsCallSites": 15,
-        "writesOutsideUow": 4,
-        "readsOutsideUow": 31,
-        "httpEntryPoints": 6
-      },
-      "tablesTouched": [
-        "encounters",
-        "soap_notes",
-        "cppt_notes",
-        "universal_audit_logs"
-      ],
-      "sharedServices": {
-        "encounters": "SHARED (Direct DB query)",
-        "universalAuditLogs": "SHARED (Direct DB insert)",
-        "safetyAuthorization": "NONE",
-        "inventory": "NONE",
-        "idempotency": "NONE"
-      },
-      "blastRadius": {
-        "clinicalImpact": "HIGH",
-        "clinicalImpactRationale": "Primary documentation of patient clinical condition, treatment plans, and interprofessional clinical communications.",
-        "financialImpact": "MEDIUM",
-        "financialImpactRationale": "Supports clinical coding and insurance claims; incomplete notes delay hospital billing and discharge.",
-        "patientSafetyDependency": "DIRECT",
-        "patientSafetyRationale": "Informs clinical handovers, vital medication notes, and doctor-nurse care continuity.",
-        "crossDomainCoupling": "LOW",
-        "crossDomainCouplingRationale": "Touches encounters, soap_notes, cppt_notes, and audit logs; zero external service imports.",
-        "transactionComplexity": "LOW",
-        "transactionComplexityRationale": "Single-operation writes with audit trail (e.g. read encounter FOR UPDATE -> insert note -> insert audit log).",
-        "rollbackComplexity": "LOW",
-        "rollbackComplexityRationale": "Direct single-step rollback; no side-effects or external message outbox coordination."
-      },
-      "testReadiness": {
-        "existingTestFiles": [
-          "tests/verticalSlice05SoapCpptDurability.test.js"
-        ],
-        "testType": "MOCK_ONLY",
-        "realDbTests": 0,
-        "missingTestCategories": [
-          "PostgreSQL 16 Real RLS Integration Test",
-          "Cross-Tenant Isolation Test (Read/Write)",
-          "UoW Atomic Rollback Test on DB Constraint Violation",
-          "Connection Reuse & GUC Leakage Test"
-        ]
-      }
+  "candidateDReconciliation": {
+    "previousInventory": {
+      "scope": "Strict Service Scope (server/services/patientFinancialAndRevenueCycle.service.js)",
+      "rlsCalls": 8,
+      "writesOut": 15,
+      "readsOut": 27,
+      "entryPoints": 6
     },
-    "B": {
-      "candidateId": "CANDIDATE_B",
-      "name": "Medication Closed-Loop",
-      "domain": "Pharmacy Dispensing, eMAR Administration & Medication Safety",
-      "primaryService": "server/services/medicationClosedLoop.service.js",
-      "controller": "server/controllers/medicationClosedLoop.controller.js",
-      "routesFile": "server/routes/medicationClosedLoop.routes.js",
-      "routePrefix": "/api/v1/medications",
-      "routes": [
-        "POST /prescribe",
-        "POST /:id/pharmacist-review",
-        "POST /:id/dispense",
-        "POST /:id/administer",
-        "POST /reconciliation/admission",
-        "POST /reconciliation/discharge",
-        "POST /administrations/:id/adverse-reaction",
-        "POST /:id/cancel"
-      ],
-      "metrics": {
-        "totalDbCallSites": 80,
-        "rlsCallSites": 13,
-        "writesOutsideUow": 23,
-        "readsOutsideUow": 57,
-        "httpEntryPoints": 8
+    "currentDeepAudit": {
+      "scope": "Expanded Domain Scope (including server/routes/billing.routes.js)",
+      "rlsCalls": 8,
+      "writesOut": 15,
+      "readsOut": 30,
+      "entryPoints": 7
+    },
+    "deltaAnalysis": {
+      "entryPointsDelta": "+1 route (GET /api/v1/billing/ledger/:episodeId)",
+      "readsDelta": "+3 read call sites (lines 12, 13, 14 of billing.routes.js: getPool + 2 SELECT queries)",
+      "writesDelta": "+0 writes",
+      "rlsCallsDelta": "+0 Stage-0 RLS calls (hospital_invoices and patient_deposit_ledgers are outside the 33 Stage-0 core)",
+      "sourceOfDelta": "server/routes/billing.routes.js",
+      "reason": "The previous backlog inventory scanned server/services/patientFinancialAndRevenueCycle.service.js and server/routes/patientFinancialAndRevenueCycle.routes.js exclusively. The deep audit discovered that server/routes/billing.routes.js defines an additional inline GET endpoint under the billing prefix (/api/v1/billing/ledger/:episodeId) executing 2 raw SELECT queries without an external service. Both scopes are factually accurate within their specified boundary."
+    },
+    "denominatorBreakdown": {
+      "serviceOnly": {
+        "totalCalls": 42,
+        "writes": 15,
+        "readsAndControls": 27,
+        "details": "15 writes + 6 connection acquisitions + 18 transaction control statements (BEGIN, COMMIT, ROLLBACK) + 3 SELECT queries = 42"
       },
-      "tablesTouched": [
-        "medication_orders",
-        "medication_dispense_allocations",
-        "medication_emar_administrations",
-        "medication_reconciliations",
+      "includingBillingRoute": {
+        "totalCalls": 45,
+        "writes": 15,
+        "readsAndControls": 30,
+        "details": "42 in service + 3 in billing.routes.js (1 getPool + 2 SELECT queries) = 45"
+      }
+    }
+  },
+  "postgresRlsCatalogValidation": {
+    "metricsTable": [
+      {
+        "metric": "RLS-enabled public tables",
+        "count": 100
+      },
+      {
+        "metric": "Public tables represented in pg_policies",
+        "count": 100
+      },
+      {
+        "metric": "Total policy rows",
+        "count": 100
+      },
+      {
+        "metric": "RLS tables with >= 1 policy",
+        "count": 100
+      },
+      {
+        "metric": "RLS tables without policy",
+        "count": 0
+      }
+    ],
+    "policyUniformity": {
+      "command": "ALL (100/100 tables)",
+      "permissive": "PERMISSIVE (100/100 tables)",
+      "roles": "{public} (100/100 tables)",
+      "usingExpression": "(tenant_id = current_app_tenant_id()) (100/100 tables)",
+      "withCheckExpression": "(tenant_id = current_app_tenant_id()) (100/100 tables)"
+    },
+    "catalogIntegrityCaveat": "Catalog presence of 100 policies confirms schema-level configuration in PostgreSQL 16. It does not prove application-level security without verified Unit of Work tenant context propagation."
+  },
+  "stage0SubsetValidation": {
+    "stage0Count": 33,
+    "databaseUniverseCount": 100,
+    "nonStage0Count": 67,
+    "ratioStage0": "33 / 100 (33.0%)",
+    "ratioNonStage0": "67 / 100 (67.0%)",
+    "duplicateCheck": "PASSED (0 duplicates in Stage-0 array)",
+    "missingInPostgresCheck": "PASSED (0 missing; all 33 exist in PostgreSQL pg_class)",
+    "subsetIntegrity": "STRICT SUBSET VERIFIED"
+  },
+  "candidateCStructure": {
+    "hierarchy": "Candidate C ├── C1 CPOE └── C2 Diagnostic Interpretation",
+    "c1_cpoe": {
+      "service": "server/services/cpoeApplication.service.js",
+      "routesFile": "server/routes/orders.routes.js",
+      "routes": 9,
+      "rlsCalls": 13,
+      "writesOut": 3,
+      "readsOut": 19
+    },
+    "c2_diagnostics": {
+      "service": "server/services/diagnosticInterpretation.service.js",
+      "routesFile": "server/routes/diagnosticInterpretation.routes.js",
+      "routes": 4,
+      "rlsCalls": 11,
+      "writesOut": 9,
+      "readsOut": 29
+    },
+    "couplingFactualFindings": {
+      "synchronousTransactionCoupling": "NONE (Zero shared transactions. CPOE order placement and diagnostic interpretation execute in separate independent database transactions at different points in time).",
+      "sharedTables": [
         "clinical_orders",
         "cpoe_order_items",
         "encounters",
-        "patient_allergies",
-        "master_drug_class_cross_reactivities",
-        "master_medication_dose_ranges",
-        "inventory_batches",
-        "inventory_stock_movements",
-        "pharmacy_warehouses",
         "clinical_domain_outbox",
         "universal_audit_logs"
       ],
-      "sharedServices": {
-        "encounters": "SHARED (Direct DB query)",
-        "clinicalOrders": "SHARED (Direct DB update)",
-        "cpoeOrderItems": "SHARED (Direct DB update)",
-        "safetyAuthorization": "SHARED (Indirect clinical safety checks)",
-        "inventory": "SHARED (Batches & stock movements)",
-        "outbox": "SHARED (clinical_domain_outbox)"
-      },
-      "blastRadius": {
-        "clinicalImpact": "HIGH",
-        "clinicalImpactRationale": "Administers active pharmacological substances directly to patients; primary line of defense against adverse drug events.",
-        "financialImpact": "HIGH",
-        "financialImpactRationale": "Manages physical pharmacy stock batches, expensive medication inventory, and billing allocations.",
-        "patientSafetyDependency": "DIRECT",
-        "patientSafetyRationale": "Enforces JCI MMU.4, high-alert dual nurse verification, bedside 6-rights verification, and lethal allergy cross-reactivity.",
-        "crossDomainCoupling": "HIGH",
-        "crossDomainCouplingRationale": "Tightly binds CPOE orders, pharmacy inventory batches, eMAR nursing administrations, and outbox event streams.",
-        "transactionComplexity": "HIGH",
-        "transactionComplexityRationale": "Complex multi-step transactions (order update -> FEFO batch deduction -> stock movement -> allocation -> eMAR record -> outbox).",
-        "rollbackComplexity": "HIGH",
-        "rollbackComplexityRationale": "Must coordinate physical stock batch rollback with order status and outbox event rollbacks."
-      },
-      "testReadiness": {
-        "existingTestFiles": [
-          "tests/verticalSlice07MedicationDurability.test.js",
-          "tests/nursingEmarVerticalSlice.test.js",
-          "tests/sprint4B3ClosedLoopMedicationPlatform.test.js"
-        ],
-        "testType": "MOCK_ONLY",
-        "realDbTests": 0,
-        "missingTestCategories": [
-          "Real PostgreSQL 16 RLS Multi-Tenant Test",
-          "Multi-Table Atomic Rollback with Real Inventory Batches",
-          "eMAR Bedside Double-Administration Concurrency Test",
-          "Connection Pool Tenant GUC Isolation"
-        ]
-      }
-    },
-    "C": {
-      "candidateId": "CANDIDATE_C",
-      "name": "CPOE + Diagnostic Interpretation",
-      "domain": "Computerized Physician Order Entry & Clinical Results Interpretation",
-      "components": {
-        "cpoe": {
-          "service": "server/services/cpoeApplication.service.js",
-          "controller": "server/controllers/cpoe.controller.js",
-          "routesFile": "server/routes/orders.routes.js",
-          "routePrefix": "/api/v1/orders",
-          "metrics": {
-            "rlsCallSites": 13,
-            "writesOutsideUow": 3,
-            "readsOutsideUow": 19,
-            "httpEntryPoints": 9
-          },
-          "routes": [
-            "POST /cpoe",
-            "POST /cpoe/:id/cancel",
-            "GET /cpoe",
-            "GET /cpoe/:id",
-            "GET /cpoe/encounter/:encounterId",
-            "GET /",
-            "POST /prescription",
-            "POST /lab",
-            "POST /radiology"
-          ]
-        },
-        "diagnostics": {
-          "service": "server/services/diagnosticInterpretation.service.js",
-          "controller": "server/controllers/diagnosticInterpretation.controller.js",
-          "routesFile": "server/routes/diagnosticInterpretation.routes.js",
-          "routePrefix": "/api/v1/diagnostics",
-          "metrics": {
-            "rlsCallSites": 11,
-            "writesOutsideUow": 9,
-            "readsOutsideUow": 29,
-            "httpEntryPoints": 4
-          },
-          "routes": [
-            "POST /notifications",
-            "POST /notifications/:id/acknowledge",
-            "POST /notifications/:id/interpret",
-            "POST /interpretations/:id/actions"
-          ]
-        }
-      },
-      "metrics": {
-        "totalDbCallSites": 60,
-        "rlsCallSites": 24,
-        "writesOutsideUow": 12,
-        "readsOutsideUow": 48,
-        "httpEntryPoints": 13
-      },
-      "tablesTouched": [
-        "clinical_orders",
-        "cpoe_order_items",
-        "encounters",
-        "diagnostic_result_notifications",
-        "physician_diagnostic_interpretations",
-        "diagnostic_secondary_actions",
-        "longitudinal_delta_checks",
-        "safety_decision_registry",
-        "clinical_domain_outbox",
-        "universal_audit_logs"
+      "sharedServices": [
+        "safetyAuthorization.service.js",
+        "postgresPoolService"
       ],
-      "sharedServices": {
-        "encounters": "SHARED (Direct DB query)",
-        "safetyAuthorization": "SHARED (safetyAuthorizationService.validateDecision)",
-        "transactionManager": "SHARED (cpoeApplicationService uses transactionManager.executeTransaction)",
-        "outbox": "SHARED (clinical_domain_outbox)",
-        "universalAudit": "SHARED (universal_audit_logs)"
-      },
-      "couplingAnalysis": {
-        "sharedState": "Both services interact with clinical_orders and encounters.",
-        "lifecycleSeparation": "CPOE initiates upstream orders; Diagnostic Interpretation processes downstream notifications and records interpretations.",
-        "partitionability": "Can be refactored as a single combined candidate or partitioned into two bounded slices (C1: CPOE, C2: Diagnostics)."
-      },
-      "blastRadius": {
-        "clinicalImpact": "HIGH",
-        "clinicalImpactRationale": "Orders diagnostic investigations and documents critical diagnostic interpretations and clinical decision actions.",
-        "financialImpact": "MEDIUM",
-        "financialImpactRationale": "Creates diagnostic order line items that feed hospital billing and tariffs.",
-        "patientSafetyDependency": "DIRECT",
-        "patientSafetyRationale": "Diagnostic results notification and physician signoff drive critical clinical interventions and prevent diagnostic delays.",
-        "crossDomainCoupling": "MEDIUM",
-        "crossDomainCouplingRationale": "Binds with Laboratory, Radiology, and Clinical Orders; triggers secondary orders upon critical findings.",
-        "transactionComplexity": "MEDIUM",
-        "transactionComplexityRationale": "Order creation with multiple order items and outbox events; interpretation recording with delta checks.",
-        "rollbackComplexity": "MEDIUM",
-        "rollbackComplexityRationale": "Order and order-item rollback or interpretation and notification update rollback."
-      },
-      "testReadiness": {
-        "existingTestFiles": [
-          "tests/verticalSlice06AUniversalCpoeDurability.test.js",
-          "tests/verticalSlice09DiagnosticInterpretationDurability.test.js",
-          "tests/cpoeCdssEndToEndIntegration.test.js"
-        ],
-        "testType": "MOCK_ONLY",
-        "realDbTests": 0,
-        "missingTestCategories": [
-          "Real PostgreSQL 16 Multi-Tenant RLS Order Test",
-          "Diagnostic Interpretation Cross-Tenant Notification Test",
-          "Atomic Rollback on Secondary Clinical Action DB Failure"
-        ]
-      }
-    },
-    "D": {
-      "candidateId": "CANDIDATE_D",
-      "name": "Patient Financial & Revenue Cycle",
-      "domain": "Patient Financial Ledgers, Split Invoicing, Cashier & AR Aging",
-      "primaryService": "server/services/patientFinancialAndRevenueCycle.service.js",
-      "controller": "server/controllers/patientFinancialAndRevenueCycle.controller.js",
-      "routesFile": "server/routes/patientFinancialAndRevenueCycle.routes.js",
-      "routePrefix": "/api/v1/patient-financial",
-      "routes": [
-        "POST /deposits",
-        "POST /invoices",
-        "POST /payments",
-        "POST /adjustments",
-        "POST /shifts/reconcile",
-        "POST /ar"
-      ],
-      "metrics": {
-        "totalDbCallSites": 45,
-        "rlsCallSites": 8,
-        "writesOutsideUow": 15,
-        "readsOutsideUow": 30,
-        "httpEntryPoints": 7
-      },
-      "tablesTouched": [
-        "patient_deposit_ledgers",
-        "patient_split_invoices",
-        "cashier_payment_transactions",
-        "financial_adjustments_and_refunds",
-        "cashier_shift_reconciliations",
-        "accounts_receivable_aging_ledgers",
-        "encounters",
-        "clinical_domain_outbox"
-      ],
-      "sharedServices": {
-        "encounters": "SHARED (Direct DB query)",
-        "careCoordination": "SHARED (careCoordinationAndTimelineService)",
-        "outbox": "SHARED (clinical_domain_outbox)",
-        "financialLedger": "LOCAL"
-      },
-      "blastRadius": {
-        "clinicalImpact": "LOW",
-        "clinicalImpactRationale": "Administrative and revenue cycle workflows; does not directly alter bedside patient care protocols.",
-        "financialImpact": "HIGH",
-        "financialImpactRationale": "Directly manages cash deposits, patient invoicing, payment reconciliation, and bad debt AR aging.",
-        "patientSafetyDependency": "NONE",
-        "patientSafetyRationale": "Financial ledger transactions have no direct impact on acute physiological patient safety.",
-        "crossDomainCoupling": "LOW",
-        "crossDomainCouplingRationale": "Coupled to encounter admissions and timeline events; decoupled from clinical orders and medication admin.",
-        "transactionComplexity": "MEDIUM",
-        "transactionComplexityRationale": "Multi-payer split invoicing, deposit drawdown balance validation, and cashier shift balance reconciliation.",
-        "rollbackComplexity": "MEDIUM",
-        "rollbackComplexityRationale": "Strict double-entry financial ledger rollback required to prevent accounting imbalances."
-      },
-      "testReadiness": {
-        "existingTestFiles": [
-          "tests/verticalSlice13PatientFinancialRevenueCycleDurability.test.js",
-          "tests/billingEngine.test.js"
-        ],
-        "testType": "MOCK_ONLY",
-        "realDbTests": 0,
-        "missingTestCategories": [
-          "Real PostgreSQL 16 Split-Invoice RLS Test",
-          "Cashier Payment Atomic Rollback Test on Ledger Failure",
-          "Cross-Tenant AR Aging Isolation Test"
-        ]
-      }
+      "asynchronousCoupling": "Diagnostic notifications reference clinical_orders.id via foreign key; secondary actions create new orders in clinical_orders.",
+      "outboxDependency": "Both sub-domains emit transactional outbox events to clinical_domain_outbox for asynchronous processing.",
+      "scopeStatement": "Factual evidence confirms C1 and C2 can operate as a single consolidated wave or as two independent bounded slices. No evaluative decision is imposed."
     }
   },
-  "transactionBoundaryMap": [
-    {
-      "operation": "Candidate A: recordSoapNote",
-      "candidate": "A",
-      "dbCalls": 5,
-      "reads": 1,
-      "writes": 2,
-      "rlsTables": [
-        "encounters",
-        "soap_notes",
-        "universal_audit_logs"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "Direct INSERT into universal_audit_logs",
-      "authorization": "Role check in controller (DOCTOR_SPECIALIST, GP)",
-      "idempotency": "None",
-      "pattern": "read -> validate -> write -> audit",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate A: amendSoapNote",
-      "candidate": "A",
-      "dbCalls": 5,
-      "reads": 1,
-      "writes": 2,
-      "rlsTables": [
-        "soap_notes",
-        "universal_audit_logs"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "Direct INSERT into universal_audit_logs",
-      "authorization": "Role check in controller",
-      "idempotency": "None",
-      "pattern": "read -> validate -> write -> audit",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate A: recordCpptEntry",
-      "candidate": "A",
-      "dbCalls": 5,
-      "reads": 1,
-      "writes": 2,
-      "rlsTables": [
-        "encounters",
-        "cppt_notes",
-        "universal_audit_logs"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "Direct INSERT into universal_audit_logs",
-      "authorization": "Role check in controller (MULTIDISCIPLINARY)",
-      "idempotency": "None",
-      "pattern": "read -> validate -> write -> audit",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate A: verifyCpptEntry",
-      "candidate": "A",
-      "dbCalls": 4,
-      "reads": 1,
-      "writes": 1,
-      "rlsTables": [
-        "cppt_notes"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "Embedded in cppt_notes update",
-      "authorization": "DPJP verification gate",
-      "idempotency": "None",
-      "pattern": "read -> validate -> write",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate A: getSoapNotesByEncounter",
-      "candidate": "A",
-      "dbCalls": 1,
-      "reads": 1,
-      "writes": 0,
-      "rlsTables": [
-        "soap_notes"
-      ],
-      "currentTransaction": "Raw pool.query outside UoW",
-      "audit": "None",
-      "authorization": "Authenticated user",
-      "idempotency": "N/A (Read-only)",
-      "pattern": "read-only",
-      "atomicRollbackRequired": false
-    },
-    {
-      "operation": "Candidate A: getCpptNotesByEncounter",
-      "candidate": "A",
-      "dbCalls": 1,
-      "reads": 1,
-      "writes": 0,
-      "rlsTables": [
-        "cppt_notes"
-      ],
-      "currentTransaction": "Raw pool.query outside UoW",
-      "audit": "None",
-      "authorization": "Authenticated user",
-      "idempotency": "N/A (Read-only)",
-      "pattern": "read-only",
-      "atomicRollbackRequired": false
-    },
-    {
-      "operation": "Candidate B: generateMedicationOrdersFromCPOE",
-      "candidate": "B",
-      "dbCalls": 8,
-      "reads": 2,
-      "writes": 4,
-      "rlsTables": [
-        "clinical_orders",
-        "cpoe_order_items",
-        "medication_orders"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Doctor role",
-      "idempotency": "Client-provided idempotency check",
-      "pattern": "read -> validate -> multi-write -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate B: pharmacistReviewOrder",
-      "candidate": "B",
-      "dbCalls": 5,
-      "reads": 1,
-      "writes": 2,
-      "rlsTables": [
-        "medication_orders"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Pharmacist role (MMU.4)",
-      "idempotency": "None",
-      "pattern": "read -> validate -> write -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate B: dispenseMedicationFEFO",
-      "candidate": "B",
-      "dbCalls": 7,
-      "reads": 2,
-      "writes": 3,
-      "rlsTables": [
-        "medication_orders",
-        "medication_dispense_allocations",
-        "inventory_batches",
-        "inventory_stock_movements"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "inventory_stock_movements + outbox",
-      "authorization": "Pharmacy staff role",
-      "idempotency": "Allocation token",
-      "pattern": "read -> validate -> inventory mutation -> multi-write",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate B: verifyBedsideAndAdminister",
-      "candidate": "B",
-      "dbCalls": 14,
-      "reads": 4,
-      "writes": 6,
-      "rlsTables": [
-        "medication_orders",
-        "medication_dispense_allocations",
-        "medication_emar_administrations",
-        "clinical_orders",
-        "cpoe_order_items"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "medication_emar_administrations + outbox",
-      "authorization": "Nurse role + Dual nurse signoff for high alert",
-      "idempotency": "Critical (prevent double dosing)",
-      "pattern": "read -> validate -> multi-write -> order update -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate B: cancelMedicationOrder",
-      "candidate": "B",
-      "dbCalls": 6,
-      "reads": 1,
-      "writes": 2,
-      "rlsTables": [
-        "medication_orders"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Prescribing doctor / Pharmacist",
-      "idempotency": "None",
-      "pattern": "read -> validate -> write -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate C: createOrder (CPOE)",
-      "candidate": "C",
-      "dbCalls": 7,
-      "reads": 3,
-      "writes": 2,
-      "rlsTables": [
-        "encounters",
-        "clinical_orders",
-        "cpoe_order_items"
-      ],
-      "currentTransaction": "transactionManager.executeTransaction",
-      "audit": "Outbox dispatch",
-      "authorization": "safetyAuthorizationService.validateDecision",
-      "idempotency": "idempotency_key check on clinical_orders",
-      "pattern": "read -> validate -> safety decision -> multi-write",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate C: cancelOrder (CPOE)",
-      "candidate": "C",
-      "dbCalls": 8,
-      "reads": 1,
-      "writes": 4,
-      "rlsTables": [
-        "clinical_orders",
-        "cpoe_order_items",
-        "universal_audit_logs"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "universal_audit_logs + outbox",
-      "authorization": "Doctor role",
-      "idempotency": "None",
-      "pattern": "read -> validate -> multi-write -> audit",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate C: publishDiagnosticNotification",
-      "candidate": "C",
-      "dbCalls": 6,
-      "reads": 1,
-      "writes": 2,
-      "rlsTables": [
-        "encounters",
-        "diagnostic_result_notifications"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Diagnostic technician / System",
-      "idempotency": "None",
-      "pattern": "read -> validate -> write -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate C: recordPhysicianInterpretation",
-      "candidate": "C",
-      "dbCalls": 9,
-      "reads": 1,
-      "writes": 4,
-      "rlsTables": [
-        "physician_diagnostic_interpretations",
-        "diagnostic_result_notifications"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Doctor specialist role",
-      "idempotency": "None",
-      "pattern": "read -> validate -> multi-write -> delta check -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate C: executeSecondaryClinicalAction",
-      "candidate": "C",
-      "dbCalls": 9,
-      "reads": 1,
-      "writes": 4,
-      "rlsTables": [
-        "clinical_orders",
-        "cpoe_order_items",
-        "diagnostic_result_notifications"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Attending physician",
-      "idempotency": "Action key",
-      "pattern": "read -> validate -> clinical order write -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate D: recordPatientDeposit",
-      "candidate": "D",
-      "dbCalls": 5,
-      "reads": 0,
-      "writes": 2,
-      "rlsTables": [
-        "patient_deposit_ledgers"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Cashier role",
-      "idempotency": "Receipt number",
-      "pattern": "write -> financial ledger -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate D: generatePatientSplitInvoice",
-      "candidate": "D",
-      "dbCalls": 7,
-      "reads": 1,
-      "writes": 3,
-      "rlsTables": [
-        "patient_deposit_ledgers",
-        "patient_split_invoices"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Billing officer role",
-      "idempotency": "Invoice number",
-      "pattern": "read -> validate -> financial mutation -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate D: recordCashierPayment",
-      "candidate": "D",
-      "dbCalls": 7,
-      "reads": 1,
-      "writes": 3,
-      "rlsTables": [
-        "patient_split_invoices",
-        "cashier_payment_transactions"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Cashier role",
-      "idempotency": "Payment reference",
-      "pattern": "read -> validate -> financial mutation -> outbox",
-      "atomicRollbackRequired": true
-    },
-    {
-      "operation": "Candidate D: executeFinancialAdjustmentOrRefund",
-      "candidate": "D",
-      "dbCalls": 7,
-      "reads": 1,
-      "writes": 3,
-      "rlsTables": [
-        "patient_split_invoices",
-        "financial_adjustments_and_refunds"
-      ],
-      "currentTransaction": "Manual client BEGIN/COMMIT/ROLLBACK outside UoW",
-      "audit": "clinical_domain_outbox",
-      "authorization": "Finance supervisor approval",
-      "idempotency": "Approval token",
-      "pattern": "read -> validate -> financial mutation -> outbox",
-      "atomicRollbackRequired": true
+  "transactionComplexityStandardization": {
+    "definitionBasis": "Classified strictly by mutation volume, dependent read count, locking requirements, and rollback surface. Not used as evaluative score, priority, or recommendation.",
+    "ratings": {
+      "CandidateA": "LOW — transaction scope consists of 1-2 dependent reads (encounters / soap_notes FOR UPDATE), 1 primary note mutation (soap_notes or cppt_notes), and 1 audit mutation (universal_audit_logs) within a single database transaction, with no external inventory or ledger locking.",
+      "CandidateB": "HIGH — transaction scope encompasses multi-step mutations across 5+ tables (medication_orders, inventory_batches, inventory_stock_movements, medication_dispense_allocations, medication_emar_administrations, clinical_domain_outbox), requiring pessimistic locking (FOR UPDATE) on inventory batches, FEFO allocation logic, and multi-table rollback coordination.",
+      "CandidateC": "MEDIUM — transaction scope in C1 consists of order header and multi-item row mutations with outbox emission; in C2 consists of notification status updates, diagnostic interpretation insertion, delta checks, and optional secondary order generation.",
+      "CandidateD": "MEDIUM — transaction scope consists of split-invoice generation with deposit ledger drawdown validation, payment transaction recording, or cashier shift reconciliation, requiring double-entry ledger balance verification and rollback coordination between deposit ledgers and invoice balances."
     }
-  ],
-  "sharedServiceGraph": {
-    "hierarchy": [
-      {
-        "candidate": "A (Nursing / CPPT)",
-        "service": "clinicalNotesApplication.service.js",
-        "sharedServices": [
-          {
-            "name": "postgresPoolService",
-            "type": "SHARED",
-            "tables": [
-              "encounters",
-              "soap_notes",
-              "cppt_notes",
-              "universal_audit_logs"
-            ]
-          },
-          {
-            "name": "universalAudit",
-            "type": "SHARED",
-            "tables": [
-              "universal_audit_logs"
-            ]
-          }
-        ]
-      },
-      {
-        "candidate": "B (Medication Closed-Loop)",
-        "service": "medicationClosedLoop.service.js",
-        "sharedServices": [
-          {
-            "name": "postgresPoolService",
-            "type": "SHARED",
-            "tables": [
-              "medication_orders",
-              "inventory_batches",
-              "medication_emar_administrations"
-            ]
-          },
-          {
-            "name": "safetyAuthorization",
-            "type": "SHARED",
-            "tables": [
-              "patient_allergies",
-              "master_drug_class_cross_reactivities"
-            ]
-          },
-          {
-            "name": "enterpriseInventory",
-            "type": "LOCAL_TO_PHARMACY",
-            "tables": [
-              "inventory_batches",
-              "inventory_stock_movements"
-            ]
-          },
-          {
-            "name": "outboxWorker",
-            "type": "SHARED",
-            "tables": [
-              "clinical_domain_outbox"
-            ]
-          }
-        ]
-      },
-      {
-        "candidate": "C (CPOE & Diagnostics)",
-        "service": "cpoeApplication.service.js & diagnosticInterpretation.service.js",
-        "sharedServices": [
-          {
-            "name": "transactionManager",
-            "type": "SHARED",
-            "tables": [
-              "clinical_orders",
-              "cpoe_order_items"
-            ]
-          },
-          {
-            "name": "safetyAuthorization",
-            "type": "SHARED",
-            "tables": [
-              "safety_decision_registry"
-            ]
-          },
-          {
-            "name": "universalAudit",
-            "type": "SHARED",
-            "tables": [
-              "universal_audit_logs"
-            ]
-          },
-          {
-            "name": "outboxWorker",
-            "type": "SHARED",
-            "tables": [
-              "clinical_domain_outbox"
-            ]
-          }
-        ]
-      },
-      {
-        "candidate": "D (Patient Financial)",
-        "service": "patientFinancialAndRevenueCycle.service.js",
-        "sharedServices": [
-          {
-            "name": "postgresPoolService",
-            "type": "SHARED",
-            "tables": [
-              "patient_split_invoices",
-              "patient_deposit_ledgers"
-            ]
-          },
-          {
-            "name": "careCoordinationAndTimeline",
-            "type": "SHARED",
-            "tables": [
-              "encounters"
-            ]
-          },
-          {
-            "name": "outboxWorker",
-            "type": "SHARED",
-            "tables": [
-              "clinical_domain_outbox"
-            ]
-          }
-        ]
-      }
-    ]
   },
-  "crossCandidateDependencies": [
-    {
-      "dependency": "encounters (Encounter Core)",
-      "A": "YES",
-      "B": "YES",
-      "C": "YES",
-      "D": "YES",
-      "shared": "YES"
+  "testEvidenceClassification": {
+    "candidateA": {
+      "mockOnly": 1,
+      "inMemory": 0,
+      "realPostgres": 0,
+      "realRls": 0
     },
-    {
-      "dependency": "universal_audit_logs (Audit Trail)",
-      "A": "YES",
-      "B": "YES",
-      "C": "YES",
-      "D": "YES",
-      "shared": "YES"
+    "candidateB": {
+      "mockOnly": 1,
+      "inMemory": 11,
+      "realPostgres": 0,
+      "realRls": 0
     },
-    {
-      "dependency": "clinical_domain_outbox (Outbox Events)",
-      "A": "NO",
-      "B": "YES",
-      "C": "YES",
-      "D": "YES",
-      "shared": "YES"
+    "candidateC": {
+      "mockOnly": 2,
+      "inMemory": 1,
+      "realPostgres": 0,
+      "realRls": 0
     },
-    {
-      "dependency": "clinical_orders (CPOE Orders)",
-      "A": "NO",
-      "B": "YES",
-      "C": "YES",
-      "D": "NO",
-      "shared": "PARTIAL (B updates status; C creates/interprets orders)"
+    "candidateD": {
+      "mockOnly": 1,
+      "inMemory": 4,
+      "realPostgres": 0,
+      "realRls": 0
     },
-    {
-      "dependency": "inventory_batches (Stock Batches)",
-      "A": "NO",
-      "B": "YES",
-      "C": "NO",
-      "D": "NO",
-      "shared": "NO (Local to Pharmacy / Inventory)"
-    },
-    {
-      "dependency": "safety_decision_registry (Safety Engine)",
-      "A": "NO",
-      "B": "YES",
-      "C": "YES",
-      "D": "NO",
-      "shared": "PARTIAL (B checks allergy overrides; C checks order safety)"
-    },
-    {
-      "dependency": "patient_deposit_ledgers (Financial Ledger)",
-      "A": "NO",
-      "B": "NO",
-      "C": "NO",
-      "D": "YES",
-      "shared": "NO (Local to Billing / Finance)"
-    }
-  ],
-  "neutralDecisionMatrix": [
-    {
-      "dimension": "RLS Call Sites (Stage-0)",
-      "candidateA": 15,
-      "candidateB": 13,
-      "candidateC": 24,
-      "candidateD": 8
-    },
-    {
-      "dimension": "Writes Outside UoW",
-      "candidateA": 4,
-      "candidateB": 23,
-      "candidateC": 12,
-      "candidateD": 15
-    },
-    {
-      "dimension": "Reads Outside UoW",
-      "candidateA": 31,
-      "candidateB": 57,
-      "candidateC": 48,
-      "candidateD": 30
-    },
-    {
-      "dimension": "HTTP Entry Points",
-      "candidateA": 6,
-      "candidateB": 8,
-      "candidateC": 13,
-      "candidateD": 7
-    },
-    {
-      "dimension": "Tables Touched",
-      "candidateA": 4,
-      "candidateB": 15,
-      "candidateC": 10,
-      "candidateD": 8
-    },
-    {
-      "dimension": "Shared Services",
-      "candidateA": "Universal Audit, Encounters",
-      "candidateB": "Inventory, Safety Auth, Outbox, CPOE Orders, Encounters",
-      "candidateC": "Safety Auth, Transaction Manager, Outbox, Universal Audit, Encounters",
-      "candidateD": "Care Coordination, Outbox, Encounters"
-    },
-    {
-      "dimension": "Transaction Complexity",
-      "candidateA": "LOW (Single note insert + audit)",
-      "candidateB": "HIGH (Multi-step order + FEFO inventory + eMAR + outbox)",
-      "candidateC": "MEDIUM (Order + items + outbox / Result interpretation + secondary actions)",
-      "candidateD": "MEDIUM (Split invoice + deposit balance + cashier shift reconciliation)"
-    },
-    {
-      "dimension": "Cross-Domain Coupling",
-      "candidateA": "LOW (Self-contained clinical notes)",
-      "candidateB": "HIGH (Binds Pharmacy, Inventory, Nursing eMAR, and CPOE)",
-      "candidateC": "MEDIUM (Binds CPOE with Lab/Radiology notification lifecycle)",
-      "candidateD": "LOW (Administrative finance; decoupled from clinical mutations)"
-    },
-    {
-      "dimension": "Clinical Impact",
-      "candidateA": "HIGH (Core clinical documentation & handover)",
-      "candidateB": "HIGH (Active drug delivery to patients)",
-      "candidateC": "HIGH (Diagnostic order entry and findings interpretation)",
-      "candidateD": "LOW (Financial settlement post-care)"
-    },
-    {
-      "dimension": "Financial Impact",
-      "candidateA": "MEDIUM (Supports coding & claims)",
-      "candidateB": "HIGH (Medication stock cost and billing lines)",
-      "candidateC": "MEDIUM (Diagnostic tariff line items)",
-      "candidateD": "HIGH (Hospital revenue, cashier cash, AR aging)"
-    },
-    {
-      "dimension": "Patient-Safety Dependency",
-      "candidateA": "DIRECT (Clinical notes & allergy/condition awareness)",
-      "candidateB": "DIRECT (Bedside 6-rights, high-alert drug verification)",
-      "candidateC": "DIRECT (Critical diagnostic findings & follow-up actions)",
-      "candidateD": "NONE (Post-clinical financial transactions)"
-    },
-    {
-      "dimension": "Existing Unit Tests",
-      "candidateA": "1 test file (100% Mock)",
-      "candidateB": "12 test files (100% Mock)",
-      "candidateC": "3 test files (100% Mock)",
-      "candidateD": "5 test files (100% Mock)"
-    },
-    {
-      "dimension": "Real-DB Evidence",
-      "candidateA": "0 tests (NO Real-DB Evidence)",
-      "candidateB": "0 tests (NO Real-DB Evidence)",
-      "candidateC": "0 tests (NO Real-DB Evidence)",
-      "candidateD": "0 tests (NO Real-DB Evidence)"
-    },
-    {
-      "dimension": "Missing Evidence",
-      "candidateA": "Real PostgreSQL 16 RLS tests for soap_notes & cppt_notes",
-      "candidateB": "Real PostgreSQL 16 RLS tests for medication_orders & eMAR with batch stock",
-      "candidateC": "Real PostgreSQL 16 RLS tests for clinical_orders & interpretations",
-      "candidateD": "Real PostgreSQL 16 RLS tests for patient_split_invoices & deposit ledger"
-    },
-    {
-      "dimension": "Rollback Requirements",
-      "candidateA": "Atomic rollback of note insert if audit log fails",
-      "candidateB": "Atomic rollback of inventory batch deduction, order status, and eMAR record",
-      "candidateC": "Atomic rollback of order and order items or diagnostic interpretation and notifications",
-      "candidateD": "Atomic rollback of split invoice and deposit ledger balance adjustments"
-    },
-    {
-      "dimension": "Concurrency Requirements",
-      "candidateA": "Optimistic concurrency on note amendment",
-      "candidateB": "Strict pessimistic lock (FOR UPDATE) on inventory batches to prevent stock overselling",
-      "candidateC": "Idempotency lock on order placement to prevent double submission",
-      "candidateD": "Pessimistic lock on patient deposit ledger to prevent double drawdown"
-    }
-  ]
+    "verificationSummary": "Confirmed: Candidates A, B, C, and D currently possess exactly 0 Real PostgreSQL tests and 0 Real RLS tests in the repository."
+  },
+  "regressionResults": {
+    "suite": "6 Target Test Suites (Triage & Encounter Pilot)",
+    "testsRun": 81,
+    "testsPassed": 81,
+    "testsFailed": 0,
+    "status": "100% CLEAN PASS"
+  }
 }

@@ -16,6 +16,60 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [02 OKTOBER 2026] — P0-2B: REKONSILIASI FAKTUAL AKHIR (FINAL FACTUAL RECONCILIATION) SEBELUM PEMILIHAN WAVE OLEH MANUSIA
+**Tag Rilis:** `audit-p02b-final-factual-reconciliation`  
+**Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
+**Status Audit:** `FINAL RECONCILIATION: VERIFIED | 100 RLS TABLES CATALOG VERIFIED | 33 STAGE-0 SUBSET VERIFIED (33%) | CANDIDATE A DENOMINATOR RECONCILED (15 RLS != 35 TOTAL) | CANDIDATE D SCOPE RECONCILED (27 READS/6 ROUTES SERVICE vs 30 READS/7 ROUTES EXPANDED) | CANDIDATE C STRUCTURED (C1 CPOE + C2 DIAGNOSTICS - ZERO SYNC COUPLING) | COMPLEXITY TERMINOLOGY STANDARDIZED | TEST EVIDENCE VERIFIED (A=0, B=0, C=0, D=0 REAL DB) | REGRESSION: 81/81 PASS`  
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | CURRENT PILOT: ENCOUNTER + TRIAGE = VERIFIED | GLOBAL RLS/UOW: NOT COMPLETE | NEXT WAVE: HOLD — PENDING HUMAN SELECTION | IMPLEMENTATION: NOT STARTED | FINAL RECONCILIATION: VERIFIED`**
+
+Telah selesai dilaksanakan **Rekonsiliasi Faktual Akhir (Final Factual Reconciliation)** sebelum pemilik proyek menentukan pilihan Wave 1B.2, dengan hasil verifikasi sumber kode sebagai berikut:
+
+#### 1. Rekonsiliasi Metrik Candidate A & Penjelasan Denominator
+- **Metrik:** 35 total DB call sites, 15 Stage-0 RLS call sites, 4 writes outside UoW, 31 reads & tx controls, 6 HTTP entry points.
+- **Denominator:** 4 writes + 31 reads/controls = 35 total calls. Sebanyak 15 call sites merupakan subset yang menyentuh tabel Stage-0 (`encounters`, `master_patients`, `universal_audit_logs`), sedangkan 20 call sites lainnya menyentuh tabel non-Stage-0 (`soap_notes`, `cppt_notes`) atau kontrol transaksi. Dipastikan bahwa 15 RLS call sites $\neq$ 35 total DB call sites.
+
+#### 2. Rekonsiliasi Candidate D (Previous vs Current Delta & Source)
+- **Previous Inventory (Service Scope):** RLS = 8, Writes = 15, Reads = 27, Entry Points = 6. (Strictly `server/services/patientFinancialAndRevenueCycle.service.js`).
+- **Current Deep Audit (Expanded Scope):** RLS = 8, Writes = 15, Reads = 30, Entry Points = 7.
+- **Delta:** +1 route, +3 reads, +0 writes, +0 Stage-0 RLS calls.
+- **Source of Delta:** [`server/routes/billing.routes.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/routes/billing.routes.js).
+- **Alasan:** Berkas `billing.routes.js` mendefinisikan rute inline `GET /api/v1/billing/ledger/:episodeId` yang menjalankan 1 `getPool()` + 2 query `SELECT` langsung ke `hospital_invoices` dan `patient_deposit_ledgers` tanpa service terpisah. Kedua scope didokumentasikan secara transparan.
+
+#### 3. Rekonsiliasi Total DB Calls Candidate D
+- Total 42 DB call sites pada service terdiri dari: 15 writes + 6 connection acquisitions + 18 kontrol transaksi (`BEGIN`, `COMMIT`, `ROLLBACK`) + 3 query `SELECT` = 42.
+- Jika digabung dengan `billing.routes.js` (3 reads): Total = 45 call sites (15 writes + 30 reads/controls).
+
+#### 4. Validasi 100 Tabel RLS pada PostgreSQL Metadata
+- `pg_class` public tables with RLS enabled: **100**.
+- Public tables in `pg_policies`: **100**.
+- Total policy rows: **100**.
+- RLS tables with $\ge$ 1 policy: **100**.
+- RLS tables without policy: **0**.
+- Seluruh 100 tabel memiliki policy aktif `tenant_isolation_*` dengan command `ALL`, roles `{public}`, permissive `PERMISSIVE`, USING dan WITH CHECK `(tenant_id = current_app_tenant_id())`.
+- *Catatan Integritas:* 100 policy pada katalog $\neq$ 100 tabel aman secara operasional tanpa runtime UoW context binding.
+
+#### 5. Validasi 33 Tabel Stage-0 sebagai Strict Subset
+- Rasio: 33 tabel Stage-0 (33.0%) dan 67 tabel subsistem non-Stage-0 (67.0%).
+- Duplikasi dalam Stage-0: 0. Seluruh 33 tabel terbukti ada di katalog PostgreSQL.
+- Verifikasi subset: **STRICT SUBSET VERIFIED (TRUE)**.
+
+#### 6. Struktur Candidate C & Verifikasi Kopling
+- Candidate C distrukturkan: **Candidate C $\rightarrow$ C1 CPOE Core + C2 Diagnostic Interpretation**.
+- **Kopling Transaksi Sinkron:** **ZERO (Tidak ada transaksi bersama)**. Order creation dan result interpretation berjalan pada transaksi independen yang terpisah waktu.
+- Kopling bersifat asinkron via foreign key `order_id` dan event outbox.
+
+#### 7. Standardisasi Terminologi Transaction Complexity
+- Kategori `LOW`, `MEDIUM`, `HIGH` didefinisikan murni berdasarkan volume mutasi, jumlah dependent read, kebutuhan locking, dan rollback surface. Tidak digunakan sebagai skor evaluatif, prioritas, atau rekomendasi.
+
+#### 8. Validasi Test Evidence (Gap Real-DB)
+- Pernyataan **`A = 0, B = 0, C = 0, D = 0 Real DB`** diverifikasi 100% benar terhadap source test files. Seluruh test durability mengandalkan Vitest in-memory mocks (`vi.fn()`). Tidak ada pengujian PostgreSQL RLS live di luar pilot Triage/Encounter.
+
+#### 9. Verifikasi Regresi Pilot Triage/Encounter
+- 6 test suite target: **81/81 PASS (100% Clean)**.
+- Kode produksi **0% disentuh**.
+
+---
+
 ### 📌 [02 OKTOBER 2026] — P0-2B: AUDIT KESIAPAN SELEKSI WAVE (WAVE SELECTION READINESS AUDIT) & MATRIKS KEPUTUSAN NETRAL KANDIDAT A/B/C/D
 **Tag Rilis:** `audit-p02b-wave-selection-readiness-matrix`  
 **Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
