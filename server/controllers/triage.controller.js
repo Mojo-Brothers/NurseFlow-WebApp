@@ -8,6 +8,7 @@
  */
 
 import { triageApplicationService, TriageDomainError } from '../services/triageApplication.service.js';
+import { isValidUuid } from '../db/unitOfWork.js';
 
 export const triageController = {
   /**
@@ -21,12 +22,12 @@ export const triageController = {
 
     try {
       const resolvedTenantId = req.tenantId || req.user?.tenantId;
-      if (!resolvedTenantId) {
+      if (!resolvedTenantId || !isValidUuid(resolvedTenantId)) {
         return res.status(403).json({
           success: false,
           error: {
             code: 'TENANT_CONTEXT_REQUIRED',
-            message: 'Konteks tenant wajib disertakan dalam request.'
+            message: 'Konteks tenant valid (UUID) wajib disertakan dalam request.'
           },
           meta: { requestId, correlationId, timestamp }
         });
@@ -87,12 +88,12 @@ export const triageController = {
 
     try {
       const resolvedTenantId = req.tenantId || req.user?.tenantId;
-      if (!resolvedTenantId) {
+      if (!resolvedTenantId || !isValidUuid(resolvedTenantId)) {
         return res.status(403).json({
           success: false,
           error: {
             code: 'TENANT_CONTEXT_REQUIRED',
-            message: 'Konteks tenant wajib disertakan dalam request.'
+            message: 'Konteks tenant valid (UUID) wajib disertakan dalam request.'
           },
           meta: { requestId, correlationId, timestamp }
         });
@@ -150,12 +151,12 @@ export const triageController = {
 
     try {
       const resolvedTenantId = req.tenantId || req.user?.tenantId;
-      if (!resolvedTenantId) {
+      if (!resolvedTenantId || !isValidUuid(resolvedTenantId)) {
         return res.status(403).json({
           success: false,
           error: {
             code: 'TENANT_CONTEXT_REQUIRED',
-            message: 'Konteks tenant wajib disertakan dalam request.'
+            message: 'Konteks tenant valid (UUID) wajib disertakan dalam request.'
           },
           meta: { requestId, correlationId, timestamp }
         });

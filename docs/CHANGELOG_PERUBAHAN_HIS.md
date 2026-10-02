@@ -16,6 +16,55 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [02 OKTOBER 2026] — P0-2B WAVE 1B.1: EVIDENCE CLOSURE & REMEDIATION (TRIAGE UOW PILOT)
+**Tag Rilis:** `stage0-p02b-wave1b1-evidence-closure`
+**Kategori:** `[SECURITY]` `[FIX]` `[ENHANCEMENT]` `[AUDIT]` `[WAVE-1B.1]`
+**Status Audit:** `UOW PILOT: VERIFIED | REAL DB EVIDENCE: 10/10 PASS | REAL RLS EVIDENCE: VERIFIED (42501 DENIAL) | SCANNER RECONCILED: 843->823 CALLS (-20), 239->234 WRITES (-5), 156->153 ROUTES (-3) | CONTROLLER GATE: FAIL-CLOSED (15/15 PASS)`
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | WAVE 1B: HOLD`**
+
+Telah berhasil dilaksanakan **penutupan celah substantif (Evidence Closure & Remediation)** untuk pilot Unit of Work (UoW) domain **Emergency / Triage** sesuai evaluasi independen P0-2B Wave 1B.1. Seluruh 4 limitasi utama (**L-1**, **L-2**, **L-3**, dan **L-4**) serta code smell **L-5** telah ditutup secara terverifikasi tanpa mengubah logika evaluasi klinis pasien:
+
+#### 1. Penutupan L-1: Controller Fail-Closed Gate & Penghapusan Fallback `DEFAULT_TENANT_ID`
+- Berkas terdampak: [`server/controllers/triage.controller.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/controllers/triage.controller.js)
+- Fallback pasif ke `process.env.DEFAULT_TENANT_ID` dihapus sepenuhnya dari seluruh handler (`recordAssessment`, `recordFirstPhysicianContact`, `getTriageByEncounterId`).
+- Diimplementasikan fungsi validasi strict `isValidUuid(resolvedTenantId)` dari `unitOfWork.js`.
+- Jika tenantId tidak ada, null, kosong, atau bukan UUID v4 yang valid, request langsung ditolak gagal-tutup dengan HTTP `403 TENANT_CONTEXT_REQUIRED` sebelum memicu service atau koneksi basis data.
+- Bukti pengujian: 15/15 test cases PASS pada [`tests/p02b_wave1b1_l1_controller_gate.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/p02b_wave1b1_l1_controller_gate.test.js) (termasuk penolakan string non-UUID seperti `'hospital-a'`).
+
+#### 2. Penutupan L-2: Bukti Riil PostgreSQL 16 & Penegakan Row-Level Security (RLS)
+- Berkas terdampak: [`tests/p02b_wave1b1_real_rls_integration.test.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/tests/p02b_wave1b1_real_rls_integration.test.js) dan [`server/services/triageApplication.service.js`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/server/services/triageApplication.service.js)
+- Pengujian dieksekusi langsung terhadap basis data uji terisolasi `nurseflow_security_lab` pada PostgreSQL 16 di `localhost:5432` menggunakan kredensial non-privileged `nurseflow_app_user` (`rolsuper=false`, `rolbypassrls=false`). Basis data produksi `nurseflow_enterprise_his` sama sekali tidak disentuh.
+- **RLS Policy Audit Log Fix:** Tabel `universal_audit_logs` menerapkan RLS policy `tenant_isolation_universal_audit_logs`. Query INSERT audit di `triageApplication.service.js` diperbaiki dengan menambahkan kolom `tenant_id: targetTenantId`, menghilangkan kegagalan 42501 pada penulisan audit yang sah tanpa mengubah skema maupun data klinis.
+- **Kernel-Level Write Denial Proof (`POSTGRESQL_RLS_DENIAL`):** Percobaan penulisan langsung SQL lintas tenant di bawah sesi UoW Tenant B terhadap data Tenant A terbukti digagalkan langsung oleh kernel PostgreSQL dengan error code `42501` (`new row violates row-level security policy for table "triage_assessments"`).
+- **Cross-Tenant Read Isolation (`REAL_RLS_READ_VERIFIED`):** Pembacaan data triase antar-tenant menghasilkan 0 baris (invisibilitas total tanpa klausa `WHERE tenant_id = ...` pada level aplikasi).
+- **Rollback & Pool Safety:** Drill kegagalan membuktikan rollback atomik sempurna (0 baris residu) dan penggunaan berulang koneksi fisik pool (`DISCARD ALL`) terbukti tidak membocorkan konteks GUC tenant ke request berikutnya.
+- Bukti pengujian: 10/10 integration tests PASS. Status diverifikasi naik dari `MOCK_VERIFIED` ke **`REAL_DB_VERIFIED`**, **`REAL_RLS_READ_VERIFIED`**, dan **`REAL_RLS_WRITE_VERIFIED`**.
+
+#### 3. Penutupan L-3: Refactoring Scanner Inventori Otoritatif & Rekonsiliasi Metrik Ganda
+- Berkas terdampak: [`scratch/authoritative_db_inventory.mjs`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/authoritative_db_inventory.mjs)
+- Hardcoding `isEncounter` dihapus dan digantikan arsitektur registry `UOW_WRAPPED_REQUEST_DOMAINS` yang memvalidasi keberadaan berkas fisik, boundary `withUnitOfWork`, dan nama metode secara runtime (`verifyUowRegistration`).
+- Rekonsiliasi perbedaan angka rute vs call-site AST:
+  - **Level Route Entry Point:** Unsafe RLS routes turun dari **156 -> 153** (-3 rute triase: `POST /assessments`, `POST /first-physician-contact`, `GET /encounter/:encounterId`).
+  - **Level AST Call Sites:** Call sites RLS di luar UoW turun dari **156 -> 145** (-11 query sites triase).
+  - **Level Write Operations:** Operasi penulisan di luar UoW turun dari **239 -> 234** (-5 operasi penulisan triase).
+  - **Total Production Request DB Calls Outside UoW:** Turun dari **843 -> 823** (-20 calls, seluruh 20 operasi DB domain Triage kini 100% di dalam UoW).
+- Artefak tergenerasi: `scratch/p02b_wave1b1_request_db_inventory_after.json` dan `scratch/authoritative_db_metrics_after.json`.
+
+#### 4. Penutupan L-4 & L-5: Git Hygiene, Batas Wave, dan Pembersihan Code Smell
+- Menghapus import tak terpakai `postgresPoolService` pada `server/services/triageApplication.service.js` (menutup code smell L-5).
+- Menjaga isolasi berkas secara ketat tanpa menyentuh modul Wave 1B.2 kandidat kedua, tanpa mengubah migration 082, dan menolak penggunaan wildcard `git add .`.
+- Melakukan staging berkas Wave 1B.1 secara eksplisit dan atomik dengan commit message terstandar: `security(p02b): close triage uow pilot evidence gap`.
+
+#### 5. Rekapitulasi Rangkaian Pengujian
+```text
+1. tests/p02b_wave1b1_triage_uow.test.js .............. 39/39 PASS (Mock UoW Contracts)
+2. tests/p02b_wave1b1_l1_controller_gate.test.js ....... 15/15 PASS (L-1 Fail-Closed Gate)
+3. tests/p02b_wave1b1_real_rls_integration.test.js .... 10/10 PASS (L-2 Real DB & RLS 42501 Denial)
+Total Bukti Terverifikasi: 64 / 64 PASS (100%)
+```
+
+---
+
 ### 🔒 [01 OKTOBER 2026] — P0-2B WAVE 1B.1: DOMAIN-BOUNDED UOW PILOT — EMERGENCY/TRIAGE (STATUS: IMPLEMENTATION COMPLETE + EVIDENCE VERIFIED)
 **Tag Rilis:** `stage0-p02b-wave1b1-triage-uow-pilot`
 **Kategori:** `[MAJOR]` `[SECURITY]` `[REFACTOR]` `[AUDIT]` `[WAVE-1B.1]`

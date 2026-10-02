@@ -11,7 +11,6 @@
  */
 
 import crypto from 'crypto';
-import { postgresPoolService } from '../db/postgresPool.js';
 import { withUnitOfWork } from '../db/unitOfWork.js';
 
 export class TriageDomainError extends Error {
@@ -272,11 +271,11 @@ export const triageApplicationService = {
           INSERT INTO universal_audit_logs (
             id, actor_id, actor_name, actor_role, client_ip, action_type,
             resource_type, resource_id, patient_id, after_state,
-            reason_for_action, signature_hash, created_at
+            reason_for_action, signature_hash, created_at, tenant_id
           ) VALUES (
             $1, $2, $3, $4, $5, $6,
             $7, $8, $9, $10,
-            $11, $12, $13
+            $11, $12, $13, $14
           );
         `, [
           crypto.randomUUID(),
@@ -291,7 +290,8 @@ export const triageApplicationService = {
           JSON.stringify(createdTriage),
           `Triase gawat darurat level ${evalResult.triageLevel} (${evalResult.targetMinutes} menit)`,
           signatureHash,
-          now
+          now,
+          targetTenantId
         ]);
 
         return {

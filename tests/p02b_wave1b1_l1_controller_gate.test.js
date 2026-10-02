@@ -1,4 +1,4 @@
-﻿/**
+/**
  * P0-2B WAVE 1B.1 — Evidence Closure: L-1 Controller Tenant Gate Tests
  *
  * Proves the controller-layer fail-closed behavior after DEFAULT_TENANT_ID
@@ -177,6 +177,47 @@ describe('P0-2B WAVE 1B.1 Evidence Closure — L-1: Controller Tenant Gate', () 
       const calledActor = triageApplicationService.recordTriageAssessment.mock.calls[0][1];
       expect(calledActor.tenantId).toBe(VALID_TENANT_A);
       expect(calledActor.tenantId).not.toBe(ENV_DEFAULT);
+    });
+  });
+
+  describe('C4 — Invalid req.tenantId format (non-UUID) is rejected with 403', () => {
+    it('C4.1 — recordAssessment rejects non-UUID string with 403', async () => {
+      const req = mockReq({
+        tenantId: 'not-a-valid-uuid',
+        user: { userId: 'U1', tenantId: 'not-a-valid-uuid' },
+        body: { encounterId: VALID_ENC_ID, chiefComplaint: 'Fever' }
+      });
+      const res = mockRes();
+      await triageController.recordAssessment(req, res);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+        error: expect.objectContaining({ code: 'TENANT_CONTEXT_REQUIRED' })
+      }));
+      expect(triageApplicationService.recordTriageAssessment).not.toHaveBeenCalled();
+    });
+
+    it('C4.2 — recordFirstPhysicianContact rejects non-UUID string with 403', async () => {
+      const req = mockReq({
+        tenantId: '12345',
+        user: { userId: 'U2', tenantId: '12345' },
+        body: { encounterId: VALID_ENC_ID }
+      });
+      const res = mockRes();
+      await triageController.recordFirstPhysicianContact(req, res);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(triageApplicationService.recordFirstPhysicianContact).not.toHaveBeenCalled();
+    });
+
+    it('C4.3 — getTriageByEncounterId rejects non-UUID string with 403', async () => {
+      const req = mockReq({
+        tenantId: 'invalid-tenant-id',
+        user: { userId: 'U3', tenantId: 'invalid-tenant-id' },
+        params: { encounterId: VALID_ENC_ID }
+      });
+      const res = mockRes();
+      await triageController.getTriageByEncounterId(req, res);
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(triageApplicationService.getTriageByEncounterId).not.toHaveBeenCalled();
     });
   });
 });
