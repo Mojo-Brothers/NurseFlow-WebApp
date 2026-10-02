@@ -8,11 +8,21 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import crypto from 'crypto';
 import app from '../server/server.js';
 import { triageApplicationService, TriageDomainError, ATS_SLA_MINUTES } from '../server/services/triageApplication.service.js';
-import { postgresPoolService } from '../server/db/postgresPool.js';
+import { postgresPoolService, pool } from '../server/db/postgresPool.js';
 import { jwtSecurityService } from '../src/core/security/jwtSecurity.service.js';
 import { ENTERPRISE_ROLES } from '../src/shared/constants/roles.js';
 
 describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Proof', () => {
+  // Canonical Test Tenant & Actor Fixtures (RFC 4122 UUID v4)
+  const CANONICAL_TEST_TENANT_ID = 'a0000000-0000-4000-8000-000000000001';
+
+  const canonicalActor = {
+    userId: 'USR-NURSE-001',
+    username: 'perawat_igd',
+    role: ENTERPRISE_ROLES.ROLE_NURSE,
+    tenantId: CANONICAL_TEST_TENANT_ID
+  };
+
   let mockDatabaseState = {
     encounters: [],
     triage_assessments: [],
@@ -28,6 +38,7 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
       encounters: [
         {
           id: 'enc-emer-001',
+          tenant_id: CANONICAL_TEST_TENANT_ID,
           episode_id: 'epc-emer-001',
           patient_id: 'pat-emer-001',
           encounter_number: 'ENC-2026-00010',
@@ -148,10 +159,9 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
           return { rows: [newTimer], rowCount: 1 };
         }
 
-        if (normalized.startsWith('UPDATE ENCOUNTERS SET STATUS = $1')) {
-          const status = params[0];
-          const targetId = params[2];
-          const updateObj = { id: targetId, data: { status } };
+        if (normalized.startsWith('UPDATE ENCOUNTERS')) {
+          const targetId = params.length >= 3 ? params[2] : params[0];
+          const updateObj = { id: targetId, data: { status: 'TRIAGED' } };
           if (activeTransactionState) {
             activeTransactionState.encounterUpdates.push(updateObj);
           }
@@ -220,6 +230,7 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
       connect: vi.fn(async () => mockClient),
       query: vi.fn(async (sql, params) => mockClient.query(sql, params))
     });
+    vi.spyOn(pool, 'connect').mockImplementation(async () => mockClient);
   });
 
   // ─── TC-01: ATS/ESI Calculation & Target SLA ───
@@ -263,7 +274,7 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
       disabilityStatus: 'ALERT',
       vitalsPayload: { systolicBp: 160, heartRate: 98, spo2: 97 },
       assessedBy: 'Ns. Ratna Dewi, S.Kep'
-    });
+    }, canonicalActor);
 
     expect(result.triage.id).toBeDefined();
     expect(result.triage.triage_level).toBe('ATS_2_EMERGENT');
@@ -284,7 +295,7 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
       triageApplicationService.recordTriageAssessment({
         encounterId: 'enc-non-existent-999',
         chiefComplaint: 'Demam tinggi'
-      })
+      }, canonicalActor)
     ).rejects.toThrow(/tidak ditemukan/);
 
     expect(mockDatabaseState.triage_assessments.length).toBe(0);
@@ -297,7 +308,7 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
       triageApplicationService.recordTriageAssessment({
         encounterId: 'enc-emer-001',
         chiefComplaint: ''
-      })
+      }, canonicalActor)
     ).rejects.toThrow(/Keluhan utama/);
   });
 
@@ -308,14 +319,14 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
       encounterId: 'enc-emer-001',
       chiefComplaint: 'Sesak nafas akut',
       atsLevel: 2
-    });
+    }, canonicalActor);
 
     // 2. Doctor arrives
     const timer = await triageApplicationService.recordFirstPhysicianContact({
       encounterId: 'enc-emer-001',
       physicianId: 'DOC-EMER-001',
       physicianName: 'dr. Emergency, Sp.B'
-    });
+    }, canonicalActor);
 
     expect(timer.status).toBe('COMPLETED');
     expect(timer.first_physician_contact_at).toBeDefined();
@@ -330,13 +341,13 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
       chiefComplaint: 'Trauma kepala akibat kecelakaan lalu lintas',
       atsLevel: 1,
       airwayStatus: 'OBSTRUCTED'
-    });
+    }, canonicalActor);
 
     if (typeof localStorage !== 'undefined') {
       localStorage.clear();
     }
 
-    const triage = await triageApplicationService.getTriageByEncounterId('enc-emer-001');
+    const triage = await triageApplicationService.getTriageByEncounterId('enc-emer-001', canonicalActor);
     expect(triage).not.toBeNull();
     expect(triage.triage_level).toBe('ATS_1_RESUSCITATION');
     expect(triage.patient_name).toBe('Budi Emergency');
@@ -349,10 +360,12 @@ describe('VS-04 — Triage Assessment & SLA Timers ➔ PostgreSQL Durability Pro
         'x-request-id': 'REQ-VS04-TEST-001',
         'x-correlation-id': 'CORR-VS04-TEST-001'
       },
+      tenantId: CANONICAL_TEST_TENANT_ID,
       user: {
         userId: 'USR-NURSE-001',
         username: 'perawat_igd',
-        role: ENTERPRISE_ROLES.ROLE_NURSE
+        role: ENTERPRISE_ROLES.ROLE_NURSE,
+        tenantId: CANONICAL_TEST_TENANT_ID
       },
       ip: '192.168.1.100',
       body: {
