@@ -16,6 +16,46 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [02 OKTOBER 2026] — P0-2B: AUDIT KESIAPAN SELEKSI WAVE (WAVE SELECTION READINESS AUDIT) & MATRIKS KEPUTUSAN NETRAL KANDIDAT A/B/C/D
+**Tag Rilis:** `audit-p02b-wave-selection-readiness-matrix`  
+**Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
+**Status Audit:** `READINESS AUDIT COMPLETED | NEUTRAL DECISION MATRIX COMPILED | CANDIDATES A/B/C/D FACT SHEETS VERIFIED | ZERO EVALUATIVE RANKING | ZERO PRODUCTION CODE MODIFICATIONS | REGRESSION: 81/81 PASS`  
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | CURRENT PILOT: ENCOUNTER + TRIAGE = VERIFIED | GLOBAL RLS/UOW: NOT COMPLETE | NEXT WAVE: HOLD — PENDING HUMAN SELECTION | IMPLEMENTATION: NOT STARTED`**
+
+Telah selesai dilaksanakan **Audit Kesiapan Seleksi Wave (Wave Selection Readiness Audit)** terhadap seluruh kandidat Wave 1B.2 (Kandidat A, B, C, D) untuk menyediakan paket pendukung keputusan faktual (Decision-Support Evidence Package) bagi pemilik proyek tanpa memihak atau memberi peringkat:
+
+#### 1. Pemisahan Tegas Dua Scope RLS
+- **Database RLS Universe (PostgreSQL 16 Metadata):** Tepat **100 tabel** di skema `public` memiliki `relrowsecurity = true` dan tepat **100 policy aktif** terstandardisasi di bawah Migrasi 081.
+- **Stage-0 Clinical-Core Inventory (Scanner Scope):** Tepat **33 tabel** (10 core + 21 zero-policy Migrasi 079 + 2 tabel triase).
+- **Subsystem 67 Tabel Non-Stage-0:** Operating Theatre & Bedah (11 tabel), Radiologi/PACS (6), Bank Darah (7), Manajemen Tempat Tidur (7), Antrean & Appointment (4), Klaim & INA-CBG (4), Farmasi & Gudang (9), Observasi & Alur Klinis (10), Kredensial & Admin (9). Subsystem ini dipartisi untuk wave berikutnya dan bukan bagian dari core default-deny Stage 0.
+
+#### 2. Audit Faktual & Fact Sheet Kandidat Wave 1B.2
+- **Kandidat A (Nursing / CPPT):** 15 RLS calls, 4 writes outside UoW, 31 reads, 6 rute HTTP (`/api/v1/clinical-notes`). Kompleksitas transaksi: LOW. Kopling antar-domain: LOW. Dampak klinis: HIGH. Dampak finansial: MEDIUM.
+- **Kandidat B (Medication Closed-Loop):** 13 RLS calls, 23 writes outside UoW (tertinggi di core klinis), 57 reads, 8 rute HTTP (`/api/v1/medications`). Kompleksitas transaksi: HIGH (FEFO batch stock deduction, stock ledger, eMAR bedside 6-rights, outbox). Kopling: HIGH. Dampak klinis: HIGH. Dampak finansial: HIGH.
+- **Kandidat C (CPOE + Diagnostic Interpretation):** 24 RLS calls (13 CPOE, 11 Diag), 12 writes (3 CPOE, 9 Diag), 48 reads, 13 rute HTTP (9 orders, 4 diagnostics). Analisis kopling menunjukkan order placement dan interpretasi hasil terhubung secara asinkron lewat `clinical_orders`, namun dapat dipartisi menjadi dua bounded slice (C1: CPOE, C2: Diagnostics).
+- **Kandidat D (Patient Financial & Revenue Cycle):** 8 RLS calls, 15 writes outside UoW, 30 reads, 7 rute HTTP (`/api/v1/patient-financial` & `/billing`). Kompleksitas transaksi: MEDIUM (split invoice, deposit balance validation, cashier shift). Kopling: LOW. Dampak klinis: LOW. Dampak finansial: HIGH. Ketergantungan keselamatan pasien: NONE.
+
+#### 3. Pemetaan Batas Transaksi & Graf Ketergantungan Layanan Bersama
+- Telah dipetakan 20 operasi bisnis representatif ke dalam tabel `Transaction Boundary Map` yang mengidentifikasi pola mutasi, kebutuhan atomic rollback, audit trail, serta perlindungan idempotensi.
+- Telah dipetakan hierarki layanan bersama (`SHARED`) seperti `universal_audit_logs`, `encounters`, `clinical_domain_outbox`, dan `safetyAuthorization` vs komponen lokal (`LOCAL`).
+
+#### 4. Kesiapan Pengujian: Gap Bukti Real-DB
+- **Temuan Kritis:** Seluruh test suite bawaan yang ada untuk Kandidat A (1 file), B (12 file), C (3 file), dan D (5 file) bergantung **100% pada in-memory mock Vitest** (`vi.fn()`).
+- **Tidak ada satu pun pengujian real PostgreSQL 16 atau RLS multi-tenant** untuk keempat kandidat tersebut di dalam repositori saat ini.
+- Disusun spesifikasi pengujian minimum `REAL_DB_VERIFIED` yang wajib dipenuhi oleh kandidat terpilih.
+
+#### 5. Matriks Keputusan Netral & Kepatuhan Non-Ranking
+- Matriks perbandingan netral disusun mencakup 15 dimensi teknis tanpa kolom skor, rank, pemenang, ataupun rekomendasi subjektif.
+- Seluruh observasi disajikan secara deskriptif faktual.
+
+#### 6. Integritas Kode & Verifikasi Regresi
+- Kode produksi (`server/`, `migrations/`, schema, RLS, UoW) **0% disentuh**.
+- Regresi 6 test suite target (Triage & Encounter): **81/81 PASS (100% Clean)**.
+- Berkas Dokumen: [`docs/audit/P0-2B-WAVE-SELECTION-READINESS.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-WAVE-SELECTION-READINESS.md)
+- Berkas Data JSON: [`scratch/p02b_wave_selection_readiness.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_wave_selection_readiness.json)
+
+---
+
 ### 📌 [02 OKTOBER 2026] — P0-2B: REKONSILIASI INDEPENDEN INVENTORI RLS/UOW & PEMERIKSAAN KONTRAK SOURCE
 **Tag Rilis:** `audit-p02b-independent-rls-uow-reconciliation`
 **Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`
