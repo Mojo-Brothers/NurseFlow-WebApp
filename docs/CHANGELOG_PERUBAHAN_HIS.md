@@ -16,6 +16,44 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [02 OKTOBER 2026] — P0-2B POST-WAVE 1B.1: INVENTORI LENGKAP BACKLOG RLS/UOW & SELEKSI KANDIDAT NEXT-WAVE
+**Tag Rilis:** `audit-p02b-post-wave1b1-rls-uow-inventory`
+**Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`
+**Status Audit:** `INVENTORY: SOURCE-DRIVEN VERIFIED | TOTAL DB CALLS: 846 | REQUEST DB CALLS: 845 | REQUEST RLS CALLS: 157 | SAFE RLS CALLS: 12 | UNSAFE RLS CALLS: 145 | UNSAFE RLS ENTRY POINTS: 153 | WRITES OUTSIDE UOW: 234 | READS OUTSIDE UOW: 589 | REGRESSION: 81/81 PASS`
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | NEXT WAVE: HOLD — PENDING HUMAN SELECTION`**
+
+Telah berhasil disusun **Inventori Otoritatif Backlog RLS/Unit of Work (UoW)** dan **Matriks Seleksi Kandidat Next-Wave** pasca-ratifikasi Wave 1B.1 tanpa mengubah kode produksi aplikasi:
+
+#### 1. Verifikasi Baseline & Scanner Otoritatif
+- Scanner diperbarui untuk mengekstraksi AST dan dependensi source code aktual di bawah direktori `server/` tanpa ketergantungan pada snapshot stale.
+- Verifikasi runtime `verifyUowRegistration` memastikan hanya domain yang terbukti memiliki boundary `withUnitOfWork` dan metode terbungkus (`encounterApplication` dan `triageApplication`) yang diakui sebagai aman (`SAFE_INSIDE_UOW`).
+
+#### 2. Rekonsiliasi Metrik Global Backlog
+- **Total Production DB Call Sites:** 846 (845 pada request path, 1 startup validator).
+- **Request-Path RLS Call Sites:** 157 (12 terlindungi di dalam UoW, 145 di luar UoW).
+- **Unsafe RLS Entry Points:** 153 rute (turun dari 156 setelah 3 rute Triase dimitigasi).
+- **Tenant-Sensitive Writes Outside UoW:** 234 penulisan (turun dari 239 setelah 5 penulisan Triase dimitigasi).
+- **Tenant-Sensitive Reads Outside UoW:** 589 pembacaan (turun dari 604 setelah 15 pembacaan Triase dimitigasi).
+- **Total Request DB Calls Outside UoW:** 823 pemanggilan (turun dari 843 setelah 20 pemanggilan Triase dimitigasi).
+
+#### 3. Pemetaan Domain, Boundary Transaksi & Blast Radius
+- 145 call site RLS yang belum termigrasi dipetakan secara detail ke 16 domain bisnis, menelusuri rantai Domain -> Modul -> Rute -> Controller -> Service -> Fungsi -> Call DB -> Tabel -> Operasi -> Status UoW.
+- Ditetapkan klasifikasi risiko faktual berbasis bukti (P0, P1, P2, P3) serta kategori blast radius klinis (`CLINICAL_CORE`, `MEDICATION`, `CLINICAL_DOCUMENTATION`, `DIAGNOSTIC`, `BLOOD_BANK`, `SURGICAL`, `BILLING`, dll.).
+
+#### 4. Matriks Seleksi Kandidat Next-Wave (Tanpa Memilih Pemenang Sepihak)
+Disajikan 4 kandidat teknis objektif untuk diputuskan oleh arsitek/human:
+- **Kandidat A (Nursing / CPPT — `clinicalNotesApplication`):** 15 call site RLS, 4 writes, 6 rute. Blast radius contained, konsentrasi RLS tertinggi per modul, kelanjutan alami dari Triase.
+- **Kandidat B (Medication Closed-Loop — `medicationClosedLoop`):** 13 call site RLS, 23 writes (tertinggi di clinical core), 8 rute. Melindungi 5-rights bedside eMAR dan stok depo farmasi.
+- **Kandidat C (CPOE & Diagnostic Orders — `cpoeApplication` + `diagnosticInterpretation`):** 24 call site RLS, 12 writes, 13 rute. Sumber kebenaran hulu untuk Lab, Rad, dan Farmasi.
+- **Kandidat D (Patient Financial & Revenue Cycle — `patientFinancialAndRevenueCycle`):** 8 call site RLS, 15 writes, 6 rute. Menjaga integritas split invoice dan klaim BPJS.
+
+#### 5. Artefak Terbitan
+- Dokumen Laporan Lengkap: [`docs/audit/P0-2B-RLS-UOW-BACKLOG-INVENTORY.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-RLS-UOW-BACKLOG-INVENTORY.md)
+- Mesin Data JSON: [`scratch/p02b_rls_uow_backlog_inventory.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_rls_uow_backlog_inventory.json)
+- Regresi Pengujian: 81/81 PASS pada 6 test suite target.
+
+---
+
 ### 📌 [02 OKTOBER 2026] — P0-2B WAVE 1B.1: EVIDENCE CLOSURE & REMEDIATION (TRIAGE UOW PILOT)
 **Tag Rilis:** `stage0-p02b-wave1b1-evidence-closure`
 **Kategori:** `[SECURITY]` `[FIX]` `[ENHANCEMENT]` `[AUDIT]` `[WAVE-1B.1]`
