@@ -16,6 +16,53 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [02 OKTOBER 2026] — P0-2B: VERIFIKASI MEKANIS JALUR EKSEKUSI RUTE (FINAL ROUTE EXECUTION-PATH VERIFICATION)
+**Tag Rilis:** `audit-p02b-route-execution-path-verification`  
+**Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
+**Status Audit:** `P0-2B ROUTE EXECUTION-PATH VERIFICATION = VERIFIED_WITH_LIMITATION | BASELINE RLS CALL SITES: 145 (UNSAFE) | REACHABLE FROM HTTP: 143 | UNREACHABLE FROM HTTP: 2 (CS 141, CS 142) | CLAIMED HTTP ROUTES: 88 (DOMAIN ENVELOPE) | ACTIVE STAGE-0 ROUTES: 42 | ZERO STAGE-0 CALLS ROUTES: 46 | FALSE POSITIVES IDENTIFIED: 46 ROUTES | FALSE NEGATIVES / SHARED CS: 2 (CS 71 SHARED ACROSS 2 ROUTES; CS 143-145 INVOKED VIA CPOE CANCEL) | BIDIRECTIONAL GRAPH EDGES: 144 (100% CONSISTENT) | CANONICAL REGRESSION: 81/81 PASS | PRODUCTION CODE TOUCH: ZERO`  
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | CURRENT PILOT: ENCOUNTER + TRIAGE = VERIFIED | GLOBAL RLS/UOW: NOT COMPLETE | NEXT WAVE: HOLD — PENDING HUMAN SELECTION | IMPLEMENTATION: NOT STARTED | P0-2B ROUTE EXECUTION-PATH VERIFICATION = VERIFIED_WITH_LIMITATION`**
+
+Telah selesai dilaksanakan **Verifikasi Mekanis Jalur Eksekusi Rute (Route Execution-Path Verification)** tingkat fungsi (*function-level Abstract Syntax Tree call graph*) untuk menguji secara riil hubungan antara **145 Unsafe Stage-0 RLS Call Sites** dengan **88 HTTP Entry Points** yang tercatat pada baseline:
+
+#### 1. Klarifikasi Metodologis: Pemetaan Selubung Domain (*Domain Envelope*) vs Jalur Eksekusi Riil
+- Audit menemukan bahwa angka "88 Entry Points" pada audit sebelumnya merupakan pemetaan asosiasi berbasis selubung domain/berkas (*domain/file-level envelope*), di mana seluruh rute dalam satu berkas router diasosiasikan dengan seluruh call site pada modul tersebut.
+- Penelusuran pohon sintaks abstrak (AST) tingkat fungsi membuktikan bahwa hanya **42 rute HTTP** yang secara nyata mengeksekusi satu atau lebih kueri basis data terhadap tabel Stage-0 RLS.
+- Sebanyak **46 rute HTTP** mengeksekusi **nol kueri tabel Stage-0** (*Zero Stage-0 Calls*), karena hanya memanipulasi tabel non-Stage-0 atau mendelegasikan tugas ke mesin mock dalam memori (*in-memory mock engines*).
+
+#### 2. Temuan False Positives (46 Rute Bebas Kueri Stage-0)
+- **Mesin Dalam Memori (9 Rute):**
+  - Seluruh 6 rute DICOMweb (`/dicomweb/*`) memanggil `pacsDicomEngineService` atau `radiologyWorkflowEngineService` tanpa mengeksekusi kueri ke PostgreSQL.
+  - 3 rute kompatibilitas CPOE (`POST /orders/prescription`, `/lab`, `/radiology`) mendelegasikan pemrosesan ke `ordersApiService` (in-memory) tanpa akses basis data.
+- **Tabel Non-Stage-0 Eksklusif (37 Rute):**
+  - Seluruh 4 rute Auth (`/api/v1/auth/*`) hanya mengakses tabel `auth_users` dan `master_staff` (non-Stage-0), dan tidak pernah memanggil `resourceAuthorization.service.js`.
+  - Rute Pelepasan Tempat Tidur (`POST /api/v1/beds/discharge`) hanya memutasi `bed_occupancies` dan `master_beds`.
+  - Berbagai endpoint pendukung pada Blood Bank (manajemen stok labu darah donor), Care Coordination (timeline & serah terima jaga SBAR), Pemantauan Klinis EWS, CPPT Verifikasi, Command Center, LIS Laboratorium, Farmasi E-Prescribing, Keuangan Kasir, dan Radiologi hanya mengakses tabel operasional sekunder di luar cakupan 33 tabel Stage-0.
+
+#### 3. Temuan Call Site yang Tidak Dapat Dijangkau dari HTTP (`UNREACHABLE_FROM_HTTP`)
+- Ditemukan tepat **2 call sites** yang sama sekali tidak dapat dijangkau dari permintaan HTTP publik:
+  - `CS 141` (`server/services/resourceAuthorization.service.js:56`, SELECT terhadap `encounters`)
+  - `CS 142` (`server/services/resourceAuthorization.service.js:57`, SELECT terhadap `master_patients`)
+- *Bukti Teknis:* Fungsi `evaluateResourceAccess` hanya dipanggil oleh `authorizationDecisionService.hasResourceAccess`. Fungsi ini hanya diimpor oleh `clinicalAuthorization.middleware.js` dan scanner latar belakang. Namun, middleware `clinicalAuthorization.middleware.js` **tidak pernah diimpor, didaftarkan, maupun dipasang pada berkas router mana pun di `server/server.js`**, sehingga membentuk jalur eksekusi mati (*dead code path*) pada request-pipeline HTTP.
+
+#### 4. Temuan False Negatives & Call Site Terbagi (*Shared Call Sites*)
+- **`CS 71` (`cpoeApplication.service.js:608` `listOrders`):** Terbukti dipanggil oleh **2 rute HTTP berbeda**, yaitu Rute 66 (`GET /api/v1/orders/cpoe`) dan Rute 69 (`GET /api/v1/orders`). Remediasi UoW pada fungsi ini akan mengamankan kedua entry point sekaligus.
+- **`CS 143, 144, 145` (`safetyAuthorization.service.js:192, 252, 344`):** Terbukti dijangkau secara transitif oleh Rute 65 (`POST /api/v1/orders/cpoe/:id/cancel`) melalui pemanggilan `cpoeApplicationService.cancelOrder` (baris 401).
+
+#### 5. Pembuktian Konsistensi Graf Dua Arah (Bidirectional Consistency Proof)
+- Dilakukan verifikasi matematis terhadap edge graf hubungan Rute $\leftrightarrow$ Call Site:
+  $$\sum \text{Edges (CallSite } \rightarrow \text{ Route)} = 144 = \sum \text{Edges (Route } \rightarrow \text{ CallSite)}$$
+- Terdiri atas 142 call site unik $\times 1$ rute + 1 call site terbagi (`CS 71`) $\times 2$ rute + 2 call site tak terjangkau $\times 0$ rute = 144 edge.
+- Konsistensi graf terbukti **100% valid tanpa inkonsistensi edge**.
+
+#### 6. Integritas Kode & Pengujian Regresi Kanonik
+- **Pengujian Regresi Kanonik:** Berhasil mempertahankan status **81/81 PASS (100% lolos)** pada 6 suite pengujian kanonik Triage & Encounter.
+- **Perubahan Kode Produksi:** **NOL (0 baris kode aplikasi/migrasi/skema diubah)**.
+- **Dokumen & Artefak Audit:**
+  - Laporan Otoritatif: [`docs/audit/P0-2B-ROUTE-EXECUTION-PATH-VERIFICATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-ROUTE-EXECUTION-PATH-VERIFICATION.md)
+  - Artefak JSON: [`scratch/p02b_route_execution_path_verification.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_route_execution_path_verification.json)
+
+---
+
 ### 📌 [02 OKTOBER 2026] — P0-2B: PENGUNCIAN BUKTI MEKANIS TERAKHIR (FINAL EVIDENCE LOCK) SEBELUM PEMILIHAN WAVE 1B.2
 **Tag Rilis:** `audit-p02b-final-evidence-lock`  
 **Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
