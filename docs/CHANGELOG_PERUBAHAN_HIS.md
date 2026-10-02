@@ -16,6 +16,48 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [02 OKTOBER 2026] — P0-2B: PENGUNCIAN BUKTI MEKANIS TERAKHIR (FINAL EVIDENCE LOCK) SEBELUM PEMILIHAN WAVE 1B.2
+**Tag Rilis:** `audit-p02b-final-evidence-lock`  
+**Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
+**Status Audit:** `P0-2B FINAL EVIDENCE LOCK = VERIFIED | RLS UNIVERSE: 100 TABLES (CATALOG VERIFIED) | STAGE-0 SCOPE: 33 TABLES (LOCKED) | NON-STAGE-0 SCOPE: 67 TABLES (LOCKED) | SET PROOF: DISJOINT (INTERSECTION=0, UNION=100) | RLS CALL SITES: 157 (12 SAFE + 145 UNSAFE) | UNSAFE HTTP ENTRY POINTS: 88 (100% MAPPED, UNMAPPED=0) | CANDIDATE MANIFESTS: A, B, C (C1+C2, ZERO SYNC COUPLING), D (CORE vs EXPANDED) LOCKED | TEST EVIDENCE: 81/81 PASS (PILOT), CANDIDATES REAL-DB=0 (MOCKED ONLY) | PRODUCTION CODE TOUCH: ZERO`  
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | CURRENT PILOT: ENCOUNTER + TRIAGE = VERIFIED | GLOBAL RLS/UOW: NOT COMPLETE | NEXT WAVE: HOLD — PENDING HUMAN SELECTION | IMPLEMENTATION: NOT STARTED | P0-2B FINAL EVIDENCE LOCK = VERIFIED`**
+
+Telah selesai dilaksanakan **Penguncian Bukti Mekanis Terakhir (P0-2B Final Evidence Lock)** yang meratifikasi seluruh rantai bukti teknis ke dalam artefak otoritatif sebelum pemilik proyek menetapkan keputusan pemilihan Wave 1B.2:
+
+#### 1. Penguncian Himpunan Partisi Tabel RLS (100 = 33 + 67)
+- **RLS Universe:** 100 tabel publik terverifikasi di PostgreSQL 16 catalog (`pg_class.relrowsecurity = true` dan `pg_policies`).
+- **Stage-0 Scope:** Tepat 33 tabel klinis utama (10 core + 21 blackout dari Migration 079 + 2 tabel Triage Wave 1B.1).
+- **Non-Stage-0 Scope:** Tepat 67 tabel subsistem tersebar di 9 domain fungsional.
+- **Set Partition Proof:** Irisan = 0 ($\emptyset$), Gabungan = 100 ($U_{rls}$), Elemen Hilang = 0, Elemen Lebih = 0. Proporsi Stage-0 = 33.00%, Non-Stage-0 = 67.00%.
+
+#### 2. Penguncian 157 RLS SQL Call Sites (12 Safe + 145 Unsafe)
+- **Formula Verifikasi:** `SAFE (12) + UNSAFE (145) = 157`.
+- **12 Safe Call Sites:** Terkunci pada `encounterApplication.service.js` (1 call site) dan `triageApplication.service.js` (11 call sites) yang tereksekusi di dalam `withUnitOfWork` dengan context `actor.tenantId` aktif.
+- **145 Unsafe Call Sites:** Terkunci pada 16 berkas produksi (3 controller + 13 service) yang mengeksekusi SQL raw terhadap tabel Stage-0 di luar transaksi UoW tanpa binding tenant context.
+
+#### 3. Pemetaan Lengkap 145 Unsafe Call Sites ke 88 Entry Points HTTP
+- Seluruh 145 unsafe call sites berhasil dipetakan ke tepat 88 rute HTTP yang didefinisikan pada 16 berkas Express router.
+- Tidak terdapat call site yang mengambang atau tidak terpetakan (`unmapped = 0`).
+
+#### 4. Penguncian Manifest Faktual Kandidat Wave 1B.2
+- **Candidate A (CPPT):** 6 rute, 35 interaksi DB, 15 Stage-0 RLS call sites, 4 writes outside UoW, 31 reads/controls, 0 real DB tests, 1 mock test.
+- **Candidate B (Medication):** 8 rute, 80 interaksi DB, 13 Stage-0 RLS call sites, 23 writes outside UoW, 57 reads/controls, 0 real DB tests, 12 mock tests.
+- **Candidate C (CPOE + Diag):** Terstruktur atas Subdomain C1 CPOE (9 rute, 13 RLS, 3 writes, 19 reads) dan C2 Diagnostics (4 rute, 11 RLS, 9 writes, 29 reads). Total gabungan: 13 rute, 60 interaksi DB, 24 RLS, 12 writes, 48 reads, 0 real DB tests, 3 mock tests. **Kopling Transaksi Sinkron: NOL (Zero shared synchronous transactions)**.
+- **Candidate D (Financial):** Lingkup Core Service (6 rute, 42 interaksi DB, 8 RLS, 15 writes, 27 reads) vs Expanded Billing (7 rute, 45 interaksi DB, 8 RLS, 15 writes, 30 reads). 0 real DB tests, 5 mock tests.
+
+#### 5. Definisi Otoritatif Denominator Metrik
+- Telah didefinisikan secara formal batas pemisah antara: Total DB Interactions (845 request-path + 1 worker = 846), SQL Call Sites (845), Stage-0 RLS Call Sites (157), Writes Outside UoW (234), Reads Outside UoW (589), dan Transaction Control (22).
+- Menegaskan bahwa jumlah RLS call sites $\ne$ total DB call sites.
+
+#### 6. Integritas Pengujian & Kode Produksi
+- **Regression Test Contract:** 81/81 PASS (100% Clean) pada 6 suite pengujian kanonik Triage & Encounter.
+- **Production Code Touch:** NOL (0 berkas produksi diubah).
+- **Dokumen & Artefak Bukti:**
+  - [`docs/audit/P0-2B-FINAL-EVIDENCE-LOCK.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-FINAL-EVIDENCE-LOCK.md)
+  - [`scratch/p02b_final_evidence_lock.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_final_evidence_lock.json)
+
+---
+
 ### 📌 [02 OKTOBER 2026] — P0-2B: REKONSILIASI FAKTUAL AKHIR (FINAL FACTUAL RECONCILIATION) SEBELUM PEMILIHAN WAVE OLEH MANUSIA
 **Tag Rilis:** `audit-p02b-final-factual-reconciliation`  
 **Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  

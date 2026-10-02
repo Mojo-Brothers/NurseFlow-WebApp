@@ -1,0 +1,5934 @@
+{
+  "metadata": {
+    "documentId": "DOC-AUDIT-P02B-FINAL-EVIDENCE-LOCK-20261002",
+    "date": "2026-10-02",
+    "repository": "Mojo-Brothers/NurseFlow-WebApp",
+    "branch": "feature/security-foundation-wave1a10",
+    "baseCommit": "d92236f86b453e0031ae7c34dbe27bb61c742918",
+    "status": "VERIFIED"
+  },
+  "objective1_setLock": {
+    "stage0Count": 33,
+    "nonStage0Count": 67,
+    "rlsUniverseCount": 100,
+    "intersectionCount": 0,
+    "unionCount": 100,
+    "missingCount": 0,
+    "extraCount": 0,
+    "canonicalSource": {
+      "scannerSource": "scratch/authoritative_db_inventory.mjs (lines 4-17)",
+      "migrationSource": "database/migrations/079_stage0_purge_legacy_policies_and_enforce_default_deny.sql (10 core + 21 blackout = 31 tables)",
+      "triageAddition": "Wave 1B.1 added triage_assessments and triage_sla_timers (+2 tables = 33 tables)"
+    },
+    "stage0Tables": [
+      "blood_bank_billing_reconciliations",
+      "blood_bedside_dual_nurse_verifications",
+      "bpjs_claim_disputes",
+      "bpjs_claim_submissions",
+      "bpjs_vclaim_lifecycle_logs",
+      "clinical_orders",
+      "cssd_sterilization_cycles",
+      "encounters",
+      "hemovigilance_incident_investigations",
+      "inacbg_grouping_results",
+      "longitudinal_care_plans",
+      "master_inacbg_tariffs",
+      "master_patients",
+      "medical_device_implant_recalls",
+      "medication_dispense_allocations",
+      "medication_emar_administrations",
+      "patient_billing_reconciliation",
+      "patient_split_invoices",
+      "pharmacy_controlled_substance_logs",
+      "pharmacy_depots",
+      "pharmacy_dispensing_orders",
+      "physician_diagnostic_interpretations",
+      "post_anesthesia_aldrete_scores",
+      "radiology_critical_finding_alerts",
+      "radiology_instances",
+      "radiology_series",
+      "safety_decision_registry",
+      "surgical_clinical_notes",
+      "surgical_teams",
+      "triage_assessments",
+      "triage_sla_timers",
+      "universal_audit_logs",
+      "who_surgical_safety_checklists"
+    ],
+    "nonStage0Tables": [
+      "anesthesia_records",
+      "appointment_audit_logs",
+      "appointments",
+      "bed_occupancies",
+      "bed_transfers",
+      "billing_ledgers",
+      "blood_bedside_verifications",
+      "blood_crossmatch_tests",
+      "blood_donor_units",
+      "blood_issue_records",
+      "blood_storage_temperature_logs",
+      "blood_transfusion_records",
+      "bpjs_sep_records",
+      "casemix_cases",
+      "cdss_alerts",
+      "clinical_authorization_logs",
+      "clinical_observations",
+      "clinical_privileges",
+      "clinical_staff_profiles",
+      "cppt_notes",
+      "cssd_instrument_sets",
+      "enterprise_users",
+      "episodes_of_care",
+      "fhir_delivery_outbox",
+      "hospital_invoices",
+      "icu_acuity_assessments",
+      "inacbg_claims",
+      "inventory_batches",
+      "inventory_stock_movements",
+      "laboratory_orders",
+      "massive_transfusion_protocols",
+      "master_beds",
+      "master_buildings",
+      "master_floors",
+      "master_rooms",
+      "master_wards",
+      "medication_catalog",
+      "medication_orders",
+      "on_call_schedules",
+      "operating_room_schedules",
+      "operating_rooms",
+      "operating_theatres",
+      "patient_allergies",
+      "patient_registrations",
+      "pharmacy_inventory_batches",
+      "pharmacy_warehouses",
+      "post_op_handoffs",
+      "prescription_dispense_records",
+      "queue_sequences",
+      "queue_tickets",
+      "radiology_audit_log",
+      "radiology_orders",
+      "radiology_reports",
+      "radiology_studies",
+      "resuscitation_events",
+      "shift_assignments",
+      "soap_notes",
+      "staff_credentials",
+      "staff_rosters",
+      "surgery_cases",
+      "surgery_schedules",
+      "surgical_billing_breakdown",
+      "surgical_cases",
+      "surgical_implants_tracking",
+      "surgical_safety_checklists",
+      "tenant_satusehat_credentials",
+      "transfusion_reaction_logs"
+    ],
+    "rlsUniverse": [
+      "anesthesia_records",
+      "appointment_audit_logs",
+      "appointments",
+      "bed_occupancies",
+      "bed_transfers",
+      "billing_ledgers",
+      "blood_bank_billing_reconciliations",
+      "blood_bedside_dual_nurse_verifications",
+      "blood_bedside_verifications",
+      "blood_crossmatch_tests",
+      "blood_donor_units",
+      "blood_issue_records",
+      "blood_storage_temperature_logs",
+      "blood_transfusion_records",
+      "bpjs_claim_disputes",
+      "bpjs_claim_submissions",
+      "bpjs_sep_records",
+      "bpjs_vclaim_lifecycle_logs",
+      "casemix_cases",
+      "cdss_alerts",
+      "clinical_authorization_logs",
+      "clinical_observations",
+      "clinical_orders",
+      "clinical_privileges",
+      "clinical_staff_profiles",
+      "cppt_notes",
+      "cssd_instrument_sets",
+      "cssd_sterilization_cycles",
+      "encounters",
+      "enterprise_users",
+      "episodes_of_care",
+      "fhir_delivery_outbox",
+      "hemovigilance_incident_investigations",
+      "hospital_invoices",
+      "icu_acuity_assessments",
+      "inacbg_claims",
+      "inacbg_grouping_results",
+      "inventory_batches",
+      "inventory_stock_movements",
+      "laboratory_orders",
+      "longitudinal_care_plans",
+      "massive_transfusion_protocols",
+      "master_beds",
+      "master_buildings",
+      "master_floors",
+      "master_inacbg_tariffs",
+      "master_patients",
+      "master_rooms",
+      "master_wards",
+      "medical_device_implant_recalls",
+      "medication_catalog",
+      "medication_dispense_allocations",
+      "medication_emar_administrations",
+      "medication_orders",
+      "on_call_schedules",
+      "operating_room_schedules",
+      "operating_rooms",
+      "operating_theatres",
+      "patient_allergies",
+      "patient_billing_reconciliation",
+      "patient_registrations",
+      "patient_split_invoices",
+      "pharmacy_controlled_substance_logs",
+      "pharmacy_depots",
+      "pharmacy_dispensing_orders",
+      "pharmacy_inventory_batches",
+      "pharmacy_warehouses",
+      "physician_diagnostic_interpretations",
+      "post_anesthesia_aldrete_scores",
+      "post_op_handoffs",
+      "prescription_dispense_records",
+      "queue_sequences",
+      "queue_tickets",
+      "radiology_audit_log",
+      "radiology_critical_finding_alerts",
+      "radiology_instances",
+      "radiology_orders",
+      "radiology_reports",
+      "radiology_series",
+      "radiology_studies",
+      "resuscitation_events",
+      "safety_decision_registry",
+      "shift_assignments",
+      "soap_notes",
+      "staff_credentials",
+      "staff_rosters",
+      "surgery_cases",
+      "surgery_schedules",
+      "surgical_billing_breakdown",
+      "surgical_cases",
+      "surgical_clinical_notes",
+      "surgical_implants_tracking",
+      "surgical_safety_checklists",
+      "surgical_teams",
+      "tenant_satusehat_credentials",
+      "transfusion_reaction_logs",
+      "triage_assessments",
+      "triage_sla_timers",
+      "universal_audit_logs",
+      "who_surgical_safety_checklists"
+    ]
+  },
+  "objective2_rlsCallSitesLock": {
+    "totalStage0RlsCallSites": 157,
+    "safeCallSitesCount": 12,
+    "unsafeCallSitesCount": 145,
+    "verificationFormula": "SAFE (12) + UNSAFE (145) = 157"
+  },
+  "objective3_safe12CallSites": [
+    {
+      "id": 1,
+      "domain": "Encounter",
+      "file": "server/services/encounterApplication.service.js",
+      "line": 61,
+      "function": "generateNextEncounterNumber",
+      "table": "encounters",
+      "operation": "READ (SELECT)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork (SET LOCAL app.current_tenant_id)",
+      "whySafe": "Executes inside withUnitOfWork callback query runner with active PostgreSQL RLS session setting and DISCARD ALL on release."
+    },
+    {
+      "id": 2,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 130,
+      "function": "recordTriageAssessment",
+      "table": "encounters",
+      "operation": "READ (SELECT ... FOR UPDATE)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork (SET LOCAL app.current_tenant_id)",
+      "whySafe": "Locks encounter row inside withUnitOfWork callback; RLS denies access if encounter belongs to different tenant."
+    },
+    {
+      "id": 3,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 131,
+      "function": "recordTriageAssessment",
+      "table": "encounters",
+      "operation": "READ (SELECT ... FOR UPDATE)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Executes inside withUnitOfWork transaction callback under verified tenant context."
+    },
+    {
+      "id": 4,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 134,
+      "function": "recordTriageAssessment",
+      "table": "encounters",
+      "operation": "READ (SELECT ... FOR UPDATE)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Executes inside withUnitOfWork transaction callback under verified tenant context."
+    },
+    {
+      "id": 5,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 137,
+      "function": "recordTriageAssessment",
+      "table": "encounters",
+      "operation": "READ (SELECT ... FOR UPDATE)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Executes inside withUnitOfWork transaction callback under verified tenant context."
+    },
+    {
+      "id": 6,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 230,
+      "function": "recordTriageAssessment",
+      "table": "encounters",
+      "operation": "WRITE (UPDATE)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Encounter status update to TRIAGED executes within UoW transaction with RLS write protection."
+    },
+    {
+      "id": 7,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 250,
+      "function": "recordTriageAssessment",
+      "table": "universal_audit_logs",
+      "operation": "WRITE (INSERT)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Audit log insertion executes within the same atomic UoW transaction under verified tenant context."
+    },
+    {
+      "id": 8,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 333,
+      "function": "recordFirstPhysicianContact",
+      "table": "encounters",
+      "operation": "WRITE (UPDATE)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Physician contact timestamp update executes within UoW transaction with RLS write protection."
+    },
+    {
+      "id": 9,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 341,
+      "function": "recordFirstPhysicianContact",
+      "table": "encounters",
+      "operation": "WRITE (UPDATE)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Physician contact state transition executes within UoW transaction with RLS write protection."
+    },
+    {
+      "id": 10,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 346,
+      "function": "recordFirstPhysicianContact",
+      "table": "encounters",
+      "operation": "WRITE (UPDATE)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Physician contact status update executes within UoW transaction with RLS write protection."
+    },
+    {
+      "id": 11,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 360,
+      "function": "getTriageByEncounterId",
+      "table": "triage_assessments, master_patients, encounters",
+      "operation": "READ (SELECT JOIN)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Multi-table join query executes through withUnitOfWork read-only transaction; RLS filters rows to caller tenant."
+    },
+    {
+      "id": 12,
+      "domain": "Emergency / Triage",
+      "file": "server/services/triageApplication.service.js",
+      "line": 370,
+      "function": "getTriageByEncounterId",
+      "table": "encounters",
+      "operation": "READ (SELECT)",
+      "uowFunction": "withUnitOfWork",
+      "tenantContextSource": "actor.tenantId passed to withUnitOfWork",
+      "whySafe": "Encounter verification query executes through withUnitOfWork read-only transaction under RLS."
+    }
+  ],
+  "objective4_unsafe145CallSites": [
+    {
+      "id": 1,
+      "file": "server/controllers/appointment.controller.js",
+      "line": 39,
+      "function": "module_scope",
+      "domain": "Queue / Appointments",
+      "domainKey": "appointment",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/appointments (via server/routes/appointment.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 2,
+      "file": "server/controllers/appointment.controller.js",
+      "line": 115,
+      "function": "if",
+      "domain": "Queue / Appointments",
+      "domainKey": "appointment",
+      "table": "master_patients",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/appointments (via server/routes/appointment.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 3,
+      "file": "server/controllers/appointment.controller.js",
+      "line": 123,
+      "function": "if",
+      "domain": "Queue / Appointments",
+      "domainKey": "appointment",
+      "table": "master_patients",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/appointments (via server/routes/appointment.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 4,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 203,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 5,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 204,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 6,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 206,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 7,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 210,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "master_patients",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 8,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 218,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "master_patients",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 9,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 227,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 10,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 236,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "encounters",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 11,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 242,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "encounters",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 12,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 397,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "master_patients",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 13,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 405,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "master_patients",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 14,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 418,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 15,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 427,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "encounters",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 16,
+      "file": "server/controllers/bloodBank.controller.js",
+      "line": 433,
+      "function": "if",
+      "domain": "Blood Bank",
+      "domainKey": "bloodBank",
+      "table": "encounters",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/blood-bank (via server/routes/bloodBank.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 17,
+      "file": "server/controllers/commandCenter.controller.js",
+      "line": 76,
+      "function": "module_scope",
+      "domain": "Executive Command Center",
+      "domainKey": "commandCenter",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/command-center (via server/routes/commandCenter.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 18,
+      "file": "server/controllers/commandCenter.controller.js",
+      "line": 77,
+      "function": "module_scope",
+      "domain": "Executive Command Center",
+      "domainKey": "commandCenter",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/command-center (via server/routes/commandCenter.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 19,
+      "file": "server/controllers/commandCenter.controller.js",
+      "line": 88,
+      "function": "module_scope",
+      "domain": "Executive Command Center",
+      "domainKey": "commandCenter",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/command-center (via server/routes/commandCenter.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 20,
+      "file": "server/controllers/commandCenter.controller.js",
+      "line": 169,
+      "function": "module_scope",
+      "domain": "Executive Command Center",
+      "domainKey": "commandCenter",
+      "table": "universal_audit_logs",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/command-center (via server/routes/commandCenter.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 21,
+      "file": "server/controllers/commandCenter.controller.js",
+      "line": 170,
+      "function": "module_scope",
+      "domain": "Executive Command Center",
+      "domainKey": "commandCenter",
+      "table": "universal_audit_logs",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/command-center (via server/routes/commandCenter.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 22,
+      "file": "server/controllers/commandCenter.controller.js",
+      "line": 180,
+      "function": "module_scope",
+      "domain": "Executive Command Center",
+      "domainKey": "commandCenter",
+      "table": "universal_audit_logs",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/command-center (via server/routes/commandCenter.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 23,
+      "file": "server/services/bedManagementApplication.service.js",
+      "line": 112,
+      "function": "if",
+      "domain": "Bed Management",
+      "domainKey": "bedManagementApplication",
+      "table": "encounters",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/beds (via server/routes/beds.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 24,
+      "file": "server/services/bedManagementApplication.service.js",
+      "line": 131,
+      "function": "if",
+      "domain": "Bed Management",
+      "domainKey": "bedManagementApplication",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/beds (via server/routes/beds.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 25,
+      "file": "server/services/bedManagementApplication.service.js",
+      "line": 274,
+      "function": "if",
+      "domain": "Bed Management",
+      "domainKey": "bedManagementApplication",
+      "table": "encounters",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/beds (via server/routes/beds.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 26,
+      "file": "server/services/bedManagementApplication.service.js",
+      "line": 293,
+      "function": "if",
+      "domain": "Bed Management",
+      "domainKey": "bedManagementApplication",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/beds (via server/routes/beds.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 27,
+      "file": "server/services/bedManagementApplication.service.js",
+      "line": 381,
+      "function": "getBeds",
+      "domain": "Bed Management",
+      "domainKey": "bedManagementApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/beds (via server/routes/beds.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 28,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 181,
+      "function": "if",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 29,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 187,
+      "function": "if",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 30,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 190,
+      "function": "if",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 31,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 204,
+      "function": "if",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "longitudinal_care_plans",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'longitudinal_care_plans' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 32,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 223,
+      "function": "if",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "longitudinal_care_plans",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'longitudinal_care_plans' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 33,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 260,
+      "function": "if",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 34,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 496,
+      "function": "createDischargeSummary",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 35,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 502,
+      "function": "createDischargeSummary",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 36,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 505,
+      "function": "createDischargeSummary",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 37,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 549,
+      "function": "if",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "encounters",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 38,
+      "file": "server/services/careCoordinationAndTimeline.service.js",
+      "line": 568,
+      "function": "if",
+      "domain": "Care Coordination & Timeline",
+      "domainKey": "careCoordinationAndTimeline",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/coordination (via server/routes/careCoordinationAndTimeline.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 39,
+      "file": "server/services/clinicalMonitoring.service.js",
+      "line": 220,
+      "function": "if",
+      "domain": "Clinical Monitoring / EWS",
+      "domainKey": "clinicalMonitoring",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/monitoring (via server/routes/clinicalMonitoring.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 40,
+      "file": "server/services/clinicalMonitoring.service.js",
+      "line": 221,
+      "function": "if",
+      "domain": "Clinical Monitoring / EWS",
+      "domainKey": "clinicalMonitoring",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/monitoring (via server/routes/clinicalMonitoring.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 41,
+      "file": "server/services/clinicalMonitoring.service.js",
+      "line": 224,
+      "function": "if",
+      "domain": "Clinical Monitoring / EWS",
+      "domainKey": "clinicalMonitoring",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/monitoring (via server/routes/clinicalMonitoring.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 42,
+      "file": "server/services/clinicalMonitoring.service.js",
+      "line": 227,
+      "function": "if",
+      "domain": "Clinical Monitoring / EWS",
+      "domainKey": "clinicalMonitoring",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/monitoring (via server/routes/clinicalMonitoring.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 43,
+      "file": "server/services/clinicalMonitoring.service.js",
+      "line": 326,
+      "function": "if",
+      "domain": "Clinical Monitoring / EWS",
+      "domainKey": "clinicalMonitoring",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/monitoring (via server/routes/clinicalMonitoring.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 44,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 78,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 45,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 79,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 46,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 82,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 47,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 85,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 48,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 152,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 49,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 289,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 50,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 355,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 51,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 356,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 52,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 359,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 53,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 361,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 54,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 426,
+      "function": "if",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 55,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 514,
+      "function": "getSoapNotesByEncounter",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 56,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 522,
+      "function": "getSoapNotesByEncounter",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 57,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 530,
+      "function": "getCpptNotesByEncounter",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 58,
+      "file": "server/services/clinicalNotesApplication.service.js",
+      "line": 538,
+      "function": "getCpptNotesByEncounter",
+      "domain": "Nursing / CPPT",
+      "domainKey": "clinicalNotesApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/clinical-notes (via server/routes/clinicalNotes.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 59,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 333,
+      "function": "for",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 60,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 334,
+      "function": "for",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 61,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 340,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 62,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 387,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 63,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 388,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 64,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 391,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 65,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 393,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 66,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 472,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 67,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 558,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 68,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 559,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 69,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 581,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 70,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 582,
+      "function": "if",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 71,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 608,
+      "function": "listOrders",
+      "domain": "Medical Record / CPOE",
+      "domainKey": "cpoeApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 72,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 82,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 73,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 83,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 74,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 86,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 75,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 89,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "encounters",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 76,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 416,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 77,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 424,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 78,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 504,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "physician_diagnostic_interpretations",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'physician_diagnostic_interpretations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 79,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 505,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "physician_diagnostic_interpretations",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'physician_diagnostic_interpretations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 80,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 508,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "physician_diagnostic_interpretations",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'physician_diagnostic_interpretations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 81,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 510,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "physician_diagnostic_interpretations",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'physician_diagnostic_interpretations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 82,
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 528,
+      "function": "if",
+      "domain": "Diagnostic Interpretation",
+      "domainKey": "diagnosticInterpretation",
+      "table": "clinical_orders",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/diagnostics (via server/routes/diagnosticInterpretation.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 83,
+      "file": "server/services/laboratoryApplication.service.js",
+      "line": 54,
+      "function": "if",
+      "domain": "Laboratory / LIS",
+      "domainKey": "laboratoryApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/laboratory (via server/routes/laboratory.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 84,
+      "file": "server/services/laboratoryApplication.service.js",
+      "line": 55,
+      "function": "if",
+      "domain": "Laboratory / LIS",
+      "domainKey": "laboratoryApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/laboratory (via server/routes/laboratory.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 85,
+      "file": "server/services/laboratoryApplication.service.js",
+      "line": 58,
+      "function": "if",
+      "domain": "Laboratory / LIS",
+      "domainKey": "laboratoryApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/laboratory (via server/routes/laboratory.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 86,
+      "file": "server/services/laboratoryApplication.service.js",
+      "line": 61,
+      "function": "if",
+      "domain": "Laboratory / LIS",
+      "domainKey": "laboratoryApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/laboratory (via server/routes/laboratory.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 87,
+      "file": "server/services/laboratoryApplication.service.js",
+      "line": 227,
+      "function": "if",
+      "domain": "Laboratory / LIS",
+      "domainKey": "laboratoryApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/laboratory (via server/routes/laboratory.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 88,
+      "file": "server/services/laboratoryApplication.service.js",
+      "line": 267,
+      "function": "if",
+      "domain": "Laboratory / LIS",
+      "domainKey": "laboratoryApplication",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/laboratory (via server/routes/laboratory.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 89,
+      "file": "server/services/laboratoryApplication.service.js",
+      "line": 770,
+      "function": "if",
+      "domain": "Laboratory / LIS",
+      "domainKey": "laboratoryApplication",
+      "table": "clinical_orders",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/laboratory (via server/routes/laboratory.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 90,
+      "file": "server/services/laboratoryApplication.service.js",
+      "line": 776,
+      "function": "if",
+      "domain": "Laboratory / LIS",
+      "domainKey": "laboratoryApplication",
+      "table": "clinical_orders",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/laboratory (via server/routes/laboratory.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 91,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 92,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 92,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 93,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 93,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 96,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 94,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 99,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 95,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 823,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "medication_dispense_allocations",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'medication_dispense_allocations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 96,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 872,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "medication_emar_administrations",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'medication_emar_administrations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 97,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 1022,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "clinical_orders",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 98,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 1027,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "clinical_orders, universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders, universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 99,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 1035,
+      "function": "if",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 100,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 1312,
+      "function": "documentAdverseReaction",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "medication_emar_administrations",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'medication_emar_administrations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 101,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 1313,
+      "function": "documentAdverseReaction",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "medication_emar_administrations",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'medication_emar_administrations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 102,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 1316,
+      "function": "documentAdverseReaction",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "medication_emar_administrations",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'medication_emar_administrations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 103,
+      "file": "server/services/medicationClosedLoop.service.js",
+      "line": 1318,
+      "function": "documentAdverseReaction",
+      "domain": "Medication Closed-Loop",
+      "domainKey": "medicationClosedLoop",
+      "table": "medication_emar_administrations",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/medications (via server/routes/medicationClosedLoop.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'medication_emar_administrations' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 104,
+      "file": "server/services/patientApplication.service.js",
+      "line": 91,
+      "function": "if",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 105,
+      "file": "server/services/patientApplication.service.js",
+      "line": 92,
+      "function": "if",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 106,
+      "file": "server/services/patientApplication.service.js",
+      "line": 96,
+      "function": "if",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 107,
+      "file": "server/services/patientApplication.service.js",
+      "line": 99,
+      "function": "if",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 108,
+      "file": "server/services/patientApplication.service.js",
+      "line": 114,
+      "function": "if",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 109,
+      "file": "server/services/patientApplication.service.js",
+      "line": 236,
+      "function": "searchPatients",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 110,
+      "file": "server/services/patientApplication.service.js",
+      "line": 246,
+      "function": "if",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 111,
+      "file": "server/services/patientApplication.service.js",
+      "line": 262,
+      "function": "if",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 112,
+      "file": "server/services/patientApplication.service.js",
+      "line": 270,
+      "function": "getPatientById",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 113,
+      "file": "server/services/patientApplication.service.js",
+      "line": 272,
+      "function": "getPatientById",
+      "domain": "Admission / Master Patient",
+      "domainKey": "patientApplication",
+      "table": "master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patients (via server/routes/patients.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 114,
+      "file": "server/services/patientFinancialAndRevenueCycle.service.js",
+      "line": 253,
+      "function": "recordCashierPayment",
+      "domain": "Patient Financial & Billing",
+      "domainKey": "patientFinancialAndRevenueCycle",
+      "table": "patient_split_invoices",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patient-financial (via server/routes/patientFinancialAndRevenueCycle.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'patient_split_invoices' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 115,
+      "file": "server/services/patientFinancialAndRevenueCycle.service.js",
+      "line": 259,
+      "function": "recordCashierPayment",
+      "domain": "Patient Financial & Billing",
+      "domainKey": "patientFinancialAndRevenueCycle",
+      "table": "patient_split_invoices",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patient-financial (via server/routes/patientFinancialAndRevenueCycle.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'patient_split_invoices' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 116,
+      "file": "server/services/patientFinancialAndRevenueCycle.service.js",
+      "line": 261,
+      "function": "recordCashierPayment",
+      "domain": "Patient Financial & Billing",
+      "domainKey": "patientFinancialAndRevenueCycle",
+      "table": "patient_split_invoices",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patient-financial (via server/routes/patientFinancialAndRevenueCycle.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'patient_split_invoices' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 117,
+      "file": "server/services/patientFinancialAndRevenueCycle.service.js",
+      "line": 283,
+      "function": "if",
+      "domain": "Patient Financial & Billing",
+      "domainKey": "patientFinancialAndRevenueCycle",
+      "table": "patient_split_invoices",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patient-financial (via server/routes/patientFinancialAndRevenueCycle.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'patient_split_invoices' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 118,
+      "file": "server/services/patientFinancialAndRevenueCycle.service.js",
+      "line": 366,
+      "function": "executeFinancialAdjustmentOrRefund",
+      "domain": "Patient Financial & Billing",
+      "domainKey": "patientFinancialAndRevenueCycle",
+      "table": "patient_split_invoices",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patient-financial (via server/routes/patientFinancialAndRevenueCycle.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'patient_split_invoices' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 119,
+      "file": "server/services/patientFinancialAndRevenueCycle.service.js",
+      "line": 372,
+      "function": "executeFinancialAdjustmentOrRefund",
+      "domain": "Patient Financial & Billing",
+      "domainKey": "patientFinancialAndRevenueCycle",
+      "table": "patient_split_invoices",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patient-financial (via server/routes/patientFinancialAndRevenueCycle.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'patient_split_invoices' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 120,
+      "file": "server/services/patientFinancialAndRevenueCycle.service.js",
+      "line": 374,
+      "function": "executeFinancialAdjustmentOrRefund",
+      "domain": "Patient Financial & Billing",
+      "domainKey": "patientFinancialAndRevenueCycle",
+      "table": "patient_split_invoices",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patient-financial (via server/routes/patientFinancialAndRevenueCycle.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'patient_split_invoices' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 121,
+      "file": "server/services/patientFinancialAndRevenueCycle.service.js",
+      "line": 409,
+      "function": "if",
+      "domain": "Patient Financial & Billing",
+      "domainKey": "patientFinancialAndRevenueCycle",
+      "table": "patient_split_invoices",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/patient-financial (via server/routes/patientFinancialAndRevenueCycle.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'patient_split_invoices' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 122,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 51,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 123,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 52,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 124,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 55,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 125,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 58,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 126,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 335,
+      "function": "for",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_series",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_series' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 127,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 345,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_series",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_series' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 128,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 368,
+      "function": "for",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_instances",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_instances' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 129,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 377,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_instances",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_instances' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 130,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 404,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "universal_audit_logs",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'universal_audit_logs' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 131,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 703,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "clinical_orders",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 132,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 708,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "clinical_orders",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'clinical_orders' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 133,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 933,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_critical_finding_alerts",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_critical_finding_alerts' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 134,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 934,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_critical_finding_alerts",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_critical_finding_alerts' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 135,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 937,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_critical_finding_alerts",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_critical_finding_alerts' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 136,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 939,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_critical_finding_alerts",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_critical_finding_alerts' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 137,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 1017,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_critical_finding_alerts",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_critical_finding_alerts' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 138,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 1018,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_critical_finding_alerts",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_critical_finding_alerts' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 139,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 1021,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_critical_finding_alerts",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_critical_finding_alerts' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 140,
+      "file": "server/services/radiologyApplication.service.js",
+      "line": 1023,
+      "function": "if",
+      "domain": "Radiology / PACS",
+      "domainKey": "radiologyApplication",
+      "table": "radiology_critical_finding_alerts",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/radiology (via server/routes/radiology.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'radiology_critical_finding_alerts' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 141,
+      "file": "server/services/resourceAuthorization.service.js",
+      "line": 56,
+      "function": "if",
+      "domain": "Resource Authorization",
+      "domainKey": "resourceAuthorization",
+      "table": "encounters, master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/auth (via server/routes/auth.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters, master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 142,
+      "file": "server/services/resourceAuthorization.service.js",
+      "line": 57,
+      "function": "if",
+      "domain": "Resource Authorization",
+      "domainKey": "resourceAuthorization",
+      "table": "encounters, master_patients",
+      "operation": "READ",
+      "readWrite": "READ",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/auth (via server/routes/auth.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'encounters, master_patients' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 143,
+      "file": "server/services/safetyAuthorization.service.js",
+      "line": 192,
+      "function": "if",
+      "domain": "Safety Decision Authorization",
+      "domainKey": "safetyAuthorization",
+      "table": "safety_decision_registry",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'safety_decision_registry' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 144,
+      "file": "server/services/safetyAuthorization.service.js",
+      "line": 252,
+      "function": "if",
+      "domain": "Safety Decision Authorization",
+      "domainKey": "safetyAuthorization",
+      "table": "safety_decision_registry",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'safety_decision_registry' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    },
+    {
+      "id": 145,
+      "file": "server/services/safetyAuthorization.service.js",
+      "line": 344,
+      "function": "if",
+      "domain": "Safety Decision Authorization",
+      "domainKey": "safetyAuthorization",
+      "table": "safety_decision_registry",
+      "operation": "WRITE",
+      "readWrite": "WRITE",
+      "uowStatus": "OUTSIDE_UOW",
+      "httpEntryPoint": "/api/v1/orders (via server/routes/orders.routes.js)",
+      "reasonUnsafe": "Executes raw SQL query on Stage-0 table 'safety_decision_registry' outside withUnitOfWork; tenant context app.current_tenant_id is not set on session."
+    }
+  ],
+  "objective5_routeMapping": {
+    "unsafeEntryPointCount": 88,
+    "unsafeRlsCallSiteCount": 145,
+    "unmappedCallSitesCount": 0,
+    "mappedRoutes": [
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/appointments",
+        "routeFile": "appointment.routes.js",
+        "line": 8,
+        "controller": "server/controllers/appointment.controller.js",
+        "services": [
+          "server/services/appointmentQueue.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/appointment.controller.js"
+        ],
+        "domainCallSiteIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/appointments/book",
+        "routeFile": "appointment.routes.js",
+        "line": 9,
+        "controller": "server/controllers/appointment.controller.js",
+        "services": [
+          "server/services/appointmentQueue.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/appointment.controller.js"
+        ],
+        "domainCallSiteIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/appointments/check-in",
+        "routeFile": "appointment.routes.js",
+        "line": 10,
+        "controller": "server/controllers/appointment.controller.js",
+        "services": [
+          "server/services/appointmentQueue.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/appointment.controller.js"
+        ],
+        "domainCallSiteIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/appointments/cancel",
+        "routeFile": "appointment.routes.js",
+        "line": 11,
+        "controller": "server/controllers/appointment.controller.js",
+        "services": [
+          "server/services/appointmentQueue.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/appointment.controller.js"
+        ],
+        "domainCallSiteIds": [
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/auth/login",
+        "routeFile": "auth.routes.js",
+        "line": 13,
+        "controller": "server/controllers/auth.controller.js",
+        "services": [
+          "server/services/resourceAuthorization.service.js",
+          "server/services/auth.service.js"
+        ],
+        "associatedCallSiteIds": [
+          141,
+          142
+        ],
+        "targetFiles": [
+          "server/services/resourceAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          141,
+          142
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/auth/refresh",
+        "routeFile": "auth.routes.js",
+        "line": 97,
+        "controller": "server/controllers/auth.controller.js",
+        "services": [
+          "server/services/resourceAuthorization.service.js",
+          "server/services/auth.service.js"
+        ],
+        "associatedCallSiteIds": [
+          141,
+          142
+        ],
+        "targetFiles": [
+          "server/services/resourceAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          141,
+          142
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/auth/logout",
+        "routeFile": "auth.routes.js",
+        "line": 116,
+        "controller": "server/controllers/auth.controller.js",
+        "services": [
+          "server/services/resourceAuthorization.service.js",
+          "server/services/auth.service.js"
+        ],
+        "associatedCallSiteIds": [
+          141,
+          142
+        ],
+        "targetFiles": [
+          "server/services/resourceAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          141,
+          142
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/auth/me",
+        "routeFile": "auth.routes.js",
+        "line": 130,
+        "controller": "server/controllers/auth.controller.js",
+        "services": [
+          "server/services/resourceAuthorization.service.js",
+          "server/services/auth.service.js"
+        ],
+        "associatedCallSiteIds": [
+          141,
+          142
+        ],
+        "targetFiles": [
+          "server/services/resourceAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          141,
+          142
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/beds",
+        "routeFile": "beds.routes.js",
+        "line": 12,
+        "controller": "server/controllers/bedManagement.controller.js",
+        "services": [
+          "server/services/bedManagementApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "targetFiles": [
+          "server/services/bedManagementApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/beds/assign",
+        "routeFile": "beds.routes.js",
+        "line": 15,
+        "controller": "server/controllers/bedManagement.controller.js",
+        "services": [
+          "server/services/bedManagementApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "targetFiles": [
+          "server/services/bedManagementApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/beds/transfer",
+        "routeFile": "beds.routes.js",
+        "line": 18,
+        "controller": "server/controllers/bedManagement.controller.js",
+        "services": [
+          "server/services/bedManagementApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "targetFiles": [
+          "server/services/bedManagementApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/beds/discharge",
+        "routeFile": "beds.routes.js",
+        "line": 21,
+        "controller": "server/controllers/bedManagement.controller.js",
+        "services": [
+          "server/services/bedManagementApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "targetFiles": [
+          "server/services/bedManagementApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/blood-bank/units",
+        "routeFile": "bloodBank.routes.js",
+        "line": 8,
+        "controller": "server/controllers/bloodBank.controller.js",
+        "services": [
+          "server/services/bloodBank.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/bloodBank.controller.js"
+        ],
+        "domainCallSiteIds": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/blood-bank/units",
+        "routeFile": "bloodBank.routes.js",
+        "line": 9,
+        "controller": "server/controllers/bloodBank.controller.js",
+        "services": [
+          "server/services/bloodBank.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/bloodBank.controller.js"
+        ],
+        "domainCallSiteIds": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/blood-bank/crossmatch",
+        "routeFile": "bloodBank.routes.js",
+        "line": 10,
+        "controller": "server/controllers/bloodBank.controller.js",
+        "services": [
+          "server/services/bloodBank.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/bloodBank.controller.js"
+        ],
+        "domainCallSiteIds": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/blood-bank/transfusion/verify",
+        "routeFile": "bloodBank.routes.js",
+        "line": 11,
+        "controller": "server/controllers/bloodBank.controller.js",
+        "services": [
+          "server/services/bloodBank.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/bloodBank.controller.js"
+        ],
+        "domainCallSiteIds": [
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/coordination/encounters/:encounterId/timeline",
+        "routeFile": "careCoordinationAndTimeline.routes.js",
+        "line": 13,
+        "controller": "server/controllers/careCoordinationAndTimeline.controller.js",
+        "services": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "associatedCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "targetFiles": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "domainCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/coordination/care-plans",
+        "routeFile": "careCoordinationAndTimeline.routes.js",
+        "line": 16,
+        "controller": "server/controllers/careCoordinationAndTimeline.controller.js",
+        "services": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "associatedCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "targetFiles": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "domainCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/coordination/handovers",
+        "routeFile": "careCoordinationAndTimeline.routes.js",
+        "line": 19,
+        "controller": "server/controllers/careCoordinationAndTimeline.controller.js",
+        "services": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "associatedCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "targetFiles": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "domainCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/coordination/handovers/:id/acknowledge",
+        "routeFile": "careCoordinationAndTimeline.routes.js",
+        "line": 22,
+        "controller": "server/controllers/careCoordinationAndTimeline.controller.js",
+        "services": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "associatedCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "targetFiles": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "domainCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/coordination/discharge-summaries",
+        "routeFile": "careCoordinationAndTimeline.routes.js",
+        "line": 25,
+        "controller": "server/controllers/careCoordinationAndTimeline.controller.js",
+        "services": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "associatedCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ],
+        "targetFiles": [
+          "server/services/careCoordinationAndTimeline.service.js"
+        ],
+        "domainCallSiteIds": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/monitoring/observations",
+        "routeFile": "clinicalMonitoring.routes.js",
+        "line": 14,
+        "controller": "server/controllers/clinicalMonitoring.controller.js",
+        "services": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "associatedCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ],
+        "targetFiles": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "domainCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/monitoring/observations/:id/escalate",
+        "routeFile": "clinicalMonitoring.routes.js",
+        "line": 17,
+        "controller": "server/controllers/clinicalMonitoring.controller.js",
+        "services": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "associatedCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ],
+        "targetFiles": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "domainCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/monitoring/escalations/:id/acknowledge",
+        "routeFile": "clinicalMonitoring.routes.js",
+        "line": 20,
+        "controller": "server/controllers/clinicalMonitoring.controller.js",
+        "services": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "associatedCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ],
+        "targetFiles": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "domainCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/monitoring/rapid-response",
+        "routeFile": "clinicalMonitoring.routes.js",
+        "line": 23,
+        "controller": "server/controllers/clinicalMonitoring.controller.js",
+        "services": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "associatedCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ],
+        "targetFiles": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "domainCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/monitoring/observations/:id/reassess",
+        "routeFile": "clinicalMonitoring.routes.js",
+        "line": 26,
+        "controller": "server/controllers/clinicalMonitoring.controller.js",
+        "services": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "associatedCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ],
+        "targetFiles": [
+          "server/services/clinicalMonitoring.service.js"
+        ],
+        "domainCallSiteIds": [
+          39,
+          40,
+          41,
+          42,
+          43
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/clinical-notes/soap",
+        "routeFile": "clinicalNotes.routes.js",
+        "line": 14,
+        "controller": "server/controllers/clinicalNotes.controller.js",
+        "services": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ],
+        "targetFiles": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/clinical-notes/soap/:id/amend",
+        "routeFile": "clinicalNotes.routes.js",
+        "line": 17,
+        "controller": "server/controllers/clinicalNotes.controller.js",
+        "services": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ],
+        "targetFiles": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/clinical-notes/soap/encounter/:encounterId",
+        "routeFile": "clinicalNotes.routes.js",
+        "line": 20,
+        "controller": "server/controllers/clinicalNotes.controller.js",
+        "services": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ],
+        "targetFiles": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/clinical-notes/cppt",
+        "routeFile": "clinicalNotes.routes.js",
+        "line": 24,
+        "controller": "server/controllers/clinicalNotes.controller.js",
+        "services": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ],
+        "targetFiles": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ]
+      },
+      {
+        "method": "PATCH",
+        "fullPath": "/api/v1/clinical-notes/cppt/:id/verify",
+        "routeFile": "clinicalNotes.routes.js",
+        "line": 27,
+        "controller": "server/controllers/clinicalNotes.controller.js",
+        "services": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ],
+        "targetFiles": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/clinical-notes/cppt/encounter/:encounterId",
+        "routeFile": "clinicalNotes.routes.js",
+        "line": 30,
+        "controller": "server/controllers/clinicalNotes.controller.js",
+        "services": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ],
+        "targetFiles": [
+          "server/services/clinicalNotesApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/command-center/capacity",
+        "routeFile": "commandCenter.routes.js",
+        "line": 8,
+        "controller": "server/controllers/commandCenter.controller.js",
+        "services": [
+          "server/services/executiveCommandCenter.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/commandCenter.controller.js"
+        ],
+        "domainCallSiteIds": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/command-center/emergency",
+        "routeFile": "commandCenter.routes.js",
+        "line": 9,
+        "controller": "server/controllers/commandCenter.controller.js",
+        "services": [
+          "server/services/executiveCommandCenter.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/commandCenter.controller.js"
+        ],
+        "domainCallSiteIds": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/command-center/financial",
+        "routeFile": "commandCenter.routes.js",
+        "line": 10,
+        "controller": "server/controllers/commandCenter.controller.js",
+        "services": [
+          "server/services/executiveCommandCenter.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/commandCenter.controller.js"
+        ],
+        "domainCallSiteIds": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/command-center/safety",
+        "routeFile": "commandCenter.routes.js",
+        "line": 11,
+        "controller": "server/controllers/commandCenter.controller.js",
+        "services": [
+          "server/services/executiveCommandCenter.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/commandCenter.controller.js"
+        ],
+        "domainCallSiteIds": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/command-center/alerts",
+        "routeFile": "commandCenter.routes.js",
+        "line": 12,
+        "controller": "server/controllers/commandCenter.controller.js",
+        "services": [
+          "server/services/executiveCommandCenter.service.js"
+        ],
+        "associatedCallSiteIds": [],
+        "targetFiles": [
+          "server/controllers/commandCenter.controller.js"
+        ],
+        "domainCallSiteIds": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/diagnostics/notifications",
+        "routeFile": "diagnosticInterpretation.routes.js",
+        "line": 13,
+        "controller": "server/controllers/diagnosticInterpretation.controller.js",
+        "services": [
+          "server/services/diagnosticInterpretation.service.js"
+        ],
+        "associatedCallSiteIds": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82
+        ],
+        "targetFiles": [
+          "server/services/diagnosticInterpretation.service.js"
+        ],
+        "domainCallSiteIds": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/diagnostics/notifications/:id/acknowledge",
+        "routeFile": "diagnosticInterpretation.routes.js",
+        "line": 16,
+        "controller": "server/controllers/diagnosticInterpretation.controller.js",
+        "services": [
+          "server/services/diagnosticInterpretation.service.js"
+        ],
+        "associatedCallSiteIds": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82
+        ],
+        "targetFiles": [
+          "server/services/diagnosticInterpretation.service.js"
+        ],
+        "domainCallSiteIds": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/diagnostics/notifications/:id/interpret",
+        "routeFile": "diagnosticInterpretation.routes.js",
+        "line": 19,
+        "controller": "server/controllers/diagnosticInterpretation.controller.js",
+        "services": [
+          "server/services/diagnosticInterpretation.service.js"
+        ],
+        "associatedCallSiteIds": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82
+        ],
+        "targetFiles": [
+          "server/services/diagnosticInterpretation.service.js"
+        ],
+        "domainCallSiteIds": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/diagnostics/interpretations/:id/actions",
+        "routeFile": "diagnosticInterpretation.routes.js",
+        "line": 22,
+        "controller": "server/controllers/diagnosticInterpretation.controller.js",
+        "services": [
+          "server/services/diagnosticInterpretation.service.js"
+        ],
+        "associatedCallSiteIds": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82
+        ],
+        "targetFiles": [
+          "server/services/diagnosticInterpretation.service.js"
+        ],
+        "domainCallSiteIds": [
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/dicomweb/worklist",
+        "routeFile": "dicomweb.routes.js",
+        "line": 19,
+        "controller": null,
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/dicomweb/orders",
+        "routeFile": "dicomweb.routes.js",
+        "line": 34,
+        "controller": null,
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/dicomweb/studies",
+        "routeFile": "dicomweb.routes.js",
+        "line": 47,
+        "controller": null,
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/dicomweb/studies/:studyInstanceUid/metadata",
+        "routeFile": "dicomweb.routes.js",
+        "line": 79,
+        "controller": null,
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/dicomweb/studies/:studyInstanceUid/series/:seriesInstanceUid/instances/:sopInstanceUid/rendered",
+        "routeFile": "dicomweb.routes.js",
+        "line": 106,
+        "controller": null,
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/dicomweb/studies",
+        "routeFile": "dicomweb.routes.js",
+        "line": 132,
+        "controller": null,
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/laboratory/specimens/generate",
+        "routeFile": "laboratory.routes.js",
+        "line": 16,
+        "controller": "server/controllers/laboratory.controller.js",
+        "services": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ],
+        "targetFiles": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/laboratory/specimens/:id/collect",
+        "routeFile": "laboratory.routes.js",
+        "line": 19,
+        "controller": "server/controllers/laboratory.controller.js",
+        "services": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ],
+        "targetFiles": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/laboratory/specimens/:id/accession",
+        "routeFile": "laboratory.routes.js",
+        "line": 22,
+        "controller": "server/controllers/laboratory.controller.js",
+        "services": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ],
+        "targetFiles": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/laboratory/specimens/:id/results",
+        "routeFile": "laboratory.routes.js",
+        "line": 28,
+        "controller": "server/controllers/laboratory.controller.js",
+        "services": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ],
+        "targetFiles": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/laboratory/results/:id/release",
+        "routeFile": "laboratory.routes.js",
+        "line": 31,
+        "controller": "server/controllers/laboratory.controller.js",
+        "services": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ],
+        "targetFiles": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/laboratory/panic-alerts/:id/acknowledge",
+        "routeFile": "laboratory.routes.js",
+        "line": 37,
+        "controller": "server/controllers/laboratory.controller.js",
+        "services": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ],
+        "targetFiles": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/laboratory/panic-alerts/:id/escalate",
+        "routeFile": "laboratory.routes.js",
+        "line": 40,
+        "controller": "server/controllers/laboratory.controller.js",
+        "services": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ],
+        "targetFiles": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/laboratory/orders/:orderId/specimens",
+        "routeFile": "laboratory.routes.js",
+        "line": 46,
+        "controller": "server/controllers/laboratory.controller.js",
+        "services": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ],
+        "targetFiles": [
+          "server/services/laboratoryApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          83,
+          84,
+          85,
+          86,
+          87,
+          88,
+          89,
+          90
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/medications/prescribe",
+        "routeFile": "medicationClosedLoop.routes.js",
+        "line": 14,
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "services": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "associatedCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ],
+        "targetFiles": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "domainCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/medications/:id/pharmacist-review",
+        "routeFile": "medicationClosedLoop.routes.js",
+        "line": 17,
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "services": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "associatedCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ],
+        "targetFiles": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "domainCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/medications/:id/dispense",
+        "routeFile": "medicationClosedLoop.routes.js",
+        "line": 20,
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "services": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "associatedCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ],
+        "targetFiles": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "domainCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/medications/:id/administer",
+        "routeFile": "medicationClosedLoop.routes.js",
+        "line": 23,
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "services": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "associatedCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ],
+        "targetFiles": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "domainCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/medications/reconciliation/admission",
+        "routeFile": "medicationClosedLoop.routes.js",
+        "line": 26,
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "services": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "associatedCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ],
+        "targetFiles": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "domainCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/medications/reconciliation/discharge",
+        "routeFile": "medicationClosedLoop.routes.js",
+        "line": 29,
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "services": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "associatedCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ],
+        "targetFiles": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "domainCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/medications/administrations/:id/adverse-reaction",
+        "routeFile": "medicationClosedLoop.routes.js",
+        "line": 32,
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "services": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "associatedCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ],
+        "targetFiles": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "domainCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/medications/:id/cancel",
+        "routeFile": "medicationClosedLoop.routes.js",
+        "line": 35,
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "services": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "associatedCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ],
+        "targetFiles": [
+          "server/services/medicationClosedLoop.service.js"
+        ],
+        "domainCallSiteIds": [
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          102,
+          103
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/orders/cpoe",
+        "routeFile": "orders.routes.js",
+        "line": 19,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/orders/cpoe/:id/cancel",
+        "routeFile": "orders.routes.js",
+        "line": 22,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/orders/cpoe",
+        "routeFile": "orders.routes.js",
+        "line": 25,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/orders/cpoe/:id",
+        "routeFile": "orders.routes.js",
+        "line": 28,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/orders/cpoe/encounter/:encounterId",
+        "routeFile": "orders.routes.js",
+        "line": 31,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/orders",
+        "routeFile": "orders.routes.js",
+        "line": 37,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/orders/prescription",
+        "routeFile": "orders.routes.js",
+        "line": 41,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/orders/lab",
+        "routeFile": "orders.routes.js",
+        "line": 55,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/orders/radiology",
+        "routeFile": "orders.routes.js",
+        "line": 69,
+        "controller": "server/controllers/cpoe.controller.js",
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "associatedCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ],
+        "targetFiles": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "domainCallSiteIds": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          143,
+          144,
+          145
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/patient-financial/deposits",
+        "routeFile": "patientFinancialAndRevenueCycle.routes.js",
+        "line": 16,
+        "controller": "server/controllers/patientFinancialAndRevenueCycle.controller.js",
+        "services": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "associatedCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ],
+        "targetFiles": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "domainCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/patient-financial/invoices",
+        "routeFile": "patientFinancialAndRevenueCycle.routes.js",
+        "line": 19,
+        "controller": "server/controllers/patientFinancialAndRevenueCycle.controller.js",
+        "services": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "associatedCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ],
+        "targetFiles": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "domainCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/patient-financial/payments",
+        "routeFile": "patientFinancialAndRevenueCycle.routes.js",
+        "line": 22,
+        "controller": "server/controllers/patientFinancialAndRevenueCycle.controller.js",
+        "services": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "associatedCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ],
+        "targetFiles": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "domainCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/patient-financial/adjustments",
+        "routeFile": "patientFinancialAndRevenueCycle.routes.js",
+        "line": 25,
+        "controller": "server/controllers/patientFinancialAndRevenueCycle.controller.js",
+        "services": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "associatedCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ],
+        "targetFiles": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "domainCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/patient-financial/shifts/reconcile",
+        "routeFile": "patientFinancialAndRevenueCycle.routes.js",
+        "line": 28,
+        "controller": "server/controllers/patientFinancialAndRevenueCycle.controller.js",
+        "services": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "associatedCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ],
+        "targetFiles": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "domainCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/patient-financial/ar",
+        "routeFile": "patientFinancialAndRevenueCycle.routes.js",
+        "line": 31,
+        "controller": "server/controllers/patientFinancialAndRevenueCycle.controller.js",
+        "services": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "associatedCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ],
+        "targetFiles": [
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "domainCallSiteIds": [
+          114,
+          115,
+          116,
+          117,
+          118,
+          119,
+          120,
+          121
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/patients",
+        "routeFile": "patients.routes.js",
+        "line": 9,
+        "controller": "server/controllers/patient.controller.js",
+        "services": [
+          "server/services/patientApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113
+        ],
+        "targetFiles": [
+          "server/services/patientApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/patients/:id",
+        "routeFile": "patients.routes.js",
+        "line": 12,
+        "controller": "server/controllers/patient.controller.js",
+        "services": [
+          "server/services/patientApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113
+        ],
+        "targetFiles": [
+          "server/services/patientApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/patients",
+        "routeFile": "patients.routes.js",
+        "line": 15,
+        "controller": "server/controllers/patient.controller.js",
+        "services": [
+          "server/services/patientApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113
+        ],
+        "targetFiles": [
+          "server/services/patientApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/radiology/worklist/generate",
+        "routeFile": "radiology.routes.js",
+        "line": 16,
+        "controller": "server/controllers/radiology.controller.js",
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/radiology/studies/acquire",
+        "routeFile": "radiology.routes.js",
+        "line": 19,
+        "controller": "server/controllers/radiology.controller.js",
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/radiology/studies/:id/reports",
+        "routeFile": "radiology.routes.js",
+        "line": 25,
+        "controller": "server/controllers/radiology.controller.js",
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/radiology/reports/:id/amend",
+        "routeFile": "radiology.routes.js",
+        "line": 28,
+        "controller": "server/controllers/radiology.controller.js",
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/radiology/critical-alerts/:id/acknowledge",
+        "routeFile": "radiology.routes.js",
+        "line": 34,
+        "controller": "server/controllers/radiology.controller.js",
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "POST",
+        "fullPath": "/api/v1/radiology/critical-alerts/:id/escalate",
+        "routeFile": "radiology.routes.js",
+        "line": 37,
+        "controller": "server/controllers/radiology.controller.js",
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      },
+      {
+        "method": "GET",
+        "fullPath": "/api/v1/radiology/orders/:orderId/studies",
+        "routeFile": "radiology.routes.js",
+        "line": 43,
+        "controller": "server/controllers/radiology.controller.js",
+        "services": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "associatedCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ],
+        "targetFiles": [
+          "server/services/radiologyApplication.service.js"
+        ],
+        "domainCallSiteIds": [
+          122,
+          123,
+          124,
+          125,
+          126,
+          127,
+          128,
+          129,
+          130,
+          131,
+          132,
+          133,
+          134,
+          135,
+          136,
+          137,
+          138,
+          139,
+          140
+        ]
+      }
+    ]
+  },
+  "objective6_candidateFacts": {
+    "candidateA": {
+      "candidate": "Candidate A (Nursing / CPPT)",
+      "files": [
+        "server/routes/clinicalNotes.routes.js",
+        "server/controllers/clinicalNotes.controller.js",
+        "server/services/clinicalNotesApplication.service.js"
+      ],
+      "routes": 6,
+      "dbInteractions": 35,
+      "stage0RlsCallSites": 15,
+      "writesOutsideUow": 4,
+      "readsOutsideUow": 31,
+      "realDbTests": 0,
+      "mockTests": 1,
+      "sharedTables": [
+        "encounters",
+        "master_patients",
+        "universal_audit_logs"
+      ],
+      "sharedServices": [
+        "postgresPoolService"
+      ],
+      "transactionBoundaries": "Manual client BEGIN/COMMIT/ROLLBACK per note creation and verification"
+    },
+    "candidateB": {
+      "candidate": "Candidate B (Medication Closed-Loop)",
+      "files": [
+        "server/routes/medicationClosedLoop.routes.js",
+        "server/controllers/medicationClosedLoop.controller.js",
+        "server/services/medicationClosedLoop.service.js"
+      ],
+      "routes": 8,
+      "dbInteractions": 80,
+      "stage0RlsCallSites": 13,
+      "writesOutsideUow": 23,
+      "readsOutsideUow": 57,
+      "realDbTests": 0,
+      "mockTests": 12,
+      "sharedTables": [
+        "clinical_orders",
+        "cpoe_order_items",
+        "encounters",
+        "patient_allergies",
+        "clinical_domain_outbox",
+        "universal_audit_logs"
+      ],
+      "sharedServices": [
+        "safetyAuthorization.service.js",
+        "enterpriseInventory",
+        "postgresPoolService"
+      ],
+      "transactionBoundaries": "Multi-table manual client transactions coordinating FEFO batch stock deductions, eMAR logging, and outbox emission"
+    },
+    "candidateC": {
+      "candidate": "Candidate C (CPOE + Diagnostic Interpretation)",
+      "subDomains": {
+        "c1_cpoe": {
+          "files": [
+            "server/routes/orders.routes.js",
+            "server/controllers/cpoe.controller.js",
+            "server/services/cpoeApplication.service.js"
+          ],
+          "routes": 9,
+          "dbInteractions": 22,
+          "stage0RlsCallSites": 13,
+          "writesOutsideUow": 3,
+          "readsOutsideUow": 19
+        },
+        "c2_diagnostics": {
+          "files": [
+            "server/routes/diagnosticInterpretation.routes.js",
+            "server/controllers/diagnosticInterpretation.controller.js",
+            "server/services/diagnosticInterpretation.service.js"
+          ],
+          "routes": 4,
+          "dbInteractions": 38,
+          "stage0RlsCallSites": 11,
+          "writesOutsideUow": 9,
+          "readsOutsideUow": 29
+        }
+      },
+      "combined": {
+        "routes": 13,
+        "dbInteractions": 60,
+        "stage0RlsCallSites": 24,
+        "writesOutsideUow": 12,
+        "readsOutsideUow": 48,
+        "realDbTests": 0,
+        "mockTests": 3,
+        "sharedTables": [
+          "clinical_orders",
+          "cpoe_order_items",
+          "encounters",
+          "clinical_domain_outbox",
+          "universal_audit_logs"
+        ],
+        "sharedServices": [
+          "safetyAuthorization.service.js",
+          "transactionManager",
+          "postgresPoolService"
+        ],
+        "synchronousTransactionCoupling": "NONE (Zero shared synchronous transactions)"
+      }
+    },
+    "candidateD": {
+      "candidate": "Candidate D (Patient Financial & Revenue Cycle)",
+      "coreServiceScope": {
+        "files": [
+          "server/routes/patientFinancialAndRevenueCycle.routes.js",
+          "server/controllers/patientFinancialAndRevenueCycle.controller.js",
+          "server/services/patientFinancialAndRevenueCycle.service.js"
+        ],
+        "routes": 6,
+        "dbInteractions": 42,
+        "stage0RlsCallSites": 8,
+        "writesOutsideUow": 15,
+        "readsOutsideUow": 27
+      },
+      "expandedBillingScope": {
+        "additionalFiles": [
+          "server/routes/billing.routes.js"
+        ],
+        "routes": 7,
+        "dbInteractions": 45,
+        "stage0RlsCallSites": 8,
+        "writesOutsideUow": 15,
+        "readsOutsideUow": 30
+      },
+      "realDbTests": 0,
+      "mockTests": 5,
+      "sharedTables": [
+        "patient_split_invoices",
+        "encounters",
+        "clinical_domain_outbox"
+      ],
+      "sharedServices": [
+        "careCoordinationAndTimeline.service.js",
+        "postgresPoolService"
+      ]
+    }
+  },
+  "objective7_denominatorDefinitions": {
+    "dbInteraction": "Any invocation of pool.query, client.query, pool.connect, or transactionManager in application code.",
+    "sqlCallSite": "A call site executing a parameterized or raw SQL query string against PostgreSQL.",
+    "stage0RlsSqlCallSite": "An SQL call site whose query target is one of the 33 Stage-0 RLS tables.",
+    "write": "An SQL execution performing INSERT, UPDATE, or DELETE on database records.",
+    "read": "An SQL execution performing SELECT on database records, or non-mutation query helper.",
+    "transactionControl": "An SQL execution issuing BEGIN, COMMIT, or ROLLBACK commands to manage transaction boundaries."
+  },
+  "objective8_regression": {
+    "targetSuites": 6,
+    "testsTotal": 81,
+    "testsPassed": 81,
+    "status": "81/81 PASS (100% Clean)"
+  }
+}
