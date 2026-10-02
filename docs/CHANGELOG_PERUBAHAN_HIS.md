@@ -16,6 +16,47 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [02 OKTOBER 2026] — P0-2B: REKONSILIASI INDEPENDEN INVENTORI RLS/UOW & PEMERIKSAAN KONTRAK SOURCE
+**Tag Rilis:** `audit-p02b-independent-rls-uow-reconciliation`
+**Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`
+**Status Audit:** `INDEPENDENT AUDIT: COMPLETED | DB CALL SITES: 846 (VERIFIED) | REQUEST PATH CALLS: 845 (VERIFIED) | RLS CALL SITES: 157 (VERIFIED) | SAFE RLS: 12 (VERIFIED) | UNSAFE RLS: 145 (VERIFIED) | ENTRY POINTS: 88 ACTUAL / 153 HISTORICAL (DISCREPANCY EXPLAINED) | WRITES OUTSIDE UOW: 234 TOTAL / 127 TENANT-SENSITIVE | REGRESSION: 81/81 PASS`
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | NEXT WAVE: HOLD — PENDING HUMAN SELECTION`**
+
+Telah selesai dilaksanakan **audit rekonsiliasi independen (Independent Cross-Check)** terhadap klaim inventori RLS/UoW dan kandidat Wave berikutnya tanpa mengubah kode produksi aplikasi:
+
+#### 1. Verifikasi Sumber Kebenaran Tabel RLS (PostgreSQL vs Scanner vs Migration)
+- **Katalog Database PostgreSQL 16 (`nurseflow_security_lab`):** Terdapat tepat **100 tabel** dengan `relrowsecurity = true` dan memiliki policy aktif pada skema `public` (dinormalisasi oleh Migration 081).
+- **Scanner RLS Catalog:** Menggunakan **33 tabel** (10 tabel core + 21 tabel zero-policy Migration 079 + 2 tabel triase). Ini merupakan subset inti Stage 0 Default-Deny.
+- **Migration Source:** Migrasi 009-024 dan 079-082 secara konsisten mendefinisikan 100 tabel tersebut.
+
+#### 2. Rekonsiliasi Independen AST Call Sites & UoW Execution Path
+- **Total Production DB Call Sites:** **846** (diverifikasi independen, delta = 0).
+- **Request-Path DB Call Sites:** **845** (diverifikasi independen, delta = 0). 1 query dikecualikan secara valid: line 100 `server/config/envValidator.js` (`assertRuntimeDatabaseSafety` saat boot).
+- **Request-Path RLS Call Sites:** **157** (diverifikasi independen, delta = 0).
+- **Safe RLS Call Sites (Inside UoW):** Tepat **12 call sites** (1 di `encounterApplication` line 61 + 11 di `triageApplication` lines 130, 131, 134, 137, 230, 250, 333, 341, 346, 360, 370).
+- **Unsafe RLS Call Sites (Outside UoW):** Tepat **145 call sites** di 16 domain.
+- **Tenant-Sensitive Writes Outside UoW:** Tepat **234 penulisan** pada pipeline request di luar UoW (127 menyentuh tabel dengan kolom `tenant_id`, 120 menyentuh tabel RLS).
+
+#### 3. Rekonsiliasi Entry Points (Penemuan Discrepancy Metrik 153)
+- **Fakta Fisik Source Code:** Total HTTP API routes dalam repositori adalah **150 rute** (+ 5 rute health/observability = 155).
+- Rute aman ber-UoW: 7 rute (3 triase + 4 encounter).
+- Rute tak aman yang memanggil domain ber-RLS: **88 rute**.
+- Rute pada domain non-RLS: 55 rute.
+- **Akar Masalah Angka "153":** Terjadi kerancuan semantik pada Wave 1A.11 di mana 156 AST query sites disebut sebagai "156 unsafe RLS request paths", lalu dikurangi 3 rute triase pada Wave 1B.1 menjadi 153. Faktanya, jumlah rute HTTP yang menyentuh tabel RLS adalah **88 rute**.
+
+#### 4. Verifikasi Faktual Kandidat Wave A, B, C, D
+- **Kandidat A (Nursing / CPPT):** 15 RLS calls, 4 writes, 31 reads, 6 rute (`VERIFIED`).
+- **Kandidat B (Medication Closed-Loop):** 13 RLS calls, 23 writes, 57 reads, 8 rute (`VERIFIED`).
+- **Kandidat C (CPOE + Diagnostics):** 24 RLS calls, 12 writes, 48 reads, 13 rute (`VERIFIED`).
+- **Kandidat D (Patient Financial):** 8 RLS calls, 15 writes, 27 reads, 6 rute (`VERIFIED`).
+
+#### 5. Artefak Terbitan & Verifikasi Regresi
+- Laporan Rekonsiliasi: [`docs/audit/P0-2B-RLS-UOW-INDEPENDENT-RECONCILIATION.md`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/docs/audit/P0-2B-RLS-UOW-INDEPENDENT-RECONCILIATION.md)
+- Data Mesin: [`scratch/p02b_rls_uow_independent_reconciliation.json`](file:///c:/ALL%20DATA/BERKAS%20ROBBY/APPS%20PROJECT/NurseFlow-WebApp/scratch/p02b_rls_uow_independent_reconciliation.json)
+- Regresi Pengujian: 81/81 PASS (100% clean).
+
+---
+
 ### 📌 [02 OKTOBER 2026] — P0-2B POST-WAVE 1B.1: INVENTORI LENGKAP BACKLOG RLS/UOW & SELEKSI KANDIDAT NEXT-WAVE
 **Tag Rilis:** `audit-p02b-post-wave1b1-rls-uow-inventory`
 **Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`
