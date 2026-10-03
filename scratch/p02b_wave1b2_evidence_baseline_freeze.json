@@ -1,0 +1,175 @@
+{
+  "document_id": "DOC-AUDIT-P02B-WAVE1B2-EVIDENCE-BASELINE-FREEZE-20261003",
+  "freeze_timestamp": "2026-10-03T11:00:00+07:00",
+  "repository": "Mojo-Brothers/NurseFlow-WebApp",
+  "branch": "feature/security-foundation-wave1a10",
+  "base_commit": "4efa9362d0e7bce28f541cfdee04caf0308dcdbb",
+  "audited_readiness_commit": "9680fc99226f13f671b20b8409a62cbfac014cc3",
+  "audit_integrity_commit": "e3d7b0abe6719fe270cafd61c62b5bc813ec1d46",
+  "canonical_regression_status": "81/81 PASS",
+  "production_code_modifications": 0,
+  "migration_modifications": 0,
+  "schema_modifications": 0,
+  "test_modifications": 0,
+  "human_owner_decision": {
+    "candidate": "[NOT SELECTED]",
+    "status": "PENDING HUMAN OWNER DECISION",
+    "wave_1b2_implementation": "NOT STARTED"
+  },
+  "information_classification_standard": {
+    "fact": "Direct empirical evidence from repository code, schema, tests, or Git history",
+    "derived_metric": "Quantified value computed via deterministic AST or static analysis scripts",
+    "interpretation": "Technical architectural evaluation of the evidence",
+    "implementation_prerequisite": "Mandatory engineering requirements if a candidate is chosen"
+  },
+  "canonical_artifacts": {
+    "matrix_doc": "docs/audit/P0-2B-WAVE1B2-DOMAIN-SELECTION-DECISION-MATRIX.md",
+    "readiness_review_doc": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md",
+    "audit_integrity_doc": "docs/audit/P0-2B-WAVE1B2-AUDIT-INTEGRITY-REVIEW.md",
+    "evidence_freeze_doc": "docs/audit/P0-2B-WAVE1B2-EVIDENCE-BASELINE-FREEZE.md",
+    "matrix_json": "scratch/p02b_wave1b2_domain_selection_matrix.json",
+    "canonical_readiness_json": "scratch/p02b_wave1b2_architecture_readiness_review.json",
+    "audit_integrity_json": "scratch/p02b_wave1b2_audit_integrity_review.json",
+    "evidence_freeze_json": "scratch/p02b_wave1b2_evidence_baseline_freeze.json"
+  },
+  "verified_candidate_metrics": {
+    "Candidate_A": {
+      "name": "Queue / Appointments",
+      "stage0_call_sites": 3,
+      "stage0_writes": 2,
+      "stage0_reads": 1,
+      "total_module_db_calls": 33,
+      "total_module_writes": 12,
+      "total_module_reads": 21,
+      "stage0_tables": ["master_patients"],
+      "express_routes_total": 4,
+      "active_stage0_routes": 2,
+      "zero_stage0_routes": 2,
+      "shared_call_sites": 0,
+      "controller_file": "server/controllers/appointment.controller.js",
+      "service_file": "NONE (direct in controller)",
+      "route_file": "server/routes/appointment.routes.js",
+      "existing_mock_test_suites": 2,
+      "existing_real_rls_suites": 0
+    },
+    "Candidate_B": {
+      "name": "Medication Closed-Loop",
+      "stage0_call_sites": 13,
+      "stage0_writes": 5,
+      "stage0_reads": 8,
+      "total_module_db_calls": 80,
+      "total_module_writes": 23,
+      "total_module_reads": 57,
+      "stage0_tables": ["clinical_orders", "medication_dispense_allocations", "medication_emar_administrations", "universal_audit_logs"],
+      "express_routes_total": 8,
+      "active_stage0_routes": 3,
+      "zero_stage0_routes": 5,
+      "shared_call_sites": 0,
+      "controller_file": "server/controllers/medicationClosedLoop.controller.js",
+      "service_file": "server/services/medicationClosedLoop.service.js",
+      "route_file": "server/routes/medicationClosedLoop.routes.js",
+      "existing_mock_test_suites": 8,
+      "existing_real_rls_suites": 0
+    },
+    "Candidate_C1": {
+      "name": "CPOE Orders & Safety",
+      "stage0_call_sites": 16,
+      "stage0_writes": 4,
+      "stage0_reads": 12,
+      "total_module_db_calls": 25,
+      "total_module_writes": 6,
+      "total_module_reads": 19,
+      "stage0_tables": ["clinical_orders", "universal_audit_logs", "safety_decision_registry"],
+      "express_routes_total": 9,
+      "active_stage0_routes": 6,
+      "zero_stage0_routes": 3,
+      "shared_call_sites": 1,
+      "shared_call_site_detail": "CS 71 (cpoeApplication.service.js:608) reached by GET /cpoe and GET /orders",
+      "controller_file": "server/controllers/cpoe.controller.js",
+      "service_file": "server/services/cpoeApplication.service.js & safetyAuthorization.service.js",
+      "route_file": "server/routes/orders.routes.js",
+      "existing_mock_test_suites": 3,
+      "existing_real_rls_suites": 0
+    },
+    "Candidate_C2": {
+      "name": "Diagnostics",
+      "stage0_call_sites": 11,
+      "stage0_writes": 3,
+      "stage0_reads": 8,
+      "total_module_db_calls": 38,
+      "total_module_writes": 9,
+      "total_module_reads": 29,
+      "stage0_tables": ["encounters", "physician_diagnostic_interpretations", "clinical_orders", "universal_audit_logs"],
+      "express_routes_total": 4,
+      "active_stage0_routes": 3,
+      "zero_stage0_routes": 1,
+      "shared_call_sites": 0,
+      "controller_file": "server/controllers/diagnosticInterpretation.controller.js",
+      "service_file": "server/services/diagnosticInterpretation.service.js",
+      "route_file": "server/routes/diagnosticInterpretation.routes.js",
+      "existing_mock_test_suites": 1,
+      "existing_real_rls_suites": 0
+    },
+    "Candidate_D": {
+      "name": "Master Patient / Admission",
+      "stage0_call_sites": 10,
+      "stage0_writes": 3,
+      "stage0_reads": 7,
+      "total_module_db_calls": 15,
+      "total_module_writes": 1,
+      "total_module_reads": 14,
+      "stage0_tables": ["master_patients"],
+      "express_routes_total": 3,
+      "active_stage0_routes": 3,
+      "zero_stage0_routes": 0,
+      "shared_call_sites": 0,
+      "controller_file": "server/controllers/patient.controller.js",
+      "service_file": "server/services/patientApplication.service.js",
+      "route_file": "server/routes/patients.routes.js",
+      "existing_mock_test_suites": 11,
+      "existing_real_rls_suites": 0
+    }
+  },
+  "verified_defect_cs82": {
+    "location": "server/services/diagnosticInterpretation.service.js:528",
+    "call_site": "CS 82",
+    "target_table": "clinical_orders",
+    "operation": "INSERT",
+    "classification": "VERIFIED_CURRENT_DEFECT",
+    "status": "Implementation prerequisite if Candidate C2 is eventually selected",
+    "technical_findings": {
+      "tenant_id_in_insert": false,
+      "columns_specified_count": 13,
+      "table_column_not_null": true,
+      "column_has_default": false,
+      "trigger_auto_fills_tenant": false,
+      "runtime_failure_on_real_pg": true
+    }
+  },
+  "c1_c2_coupling_verification": {
+    "dimension_a_direct_synchronous_service_coupling": {
+      "coupled": false,
+      "status": "NO DIRECT SYNCHRONOUS SERVICE COUPLING",
+      "evidence": "cpoeApplication.service.js and diagnosticInterpretation.service.js do not import or call each other"
+    },
+    "dimension_b_shared_datastore_mutation": {
+      "coupled": true,
+      "status": "SHARED DATASTORE MUTATION",
+      "evidence": "Both modules perform mutations on Stage-0 table clinical_orders"
+    },
+    "dimension_c_shared_transaction_boundary": {
+      "coupled": false,
+      "status": "NO SHARED TRANSACTION BOUNDARY",
+      "evidence": "Each module establishes and manages its own independent database client transaction"
+    }
+  },
+  "master_patients_fk_verification": {
+    "total_referencing_constraints": 65,
+    "unique_referencing_tables": 65,
+    "on_delete_cascade_count": 0,
+    "on_delete_restrict_count": 42,
+    "on_delete_no_action_count": 23,
+    "composite_fks": 1,
+    "classification": "DIRECT FK ROOT / HIGH-DEGREE RELATIONAL HUB"
+  }
+}
