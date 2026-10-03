@@ -1,0 +1,1252 @@
+{
+  "commit": "adaad6341e7f56f297162494b4fa9a611d9515ed",
+  "generated_at": "2026-10-03T02:51:36.574Z",
+  "read_only": true,
+  "baseline_summary": {
+    "total_unsafe_rls_call_sites": 145,
+    "http_reachable": 143,
+    "unreachable_from_http": 2,
+    "active_stage0_routes": 42,
+    "zero_stage0_routes": 46,
+    "total_domain_envelope_routes": 88,
+    "canonical_regression": "81/81 PASS",
+    "production_code_changes": 0
+  },
+  "candidates": {
+    "candidateA": {
+      "totalRoutes": 4,
+      "activeStage0Routes": 2,
+      "zeroStage0Routes": 2,
+      "stage0UnsafeCallSites": 3,
+      "httpReachableCallSites": 3,
+      "unreachableCallSites": 0,
+      "stage0TablesCount": 1,
+      "unsafeWritesStage0": 2,
+      "unsafeReadsStage0": 1,
+      "totalDomainDbCalls": 33,
+      "totalDomainWrites": 12,
+      "totalDomainReads": 21,
+      "sharedCallSitesCount": 0,
+      "transitiveCallSitesCount": 0,
+      "directCallSitesCount": 3
+    },
+    "candidateB": {
+      "totalRoutes": 8,
+      "activeStage0Routes": 3,
+      "zeroStage0Routes": 5,
+      "stage0UnsafeCallSites": 13,
+      "httpReachableCallSites": 13,
+      "unreachableCallSites": 0,
+      "stage0TablesCount": 4,
+      "unsafeWritesStage0": 5,
+      "unsafeReadsStage0": 8,
+      "totalDomainDbCalls": 80,
+      "totalDomainWrites": 23,
+      "totalDomainReads": 57,
+      "sharedCallSitesCount": 0,
+      "transitiveCallSitesCount": 13,
+      "directCallSitesCount": 0
+    },
+    "candidateC1": {
+      "totalRoutes": 9,
+      "activeStage0Routes": 6,
+      "zeroStage0Routes": 3,
+      "stage0UnsafeCallSites": 16,
+      "httpReachableCallSites": 16,
+      "unreachableCallSites": 0,
+      "stage0TablesCount": 3,
+      "unsafeWritesStage0": 4,
+      "unsafeReadsStage0": 12,
+      "totalDomainDbCalls": 25,
+      "totalDomainWrites": 6,
+      "totalDomainReads": 19,
+      "sharedCallSitesCount": 1,
+      "transitiveCallSitesCount": 16,
+      "directCallSitesCount": 0
+    },
+    "candidateC2": {
+      "totalRoutes": 4,
+      "activeStage0Routes": 3,
+      "zeroStage0Routes": 1,
+      "stage0UnsafeCallSites": 11,
+      "httpReachableCallSites": 11,
+      "unreachableCallSites": 0,
+      "stage0TablesCount": 4,
+      "unsafeWritesStage0": 3,
+      "unsafeReadsStage0": 8,
+      "totalDomainDbCalls": 38,
+      "totalDomainWrites": 9,
+      "totalDomainReads": 29,
+      "sharedCallSitesCount": 0,
+      "transitiveCallSitesCount": 11,
+      "directCallSitesCount": 0
+    },
+    "candidateD": {
+      "totalRoutes": 3,
+      "activeStage0Routes": 3,
+      "zeroStage0Routes": 0,
+      "stage0UnsafeCallSites": 10,
+      "httpReachableCallSites": 10,
+      "unreachableCallSites": 0,
+      "stage0TablesCount": 1,
+      "unsafeWritesStage0": 3,
+      "unsafeReadsStage0": 7,
+      "totalDomainDbCalls": 15,
+      "totalDomainWrites": 1,
+      "totalDomainReads": 14,
+      "sharedCallSitesCount": 0,
+      "transitiveCallSitesCount": 10,
+      "directCallSitesCount": 0
+    }
+  },
+  "execution_path": {
+    "candidateA": [
+      {
+        "id": 1,
+        "file": "server/controllers/appointment.controller.js",
+        "line": 39,
+        "function": "getAppointments",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "GET /api/v1/appointments"
+        ],
+        "classification": "DIRECT",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/appointments -> appointmentController.getAppointments -> SQL L39 (master_patients)"
+      },
+      {
+        "id": 2,
+        "file": "server/controllers/appointment.controller.js",
+        "line": 115,
+        "function": "book",
+        "operation": "WRITE",
+        "table": "master_patients",
+        "routes": [
+          "POST /api/v1/appointments/book"
+        ],
+        "classification": "DIRECT",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/appointments/book -> appointmentController.book -> SQL L115 (master_patients)"
+      },
+      {
+        "id": 3,
+        "file": "server/controllers/appointment.controller.js",
+        "line": 123,
+        "function": "book",
+        "operation": "WRITE",
+        "table": "master_patients",
+        "routes": [
+          "POST /api/v1/appointments/book"
+        ],
+        "classification": "DIRECT",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/appointments/book -> appointmentController.book -> SQL L123 (master_patients)"
+      }
+    ],
+    "candidateB": [
+      {
+        "id": 91,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 92,
+        "function": "generateMedicationOrdersFromCPOE",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/medications/prescribe"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/prescribe -> medicationClosedLoopController.generateMedicationOrders -> medicationClosedLoopService.generateMedicationOrdersFromCPOE -> SQL L92 (clinical_orders)"
+      },
+      {
+        "id": 92,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 93,
+        "function": "generateMedicationOrdersFromCPOE",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/medications/prescribe"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/prescribe -> medicationClosedLoopController.generateMedicationOrders -> medicationClosedLoopService.generateMedicationOrdersFromCPOE -> SQL L93 (clinical_orders)"
+      },
+      {
+        "id": 93,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 96,
+        "function": "generateMedicationOrdersFromCPOE",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/medications/prescribe"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/prescribe -> medicationClosedLoopController.generateMedicationOrders -> medicationClosedLoopService.generateMedicationOrdersFromCPOE -> SQL L96 (clinical_orders)"
+      },
+      {
+        "id": 94,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 99,
+        "function": "generateMedicationOrdersFromCPOE",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/medications/prescribe"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/prescribe -> medicationClosedLoopController.generateMedicationOrders -> medicationClosedLoopService.generateMedicationOrdersFromCPOE -> SQL L99 (clinical_orders)"
+      },
+      {
+        "id": 95,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 823,
+        "function": "verifyBedsideAndAdminister",
+        "operation": "READ",
+        "table": "medication_dispense_allocations",
+        "routes": [
+          "POST /api/v1/medications/:id/administer"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/:id/administer -> medicationClosedLoopController.administerMedication -> medicationClosedLoopService.verifyBedsideAndAdminister -> SQL L823 (medication_dispense_allocations)"
+      },
+      {
+        "id": 96,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 872,
+        "function": "verifyBedsideAndAdminister",
+        "operation": "READ",
+        "table": "medication_emar_administrations",
+        "routes": [
+          "POST /api/v1/medications/:id/administer"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/:id/administer -> medicationClosedLoopController.administerMedication -> medicationClosedLoopService.verifyBedsideAndAdminister -> SQL L872 (medication_emar_administrations)"
+      },
+      {
+        "id": 97,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 1022,
+        "function": "verifyBedsideAndAdminister",
+        "operation": "WRITE",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/medications/:id/administer"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/:id/administer -> medicationClosedLoopController.administerMedication -> medicationClosedLoopService.verifyBedsideAndAdminister -> SQL L1022 (clinical_orders)"
+      },
+      {
+        "id": 98,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 1027,
+        "function": "verifyBedsideAndAdminister",
+        "operation": "WRITE",
+        "table": "clinical_orders, universal_audit_logs",
+        "routes": [
+          "POST /api/v1/medications/:id/administer"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/:id/administer -> medicationClosedLoopController.administerMedication -> medicationClosedLoopService.verifyBedsideAndAdminister -> SQL L1027 (clinical_orders, universal_audit_logs)"
+      },
+      {
+        "id": 99,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 1035,
+        "function": "verifyBedsideAndAdminister",
+        "operation": "WRITE",
+        "table": "universal_audit_logs",
+        "routes": [
+          "POST /api/v1/medications/:id/administer"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/:id/administer -> medicationClosedLoopController.administerMedication -> medicationClosedLoopService.verifyBedsideAndAdminister -> SQL L1035 (universal_audit_logs)"
+      },
+      {
+        "id": 100,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 1312,
+        "function": "documentAdverseReaction",
+        "operation": "READ",
+        "table": "medication_emar_administrations",
+        "routes": [
+          "POST /api/v1/medications/administrations/:id/adverse-reaction"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/administrations/:id/adverse-reaction -> medicationClosedLoopController.recordAdverseReaction -> medicationClosedLoopService.documentAdverseReaction -> SQL L1312 (medication_emar_administrations)"
+      },
+      {
+        "id": 101,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 1313,
+        "function": "documentAdverseReaction",
+        "operation": "READ",
+        "table": "medication_emar_administrations",
+        "routes": [
+          "POST /api/v1/medications/administrations/:id/adverse-reaction"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/administrations/:id/adverse-reaction -> medicationClosedLoopController.recordAdverseReaction -> medicationClosedLoopService.documentAdverseReaction -> SQL L1313 (medication_emar_administrations)"
+      },
+      {
+        "id": 102,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 1316,
+        "function": "documentAdverseReaction",
+        "operation": "WRITE",
+        "table": "medication_emar_administrations",
+        "routes": [
+          "POST /api/v1/medications/administrations/:id/adverse-reaction"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/administrations/:id/adverse-reaction -> medicationClosedLoopController.recordAdverseReaction -> medicationClosedLoopService.documentAdverseReaction -> SQL L1316 (medication_emar_administrations)"
+      },
+      {
+        "id": 103,
+        "file": "server/services/medicationClosedLoop.service.js",
+        "line": 1318,
+        "function": "documentAdverseReaction",
+        "operation": "WRITE",
+        "table": "medication_emar_administrations",
+        "routes": [
+          "POST /api/v1/medications/administrations/:id/adverse-reaction"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/medications/administrations/:id/adverse-reaction -> medicationClosedLoopController.recordAdverseReaction -> medicationClosedLoopService.documentAdverseReaction -> SQL L1318 (medication_emar_administrations)"
+      }
+    ],
+    "candidateC1": [
+      {
+        "id": 59,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 333,
+        "function": "createOrder",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/orders/cpoe"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe -> cpoeController.createOrder -> cpoeApplicationService.createOrder -> SQL L333 (clinical_orders)"
+      },
+      {
+        "id": 60,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 334,
+        "function": "createOrder",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/orders/cpoe"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe -> cpoeController.createOrder -> cpoeApplicationService.createOrder -> SQL L334 (clinical_orders)"
+      },
+      {
+        "id": 61,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 340,
+        "function": "createOrder",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/orders/cpoe"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe -> cpoeController.createOrder -> cpoeApplicationService.createOrder -> SQL L340 (clinical_orders)"
+      },
+      {
+        "id": 62,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 387,
+        "function": "cancelOrder",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/orders/cpoe/:id/cancel"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe/:id/cancel -> cpoeController.cancelOrder -> cpoeApplicationService.cancelOrder -> SQL L387 (clinical_orders)"
+      },
+      {
+        "id": 63,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 388,
+        "function": "cancelOrder",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/orders/cpoe/:id/cancel"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe/:id/cancel -> cpoeController.cancelOrder -> cpoeApplicationService.cancelOrder -> SQL L388 (clinical_orders)"
+      },
+      {
+        "id": 64,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 391,
+        "function": "cancelOrder",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/orders/cpoe/:id/cancel"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe/:id/cancel -> cpoeController.cancelOrder -> cpoeApplicationService.cancelOrder -> SQL L391 (clinical_orders)"
+      },
+      {
+        "id": 65,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 393,
+        "function": "cancelOrder",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/orders/cpoe/:id/cancel"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe/:id/cancel -> cpoeController.cancelOrder -> cpoeApplicationService.cancelOrder -> SQL L393 (clinical_orders)"
+      },
+      {
+        "id": 66,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 472,
+        "function": "cancelOrder",
+        "operation": "WRITE",
+        "table": "universal_audit_logs",
+        "routes": [
+          "POST /api/v1/orders/cpoe/:id/cancel"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe/:id/cancel -> cpoeController.cancelOrder -> cpoeApplicationService.cancelOrder -> SQL L472 (universal_audit_logs)"
+      },
+      {
+        "id": 67,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 558,
+        "function": "getOrderById",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "GET /api/v1/orders/cpoe/:id"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/orders/cpoe/:id -> cpoeController.getOrderById -> cpoeApplicationService.getOrderById -> SQL L558 (clinical_orders)"
+      },
+      {
+        "id": 68,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 559,
+        "function": "getOrderById",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "GET /api/v1/orders/cpoe/:id"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/orders/cpoe/:id -> cpoeController.getOrderById -> cpoeApplicationService.getOrderById -> SQL L559 (clinical_orders)"
+      },
+      {
+        "id": 69,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 581,
+        "function": "getOrdersByEncounterId",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "GET /api/v1/orders/cpoe/encounter/:encounterId"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/orders/cpoe/encounter/:encounterId -> cpoeController.getOrdersByEncounter -> cpoeApplicationService.getOrdersByEncounterId -> SQL L581 (clinical_orders)"
+      },
+      {
+        "id": 70,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 582,
+        "function": "getOrdersByEncounterId",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "GET /api/v1/orders/cpoe/encounter/:encounterId"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/orders/cpoe/encounter/:encounterId -> cpoeController.getOrdersByEncounter -> cpoeApplicationService.getOrdersByEncounterId -> SQL L582 (clinical_orders)"
+      },
+      {
+        "id": 71,
+        "file": "server/services/cpoeApplication.service.js",
+        "line": 608,
+        "function": "listOrders",
+        "operation": "READ",
+        "table": "clinical_orders",
+        "routes": [
+          "GET /api/v1/orders/cpoe",
+          "GET /api/v1/orders"
+        ],
+        "classification": "SHARED_SERVICE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/orders/cpoe & GET /api/v1/orders -> cpoeController.listOrders -> cpoeApplicationService.listOrders -> SQL L608 (clinical_orders)"
+      },
+      {
+        "id": 143,
+        "file": "server/services/safetyAuthorization.service.js",
+        "line": 192,
+        "function": "verifyAndConsumeTransactional",
+        "operation": "WRITE",
+        "table": "safety_decision_registry",
+        "routes": [
+          "POST /api/v1/orders/cpoe/:id/cancel"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe/:id/cancel -> cpoeController.cancelOrder -> cpoeApplicationService.cancelOrder (L401) -> safetyAuthorizationService.verifyAndConsumeTransactional -> SQL L192 (safety_decision_registry)"
+      },
+      {
+        "id": 144,
+        "file": "server/services/safetyAuthorization.service.js",
+        "line": 252,
+        "function": "verifyAndConsumeTransactional",
+        "operation": "WRITE",
+        "table": "safety_decision_registry",
+        "routes": [
+          "POST /api/v1/orders/cpoe/:id/cancel"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe/:id/cancel -> cpoeController.cancelOrder -> cpoeApplicationService.cancelOrder (L401) -> safetyAuthorizationService.verifyAndConsumeTransactional -> SQL L252 (safety_decision_registry)"
+      },
+      {
+        "id": 145,
+        "file": "server/services/safetyAuthorization.service.js",
+        "line": 344,
+        "function": "verifyAndConsumeTransactional",
+        "operation": "WRITE",
+        "table": "safety_decision_registry",
+        "routes": [
+          "POST /api/v1/orders/cpoe/:id/cancel"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/orders/cpoe/:id/cancel -> cpoeController.cancelOrder -> cpoeApplicationService.cancelOrder (L401) -> safetyAuthorizationService.verifyAndConsumeTransactional -> SQL L344 (safety_decision_registry)"
+      }
+    ],
+    "candidateC2": [
+      {
+        "id": 72,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 82,
+        "function": "publishDiagnosticNotification",
+        "operation": "READ",
+        "table": "encounters",
+        "routes": [
+          "POST /api/v1/diagnostics/notifications"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/notifications -> diagnosticInterpretationController.publishNotification -> diagnosticInterpretationService.publishDiagnosticNotification -> SQL L82 (encounters)"
+      },
+      {
+        "id": 73,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 83,
+        "function": "publishDiagnosticNotification",
+        "operation": "READ",
+        "table": "encounters",
+        "routes": [
+          "POST /api/v1/diagnostics/notifications"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/notifications -> diagnosticInterpretationController.publishNotification -> diagnosticInterpretationService.publishDiagnosticNotification -> SQL L83 (encounters)"
+      },
+      {
+        "id": 74,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 86,
+        "function": "publishDiagnosticNotification",
+        "operation": "READ",
+        "table": "encounters",
+        "routes": [
+          "POST /api/v1/diagnostics/notifications"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/notifications -> diagnosticInterpretationController.publishNotification -> diagnosticInterpretationService.publishDiagnosticNotification -> SQL L86 (encounters)"
+      },
+      {
+        "id": 75,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 89,
+        "function": "publishDiagnosticNotification",
+        "operation": "READ",
+        "table": "encounters",
+        "routes": [
+          "POST /api/v1/diagnostics/notifications"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/notifications -> diagnosticInterpretationController.publishNotification -> diagnosticInterpretationService.publishDiagnosticNotification -> SQL L89 (encounters)"
+      },
+      {
+        "id": 76,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 416,
+        "function": "recordPhysicianInterpretation",
+        "operation": "WRITE",
+        "table": "universal_audit_logs",
+        "routes": [
+          "POST /api/v1/diagnostics/notifications/:id/interpret"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/notifications/:id/interpret -> diagnosticInterpretationController.recordInterpretation -> diagnosticInterpretationService.recordPhysicianInterpretation -> SQL L416 (universal_audit_logs)"
+      },
+      {
+        "id": 77,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 424,
+        "function": "recordPhysicianInterpretation",
+        "operation": "WRITE",
+        "table": "universal_audit_logs",
+        "routes": [
+          "POST /api/v1/diagnostics/notifications/:id/interpret"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/notifications/:id/interpret -> diagnosticInterpretationController.recordInterpretation -> diagnosticInterpretationService.recordPhysicianInterpretation -> SQL L424 (universal_audit_logs)"
+      },
+      {
+        "id": 78,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 504,
+        "function": "executeSecondaryClinicalAction",
+        "operation": "READ",
+        "table": "physician_diagnostic_interpretations",
+        "routes": [
+          "POST /api/v1/diagnostics/interpretations/:id/actions"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/interpretations/:id/actions -> diagnosticInterpretationController.executeAction -> diagnosticInterpretationService.executeSecondaryClinicalAction -> SQL L504 (physician_diagnostic_interpretations)"
+      },
+      {
+        "id": 79,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 505,
+        "function": "executeSecondaryClinicalAction",
+        "operation": "READ",
+        "table": "physician_diagnostic_interpretations",
+        "routes": [
+          "POST /api/v1/diagnostics/interpretations/:id/actions"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/interpretations/:id/actions -> diagnosticInterpretationController.executeAction -> diagnosticInterpretationService.executeSecondaryClinicalAction -> SQL L505 (physician_diagnostic_interpretations)"
+      },
+      {
+        "id": 80,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 508,
+        "function": "executeSecondaryClinicalAction",
+        "operation": "READ",
+        "table": "physician_diagnostic_interpretations",
+        "routes": [
+          "POST /api/v1/diagnostics/interpretations/:id/actions"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/interpretations/:id/actions -> diagnosticInterpretationController.executeAction -> diagnosticInterpretationService.executeSecondaryClinicalAction -> SQL L508 (physician_diagnostic_interpretations)"
+      },
+      {
+        "id": 81,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 510,
+        "function": "executeSecondaryClinicalAction",
+        "operation": "READ",
+        "table": "physician_diagnostic_interpretations",
+        "routes": [
+          "POST /api/v1/diagnostics/interpretations/:id/actions"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/interpretations/:id/actions -> diagnosticInterpretationController.executeAction -> diagnosticInterpretationService.executeSecondaryClinicalAction -> SQL L510 (physician_diagnostic_interpretations)"
+      },
+      {
+        "id": 82,
+        "file": "server/services/diagnosticInterpretation.service.js",
+        "line": 528,
+        "function": "executeSecondaryClinicalAction",
+        "operation": "WRITE",
+        "table": "clinical_orders",
+        "routes": [
+          "POST /api/v1/diagnostics/interpretations/:id/actions"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/diagnostics/interpretations/:id/actions -> diagnosticInterpretationController.executeAction -> diagnosticInterpretationService.executeSecondaryClinicalAction -> SQL L528 (clinical_orders)"
+      }
+    ],
+    "candidateD": [
+      {
+        "id": 104,
+        "file": "server/services/patientApplication.service.js",
+        "line": 91,
+        "function": "registerPatient",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "POST /api/v1/patients"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/patients -> patientController.registerPatient -> patientApplicationService.registerPatient -> SQL L91 (master_patients)"
+      },
+      {
+        "id": 105,
+        "file": "server/services/patientApplication.service.js",
+        "line": 92,
+        "function": "registerPatient",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "POST /api/v1/patients"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/patients -> patientController.registerPatient -> patientApplicationService.registerPatient -> SQL L92 (master_patients)"
+      },
+      {
+        "id": 106,
+        "file": "server/services/patientApplication.service.js",
+        "line": 96,
+        "function": "registerPatient",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "POST /api/v1/patients"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/patients -> patientController.registerPatient -> patientApplicationService.registerPatient -> SQL L96 (master_patients)"
+      },
+      {
+        "id": 107,
+        "file": "server/services/patientApplication.service.js",
+        "line": 99,
+        "function": "registerPatient",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "POST /api/v1/patients"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/patients -> patientController.registerPatient -> patientApplicationService.registerPatient -> SQL L99 (master_patients)"
+      },
+      {
+        "id": 108,
+        "file": "server/services/patientApplication.service.js",
+        "line": 114,
+        "function": "registerPatient",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "POST /api/v1/patients"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "POST /api/v1/patients -> patientController.registerPatient -> patientApplicationService.registerPatient -> SQL L114 (master_patients)"
+      },
+      {
+        "id": 109,
+        "file": "server/services/patientApplication.service.js",
+        "line": 236,
+        "function": "searchPatients",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "GET /api/v1/patients"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/patients -> patientController.searchPatients -> patientApplicationService.searchPatients -> SQL L236 (master_patients)"
+      },
+      {
+        "id": 110,
+        "file": "server/services/patientApplication.service.js",
+        "line": 246,
+        "function": "searchPatients",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "GET /api/v1/patients"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/patients -> patientController.searchPatients -> patientApplicationService.searchPatients -> SQL L246 (master_patients)"
+      },
+      {
+        "id": 111,
+        "file": "server/services/patientApplication.service.js",
+        "line": 262,
+        "function": "searchPatients",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "GET /api/v1/patients"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/patients -> patientController.searchPatients -> patientApplicationService.searchPatients -> SQL L262 (master_patients)"
+      },
+      {
+        "id": 112,
+        "file": "server/services/patientApplication.service.js",
+        "line": 270,
+        "function": "getPatientById",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "GET /api/v1/patients/:id"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/patients/:id -> patientController.getPatientById -> patientApplicationService.getPatientById -> SQL L270 (master_patients)"
+      },
+      {
+        "id": 113,
+        "file": "server/services/patientApplication.service.js",
+        "line": 272,
+        "function": "getPatientById",
+        "operation": "READ",
+        "table": "master_patients",
+        "routes": [
+          "GET /api/v1/patients/:id"
+        ],
+        "classification": "TRANSITIVE",
+        "reachability": "REACHABLE",
+        "confidence": "HIGH_AST_VERIFIED",
+        "callChain": "GET /api/v1/patients/:id -> patientController.getPatientById -> patientApplicationService.getPatientById -> SQL L272 (master_patients)"
+      }
+    ]
+  },
+  "shared_call_sites": [
+    {
+      "call_site_id": 71,
+      "file": "server/services/cpoeApplication.service.js",
+      "line": 608,
+      "function": "listOrders",
+      "table": "clinical_orders",
+      "operation": "READ",
+      "routes": [
+        "GET /api/v1/orders/cpoe (orders.routes.js:25)",
+        "GET /api/v1/orders (orders.routes.js:37)"
+      ],
+      "counting_rule": "Counted as 1 unique call site, 2 route exposure edges"
+    }
+  ],
+  "unreachable_call_sites": [
+    {
+      "call_site_id": 141,
+      "file": "server/services/resourceAuthorization.service.js",
+      "line": 56,
+      "function": "evaluateResourceAccess",
+      "table": "encounters",
+      "operation": "READ",
+      "status": "UNREACHABLE_FROM_HTTP — RETAIN IN INVENTORY",
+      "reason": "evaluateResourceAccess is only referenced by authorizationDecisionService.hasResourceAccess. It is imported by clinicalAuthorization.middleware.js, but that middleware is never mounted on any Express router or server.js pipeline."
+    },
+    {
+      "call_site_id": 142,
+      "file": "server/services/resourceAuthorization.service.js",
+      "line": 57,
+      "function": "evaluateResourceAccess",
+      "table": "master_patients",
+      "operation": "READ",
+      "status": "UNREACHABLE_FROM_HTTP — RETAIN IN INVENTORY",
+      "reason": "Same as CS 141. Represents dead/dormant authorization middleware code in HTTP request paths."
+    }
+  ],
+  "c1_c2_coupling_verification": {
+    "coupling_status": "NOL / ZERO SYNCHRONOUS COUPLING",
+    "evidence": [
+      "cpoeApplication.service.js does not import or invoke diagnosticInterpretation.service.js",
+      "diagnosticInterpretation.service.js does not import or invoke cpoeApplication.service.js",
+      "orders.routes.js and diagnosticInterpretation.routes.js mount distinct, non-overlapping controllers",
+      "CS 82 (diagnosticInterpretation.service.js:528) inserts downstream orders directly via raw SQL inside its own client transaction, without delegating to cpoeApplicationService",
+      "Transactions are executed on independent connection clients with independent BEGIN/COMMIT boundaries"
+    ]
+  },
+  "dependencies": {
+    "candidateA": {
+      "upstream": [
+        "master_patients",
+        "appointments",
+        "queue_sequences",
+        "idempotency_keys"
+      ],
+      "downstream": [
+        "Poliklinik consultation workflows"
+      ],
+      "shared_infra": [
+        "DEFAULT_TENANT_ID fallback",
+        "idempotencyMiddleware"
+      ],
+      "cross_domain_coupling": "LOW"
+    },
+    "candidateB": {
+      "upstream": [
+        "clinical_orders (CPOE)",
+        "patient_allergies",
+        "pharmacy_inventory_batches"
+      ],
+      "downstream": [
+        "Nursing eMAR administration",
+        "Billing / Patient Financial reconciliation"
+      ],
+      "shared_infra": [
+        "universal_audit_logs",
+        "eventBusService"
+      ],
+      "cross_domain_coupling": "HIGH"
+    },
+    "candidateC1": {
+      "upstream": [
+        "encounters (Encounter domain)",
+        "master_patients",
+        "safety_decision_registry"
+      ],
+      "downstream": [
+        "medicationClosedLoop",
+        "laboratoryApplication",
+        "radiologyApplication",
+        "billing"
+      ],
+      "shared_infra": [
+        "safety_decision_registry",
+        "universal_audit_logs",
+        "idempotencyMiddleware"
+      ],
+      "cross_domain_coupling": "HIGH"
+    },
+    "candidateC2": {
+      "upstream": [
+        "encounters (Encounter domain)",
+        "diagnostic_result_notifications"
+      ],
+      "downstream": [
+        "clinical_orders (downstream orders created via executeSecondaryClinicalAction)"
+      ],
+      "shared_infra": [
+        "universal_audit_logs",
+        "eventBusService"
+      ],
+      "cross_domain_coupling": "MEDIUM"
+    },
+    "candidateD": {
+      "upstream": [
+        "master_patients (foundation entity)"
+      ],
+      "downstream": [
+        "All hospital domains (Encounters, Appointments, CPOE, Pharmacy, Lab, Rad, Billing)"
+      ],
+      "shared_infra": [
+        "Sequential MRN generator",
+        "NIK/BPJS unique constraints"
+      ],
+      "cross_domain_coupling": "LOW (code isolation), HIGHEST (relational foundation)"
+    }
+  },
+  "transaction_analysis": {
+    "candidateA": {
+      "multi_step_mutations": [
+        "Appointment booking with doctor slot mutex, patient auto-provision, and queue sequencing"
+      ],
+      "transaction_sensitivity": "MEDIUM",
+      "outside_uow": true
+    },
+    "candidateB": {
+      "multi_step_mutations": [
+        "Prescription generation from CPOE",
+        "Bedside 5-rights administration with dual nurse sign-off and eMAR audit",
+        "Adverse reaction medicolegal documentation"
+      ],
+      "transaction_sensitivity": "HIGH",
+      "outside_uow": true
+    },
+    "candidateC1": {
+      "multi_step_mutations": [
+        "Master CPOE order creation with items and audit",
+        "CPOE cancellation with transactional Safety Decision token verification (CS 143-145)"
+      ],
+      "transaction_sensitivity": "HIGH to CRITICAL",
+      "outside_uow": true
+    },
+    "candidateC2": {
+      "multi_step_mutations": [
+        "Critical notification broadcast with SLA",
+        "Physician diagnostic interpretation sign-off",
+        "Secondary clinical action with downstream CPOE order insertion"
+      ],
+      "transaction_sensitivity": "HIGH",
+      "outside_uow": true
+    },
+    "candidateD": {
+      "multi_step_mutations": [
+        "MPI patient registration with row-level locks on NIK/BPJS and sequential MRN generation"
+      ],
+      "transaction_sensitivity": "CRITICAL",
+      "outside_uow": true
+    }
+  },
+  "testability": {
+    "candidateA": {
+      "existing_unit_tests": "EXISTING",
+      "existing_integration_tests": "PARTIAL (Mocked pool)",
+      "rls_tests": "ABSENT",
+      "rollback_tests": "PARTIAL",
+      "test_files": [
+        "tests/appointmentQueue.test.js",
+        "tests/appointmentQueuePersistence.test.js"
+      ]
+    },
+    "candidateB": {
+      "existing_unit_tests": "EXISTING",
+      "existing_integration_tests": "PARTIAL (Mocked pool)",
+      "rls_tests": "ABSENT",
+      "rollback_tests": "PARTIAL",
+      "test_files": [
+        "tests/verticalSlice07MedicationDurability.test.js",
+        "tests/medicationLifecycleEngine.test.js",
+        "tests/medicationEventStoreHardening.test.js"
+      ]
+    },
+    "candidateC1": {
+      "existing_unit_tests": "EXISTING",
+      "existing_integration_tests": "PARTIAL (Mocked pool)",
+      "rls_tests": "ABSENT",
+      "rollback_tests": "PARTIAL",
+      "test_files": [
+        "tests/verticalSlice06AUniversalCpoeDurability.test.js",
+        "tests/cpoeCdssEndToEndIntegration.test.js"
+      ]
+    },
+    "candidateC2": {
+      "existing_unit_tests": "EXISTING",
+      "existing_integration_tests": "PARTIAL (Mocked pool)",
+      "rls_tests": "ABSENT",
+      "rollback_tests": "PARTIAL",
+      "test_files": [
+        "tests/verticalSlice09DiagnosticInterpretationDurability.test.js"
+      ]
+    },
+    "candidateD": {
+      "existing_unit_tests": "EXISTING",
+      "existing_integration_tests": "PARTIAL (Mocked pool)",
+      "rls_tests": "ABSENT",
+      "rollback_tests": "PARTIAL",
+      "test_files": [
+        "tests/verticalSlice01PatientDurability.test.js",
+        "tests/s01NewPatientRegistrationReconciliation.test.js",
+        "tests/patientJourneyEmpi.test.js"
+      ]
+    }
+  },
+  "change_surface": {
+    "candidateA": {
+      "controllers": 1,
+      "services": 1,
+      "routes": 4,
+      "active_routes": 2,
+      "call_sites": 3,
+      "stage0_tables": 1,
+      "writes": 2,
+      "reads": 1
+    },
+    "candidateB": {
+      "controllers": 1,
+      "services": 1,
+      "routes": 8,
+      "active_routes": 3,
+      "call_sites": 13,
+      "stage0_tables": 4,
+      "writes": 5,
+      "reads": 8
+    },
+    "candidateC1": {
+      "controllers": 1,
+      "services": 2,
+      "routes": 9,
+      "active_routes": 6,
+      "call_sites": 16,
+      "stage0_tables": 3,
+      "writes": 4,
+      "reads": 12
+    },
+    "candidateC2": {
+      "controllers": 1,
+      "services": 1,
+      "routes": 4,
+      "active_routes": 3,
+      "call_sites": 11,
+      "stage0_tables": 4,
+      "writes": 3,
+      "reads": 8
+    },
+    "candidateD": {
+      "controllers": 1,
+      "services": 1,
+      "routes": 3,
+      "active_routes": 3,
+      "call_sites": 10,
+      "stage0_tables": 1,
+      "writes": 3,
+      "reads": 7
+    }
+  },
+  "risk_factors": {
+    "candidateA": {
+      "http_exposure": "LOW (2 active routes)",
+      "unsafe_write_exposure": "LOW (2 write call sites)",
+      "unsafe_read_exposure": "LOW (1 read call site)",
+      "multi_table_mutation": "LOW (master_patients, appointments)",
+      "shared_service_dependency": "NONE",
+      "cross_domain_coupling": "LOW",
+      "transaction_sensitivity": "MEDIUM",
+      "safety_sensitive_operation": "LOW",
+      "test_coverage": "PARTIAL (Mocked)",
+      "rls_surface": "LOW (1 Stage-0 table)",
+      "change_surface": "LOW"
+    },
+    "candidateB": {
+      "http_exposure": "MEDIUM (3 active routes)",
+      "unsafe_write_exposure": "HIGH (5 Stage-0 writes, 23 total domain writes)",
+      "unsafe_read_exposure": "HIGH (8 Stage-0 reads, 57 total domain reads)",
+      "multi_table_mutation": "HIGH (4 Stage-0 tables, inventory, eMAR)",
+      "shared_service_dependency": "LOW",
+      "cross_domain_coupling": "HIGH (consumes CPOE, triggers inventory & billing)",
+      "transaction_sensitivity": "HIGH (bedside dual-nurse eMAR administration)",
+      "safety_sensitive_operation": "HIGH (JCI IPSG 3 high-alert medications)",
+      "test_coverage": "PARTIAL (Mocked)",
+      "rls_surface": "HIGH (4 Stage-0 tables)",
+      "change_surface": "HIGH"
+    },
+    "candidateC1": {
+      "http_exposure": "HIGH (6 active routes)",
+      "unsafe_write_exposure": "HIGH (4 Stage-0 writes, 6 total domain writes)",
+      "unsafe_read_exposure": "HIGH (12 Stage-0 reads, 19 total domain reads)",
+      "multi_table_mutation": "HIGH (clinical_orders, items, audit, safety_decision_registry)",
+      "shared_service_dependency": "MEDIUM (CS 71 shared across 2 routes)",
+      "cross_domain_coupling": "HIGH (central clinical ordering bus for Lab, Rad, Pharmacy)",
+      "transaction_sensitivity": "HIGH (cancellation with transactional Safety Decision consumption)",
+      "safety_sensitive_operation": "HIGH (JCI COP physician order sign-off and cancellation)",
+      "test_coverage": "PARTIAL (Mocked)",
+      "rls_surface": "MEDIUM (3 Stage-0 tables)",
+      "change_surface": "HIGH"
+    },
+    "candidateC2": {
+      "http_exposure": "MEDIUM (3 active routes)",
+      "unsafe_write_exposure": "MEDIUM (3 Stage-0 writes, 9 total domain writes)",
+      "unsafe_read_exposure": "MEDIUM (8 Stage-0 reads, 29 total domain reads)",
+      "multi_table_mutation": "MEDIUM (encounters, notifications, interpretations, clinical_orders)",
+      "shared_service_dependency": "NONE",
+      "cross_domain_coupling": "MEDIUM (touches encounters, creates downstream orders)",
+      "transaction_sensitivity": "HIGH (critical diagnostic notification broadcasting and physician sign-off)",
+      "safety_sensitive_operation": "HIGH (JCI IPSG 2 critical lab/radiology findings)",
+      "test_coverage": "PARTIAL (Mocked)",
+      "rls_surface": "HIGH (4 Stage-0 tables)",
+      "change_surface": "MEDIUM"
+    },
+    "candidateD": {
+      "http_exposure": "MEDIUM (3 active routes, 100% active)",
+      "unsafe_write_exposure": "MEDIUM (1 insert, 2 row-level locks on NIK/BPJS)",
+      "unsafe_read_exposure": "MEDIUM (7 read queries)",
+      "multi_table_mutation": "LOW (master_patients, audit log)",
+      "shared_service_dependency": "NONE",
+      "cross_domain_coupling": "LOW (code isolation), HIGHEST (relational foundation for all clinical encounters)",
+      "transaction_sensitivity": "HIGH (sequential MRN generation, NIK/BPJS duplicate mutex)",
+      "safety_sensitive_operation": "HIGH (JCI IPSG 1 patient identity accuracy)",
+      "test_coverage": "PARTIAL (Mocked)",
+      "rls_surface": "LOW (1 Stage-0 table)",
+      "change_surface": "LOW to MEDIUM"
+    }
+  },
+  "human_decision_required": true
+}
