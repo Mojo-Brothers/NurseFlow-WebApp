@@ -16,6 +16,74 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [03 OKTOBER 2026] — P0-2B: IMPLEMENTASI & AUDIT BUKTI TERTUTUP WAVE 1B.2 CANDIDATE C2 (DIAGNOSTIC INTERPRETATION SECURITY FOUNDATION)
+**Tag Rilis:** `p02b-wave1b2-c2-implementation-audit-closure`  
+**Kategori:** `[MAJOR]` `[FEATURE]` `[SECURITY]` `[FIX]` `[AUDIT]`  
+**Status Implementasi:** `C2 IMPLEMENTATION = COMPLETED & EVIDENCE LOCKED | CONTROLLER GATE: 4/4 ROUTES FAIL-CLOSED (14/14 PASS) | SERVICE UOW: 4/4 METHODS WITHUNITOFWORK (READ COMMITTED + SET LOCAL) | CS 82 REMEDIATION: VERIFIED EXPLICIT TENANT_ID ON CLINICAL_ORDERS | REAL POSTGRESQL RLS: 9/9 PASS (NURSEFLOW_SECURITY_LAB, NON-SUPERUSER NURSEFLOW_APP_USER) | C2 DURABILITY: 25/25 PASS | CANONICAL BASELINE: 81/81 PASS | GRAND TOTAL: 129/129 PASS (100%) | STAGE-0 UNSAFE CALL SITES: 145 -> 134 (11 CS SECURED: CS 72-82) | STRICT SCOPE ISOLATION: A, B, C1, D 100% UNTOUCHED | DDL MIGRATIONS: UNTOUCHED | FRONTEND: UNTOUCHED`  
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: EXPANDED (ENCOUNTER + TRIAGE + DIAGNOSTICS C2 VERIFIED) | STAGE 0: NO-GO | PRODUCTION: BLOCKED | REMAINING STAGE-0 UNSAFE CALL SITES: 134 | NEXT WAVE: PENDING HUMAN OWNER DECISION`**
+
+Menindaklanjuti penetapan resmi oleh **Human Owner** yang memilih **Candidate C2 (Diagnostics)** untuk Wave 1B.2 dan menyetujui blueprint teknis implementasi (`docs/audit/P0-2B-WAVE1B2-C2-IMPLEMENTATION-PLAN.md`, commit `0194cf8`), telah diselesaikan secara penuh:
+1. **Implementasi Keamanan Fondasional Domain C2** (`feat(security): implement C2 diagnostic interpretation UoW and RLS`, commit `b9b2906`).
+2. **Audit Bukti Pasca-Implementasi (Post-Implementation Evidence Audit)** (`audit(p02b): verify C2 implementation evidence`, commit `600ca0f`).
+
+Berikut rincian teknis, remediasi cacat, pengujian pembuktian, dan dampak arsitektural:
+
+#### 1. Gerbang Ingress Kontroler L1 Fail-Closed (`server/controllers/diagnosticInterpretation.controller.js`)
+- Mengimplementasikan gerbang validasi ketat `isValidUuid` pada seluruh 4 endpoint HTTP C2:
+  - `POST /api/v1/diagnostics/notifications` (`publishNotification`)
+  - `POST /api/v1/diagnostics/notifications/:id/acknowledge` (`acknowledgeNotification`)
+  - `POST /api/v1/diagnostics/interpretations` (`recordInterpretation`)
+  - `POST /api/v1/diagnostics/actions` (`executeSecondaryAction`)
+- Setiap request yang tidak menyertakan konteks tenant atau memiliki nilai bukan RFC 4122 UUID v4 langsung ditolak dengan status HTTP `403 Forbidden` (`TENANT_CONTEXT_REQUIRED`) **sebelum** koneksi basis data diambil dari pool.
+- Menghapus seluruh fallback mock actor legacy (`USR-LAB-01`, `DOC-DPJP-01`) dan mengeliminasi fallback `DEFAULT_TENANT_ID`. Identitas tenant diturunkan secara otoritatif dari JWT `req.user.tenantId` / `req.tenantId` yang telah dilindungi anti-spoofing di middleware.
+
+#### 2. Migrasi Lapisan Layanan ke `withUnitOfWork` (`server/services/diagnosticInterpretation.service.js`)
+- Seluruh 4 metode layanan inti dimigrasikan dari manajemen koneksi pool mentah (`pool.connect()`, `BEGIN`, `COMMIT`, `ROLLBACK`) ke pembungkus transaksional terstandarisasi `withUnitOfWork`:
+  - `publishDiagnosticNotification`
+  - `acknowledgeDiagnosticNotification`
+  - `recordDiagnosticInterpretation`
+  - `executeSecondaryClinicalAction`
+- Setiap transaksi dijalankan dengan tingkat isolasi `READ COMMITTED`, pengaturan variabel sesi lokal `SET LOCAL app.current_tenant_id = $1`, dan sanitasi soket otomatis via `DISCARD ALL` saat koneksi dikembalikan ke pool.
+- Pembuatan order CPOE turunan pada `executeSecondaryClinicalAction` dieksekusi langsung di dalam transaksi UoW yang sama tanpa melalui perantara HTTP atau service eksternal, mencegah anomali split-brain atau kegagalan atomisitas.
+
+#### 3. Remediasi Cacat DML Kritis CS 82 (`clinical_orders.tenant_id`)
+- **Masalah Legacy:** Pada implementasi sebelumnya di `executeSecondaryClinicalAction`, kueri `INSERT INTO clinical_orders` tidak menyertakan kolom `tenant_id`. Mengingat kolom `tenant_id` pada tabel `clinical_orders` berstatus `NOT NULL` tanpa default, kueri ini pasti memicu `NotNullViolation` di PostgreSQL riil.
+- **Solusi & Remedi:** Kueri DML diselaraskan secara penuh dengan skema database riil. Kolom `tenant_id` ($2) disertakan secara eksplisit dari `tenantId` terikat UoW tepercaya, bersama kolom `episode_id` yang ditarik dari relasi encounter, `order_category`, `ordered_by`, dan `clinical_indication`.
+
+#### 4. Pengamanan 11 Call Sites Stage-0 (CS 72 s/d CS 82)
+Sebanyak 11 Stage-0 Call Sites pada domain Diagnostic Interpretation berhasil diamankan dan bertransformasi dari *Unsafe* menjadi *Secured via UoW & RLS*:
+- `CS 72, 73, 74`: Pengelolaan pool koneksi dan transaksi `publishDiagnosticNotification` (Secured UoW).
+- `CS 75`: Verifikasi encounter `SELECT ... FOR UPDATE` (Secured UoW & RLS).
+- `CS 76`: Pembacaan encounter pada `recordDiagnosticInterpretation` (Secured UoW & RLS).
+- `CS 77`: Pencatatan log audit ke `universal_audit_logs` (Secured UoW & RLS).
+- `CS 78, 79, 80`: Pengelolaan pool koneksi dan transaksi `executeSecondaryClinicalAction` (Secured UoW).
+- `CS 81`: Pengecekan status interpretasi diagnostik `SELECT ... FOR UPDATE` (Secured UoW & RLS).
+- `CS 82`: Pembuatan order sekunder pada `clinical_orders` (Secured UoW, RLS & Remediated Explicit Tenant).
+
+*Dampak:* Unsafe Stage-0 Call Sites berkurang dari **145 menjadi 134**.
+
+#### 5. Verifikasi Pengujian & Bukti Runtime Komprehensif (129/129 PASS)
+1. **Pengujian Unit Gerbang L1 Kontroler (`tests/p02b_wave1b2_c2_l1_controller_gate.test.js`):** **14/14 PASS** (memvalidasi 403 `TENANT_CONTEXT_REQUIRED` dan zero fallback).
+2. **Pengujian Integrasi PostgreSQL RLS Riil (`tests/p02b_wave1b2_c2_real_rls_integration.test.js`):** **9/9 PASS** (dijalankan langsung terhadap database lab `nurseflow_security_lab` dengan non-superuser `nurseflow_app_user`, membuktikan isolasi baca/tulis multi-tenant, penolakan cross-tenant write via SQLSTATE `42501`, atomisitas rollback, dan sanitasi koneksi `DISCARD ALL`).
+3. **Pengujian Durabilitas Domain C2 (`tests/verticalSlice09DiagnosticInterpretationDurability.test.js`):** **25/25 PASS** (diselaraskan dengan kontrak keamanan UoW dan lolos tanpa regresi).
+4. **Suite Regresi Kanonik Baseline (Triage & Encounter):** **81/81 PASS** (100% lolos di 6 suite pengujian).
+5. **Grand Total:** **129/129 PASS** di seluruh 9 suite pengujian.
+
+#### 6. Temuan Audit Pasca-Implementasi (Audit Findings)
+Audit independen terhadap diff dan jalur eksekusi mencatat:
+- **Finding F-01:** Builder aktor pada kontroler C2 menerapkan fallback deskriptif untuk atribut non-tenant (`userId`, `role`), namun untuk `tenantId` menerapkan **zero-fallback / fail-closed mutlak**.
+- **Finding F-02:** Penegakan RLS PostgreSQL diterapkan langsung (*Direct RLS*) pada tabel `encounters`, `physician_diagnostic_interpretations`, `clinical_orders`, dan `universal_audit_logs`. Tabel anak (`diagnostic_result_notifications`, `diagnostic_secondary_actions`) dilindungi melalui relasi kunci asing (*FK cascade*) dan kueri terikat UoW.
+- **Finding F-03:** Skenario `C2-RLS-07` memverifikasi ketiadaan GUC bleed setelah koneksi dilepas ke pool via kueri verifikasi `current_setting('app.current_tenant_id', true) IS NULL`.
+- **Finding F-04:** Tabel `universal_audit_logs` dilindungi trigger append-only di tingkat PostgreSQL (sesuai standar akreditasi JCI), mencegah perubahan atau penghapusan riwayat audit.
+
+#### 7. Kepatuhan Isolasi Domain (Strict Scope Isolation)
+- Domain lain (Candidate A: Antrean/Janji Temu, Candidate B: Siklus Obat Tertutup, Candidate C1: CPOE Medis, Candidate D: Master Pasien) **100% TIDAK TERSENTUH (0 baris diubah)**.
+- Nol perubahan pada migrasi DDL basis data (`database/migrations/`).
+- Nol perubahan pada skema basis data (`database/schema/`).
+- Nol perubahan pada frontend (`src/`).
+
+---
+
 ### 📌 [03 OKTOBER 2026] — P0-2B: TINJAUAN KESIAPAN ARSITEKTUR WAVE 1B.2 (ARCHITECTURE DECISION READINESS REVIEW)
 **Tag Rilis:** `audit-p02b-wave1b2-architecture-readiness-review`  
 **Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
