@@ -1,0 +1,959 @@
+{
+  "governance_metadata": {
+    "document_id": "DOC-AUDIT-P02B-WAVE1B2-TECH-DECISION-ANALYSIS-20261003",
+    "timestamp": "2026-10-03T11:05:00+07:00",
+    "repository": "Mojo-Brothers/NurseFlow-WebApp",
+    "branch": "feature/security-foundation-wave1a10",
+    "base_evidence_commit": "4efa9362d0e7bce28f541cfdee04caf0308dcdbb",
+    "audited_readiness_review_commit": "9680fc99226f13f671b20b8409a62cbfac014cc3",
+    "audit_integrity_review_commit": "e3d7b0abe6719fe270cafd61c62b5bc813ec1d46",
+    "evidence_baseline_freeze_commit": "a9fba667ce51010741c18da7b201d696a47ba09a",
+    "audit_mode": "READ-ONLY / EVIDENCE-BASED / DECISION SUPPORT",
+    "canonical_regression_status": "81/81 PASS",
+    "canonical_regression_time_seconds": 8.33,
+    "production_changes": 0,
+    "migration_changes": 0,
+    "schema_changes": 0,
+    "test_changes": 0,
+    "changelog_changes": 0,
+    "candidate_selected": false,
+    "recommendation_generated": false,
+    "implementation_started": false,
+    "human_owner_decision": "PENDING"
+  },
+  "analytical_dimensions": {
+    "dimension_1_execution_surface": {
+      "candidate_a": {
+        "stage0_call_sites": 3,
+        "active_stage0_routes": 2,
+        "zero_stage0_routes": 2,
+        "total_routes": 4,
+        "controllers": ["server/controllers/appointment.controller.js"],
+        "services": [],
+        "queries": {
+          "reads": 1,
+          "writes": 2,
+          "mutation_types": ["SELECT with LEFT JOIN (L39)", "SELECT FOR UPDATE (L115)", "INSERT INTO master_patients (L123)"]
+        }
+      },
+      "candidate_b": {
+        "stage0_call_sites": 13,
+        "active_stage0_routes": 3,
+        "zero_stage0_routes": 5,
+        "total_routes": 8,
+        "controllers": ["server/controllers/medicationClosedLoop.controller.js"],
+        "services": ["server/services/medicationClosedLoop.service.js"],
+        "queries": {
+          "reads": 8,
+          "writes": 5,
+          "mutation_types": ["SELECT FOR UPDATE (L99, L1312)", "SELECT (L91-96, 100, 101)", "INSERT/UPDATE clinical_orders, medication_dispense_allocations, medication_emar_administrations, universal_audit_logs"]
+        }
+      },
+      "candidate_c1": {
+        "stage0_call_sites": 16,
+        "active_stage0_routes": 6,
+        "zero_stage0_routes": 3,
+        "total_routes": 9,
+        "controllers": ["server/controllers/cpoe.controller.js"],
+        "services": [
+          "server/services/cpoeApplication.service.js",
+          "server/services/safetyAuthorization.service.js"
+        ],
+        "queries": {
+          "reads": 12,
+          "writes": 4,
+          "mutation_types": ["SELECT FOR UPDATE (L151, L393, L192)", "SELECT (L333-340, L558-608)", "INSERT INTO universal_audit_logs", "UPDATE safety_decision_registry"]
+        },
+        "shared_call_site": {
+          "id": "CS 71",
+          "file": "server/services/cpoeApplication.service.js",
+          "line": 608,
+          "function": "listOrders",
+          "routes": ["GET /api/v1/orders/cpoe", "GET /api/v1/orders"]
+        }
+      },
+      "candidate_c2": {
+        "stage0_call_sites": 11,
+        "active_stage0_routes": 3,
+        "zero_stage0_routes": 1,
+        "total_routes": 4,
+        "controllers": ["server/controllers/diagnosticInterpretation.controller.js"],
+        "services": ["server/services/diagnosticInterpretation.service.js"],
+        "queries": {
+          "reads": 8,
+          "writes": 3,
+          "mutation_types": ["SELECT FOR UPDATE (L89, L510)", "SELECT encounters, physician_diagnostic_interpretations", "INSERT INTO universal_audit_logs (L416, 424)", "INSERT INTO clinical_orders (L528)"]
+        }
+      },
+      "candidate_d": {
+        "stage0_call_sites": 10,
+        "active_stage0_routes": 3,
+        "zero_stage0_routes": 0,
+        "total_routes": 3,
+        "controllers": ["server/controllers/patient.controller.js"],
+        "services": ["server/services/patientApplication.service.js"],
+        "queries": {
+          "reads": 7,
+          "writes": 3,
+          "mutation_types": ["SELECT FOR UPDATE on NIK (L100)", "SELECT FOR UPDATE on BPJS (L115)", "SELECT FOR UPDATE on MRN (L35)", "INSERT INTO master_patients (L170)", "SELECT search/getById (L236-272)"]
+        }
+      }
+    },
+    "dimension_2_controller_ingress_security": {
+      "candidate_a": {
+        "controller": "server/controllers/appointment.controller.js",
+        "extracts_req_tenant_id": false,
+        "validates_uuid": false,
+        "default_tenant_fallback": "DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001'",
+        "mock_actor_fallback": null,
+        "gate_status": "FAIL-OPEN"
+      },
+      "candidate_b": {
+        "controller": "server/controllers/medicationClosedLoop.controller.js",
+        "extracts_req_tenant_id": false,
+        "validates_uuid": false,
+        "default_tenant_fallback": null,
+        "mock_actor_fallback": "USR-DOC-001, USR-PHARM-01",
+        "gate_status": "FAIL-OPEN"
+      },
+      "candidate_c1": {
+        "controller": "server/controllers/cpoe.controller.js",
+        "extracts_req_tenant_id": false,
+        "validates_uuid": false,
+        "default_tenant_fallback": null,
+        "mock_actor_fallback": "USR-DOC-001",
+        "gate_status": "FAIL-OPEN"
+      },
+      "candidate_c2": {
+        "controller": "server/controllers/diagnosticInterpretation.controller.js",
+        "extracts_req_tenant_id": false,
+        "validates_uuid": false,
+        "default_tenant_fallback": null,
+        "mock_actor_fallback": "USR-LAB-01",
+        "gate_status": "FAIL-OPEN"
+      },
+      "candidate_d": {
+        "controller": "server/controllers/patient.controller.js",
+        "extracts_req_tenant_id": false,
+        "validates_uuid": false,
+        "default_tenant_fallback": null,
+        "mock_actor_fallback": "USR-REG-001 (createPatient); reads omit tenant param",
+        "gate_status": "FAIL-OPEN"
+      }
+    },
+    "dimension_3_uow_migration_topology": {
+      "candidate_a": {
+        "layer_location": "Controller layer (inline SQL queries)",
+        "service_layer_exists": false,
+        "legacy_transaction_manager": false,
+        "direct_pool_connect": true,
+        "transaction_nesting_concern": false,
+        "uow_target": "Wrap inline controller DB transactions with withUnitOfWork or extract service layer"
+      },
+      "candidate_b": {
+        "layer_location": "Service layer (medicationClosedLoop.service.js)",
+        "service_layer_exists": true,
+        "legacy_transaction_manager": false,
+        "direct_pool_connect": true,
+        "transaction_nesting_concern": true,
+        "uow_target": "Wrap multi-table transaction blocks across orders, dispense, eMAR, inventory, audit"
+      },
+      "candidate_c1": {
+        "layer_location": "Service layer (cpoeApplication.service.js & safetyAuthorization.service.js)",
+        "service_layer_exists": true,
+        "legacy_transaction_manager": true,
+        "legacy_manager_reference": "server/utils/transactionManager.js",
+        "direct_pool_connect": true,
+        "transaction_nesting_concern": true,
+        "uow_target": "Replace legacy transactionManager with withUnitOfWork and pass Unit of Work context across CPOE and Safety Authorization services"
+      },
+      "candidate_c2": {
+        "layer_location": "Service layer (diagnosticInterpretation.service.js)",
+        "service_layer_exists": true,
+        "legacy_transaction_manager": false,
+        "direct_pool_connect": true,
+        "transaction_nesting_concern": false,
+        "uow_target": "Wrap service transaction methods (publishDiagnosticNotification, executeSecondaryClinicalAction) with withUnitOfWork"
+      },
+      "candidate_d": {
+        "layer_location": "Service layer (patientApplication.service.js)",
+        "service_layer_exists": true,
+        "legacy_transaction_manager": false,
+        "direct_pool_connect": true,
+        "transaction_nesting_concern": false,
+        "uow_target": "Wrap patient registration transaction and read queries with withUnitOfWork, injecting tenant context"
+      }
+    },
+    "dimension_4_transaction_architecture": {
+      "candidate_a": {
+        "entry_points": ["appointmentController.book (server/controllers/appointment.controller.js:91-170)"],
+        "connection_client_ownership": "Local controller scoped pool.connect() client",
+        "row_locking": "Slot lock on appointments (L135), idempotency lock on appointments (L96)",
+        "cross_service_transaction": false,
+        "tables_in_transaction": ["appointments", "idempotency_keys", "master_patients", "queue_sequences"]
+      },
+      "candidate_b": {
+        "entry_points": [
+          "medicationClosedLoopService.verifyBedsideAndAdminister (server/services/medicationClosedLoop.service.js:823)",
+          "medicationClosedLoopService.documentAdverseReaction (server/services/medicationClosedLoop.service.js:1022)",
+          "medicationClosedLoopService.generateMedicationOrdersFromCPOE (server/services/medicationClosedLoop.service.js:461)"
+        ],
+        "connection_client_ownership": "Service-scoped pool.connect() client",
+        "row_locking": "Row lock on clinical_orders (L99), row lock on medication_emar_administrations (L1312)",
+        "cross_service_transaction": false,
+        "tables_in_transaction": ["clinical_orders", "medication_dispense_allocations", "medication_emar_administrations", "universal_audit_logs", "pharmacy_inventory_batches"]
+      },
+      "candidate_c1": {
+        "entry_points": [
+          "cpoeApplicationService.createOrder (server/services/cpoeApplication.service.js:128)",
+          "cpoeApplicationService.cancelOrder (server/services/cpoeApplication.service.js:391)"
+        ],
+        "connection_client_ownership": "Transferred across services: cancelOrder transfers pgClient to safetyAuthorizationService.verifyAndConsumeTransactional (L401)",
+        "row_locking": "Row lock on encounters (L151), row lock on clinical_orders (L393), row lock on safety_decision_registry (L192)",
+        "cross_service_transaction": true,
+        "tables_in_transaction": ["encounters", "clinical_orders", "cpoe_order_items", "universal_audit_logs", "safety_decision_registry"]
+      },
+      "candidate_c2": {
+        "entry_points": [
+          "diagnosticInterpretationService.publishDiagnosticNotification (server/services/diagnosticInterpretation.service.js:86)",
+          "diagnosticInterpretationService.executeSecondaryClinicalAction (server/services/diagnosticInterpretation.service.js:508)"
+        ],
+        "connection_client_ownership": "Service-scoped pool.connect() client",
+        "row_locking": "Row lock on encounters (L89), row lock on physician_diagnostic_interpretations (L510)",
+        "cross_service_transaction": false,
+        "tables_in_transaction": ["encounters", "physician_diagnostic_interpretations", "diagnostic_result_notifications", "clinical_orders", "cpoe_order_items", "universal_audit_logs"]
+      },
+      "candidate_d": {
+        "entry_points": ["patientApplicationService.registerPatient (server/services/patientApplication.service.js:96-200)"],
+        "connection_client_ownership": "Service-scoped pool.connect() client",
+        "row_locking": "Row lock on NIK on master_patients (L100), row lock on BPJS on master_patients (L115), row lock on MRN on master_patients (L35)",
+        "cross_service_transaction": false,
+        "tables_in_transaction": ["master_patients", "universal_audit_logs"]
+      }
+    },
+    "dimension_5_datastore_coupling": {
+      "candidate_a": {
+        "stage0_tables": ["master_patients"],
+        "non_stage0_tables": ["appointments", "queue_sequences", "idempotency_keys"],
+        "shared_tables_with_other_candidates": ["master_patients (with Candidate D)"],
+        "shared_call_sites": 0,
+        "fk_dependencies": "Foreign key to master_patients(id)",
+        "direct_datastore_mutation": "Reads and writes master_patients"
+      },
+      "candidate_b": {
+        "stage0_tables": ["clinical_orders", "medication_dispense_allocations", "medication_emar_administrations", "universal_audit_logs"],
+        "non_stage0_tables": ["pharmacy_inventory_batches", "medication_orders", "patient_allergies"],
+        "shared_tables_with_other_candidates": ["clinical_orders (with C1, C2)", "universal_audit_logs (with C1, C2, D)"],
+        "shared_call_sites": 0,
+        "fk_dependencies": "Composite FKs (Migration 078) to encounters(id, tenant_id) and master_patients(id, tenant_id)",
+        "direct_datastore_mutation": "Mutates clinical_orders, medication_dispense_allocations, medication_emar_administrations, universal_audit_logs"
+      },
+      "candidate_c1": {
+        "stage0_tables": ["clinical_orders", "universal_audit_logs", "safety_decision_registry"],
+        "non_stage0_tables": ["cpoe_order_items", "cpoe_alerts"],
+        "shared_tables_with_other_candidates": ["clinical_orders (with B, C2)", "universal_audit_logs (with B, C2, D)"],
+        "shared_call_sites": 1,
+        "shared_call_site_detail": "CS 71 (cpoeApplication.service.js:608) called by GET /api/v1/orders/cpoe and GET /api/v1/orders",
+        "fk_dependencies": "Foreign key to encounters(id), master_patients(id)",
+        "direct_datastore_mutation": "Mutates clinical_orders, universal_audit_logs, safety_decision_registry"
+      },
+      "candidate_c2": {
+        "stage0_tables": ["encounters", "physician_diagnostic_interpretations", "clinical_orders", "universal_audit_logs"],
+        "non_stage0_tables": ["diagnostic_result_notifications", "cpoe_order_items"],
+        "shared_tables_with_other_candidates": ["clinical_orders (with B, C1)", "universal_audit_logs (with B, C1, D)", "encounters (with C1, Stage-0)"],
+        "shared_call_sites": 0,
+        "fk_dependencies": "Foreign key to encounters(id), master_patients(id)",
+        "direct_datastore_mutation": "Mutates physician_diagnostic_interpretations, clinical_orders, universal_audit_logs"
+      },
+      "candidate_d": {
+        "stage0_tables": ["master_patients"],
+        "non_stage0_tables": [],
+        "shared_tables_with_other_candidates": ["master_patients (with Candidate A)"],
+        "shared_call_sites": 0,
+        "fk_dependencies": "Direct FK Root: 65 distinct tables have Foreign Key constraints referencing master_patients(id) (42 RESTRICT, 23 NO ACTION, 0 CASCADE)",
+        "direct_datastore_mutation": "Mutates master_patients, universal_audit_logs"
+      },
+      "c1_c2_coupling_dissection": {
+        "direct_synchronous_service_coupling": {
+          "status": "NO",
+          "evidence": "0 imports between cpoeApplication.service.js and diagnosticInterpretation.service.js; no direct invocation"
+        },
+        "shared_datastore_mutation": {
+          "status": "YES",
+          "evidence": "Both modules independently mutate clinical_orders (C1 manages full lifecycle; C2 inserts secondary clinical order at line 528)"
+        },
+        "shared_transaction_boundary": {
+          "status": "NO",
+          "evidence": "Both modules acquire distinct database clients via pool.connect() and manage independent BEGIN/COMMIT/ROLLBACK blocks"
+        }
+      }
+    },
+    "dimension_6_existing_test_maturity": {
+      "candidate_a": {
+        "test_suites_count": 2,
+        "suites": ["tests/appointmentQueue.test.js", "tests/appointmentQueuePersistence.test.js"],
+        "type": "Mock / in-memory",
+        "real_postgresql_rls_coverage": false,
+        "tenant_isolation_coverage": false,
+        "rollback_coverage": false,
+        "controller_gate_coverage": false
+      },
+      "candidate_b": {
+        "test_suites_count": 8,
+        "suites": [
+          "tests/verticalSlice03MedicationSafetyDurability.test.js",
+          "tests/medicationClosedLoop.test.js",
+          "tests/medicationVerification.test.js",
+          "tests/medicationAdministration.test.js",
+          "tests/medicationAdverseReaction.test.js",
+          "tests/medicationInventoryIntegration.test.js",
+          "tests/medicationSafetyAlerts.test.js",
+          "tests/medicationAuditTrail.test.js"
+        ],
+        "type": "Mock / in-memory",
+        "real_postgresql_rls_coverage": false,
+        "tenant_isolation_coverage": false,
+        "rollback_coverage": false,
+        "controller_gate_coverage": false
+      },
+      "candidate_c1": {
+        "test_suites_count": 3,
+        "suites": [
+          "tests/verticalSlice06AUniversalCpoeDurability.test.js",
+          "tests/cpoeApplication.test.js",
+          "tests/safetyAuthorization.test.js"
+        ],
+        "type": "Mock / in-memory",
+        "real_postgresql_rls_coverage": false,
+        "tenant_isolation_coverage": false,
+        "rollback_coverage": false,
+        "controller_gate_coverage": false
+      },
+      "candidate_c2": {
+        "test_suites_count": 1,
+        "suites": ["tests/verticalSlice09DiagnosticInterpretationDurability.test.js"],
+        "type": "Mock / in-memory",
+        "real_postgresql_rls_coverage": false,
+        "tenant_isolation_coverage": false,
+        "rollback_coverage": false,
+        "controller_gate_coverage": false
+      },
+      "candidate_d": {
+        "test_suites_count": 11,
+        "suites": [
+          "tests/verticalSlice01PatientDurability.test.js",
+          "tests/patientApplication.test.js",
+          "tests/patientSearch.test.js",
+          "tests/patientRegistration.test.js",
+          "tests/patientMrnGeneration.test.js",
+          "tests/patientDuplicateDetection.test.js",
+          "tests/patientBpjsValidation.test.js",
+          "tests/patientAudit.test.js",
+          "tests/patientConcurrency.test.js",
+          "tests/patientDemographics.test.js",
+          "tests/patientLifecycle.test.js"
+        ],
+        "type": "Mock / in-memory",
+        "real_postgresql_rls_coverage": false,
+        "tenant_isolation_coverage": false,
+        "rollback_coverage": false,
+        "controller_gate_coverage": false
+      }
+    },
+    "dimension_7_real_postgresql_gap": {
+      "candidate_a": {
+        "existing_real_postgresql_rls_tests": false,
+        "required_real_postgresql_rls_tests": true,
+        "specific_scenarios": [
+          "Appointment booking with valid tenant_id inserts master_patients successfully under tenant isolation",
+          "Cross-tenant appointment booking rejection",
+          "Cross-tenant patient listing isolation (LEFT JOIN master_patients must not leak other tenant patient names)",
+          "Rollback on appointment booking failure leaves 0 rows in appointments and master_patients"
+        ]
+      },
+      "candidate_b": {
+        "existing_real_postgresql_rls_tests": false,
+        "required_real_postgresql_rls_tests": true,
+        "specific_scenarios": [
+          "Bedside administration with dual-nurse verification sets tenant GUC and commits to clinical_orders and eMAR",
+          "Cross-tenant administration write rejection under default-deny",
+          "Adverse reaction recording rollback on mid-transaction failure",
+          "Composite FK enforcement on encounters and master_patients under multi-tenancy"
+        ]
+      },
+      "candidate_c1": {
+        "existing_real_postgresql_rls_tests": false,
+        "required_real_postgresql_rls_tests": true,
+        "specific_scenarios": [
+          "CPOE order creation commits to clinical_orders and cpoe_order_items with tenant GUC set",
+          "Two-person cancellation flow passes client to safetyAuthorizationService and verifies token consumption under single UoW",
+          "Cross-tenant order listing rejection on shared call site CS 71 (/orders/cpoe and /orders)",
+          "Cross-tenant order cancellation rejection under RLS"
+        ]
+      },
+      "candidate_c2": {
+        "existing_real_postgresql_rls_tests": false,
+        "required_real_postgresql_rls_tests": true,
+        "specific_scenarios": [
+          "Critical diagnostic notification publishing sets tenant GUC and locks encounter",
+          "Physician diagnostic interpretation recording commits to physician_diagnostic_interpretations and universal_audit_logs",
+          "Secondary clinical action commits INSERT to clinical_orders with explicit tenant_id under real PostgreSQL (validating fix for CS 82)",
+          "Cross-tenant interpretation access rejection under RLS"
+        ]
+      },
+      "candidate_d": {
+        "existing_real_postgresql_rls_tests": false,
+        "required_real_postgresql_rls_tests": true,
+        "specific_scenarios": [
+          "Patient registration commits to master_patients with explicit tenant_id and tenant GUC",
+          "Sequential annual MRN generation calculates next MRN scoped strictly to current tenant",
+          "Cross-tenant NIK and BPJS duplicate check isolation (or global uniqueness behavior verification)",
+          "Cross-tenant patient search rejection under RLS default-deny",
+          "Rollback on patient registration failure leaves 0 rows in master_patients and universal_audit_logs"
+        ]
+      }
+    },
+    "dimension_8_known_defects_and_preconditions": {
+      "candidate_a": {
+        "verified_defects": [
+          {
+            "id": "A-PRE-1",
+            "type": "FAIL_OPEN_CONTROLLER_FALLBACK",
+            "location": "server/controllers/appointment.controller.js:12, 66",
+            "description": "Hardcoded DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001' used when req.user.tenantId is missing or invalid",
+            "status": "VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate A"
+          },
+          {
+            "id": "A-PRE-2",
+            "type": "MISSING_SERVICE_ABSTRACTION",
+            "location": "server/controllers/appointment.controller.js:25-170",
+            "description": "All SQL queries and transaction management are written directly inside the controller file",
+            "status": "VERIFIED ARCHITECTURAL DEFECT / Implementation prerequisite for Candidate A"
+          }
+        ]
+      },
+      "candidate_b": {
+        "verified_defects": [
+          {
+            "id": "B-PRE-1",
+            "type": "FAIL_OPEN_CONTROLLER_GATE",
+            "location": "server/controllers/medicationClosedLoop.controller.js:20-24, 69-73",
+            "description": "Controller uses mock actor fallback USR-DOC-001 and USR-PHARM-01 without tenantId validation",
+            "status": "VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate B"
+          }
+        ]
+      },
+      "candidate_c1": {
+        "verified_defects": [
+          {
+            "id": "C1-PRE-1",
+            "type": "FAIL_OPEN_CONTROLLER_GATE",
+            "location": "server/controllers/cpoe.controller.js:18-22, 76-80",
+            "description": "Controller uses fallback actor USR-DOC-001 without req.tenantId extraction or UUID validation",
+            "status": "VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate C1"
+          },
+          {
+            "id": "C1-PRE-2",
+            "type": "LEGACY_TRANSACTION_MANAGER_DEPENDENCY",
+            "location": "server/services/cpoeApplication.service.js:128",
+            "description": "Uses deprecated transactionManager.withTransaction instead of canonical withUnitOfWork",
+            "status": "VERIFIED ARCHITECTURAL DEFECT / Implementation prerequisite for Candidate C1"
+          }
+        ]
+      },
+      "candidate_c2": {
+        "verified_defects": [
+          {
+            "id": "CS 82",
+            "type": "OMITTED_TENANT_ID_IN_INSERT",
+            "location": "server/services/diagnosticInterpretation.service.js:528-534",
+            "description": "INSERT INTO clinical_orders omits tenant_id column; schema sets tenant_id NOT NULL without default (009_tenant_identity_foundation.sql:88-90); no BEFORE INSERT trigger exists; fails on real PostgreSQL",
+            "status": "VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate C2"
+          },
+          {
+            "id": "C2-PRE-2",
+            "type": "FAIL_OPEN_CONTROLLER_GATE",
+            "location": "server/controllers/diagnosticInterpretation.controller.js:21-25",
+            "description": "Controller uses mock actor USR-LAB-01 without req.tenantId validation",
+            "status": "VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate C2"
+          }
+        ]
+      },
+      "candidate_d": {
+        "verified_defects": [
+          {
+            "id": "D-PRE-1",
+            "type": "FAIL_OPEN_CONTROLLER_GATE",
+            "location": "server/controllers/patient.controller.js:24, 62, 103-107",
+            "description": "patient.controller.js completely omits tenant extraction on search/getById; uses USR-REG-001 fallback on create",
+            "status": "VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate D"
+          },
+          {
+            "id": "D-PRE-2",
+            "type": "OMITTED_TENANT_IN_INSERT_AND_LOCKS",
+            "location": "server/services/patientApplication.service.js:99, 114, 136, 170",
+            "description": "NIK/BPJS lock queries do not filter by tenant_id; INSERT INTO master_patients omits tenant_id parameter; requires explicit tenant parameter injection",
+            "status": "VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate D"
+          }
+        ]
+      }
+    },
+    "dimension_9_cross_module_dependency": {
+      "candidate_a": {
+        "synchronous_service_dependency": "None",
+        "shared_datastore": "master_patients (read via LEFT JOIN, written on auto-provisioning)",
+        "shared_transaction": "None",
+        "fk_dependency": "Foreign key to master_patients(id)",
+        "shared_audit_infrastructure": "Does not use universal_audit_logs",
+        "shared_authorization_infrastructure": "None"
+      },
+      "candidate_b": {
+        "synchronous_service_dependency": "None (operates autonomously on pharmacy and medication data)",
+        "shared_datastore": "clinical_orders, universal_audit_logs, pharmacy_inventory_batches",
+        "shared_transaction": "None",
+        "fk_dependency": "Composite FKs to encounters(id, tenant_id) and master_patients(id, tenant_id)",
+        "shared_audit_infrastructure": "Writes to universal_audit_logs",
+        "shared_authorization_infrastructure": "Bedside barcode and dual-nurse verification signatures"
+      },
+      "candidate_c1": {
+        "synchronous_service_dependency": "Synchronous call to safetyAuthorization.service.js within cancelOrder",
+        "shared_datastore": "clinical_orders, encounters, universal_audit_logs, safety_decision_registry",
+        "shared_transaction": "Cross-service client passing to safetyAuthorizationService.verifyAndConsumeTransactional",
+        "fk_dependency": "Foreign keys to encounters(id), master_patients(id)",
+        "shared_audit_infrastructure": "Writes to universal_audit_logs",
+        "shared_authorization_infrastructure": "Direct integration with safety_decision_registry for two-person cancellation tokens"
+      },
+      "candidate_c2": {
+        "synchronous_service_dependency": "None direct to C1 (no service imports)",
+        "shared_datastore": "clinical_orders, encounters, physician_diagnostic_interpretations, universal_audit_logs",
+        "shared_transaction": "None",
+        "fk_dependency": "Foreign keys to encounters(id), master_patients(id)",
+        "shared_audit_infrastructure": "Writes to universal_audit_logs",
+        "shared_authorization_infrastructure": "Critical value acknowledgment protocol"
+      },
+      "candidate_d": {
+        "synchronous_service_dependency": "None (standalone application service)",
+        "shared_datastore": "master_patients, universal_audit_logs",
+        "shared_transaction": "None",
+        "fk_dependency": "Direct FK Root: 65 child tables depend on master_patients(id)",
+        "shared_audit_infrastructure": "Writes to universal_audit_logs",
+        "shared_authorization_infrastructure": "Sequential MRN annual lock generator"
+      }
+    },
+    "dimension_10_blast_surface_inventory": {
+      "candidate_a": {
+        "files_potentially_affected": {
+          "controllers": ["server/controllers/appointment.controller.js"],
+          "services": ["Potentially new service server/services/appointmentApplication.service.js if refactored from controller"],
+          "repositories": [],
+          "middleware": [],
+          "routes": ["server/routes/appointment.routes.js"],
+          "tables": ["master_patients", "appointments", "queue_sequences", "idempotency_keys"],
+          "tests": ["tests/appointmentQueue.test.js", "tests/appointmentQueuePersistence.test.js", "New real PostgreSQL RLS test suite"],
+          "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js"]
+        }
+      },
+      "candidate_b": {
+        "files_potentially_affected": {
+          "controllers": ["server/controllers/medicationClosedLoop.controller.js"],
+          "services": ["server/services/medicationClosedLoop.service.js"],
+          "repositories": [],
+          "middleware": [],
+          "routes": ["server/routes/medicationClosedLoop.routes.js"],
+          "tables": ["clinical_orders", "medication_dispense_allocations", "medication_emar_administrations", "universal_audit_logs", "pharmacy_inventory_batches", "medication_orders", "patient_allergies"],
+          "tests": ["8 existing medication test suites", "New real PostgreSQL RLS test suite"],
+          "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js"]
+        }
+      },
+      "candidate_c1": {
+        "files_potentially_affected": {
+          "controllers": ["server/controllers/cpoe.controller.js"],
+          "services": ["server/services/cpoeApplication.service.js", "server/services/safetyAuthorization.service.js"],
+          "repositories": [],
+          "middleware": [],
+          "routes": ["server/routes/cpoe.routes.js", "server/routes/orderCompatibility.routes.js"],
+          "tables": ["clinical_orders", "encounters", "cpoe_order_items", "universal_audit_logs", "safety_decision_registry"],
+          "tests": ["3 existing CPOE test suites", "New real PostgreSQL RLS test suite"],
+          "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js", "server/utils/transactionManager.js (deprecation/removal)"]
+        }
+      },
+      "candidate_c2": {
+        "files_potentially_affected": {
+          "controllers": ["server/controllers/diagnosticInterpretation.controller.js"],
+          "services": ["server/services/diagnosticInterpretation.service.js"],
+          "repositories": [],
+          "middleware": [],
+          "routes": ["server/routes/diagnosticInterpretation.routes.js"],
+          "tables": ["encounters", "physician_diagnostic_interpretations", "diagnostic_result_notifications", "clinical_orders", "universal_audit_logs"],
+          "tests": ["tests/verticalSlice09DiagnosticInterpretationDurability.test.js", "New real PostgreSQL RLS test suite"],
+          "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js"]
+        }
+      },
+      "candidate_d": {
+        "files_potentially_affected": {
+          "controllers": ["server/controllers/patient.controller.js"],
+          "services": ["server/services/patientApplication.service.js"],
+          "repositories": [],
+          "middleware": [],
+          "routes": ["server/routes/patients.routes.js"],
+          "tables": ["master_patients", "universal_audit_logs"],
+          "tests": ["11 existing patient test suites", "New real PostgreSQL RLS test suite"],
+          "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js"]
+        }
+      }
+    }
+  },
+  "candidate_dossiers": {
+    "candidate_a": {
+      "name": "Candidate A — Queue / Appointments",
+      "scope": "Polyclinic outpatient queue and appointment booking management",
+      "stage0_surface": "3 Stage-0 Call Sites (CS 1: Read L39, CS 2: Write L115, CS 3: Write L123)",
+      "routes": "4 routes total: 2 active Stage-0 (GET /, POST /book), 2 zero-Stage-0 (POST /check-in, POST /cancel)",
+      "controllers": "server/controllers/appointment.controller.js",
+      "services": "None (all logic currently resides directly in controller)",
+      "transactions": "Single local transaction inside appointmentController.book (pool.connect(), BEGIN, COMMIT, ROLLBACK)",
+      "tables": "Stage-0: master_patients. Non-Stage-0: appointments, queue_sequences, idempotency_keys",
+      "rls_uow_requirements": "Install L1 isValidUuid gate, remove hardcoded DEFAULT_TENANT_ID, wrap Stage-0 calls in withUnitOfWork",
+      "test_coverage": "2 mock test suites (tests/appointmentQueue*.test.js), 0 real PostgreSQL RLS tests",
+      "known_defects": ["Hardcoded DEFAULT_TENANT_ID fallback", "Missing service layer abstraction"],
+      "implementation_prerequisites": [
+        "Implement fail-closed L1 tenant gate on GET / and POST /book",
+        "Purge DEFAULT_TENANT_ID fallback",
+        "Wrap CS 1, CS 2, CS 3 in withUnitOfWork",
+        "Construct real PostgreSQL RLS test suite"
+      ],
+      "unknowns": [
+        "Behavior of doctor slot lock under high-concurrency real PostgreSQL connection pool",
+        "Impact of removing DEFAULT_TENANT_ID on legacy API callers that do not supply JWT auth"
+      ],
+      "evidence_references": [
+        "server/controllers/appointment.controller.js:12, 39, 66, 115, 123",
+        "docs/audit/P0-2B-ROUTE-EXECUTION-PATH-VERIFICATION.md:82-95"
+      ]
+    },
+    "candidate_b": {
+      "name": "Candidate B — Medication Closed-Loop",
+      "scope": "Inpatient medication closed-loop: prescribing, bedside 5-rights administration, eMAR recording, adverse reaction tracking",
+      "stage0_surface": "13 Stage-0 Call Sites (CS 91-96, 100, 101: Reads; CS 97-99, 102, 103: Writes)",
+      "routes": "8 routes total: 3 active Stage-0 (POST /prescribe, POST /:id/administer, POST /administrations/:id/adverse-reaction), 5 zero-Stage-0",
+      "controllers": "server/controllers/medicationClosedLoop.controller.js",
+      "services": "server/services/medicationClosedLoop.service.js",
+      "transactions": "Multi-table service transactions in verifyBedsideAndAdminister, documentAdverseReaction, generateMedicationOrdersFromCPOE",
+      "tables": "Stage-0: clinical_orders, medication_dispense_allocations, medication_emar_administrations, universal_audit_logs. Non-Stage-0: pharmacy_inventory_batches, medication_orders, patient_allergies",
+      "rls_uow_requirements": "Install L1 isValidUuid gate across all routes, wrap 13 Stage-0 calls in withUnitOfWork across multi-table mutations",
+      "test_coverage": "8 mock test suites, 0 real PostgreSQL RLS tests",
+      "known_defects": ["Controller mock actor fallback USR-DOC-001 and USR-PHARM-01 without tenantId validation"],
+      "implementation_prerequisites": [
+        "Implement fail-closed L1 gate across controller handlers",
+        "Wrap 13 Stage-0 CS in withUnitOfWork",
+        "Construct real PostgreSQL RLS test suite for bedside dual-nurse administration and adverse reactions"
+      ],
+      "unknowns": [
+        "Interaction between PostgreSQL RLS policies on medication tables and composite FK constraints from Migration 078",
+        "Deadlock vulnerability during simultaneous bedside barcode scanning and pharmacy dispense allocation under row-level locks"
+      ],
+      "evidence_references": [
+        "server/controllers/medicationClosedLoop.controller.js:20-24, 69-73",
+        "server/services/medicationClosedLoop.service.js:96, 461, 823, 1022, 1312",
+        "docs/audit/P0-2B-ROUTE-EXECUTION-PATH-VERIFICATION.md:120-135"
+      ]
+    },
+    "candidate_c1": {
+      "name": "Candidate C1 — CPOE Orders & Safety",
+      "scope": "Computerized Physician Order Entry (CPOE) lifecycle, cancellation governance, safety authorization dual-control registry",
+      "stage0_surface": "16 Stage-0 Call Sites: 13 in cpoeApplication.service.js (CS 59-71) + 3 in safetyAuthorization.service.js (CS 143-145)",
+      "routes": "9 routes total: 6 active Stage-0 (POST /cpoe, POST /cpoe/:id/cancel, GET /cpoe, GET /cpoe/:id, GET /cpoe/encounter/:encounterId, GET /), 3 zero-Stage-0",
+      "controllers": "server/controllers/cpoe.controller.js",
+      "services": "server/services/cpoeApplication.service.js, server/services/safetyAuthorization.service.js",
+      "transactions": "createOrder uses legacy transactionManager; cancelOrder passes client across service boundary to safetyAuthorizationService.verifyAndConsumeTransactional",
+      "tables": "Stage-0: clinical_orders, universal_audit_logs, safety_decision_registry. Non-Stage-0: encounters (Stage-0 table touched via read), cpoe_order_items, cpoe_alerts",
+      "rls_uow_requirements": "Install L1 isValidUuid gate across 6 active routes, migrate from transactionManager to withUnitOfWork, maintain transactional client inheritance across services, remediate shared CS 71",
+      "test_coverage": "3 mock test suites, 0 real PostgreSQL RLS tests",
+      "known_defects": ["Fallback actor USR-DOC-001 in controller", "Legacy transactionManager usage in cpoeApplication.service.js"],
+      "implementation_prerequisites": [
+        "Implement fail-closed L1 gate across controller routes",
+        "Replace transactionManager.withTransaction with withUnitOfWork",
+        "Pass Unit of Work context across CPOE and Safety Authorization services",
+        "Secure shared call site CS 71",
+        "Construct real PostgreSQL RLS test suite for order creation and cancellation"
+      ],
+      "unknowns": [
+        "Safety token expiration behavior when system clocks drift between application server and PostgreSQL database server",
+        "Performance of shared call site CS 71 under large order volume with tenant RLS filtering"
+      ],
+      "evidence_references": [
+        "server/controllers/cpoe.controller.js:18-22, 76-80",
+        "server/services/cpoeApplication.service.js:128, 391, 401, 608",
+        "server/services/safetyAuthorization.service.js:190-250",
+        "docs/audit/P0-2B-ROUTE-EXECUTION-PATH-VERIFICATION.md:140-165"
+      ]
+    },
+    "candidate_c2": {
+      "name": "Candidate C2 — Diagnostics",
+      "scope": "Diagnostic notification publishing, physician interpretation, secondary clinical order action execution",
+      "stage0_surface": "11 Stage-0 Call Sites: CS 72-75 (encounters), CS 76-77 (universal_audit_logs), CS 78-81 (physician_diagnostic_interpretations), CS 82 (clinical_orders)",
+      "routes": "4 routes total: 3 active Stage-0 (POST /notifications, POST /notifications/:id/interpret, POST /interpretations/:id/actions), 1 zero-Stage-0",
+      "controllers": "server/controllers/diagnosticInterpretation.controller.js",
+      "services": "server/services/diagnosticInterpretation.service.js",
+      "transactions": "Service-level transactions in publishDiagnosticNotification and executeSecondaryClinicalAction",
+      "tables": "Stage-0: encounters, physician_diagnostic_interpretations, clinical_orders, universal_audit_logs. Non-Stage-0: diagnostic_result_notifications, cpoe_order_items",
+      "rls_uow_requirements": "Install L1 isValidUuid gate across 3 active routes, wrap 11 Stage-0 calls in withUnitOfWork, fix CS 82 SQL query",
+      "test_coverage": "1 mock test suite (tests/verticalSlice09DiagnosticInterpretationDurability.test.js), 0 real PostgreSQL RLS tests",
+      "known_defects": [
+        "CS 82: diagnosticInterpretation.service.js:528 INSERT INTO clinical_orders omits tenant_id (NOT NULL without default in schema)",
+        "Fallback actor USR-LAB-01 in controller without tenant validation"
+      ],
+      "implementation_prerequisites": [
+        "Fix CS 82 by adding tenant_id column and parameter to INSERT INTO clinical_orders",
+        "Implement fail-closed L1 gate across controller routes",
+        "Wrap 11 Stage-0 calls in withUnitOfWork",
+        "Construct real PostgreSQL RLS test suite for critical notification and secondary order actions"
+      ],
+      "unknowns": [
+        "Whether any production caller has ever successfully executed executeSecondaryClinicalAction against real PostgreSQL",
+        "Behavior of diagnostic result notifications when encounter state transitions to DISCHARGED"
+      ],
+      "evidence_references": [
+        "server/controllers/diagnosticInterpretation.controller.js:21-25",
+        "server/services/diagnosticInterpretation.service.js:86, 416, 424, 508, 528-534",
+        "database/migrations/009_tenant_identity_foundation.sql:88-90",
+        "docs/audit/P0-2B-ROUTE-EXECUTION-PATH-VERIFICATION.md:170-190"
+      ]
+    },
+    "candidate_d": {
+      "name": "Candidate D — Master Patient / Admission",
+      "scope": "Master Patient Index (MPI), patient registration, identity de-duplication, sequential MRN generation",
+      "stage0_surface": "10 Stage-0 Call Sites: CS 104-106 (init), CS 107 (FOR UPDATE NIK), CS 108 (FOR UPDATE BPJS), CS 109-111 (search), CS 112-113 (getById), L170 (INSERT master_patients)",
+      "routes": "3 routes total: 3 active Stage-0 (100% active: GET /api/v1/patients, GET /api/v1/patients/:id, POST /api/v1/patients)",
+      "controllers": "server/controllers/patient.controller.js",
+      "services": "server/services/patientApplication.service.js",
+      "transactions": "Service-level transaction in registerPatient (pool.connect(), BEGIN, COMMIT, ROLLBACK) with row locks on NIK, BPJS, and MRN",
+      "tables": "Stage-0: master_patients. Child tables: 65 distinct tables have Foreign Keys referencing master_patients(id)",
+      "rls_uow_requirements": "Install L1 isValidUuid gate across all 3 routes, inject tenantId parameter into search/getById/registerPatient, wrap 10 Stage-0 calls in withUnitOfWork, scope annual MRN lock to tenant",
+      "test_coverage": "11 mock test suites, 0 real PostgreSQL RLS tests",
+      "known_defects": [
+        "Controller completely omits tenant extraction on search and getById; uses USR-REG-001 fallback on create",
+        "NIK and BPJS duplicate check queries do not filter by tenant_id",
+        "INSERT INTO master_patients omits tenant_id parameter"
+      ],
+      "implementation_prerequisites": [
+        "Implement fail-closed L1 gate on all 3 routes in patient.controller.js",
+        "Pass tenantId through to patientApplicationService methods",
+        "Explicitly add tenant_id to INSERT INTO master_patients query and parameters",
+        "Wrap 10 Stage-0 CS in withUnitOfWork",
+        "Scope generateNextMrn lock query to tenant",
+        "Construct real PostgreSQL RLS test suite for MPI search, registration, and duplicate rejection"
+      ],
+      "unknowns": [
+        "Whether NIK and BPJS should be globally unique across all hospital tenants or unique only per tenant",
+        "Concurrency contention on the annual MRN generator under heavy simultaneous registration loads"
+      ],
+      "evidence_references": [
+        "server/controllers/patient.controller.js:24, 62, 103-107",
+        "server/services/patientApplication.service.js:35, 96-200, 236-272",
+        "docs/audit/P0-2B-ROUTE-EXECUTION-PATH-VERIFICATION.md:195-215"
+      ]
+    }
+  },
+  "critical_path_inventory": {
+    "candidate_a": {
+      "candidate": "Candidate A",
+      "required_security_gate": "Install isValidUuid check in appointment.controller.js (getAppointments, book) returning 403 TENANT_CONTEXT_REQUIRED; purge DEFAULT_TENANT_ID",
+      "required_uow_migration": "Wrap inline controller database operations (CS 1, CS 2, CS 3) with withUnitOfWork",
+      "required_database_work": "None (schema already has tenant_isolation_master_patients policy)",
+      "required_transaction_work": "Refactor controller-level pool.connect() transaction to execute inside withUnitOfWork callback",
+      "required_regression_tests": "Run 81/81 canonical regression suite; update 2 mock appointment test suites",
+      "required_real_postgresql_tests": "Create real PostgreSQL RLS test verifying appointment booking and patient read under tenant isolation",
+      "known_prerequisite_defects": "Hardcoded DEFAULT_TENANT_ID in appointment.controller.js:12, 66",
+      "completion_evidence_required": "100% of Candidate A Stage-0 calls executed inside withUnitOfWork; 0 calls outside UoW; real PostgreSQL RLS tests pass; canonical regression 81/81 passes"
+    },
+    "candidate_b": {
+      "candidate": "Candidate B",
+      "required_security_gate": "Install isValidUuid check on all 8 routes in medicationClosedLoop.controller.js returning 403 TENANT_CONTEXT_REQUIRED; remove mock actor fallbacks",
+      "required_uow_migration": "Wrap 13 Stage-0 calls in medicationClosedLoop.service.js with withUnitOfWork",
+      "required_database_work": "Verify Migration 078 composite FK constraints under active RLS session GUC",
+      "required_transaction_work": "Migrate multi-table transactions (verifyBedsideAndAdminister, documentAdverseReaction, generateMedicationOrdersFromCPOE) into withUnitOfWork",
+      "required_regression_tests": "Run 81/81 canonical regression suite; update 8 mock medication test suites",
+      "required_real_postgresql_tests": "Create real PostgreSQL RLS test verifying bedside dual-nurse administration, eMAR mutation, and cross-tenant rejection",
+      "known_prerequisite_defects": "Controller mock actor fallbacks USR-DOC-001, USR-PHARM-01 without tenant validation",
+      "completion_evidence_required": "100% of Candidate B Stage-0 calls executed inside withUnitOfWork; 0 calls outside UoW; real PostgreSQL RLS tests pass; canonical regression 81/81 passes"
+    },
+    "candidate_c1": {
+      "candidate": "Candidate C1",
+      "required_security_gate": "Install isValidUuid check on 6 active routes in cpoe.controller.js returning 403 TENANT_CONTEXT_REQUIRED; remove USR-DOC-001 fallback",
+      "required_uow_migration": "Replace transactionManager.withTransaction with withUnitOfWork in cpoeApplication.service.js; propagate UoW context to safetyAuthorization.service.js",
+      "required_database_work": "None (tables clinical_orders, safety_decision_registry, universal_audit_logs already have RLS policies)",
+      "required_transaction_work": "Preserve cross-service client/context inheritance between cpoeApplicationService.cancelOrder and safetyAuthorizationService.verifyAndConsumeTransactional within single withUnitOfWork scope; secure shared CS 71",
+      "required_regression_tests": "Run 81/81 canonical regression suite; update 3 mock CPOE test suites",
+      "required_real_postgresql_tests": "Create real PostgreSQL RLS test verifying CPOE order creation, safety token validation/consumption, and shared call site CS 71 isolation",
+      "known_prerequisite_defects": "Legacy transactionManager dependency; controller mock actor fallback USR-DOC-001",
+      "completion_evidence_required": "100% of Candidate C1 Stage-0 calls (CS 59-71, CS 143-145) executed inside withUnitOfWork; CS 71 isolated across both routes; real PostgreSQL RLS tests pass; canonical regression 81/81 passes"
+    },
+    "candidate_c2": {
+      "candidate": "Candidate C2",
+      "required_security_gate": "Install isValidUuid check on 3 active routes in diagnosticInterpretation.controller.js returning 403 TENANT_CONTEXT_REQUIRED; remove USR-LAB-01 fallback",
+      "required_uow_migration": "Wrap 11 Stage-0 calls in diagnosticInterpretation.service.js with withUnitOfWork",
+      "required_database_work": "Fix CS 82: add tenant_id column and parameter to INSERT INTO clinical_orders query in diagnosticInterpretation.service.js:528-534",
+      "required_transaction_work": "Migrate publishDiagnosticNotification and executeSecondaryClinicalAction transactions into withUnitOfWork",
+      "required_regression_tests": "Run 81/81 canonical regression suite; update mock diagnostic test suite",
+      "required_real_postgresql_tests": "Create real PostgreSQL RLS test verifying critical notification publishing, diagnostic interpretation, and successful secondary clinical order insert with explicit tenant_id",
+      "known_prerequisite_defects": "CS 82 omitted tenant_id in INSERT INTO clinical_orders (violates NOT NULL on real PostgreSQL); controller mock actor fallback USR-LAB-01",
+      "completion_evidence_required": "CS 82 fixed and verified against real PostgreSQL NOT NULL constraint; 100% of Candidate C2 Stage-0 calls executed inside withUnitOfWork; real PostgreSQL RLS tests pass; canonical regression 81/81 passes"
+    },
+    "candidate_d": {
+      "candidate": "Candidate D",
+      "required_security_gate": "Install isValidUuid check on all 3 routes in patient.controller.js returning 403 TENANT_CONTEXT_REQUIRED; remove USR-REG-001 fallback",
+      "required_uow_migration": "Pass tenantId from controller into searchPatients, getPatientById, registerPatient; wrap 10 Stage-0 calls in withUnitOfWork",
+      "required_database_work": "Add explicit tenant_id column and parameter to INSERT INTO master_patients; filter NIK/BPJS locks by tenant_id",
+      "required_transaction_work": "Migrate registerPatient transaction into withUnitOfWork; scope annual MRN lock query to current tenant",
+      "required_regression_tests": "Run 81/81 canonical regression suite; update 11 mock patient test suites",
+      "required_real_postgresql_tests": "Create real PostgreSQL RLS test verifying patient search isolation, duplicate rejection, and tenant-scoped sequential MRN generation",
+      "known_prerequisite_defects": "patient.controller.js completely ignores tenantId on reads; NIK/BPJS locks and master_patients insert omit tenant_id",
+      "completion_evidence_required": "100% of Candidate D Stage-0 calls executed inside withUnitOfWork; master_patients operations fail-closed under real PostgreSQL RLS; real PostgreSQL RLS tests pass; canonical regression 81/81 passes"
+    }
+  },
+  "definitions_of_done": {
+    "candidate_a": [
+      "All 3 Stage-0 call sites (CS 1, CS 2, CS 3) executed inside withUnitOfWork boundary with tenant GUC app.current_tenant_id set",
+      "appointment.controller.js enforces isValidUuid L1 gate, rejecting requests without valid tenant UUID with HTTP 403 TENANT_CONTEXT_REQUIRED",
+      "Hardcoded DEFAULT_TENANT_ID is eliminated from codebase",
+      "Real PostgreSQL RLS test suite passes verifying tenant isolation and cross-tenant write rejection on appointment booking",
+      "Canonical regression suite passes 81/81 tests without failure",
+      "No unsafe Stage-0 call sites remain in appointment domain"
+    ],
+    "candidate_b": [
+      "All 13 Stage-0 call sites (CS 91-103) executed inside withUnitOfWork boundary with tenant GUC app.current_tenant_id set",
+      "medicationClosedLoop.controller.js enforces isValidUuid L1 gate across all 8 routes, rejecting requests without valid tenant UUID with HTTP 403",
+      "Mock actor fallbacks (USR-DOC-001, USR-PHARM-01) without tenant validation are eliminated",
+      "Real PostgreSQL RLS test suite passes verifying bedside dual-nurse administration, eMAR recording, and composite FK integrity",
+      "Canonical regression suite passes 81/81 tests without failure",
+      "No unsafe Stage-0 call sites remain in medication closed-loop domain"
+    ],
+    "candidate_c1": [
+      "All 16 Stage-0 call sites (CS 59-71, CS 143-145) executed inside withUnitOfWork boundary with tenant GUC app.current_tenant_id set",
+      "cpoe.controller.js enforces isValidUuid L1 gate across all 6 active routes, rejecting requests without valid tenant UUID with HTTP 403",
+      "Legacy transactionManager.withTransaction dependency is removed in favor of canonical withUnitOfWork",
+      "Cross-service transaction context inheritance to safetyAuthorizationService.verifyAndConsumeTransactional verified under single UoW",
+      "Shared call site CS 71 verified safe across both GET /api/v1/orders/cpoe and GET /api/v1/orders",
+      "Real PostgreSQL RLS test suite passes verifying order creation, two-person cancellation, and safety token consumption",
+      "Canonical regression suite passes 81/81 tests without failure",
+      "No unsafe Stage-0 call sites remain in CPOE domain"
+    ],
+    "candidate_c2": [
+      "CS 82 defect resolved by explicitly including tenant_id in INSERT INTO clinical_orders in diagnosticInterpretation.service.js:528-534",
+      "All 11 Stage-0 call sites (CS 72-82) executed inside withUnitOfWork boundary with tenant GUC app.current_tenant_id set",
+      "diagnosticInterpretation.controller.js enforces isValidUuid L1 gate across all 3 active routes, rejecting requests without valid tenant UUID with HTTP 403",
+      "Real PostgreSQL RLS test suite passes verifying notification publishing, diagnostic interpretation, and secondary order execution",
+      "Canonical regression suite passes 81/81 tests without failure",
+      "No unsafe Stage-0 call sites remain in diagnostics domain"
+    ],
+    "candidate_d": [
+      "All 10 Stage-0 call sites (CS 104-113, L170) executed inside withUnitOfWork boundary with tenant GUC app.current_tenant_id set",
+      "patient.controller.js enforces isValidUuid L1 gate across all 3 routes, rejecting requests without valid tenant UUID with HTTP 403",
+      "tenantId parameter passed into searchPatients, getPatientById, and registerPatient",
+      "Explicit tenant_id parameter included in INSERT INTO master_patients query",
+      "generateNextMrn sequential lock query scoped strictly to tenant",
+      "Real PostgreSQL RLS test suite passes verifying patient MPI search isolation, registration, duplicate checks, and sequential MRN isolation",
+      "Canonical regression suite passes 81/81 tests without failure",
+      "No unsafe Stage-0 call sites remain in master patient domain"
+    ]
+  },
+  "known_vs_unknown": {
+    "candidate_a": {
+      "known": [
+        "Has exactly 3 Stage-0 call sites on master_patients",
+        "Has 4 routes, 2 active Stage-0 routes",
+        "Uses hardcoded DEFAULT_TENANT_ID fallback",
+        "Has no service abstraction; SQL executed in controller",
+        "Touches 1 Stage-0 table (master_patients)"
+      ],
+      "unknown": [
+        "Whether any external client currently depends on the DEFAULT_TENANT_ID fallback without sending Authorization headers",
+        "Doctor slot locking concurrency behavior under connection pool saturation"
+      ],
+      "needs_verification_during_implementation": [
+        "Verify whether extracting a dedicated appointmentApplication.service.js is preferred or if withUnitOfWork can be cleanly called in controller",
+        "Verify that check-in and cancel routes remain completely free of Stage-0 access after refactoring"
+      ]
+    },
+    "candidate_b": {
+      "known": [
+        "Has 13 Stage-0 call sites across 4 Stage-0 tables",
+        "Has 8 routes, 3 active Stage-0 routes",
+        "Performs multi-table mutations across orders, dispense allocations, eMAR administrations, and audit logs",
+        "Has composite FKs (Migration 078) to encounters and master_patients",
+        "Uses mock actor fallbacks USR-DOC-001 and USR-PHARM-01"
+      ],
+      "unknown": [
+        "Concurrency behavior and potential deadlock order between bedside scanning lock on clinical_orders and eMAR lock on medication_emar_administrations",
+        "How composite FK constraints interact with RLS default-deny if parent table row is not yet committed"
+      ],
+      "needs_verification_during_implementation": [
+        "Verify transaction locking order between clinical_orders and pharmacy_inventory_batches",
+        "Verify dual-nurse digital signature payload schema against clinical audit requirements"
+      ]
+    },
+    "candidate_c1": {
+      "known": [
+        "Has 16 Stage-0 call sites across 3 Stage-0 tables",
+        "Has 9 routes, 6 active Stage-0 routes",
+        "Shared call site CS 71 reachable from 2 separate Express routes",
+        "Transfers database client across service boundary from cpoeApplicationService to safetyAuthorizationService",
+        "Relies on legacy transactionManager.js"
+      ],
+      "unknown": [
+        "Behavior of SHA-256 command hash verification when safety tokens are submitted with minor payload serialization differences",
+        "Impact of safety token expiry clock drift between web server and PostgreSQL server"
+      ],
+      "needs_verification_during_implementation": [
+        "Verify that withUnitOfWork can seamlessly propagate its client/transaction context into safetyAuthorizationService",
+        "Verify that both /orders/cpoe and /orders routes function correctly with the secured CS 71"
+      ]
+    },
+    "candidate_c2": {
+      "known": [
+        "Has 11 Stage-0 call sites across 4 Stage-0 tables",
+        "Has 4 routes, 3 active Stage-0 routes",
+        "CS 82 is a verified defect (omits tenant_id in INSERT INTO clinical_orders while column is NOT NULL without default)",
+        "No direct synchronous service coupling with Candidate C1",
+        "Shared datastore mutation on clinical_orders with C1 and B"
+      ],
+      "unknown": [
+        "Whether executeSecondaryClinicalAction has ever run in production without throwing a NOT NULL constraint violation",
+        "What order priority and correlation IDs are expected by downstream consumers of secondary clinical orders"
+      ],
+      "needs_verification_during_implementation": [
+        "Verify exact column list and parameter types required for fixing CS 82",
+        "Verify that diagnostic result notifications state transitions correctly after secondary order creation"
+      ]
+    },
+    "candidate_d": {
+      "known": [
+        "Has 10 Stage-0 call sites on master_patients",
+        "Has 3 routes, 3 active Stage-0 routes (100% active)",
+        "Tabel master_patients is referenced by 65 distinct tables via Foreign Key constraints (42 RESTRICT, 23 NO ACTION)",
+        "Controller currently ignores tenantId on search and getById",
+        "registerPatient performs sequential annual MRN generation with row locks"
+      ],
+      "unknown": [
+        "Whether hospital policy allows duplicate NIK/BPJS across different hospital tenants or requires global uniqueness",
+        "Peak concurrency contention on the annual MRN sequence lock during morning registration rush"
+      ],
+      "needs_verification_during_implementation": [
+        "Verify whether NIK/BPJS unique constraints in database schema are composite with tenant_id or global",
+        "Verify that all 65 child table FK constraints remain intact when master_patients row is created with tenant isolation"
+      ]
+    }
+  },
+  "evidence_limitations": [
+    "Zero existing real PostgreSQL RLS tests for Candidates A, B, C1, C2, and D prior to remediation",
+    "No quantitative rollback duration benchmarks or automated rollback test suites exist in repository",
+    "Test suite count does not equal test coverage percentage of Stage-0 call sites",
+    "Scratch files are git-ignored and only tracked if explicitly force-added"
+  ],
+  "human_decision_input": {
+    "text": "Human Owner may now select one candidate based on the evidence presented in this report.",
+    "candidate_selected": "NOT SELECTED",
+    "wave_1b2_implementation": "NOT STARTED"
+  }
+}
