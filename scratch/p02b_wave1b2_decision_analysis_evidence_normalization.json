@@ -1,0 +1,184 @@
+{
+  "normalization_metadata": {
+    "document_id": "DOC-NORM-P02B-WAVE1B2-TECH-DECISION-20261003",
+    "timestamp": "2026-10-03T11:31:00+07:00",
+    "repository": "Mojo-Brothers/NurseFlow-WebApp",
+    "branch": "feature/security-foundation-wave1a10",
+    "base_integrity_audit_commit": "544d157ae0a8931280e05b15d585385f6ec25a07"
+  },
+  "reconciled_test_suites": [
+    {
+      "candidate": "Candidate A",
+      "test_path": "tests/appointmentQueue.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/appointmentQueue.test.js"
+    },
+    {
+      "candidate": "Candidate A",
+      "test_path": "tests/appointmentQueuePersistence.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/appointmentQueuePersistence.test.js"
+    },
+    {
+      "candidate": "Candidate B",
+      "test_path": "tests/medicationEventStoreHardening.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/medicationEventStoreHardening.test.js"
+    },
+    {
+      "candidate": "Candidate B",
+      "test_path": "tests/medicationKnowledgeBase.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/medicationKnowledgeBase.test.js"
+    },
+    {
+      "candidate": "Candidate B",
+      "test_path": "tests/medicationLifecycleEngine.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/medicationLifecycleEngine.test.js"
+    },
+    {
+      "candidate": "Candidate B",
+      "test_path": "tests/medicationProjectionEngine.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/medicationProjectionEngine.test.js"
+    },
+    {
+      "candidate": "Candidate B",
+      "test_path": "tests/medicationTerminologyService.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/medicationTerminologyService.test.js"
+    },
+    {
+      "candidate": "Candidate B",
+      "test_path": "tests/s04PneumoniaMedicationLifecycleReconciliation.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/s04PneumoniaMedicationLifecycleReconciliation.test.js"
+    },
+    {
+      "candidate": "Candidate B",
+      "test_path": "tests/sprint4B3ClosedLoopMedicationPlatform.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/sprint4B3ClosedLoopMedicationPlatform.test.js"
+    },
+    {
+      "candidate": "Candidate B",
+      "test_path": "tests/verticalSlice07MedicationDurability.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/verticalSlice07MedicationDurability.test.js (previously cited as verticalSlice03...)"
+    },
+    {
+      "candidate": "Candidate C1",
+      "test_path": "tests/cpoeCdssEndToEndIntegration.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/cpoeCdssEndToEndIntegration.test.js"
+    },
+    {
+      "candidate": "Candidate C1",
+      "test_path": "tests/phaseD23DSafetyAuthorizationIntegrity.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/phaseD23DSafetyAuthorizationIntegrity.test.js"
+    },
+    {
+      "candidate": "Candidate C1",
+      "test_path": "tests/verticalSlice06AUniversalCpoeDurability.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/verticalSlice06AUniversalCpoeDurability.test.js"
+    },
+    {
+      "candidate": "Candidate C2",
+      "test_path": "tests/verticalSlice09DiagnosticInterpretationDurability.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/verticalSlice09DiagnosticInterpretationDurability.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/e2ePatientJourney.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/e2ePatientJourney.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/globalPatientSearchMigration.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/globalPatientSearchMigration.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/patientAllergyPersistence.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/patientAllergyPersistence.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/patientCareJourneyFsm.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/patientCareJourneyFsm.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/patientJourneyEmpi.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/patientJourneyEmpi.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/s01NewPatientRegistrationReconciliation.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/s01NewPatientRegistrationReconciliation.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/s02FastTrackPatientReconciliation.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/s02FastTrackPatientReconciliation.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/s03DhfInpatientAdmissionReconciliation.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/s03DhfInpatientAdmissionReconciliation.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/sprint4B6LongitudinalPatientTrajectory.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/sprint4B6LongitudinalPatientTrajectory.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/unifiedPatientChartArchitecture.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/unifiedPatientChartArchitecture.test.js"
+    },
+    {
+      "candidate": "Candidate D",
+      "test_path": "tests/verticalSlice01PatientDurability.test.js",
+      "exists": true,
+      "evidence": "filesystem tests/verticalSlice01PatientDurability.test.js"
+    }
+  ],
+  "matrix_cell_normalizations": {
+    "relational_in_degree_hub": {
+      "old_classification": "UNSUPPORTED QUALITATIVE RANKING (Rendah/Sedang/Tinggi)",
+      "new_classification": "FACT / DERIVED (Exact FK counts and references)",
+      "values": {
+        "candidate_a": "0 referencing FKs (1 outgoing FK to master_patients) [FACT]",
+        "candidate_b": "Referencing FKs on clinical_orders + Composite FKs (Migration 078) [FACT]",
+        "candidate_c1": "Referencing FKs on clinical_orders (cpoe_order_items) [FACT]",
+        "candidate_c2": "Referencing FKs on clinical_orders + FK on encounters [FACT]",
+        "candidate_d": "65 referencing FKs across 65 unique child tables (42 RESTRICT, 23 NO ACTION, 0 CASCADE) [DERIVED]"
+      }
+    },
+    "total_interaksi_db_modul": {
+      "old_classification": "AMBIGUOUS",
+      "new_classification": "DERIVED (Operational definition specified)",
+      "definition": "Total Static AST Database Call Sites (Stage-0 + non-Stage-0 SQL references identified in candidate controller and service source files)"
+    },
+    "kebutuhan_lapisan_service": {
+      "old_classification": "AMBIGUOUS (Candidate A)",
+      "new_classification": "FACT / TECHNICAL INTERPRETATION",
+      "clarification": "Candidate A: File server/services/appointmentQueue.service.js exists on disk as an in-memory service, but is not used in the controller's runtime SQL execution path; database-backed service abstraction is not present."
+    }
+  }
+}

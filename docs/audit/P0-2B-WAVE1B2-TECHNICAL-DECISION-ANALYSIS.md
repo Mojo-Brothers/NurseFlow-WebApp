@@ -15,7 +15,8 @@ Dokumen ini menyajikan **Analisis Teknis Komparatif Otoritatif** (*Comparative T
 `[FACT]` **Mandat dan Batasan Tugas:**
 - Analisis ini disusun semata-mata sebagai instrumen pendukung keputusan (*decision-support artifact*) bagi **Human Owner**.
 - Dokumen ini **TIDAK MEMILIH** kandidat mana pun (`Candidate selected: NOT SELECTED`).
-- Dokumen ini **TIDAK MEREKOMENDASIKAN**, membuat peringkat (*ranking*), memberi skor (*scoring*), menentukan pemenang (*winner/loser*), atau memberikan arahan bersyarat (*conditional guidance* seperti *"Jika fokus pada X maka pilih Y"*).
+- Dokumen ini **TIDAK MEREKOMENDASIKAN**, membuat peringkat (*ranking*), memberi skor (*scoring*), menentukan pemenang (*winner/loser*), atau memberikan arahan bersyarat (*conditional guidance*).
+- Dokumen ini telah dinormalisasi untuk menghilangkan pelabelan kualitatif tanpa ambang matematis dan merekonsiliasi seluruh nama berkas pengujian berdasarkan sistem berkas riil.
 - Status implementasi tetap tidak berubah: **`WAVE 1B.2 IMPLEMENTATION = NOT STARTED`**.
 - Status keamanan operasional tetap membeku: **`STAGE 0: NO-GO | PRODUCTION: BLOCKED`**.
 
@@ -27,17 +28,16 @@ Dokumen ini menyajikan **Analisis Teknis Komparatif Otoritatif** (*Comparative T
 
 | Parameter Baseline | Nilai Otoritatif Aktual | Status Verifikasi | Sumber Bukti |
 |---|---|:---:|---|
-| **Base Evidence Commit** | `4efa9362d0e7bce28f541cfdee04caf0308dcdbb` | `[FACT]` VERIFIED | `git rev-parse HEAD~3` |
-| **Audited Readiness Review Commit** | `9680fc99226f13f671b20b8409a62cbfac014cc3` | `[FACT]` VERIFIED | `git rev-parse HEAD~2` |
-| **Audit Integrity Review Commit** | `e3d7b0abe6719fe270cafd61c62b5bc813ec1d46` | `[FACT]` VERIFIED | `git rev-parse HEAD~1` |
-| **Evidence Baseline Freeze Commit** | `a9fba667ce51010741c18da7b201d696a47ba09a` | `[FACT]` VERIFIED | `git rev-parse HEAD` |
+| **Evidence Baseline Freeze Commit** | `a9fba667ce51010741c18da7b201d696a47ba09a` | `[FACT]` VERIFIED | `git rev-parse a9fba66` |
+| **Audited Technical Decision Commit** | `d443aa1a1a8b4f8bf98f6a85e476f444ec78432b` | `[FACT]` VERIFIED | `git rev-parse d443aa1` |
+| **Integrity Audit Commit** | `544d157ae0a8931280e05b15d585385f6ec25a07` | `[FACT]` VERIFIED | `git rev-parse 544d157` |
 | **Active Branch** | `feature/security-foundation-wave1a10` | `[FACT]` VERIFIED | `git branch --show-current` |
 | **Working Tree Status** | Clean (0 baris modifikasi pada production/test/migration) | `[FACT]` VERIFIED | `git status --short` |
-| **Production Code Changes** | **0 baris** | `[FACT]` VERIFIED | `git diff 4efa9362..HEAD -- server/ src/` |
-| **Migration & Schema Changes** | **0 baris** | `[FACT]` VERIFIED | `git diff 4efa9362..HEAD -- database/` |
-| **Test Suite Changes** | **0 baris** | `[FACT]` VERIFIED | `git diff 4efa9362..HEAD -- tests/` |
-| **Changelog Changes** | **0 baris** | `[FACT]` VERIFIED | `git diff a9fba667..HEAD -- docs/CHANGELOG_PERUBAHAN_HIS.md` |
-| **Canonical Regression Baseline** | **81/81 PASS (100% Clean, 8.33s)** | `[FACT]` VERIFIED | Vitest Runner (6 test files) |
+| **Production Code Changes** | **0 baris** | `[FACT]` COMPLIANT | `git diff a9fba66..HEAD -- server/ src/` |
+| **Migration & Schema Changes** | **0 baris** | `[FACT]` COMPLIANT | `git diff a9fba66..HEAD -- database/` |
+| **Test Suite Changes** | **0 baris** | `[FACT]` COMPLIANT | `git diff a9fba66..HEAD -- tests/` |
+| **Changelog Changes** | **0 baris** | `[FACT]` COMPLIANT | `git diff a9fba66..HEAD -- docs/CHANGELOG_PERUBAHAN_HIS.md` |
+| **Canonical Regression Baseline** | **81/81 PASS (100% Clean, 6.49s)** | `[FACT]` VERIFIED | Vitest Runner (6 test files) |
 
 `[FACT]` Rincian eksekusi suite pengujian regresi kanonik (81/81 PASS):
 1. `tests/p02b_wave1b1_real_rls_integration.test.js`: 10 passed
@@ -49,18 +49,18 @@ Dokumen ini menyajikan **Analisis Teknis Komparatif Otoritatif** (*Comparative T
 
 ---
 
-## 3. DECISION CONSTRAINTS
+## 3. DECISION CONSTRAINTS & INFORMATION STANDARDS
 
 Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapkan batasan keputusan ketat:
 
-1. **Aturan Netralitas Absolut:** Dilarang menggunakan istilah superlatif (*best, preferred, optimal, safest, easiest*) atau komparatif hierarkis ($A > B$, $A < B$, pemenang, urutan peringkat). Seluruh kandidat disajikan dalam bentuk data profil teknis mandiri.
-2. **Ketiadaan Arahan Kondisional:** Dilarang menyajikan pola pengambilan keputusan berbasis prioritas subyektif (seperti *"Jika memprioritaskan A maka pilih B"*).
+1. **Aturan Netralitas Absolut:** Dilarang menggunakan istilah superlatif atau komparatif hierarkis. Seluruh kandidat disajikan dalam bentuk data profil teknis mandiri tanpa penentuan pemenang atau peringkat.
+2. **Ketiadaan Arahan Kondisional:** Dilarang menyajikan pola pengambilan keputusan berbasis prioritas subyektif.
 3. **Pelabelan Bukti Eksplisit:** Setiap poin informasi wajib dilabeli dengan kategori epistemik:
    - `[FACT]`: Fakta empiris yang dibuktikan langsung dari baris kode sumber, skema SQL, berkas konfigurasi, atau log runner.
-   - `[DERIVED]`: Angka atau kesimpulan kuantitatif hasil perhitungan statis / traversal graf kode.
-   - `[TECHNICAL IMPLICATION]`: Konsekuensi teknis mekanis dari keberadaan arsitektur saat ini terhadap sistem.
-   - `[UNKNOWN]`: Aspek operasional atau konkurensi yang belum dapat dibuktikan tanpa eksekusi langsung.
+   - `[DERIVED]`: Angka atau kesimpulan kuantitatif hasil perhitungan statis, rumus DDL, atau traversal graf kode dengan formula jelas.
+   - `[TECHNICAL INTERPRETATION]`: Evaluasi arsitektural yang didasarkan pada karakteristik sistem, dengan batas interpretasi yang dinyatakan terbuka.
    - `[IMPLEMENTATION PREREQUISITE]`: Pekerjaan teknis yang wajib diselesaikan jika kandidat terkait dipilih.
+   - `[UNKNOWN]`: Aspek operasional atau konkurensi yang belum dapat dibuktikan tanpa eksekusi langsung.
 4. **Status Cacat CS 82:** Cacat pada CS 82 (`server/services/diagnosticInterpretation.service.js:528`) dicatat sebagai `VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate C2` dan **TIDAK DIPERBAIKI** dalam dokumen ini.
 
 ---
@@ -70,7 +70,10 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
 ### A. Lingkup & Batasan Fungsional
 - `[FACT]` **Lingkup Bisnis:** Manajemen antrean poliklinik rawat jalan, reservasi jadwal dokter, validasi kuota antrean BPJS, dan pembatalan janji temu.
 - `[FACT]` **Komponen Berkas:** `server/controllers/appointment.controller.js`, `server/routes/appointment.routes.js`.
-- `[FACT]` **Abstraksi Service:** **TIDAK ADA**. Modul ini tidak memiliki berkas service terpisah (`appointment.service.js`); seluruh kueri database dan transaksi dieksekusi langsung di dalam berkas kontroler.
+- `[FACT]` **Status Lapisan Service (Service Layer):**
+  - Berkas service fisik `server/services/appointmentQueue.service.js` **ADA** di repositori (90 baris). Berkas ini diimpor pada `appointment.controller.js:9`.
+  - Berkas tersebut merupakan implementasi memori lokal (*in-memory Map*), dan variabel `appointmentQueueService` **TIDAK PERNAH DIPANGGIL** dalam alur kueri database pada `appointment.controller.js`.
+  - Abstraksi service berbasis database (*database-backed service*) **TIDAK ADA**; seluruh kueri database dan transaksi dieksekusi inline di dalam controller.
 
 ### B. Permukaan Stage-0 & Keterjangkauan HTTP
 - `[FACT]` **Stage-0 Call Sites:** **3 Call Sites** (seluruhnya beroperasi pada tabel Stage-0 `master_patients`):
@@ -100,39 +103,45 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
   - Kunci pasien pada `master_patients` (baris 115).
 - `[FACT]` **Transaksi Lintas-Layanan:** **TIDAK ADA**.
 
-### E. Kopling Datastore & Ketergantungan
+### E. Kopling Datastore & Ketergantungan Foreign Key
 - `[FACT]` **Tabel Stage-0 Terlibat:** `master_patients` (1 tabel).
 - `[FACT]` **Tabel Non-Stage-0 Terlibat:** `appointments`, `queue_sequences`, `idempotency_keys`.
-- `[DERIVED]` **Total Interaksi Basis Data Modul:** **33 interaksi** (12 Writes, 21 Reads).
+- `[DERIVED]` **Total Static AST DB Call Sites:** **33 titik pemanggilan** (12 Writes, 21 Reads pada seluruh tabel di dalam modul).
 - `[FACT]` **Tabel Bersama dengan Kandidat Lain:** `master_patients` (dipakai bersama dengan Candidate D).
+- `[FACT]` **Ketergantungan Foreign Key:**
+  - Foreign key keluar (*outgoing*): `appointments(patient_id) REFERENCES master_patients(id)`.
+  - Foreign key masuk dari tabel Stage-0 lain ke `appointments`: **0 constraint**.
 - `[FACT]` **Shared Call Sites:** 0.
 
 ### F. Kematangan Pengujian & Kesenjangan Real PostgreSQL
-- `[FACT]` **Suite Pengujian Eksisting:** **2 test suite** (`tests/appointmentQueue.test.js`, `tests/appointmentQueuePersistence.test.js`).
+- `[FACT]` **Suite Pengujian Eksisting (Terverifikasi di Filesystem):** **2 test suite**:
+  1. `tests/appointmentQueue.test.js`
+  2. `tests/appointmentQueuePersistence.test.js`
 - `[FACT]` **Tipe Pengujian Eksisting:** Berbasis mock in-memory / stub database.
 - `[FACT]` **Cakupan Real PostgreSQL RLS:** **0% (TIDAK ADA)**. Belum ada pengujian yang memverifikasi isolasi baris `master_patients` atau penolakan lintas-tenant di PostgreSQL aktual.
 
 ### G. Cacat & Prasyarat Implementasi
 - `[FACT]` **Cacat Terverifikasi:**
   1. `A-PRE-1`: Fallback `DEFAULT_TENANT_ID` hardcoded (`appointment.controller.js:12, 66`) melanggar prinsip multi-tenant fail-closed.
-  2. `A-PRE-2`: Ketiadaan lapisan service (*missing service abstraction*) menyebabkan logika bisnis dan DML database bercampur di level controller.
+  2. `A-PRE-2`: Ketiadaan lapisan service database menyebabkan logika bisnis dan DML database bercampur di level controller.
 - `[IMPLEMENTATION PREREQUISITE]` Jika Candidate A dipilih:
-  1. Pasang gerbang L1 `isValidUuid` fail-closed pada seluruh rute kontroler.
+  1. Pasang gerbang L1 `isValidUuid` fail-closed pada rute kontroler.
   2. Hapus total konstanta `DEFAULT_TENANT_ID`.
   3. Bungkus CS 1, CS 2, CS 3 ke dalam batas `withUnitOfWork`.
   4. Bangun suite pengujian Real PostgreSQL RLS untuk alur antrean dan reservasi pasien.
 
 ### H. Unknowns & Hal yang Memerlukan Verifikasi
 - `[UNKNOWN]` Dampak terhadap klien API eksternal (misal: mesin kios antrean mandiri) apabila fallback `DEFAULT_TENANT_ID` dicabut dan mewajibkan token JWT bertenant valid.
-- `[UNKNOWN]` Karakteristik penanganan timeout pada *slot mutex lock* dokter di bawah beban konkurensi tinggi pada connection pool PostgreSQL produksi.
+- `[UNKNOWN]` Karakteristik penanganan timeout pada *slot mutex lock* dokter di bawah beban konkurensi pada connection pool PostgreSQL produksi.
 
 ---
 
 ## 5. CANDIDATE B DOSSIER — MEDICATION CLOSED-LOOP
 
-### B. Lingkup & Batasan Fungsional
+### A. Lingkup & Batasan Fungsional
 - `[FACT]` **Lingkup Bisnis:** Siklus tertutup pengelolaan obat rawat inap: peresepan obat, verifikasi farmasi, alokasi batch inventaris, verifikasi 5-Benar di tempat tidur (*bedside 5-rights verification* dengan dual-nurse barcode scan), pencatatan administrasi eMAR, dan pelaporan reaksi obat tidak diinginkan (*adverse drug reactions*).
 - `[FACT]` **Komponen Berkas:** `server/controllers/medicationClosedLoop.controller.js`, `server/services/medicationClosedLoop.service.js`, `server/routes/medicationClosedLoop.routes.js`.
+- `[FACT]` **Status Lapisan Service:** Berkas `server/services/medicationClosedLoop.service.js` ada dan aktif dipanggil oleh handler kontroler.
 
 ### B. Permukaan Stage-0 & Keterjangkauan HTTP
 - `[FACT]` **Stage-0 Call Sites:** **13 Call Sites** (5 Writes, 8 Reads):
@@ -165,25 +174,38 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
   - Kunci catatan administrasi pada `medication_emar_administrations` (baris 1312).
 - `[FACT]` **Transaksi Lintas-Layanan:** **TIDAK ADA**. Logika multi-tabel berada dalam service yang sama.
 
-### E. Kopling Datastore & Ketergantungan
+### E. Kopling Datastore & Ketergantungan Foreign Key
 - `[FACT]` **Tabel Stage-0 Terlibat:** **4 tabel** (`clinical_orders`, `medication_dispense_allocations`, `medication_emar_administrations`, `universal_audit_logs`).
 - `[FACT]` **Tabel Non-Stage-0 Terlibat:** `pharmacy_inventory_batches`, `medication_orders`, `patient_allergies`.
-- `[DERIVED]` **Total Interaksi Basis Data Modul:** **80 interaksi** (23 Writes, 57 Reads).
+- `[DERIVED]` **Total Static AST DB Call Sites:** **80 titik pemanggilan** (23 Writes, 57 Reads pada seluruh tabel di dalam modul).
 - `[FACT]` **Tabel Bersama dengan Kandidat Lain:**
   - `clinical_orders` (dipakai bersama dengan C1 dan C2).
   - `universal_audit_logs` (dipakai bersama dengan C1, C2, dan D).
-- `[FACT]` **Ketergantungan Foreign Key Khusus:** Menggunakan constraint FK komposit (`Migration 078: FOREIGN KEY (encounter_id, tenant_id) REFERENCES encounters(id, tenant_id)` dan `FOREIGN KEY (patient_id, tenant_id) REFERENCES master_patients(id, tenant_id)`).
+- `[FACT]` **Ketergantungan Foreign Key:**
+  - Constraint FK komposit (`Migration 078`):
+    - `FOREIGN KEY (encounter_id, tenant_id) REFERENCES encounters(id, tenant_id)`
+    - `FOREIGN KEY (patient_id, tenant_id) REFERENCES master_patients(id, tenant_id)`
+  - Tabel anak `medication_dispense_allocations` dan `medication_emar_administrations` merujuk ke `clinical_orders(id)`.
 
 ### F. Kematangan Pengujian & Kesenjangan Real PostgreSQL
-- `[FACT]` **Suite Pengujian Eksisting:** **8 test suite** (`tests/verticalSlice03MedicationSafetyDurability.test.js`, dll.).
+- `[FACT]` **Suite Pengujian Eksisting (Terverifikasi di Filesystem):** **8 test suite**:
+  1. `tests/medicationEventStoreHardening.test.js`
+  2. `tests/medicationKnowledgeBase.test.js`
+  3. `tests/medicationLifecycleEngine.test.js`
+  4. `tests/medicationProjectionEngine.test.js`
+  5. `tests/medicationTerminologyService.test.js`
+  6. `tests/s04PneumoniaMedicationLifecycleReconciliation.test.js`
+  7. `tests/sprint4B3ClosedLoopMedicationPlatform.test.js`
+  8. `tests/verticalSlice07MedicationDurability.test.js`
+  *(Catatan Rekonsiliasi: Dokumen audit sebelumnya mencatat nama `verticalSlice03MedicationSafetyDurability.test.js` yang tidak ada; berkas riil terverifikasi adalah `verticalSlice07MedicationDurability.test.js`).*
 - `[FACT]` **Tipe Pengujian Eksisting:** Berbasis mock in-memory.
-- `[FACT]` **Cakupan Real PostgreSQL RLS:** **0% (TIDAK ADA)**. Belum ada pengujian yang memverifikasi eksekusi verifikasi obat di bawah RLS nyata.
+- `[FACT]` **Cakupan Real PostgreSQL RLS:** **0% (TIDAK ADA)**.
 
 ### G. Cacat & Prasyarat Implementasi
 - `[FACT]` **Cacat Terverifikasi:**
   1. `B-PRE-1`: Fallback identitas mock tanpa validasi konteks tenant pada kontroler.
 - `[IMPLEMENTATION PREREQUISITE]` Jika Candidate B dipilih:
-  1. Pasang gerbang L1 `isValidUuid` fail-closed pada seluruh 8 endpoint kontroler.
+  1. Pasang gerbang L1 `isValidUuid` fail-closed pada 8 endpoint kontroler.
   2. Bungkus 13 Stage-0 Call Sites ke dalam transaksi `withUnitOfWork`.
   3. Verifikasi kompatibilitas constraint FK komposit (Migration 078) terhadap sesi RLS tenant.
   4. Bangun suite pengujian Real PostgreSQL RLS untuk alur verifikasi dual-nurse dan mutasi eMAR multi-tabel.
@@ -199,6 +221,7 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
 ### A. Lingkup & Batasan Fungsional
 - `[FACT]` **Lingkup Bisnis:** Entri instruksi medis dokter (*Computerized Physician Order Entry*), validasi kontraindikasi/alergi, alur otorisasi pembatalan order dua orang (*two-person cancellation dual control*), penerbitan token keamanan SHA-256, dan audit pembatalan pesanan klinis.
 - `[FACT]` **Komponen Berkas:** `server/controllers/cpoe.controller.js`, `server/services/cpoeApplication.service.js`, `server/services/safetyAuthorization.service.js`, `server/routes/cpoe.routes.js`.
+- `[FACT]` **Status Lapisan Service:** Berkas `cpoeApplication.service.js` dan `safetyAuthorization.service.js` ada dan aktif dipanggil oleh controller.
 
 ### B. Permukaan Stage-0 & Keterjangkauan HTTP
 - `[FACT]` **Stage-0 Call Sites:** **16 Call Sites** (4 Writes, 12 Reads):
@@ -229,14 +252,21 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
   - Kunci token keamanan pada `safety_decision_registry` (baris 192).
 - `[FACT]` **Transaksi Lintas-Layanan:** **YA (TERBUKTI)**.
 
-### E. Kopling Datastore & Ketergantungan
+### E. Kopling Datastore & Ketergantungan Foreign Key
 - `[FACT]` **Tabel Stage-0 Terlibat:** **3 tabel** (`clinical_orders`, `universal_audit_logs`, `safety_decision_registry`).
 - `[FACT]` **Tabel Non-Stage-0 Terlibat:** `cpoe_order_items`, `cpoe_alerts`.
-- `[DERIVED]` **Total Interaksi Basis Data Modul:** **25 interaksi** (6 Writes, 19 Reads).
+- `[DERIVED]` **Total Static AST DB Call Sites:** **25 titik pemanggilan** (6 Writes, 19 Reads pada seluruh tabel di dalam modul).
 - `[FACT]` **Tabel Bersama dengan Kandidat Lain:** `clinical_orders` (dengan B dan C2), `universal_audit_logs` (dengan B, C2, dan D).
+- `[FACT]` **Ketergantungan Foreign Key:**
+  - `clinical_orders(encounter_id) REFERENCES encounters(id)`
+  - `clinical_orders(patient_id) REFERENCES master_patients(id)`
+  - `cpoe_order_items(order_id) REFERENCES clinical_orders(id)`
 
 ### F. Kematangan Pengujian & Kesenjangan Real PostgreSQL
-- `[FACT]` **Suite Pengujian Eksisting:** **3 test suite** (`tests/verticalSlice06AUniversalCpoeDurability.test.js`, dll.).
+- `[FACT]` **Suite Pengujian Eksisting (Terverifikasi di Filesystem):** **3 test suite**:
+  1. `tests/cpoeCdssEndToEndIntegration.test.js`
+  2. `tests/phaseD23DSafetyAuthorizationIntegrity.test.js`
+  3. `tests/verticalSlice06AUniversalCpoeDurability.test.js`
 - `[FACT]` **Tipe Pengujian Eksisting:** Berbasis mock in-memory.
 - `[FACT]` **Cakupan Real PostgreSQL RLS:** **0% (TIDAK ADA)**.
 
@@ -252,8 +282,8 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
   5. Bangun suite pengujian Real PostgreSQL RLS untuk penerbitan order, verifikasi hash SHA-256, dan konsumsi token pembatalan.
 
 ### H. Unknowns & Hal yang Memerlukan Verifikasi
-- `[UNKNOWN]` Respon mekanisme verifikasi hash SHA-256 token jika terdapat perbedaan serialisasi JSON payload antara environment runtime Node.js dan database.
-- `[UNKNOWN]` Dampak drift jam sistem (*clock skew*) antara server aplikasi dan database PostgreSQL terhadap evaluasi masa berlaku token keamanan (`expires_at`).
+- `[UNKNOWN]` Respon mekanisme verifikasi hash SHA-256 token jika terdapat perbedaan serialisasi JSON payload antar-versi runtime Node.js.
+- `[UNKNOWN]` Dampak drift jam sistem (*clock skew*) antara server API dan server database saat mengevaluasi kadaluarsa token keamanan (`expires_at`).
 
 ---
 
@@ -262,6 +292,7 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
 ### A. Lingkup & Batasan Fungsional
 - `[FACT]` **Lingkup Bisnis:** Penerbitan notifikasi hasil kritis laboratorium/radiologi, pencatatan interpretasi dokter spesialis penunjang, eksekusi protokol komunikasi kritis TBAK (*Tulis-Baca-Konfirmasi*), dan penerbitan instruksi klinis sekunder (*secondary clinical orders*).
 - `[FACT]` **Komponen Berkas:** `server/controllers/diagnosticInterpretation.controller.js`, `server/services/diagnosticInterpretation.service.js`, `server/routes/diagnosticInterpretation.routes.js`.
+- `[FACT]` **Status Lapisan Service:** Berkas `server/services/diagnosticInterpretation.service.js` ada dan aktif dipanggil oleh controller.
 
 ### B. Permukaan Stage-0 & Keterjangkauan HTTP
 - `[FACT]` **Stage-0 Call Sites:** **11 Call Sites** (3 Writes, 8 Reads):
@@ -271,7 +302,7 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
   - `CS 82`: 1 mutasi `WRITE` (`INSERT INTO clinical_orders`).
 - `[DERIVED]` **Rute HTTP Express:** **4 total rute**:
   - **Active Stage-0 Routes:** **3 rute** (`POST /api/v1/diagnostics/notifications`, `POST /api/v1/diagnostics/notifications/:id/interpret`, `POST /api/v1/diagnostics/interpretations/:id/actions`).
-  - **Zero Stage-0 Routes:** **1 rute** (`POST /api/v1/diagnostics/notifications/:id/acknowledge` hanya memanipulasi tabel `diagnostic_result_notifications` non-Stage-0).
+  - **Zero Stage-0 Routes:** **1 rute** (`POST /notifications/:id/acknowledge` hanya memanipulasi `diagnostic_result_notifications` non-Stage-0).
 
 ### C. Keamanan Gerbang Kontroler (Ingress)
 - `[FACT]` **Pengecekan `req.tenantId`:** **TIDAK ADA**.
@@ -289,14 +320,18 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
   - Kunci interpretasi pada `physician_diagnostic_interpretations` (baris 510).
 - `[FACT]` **Transaksi Lintas-Layanan:** **TIDAK ADA**.
 
-### E. Kopling Datastore & Ketergantungan
+### E. Kopling Datastore & Ketergantungan Foreign Key
 - `[FACT]` **Tabel Stage-0 Terlibat:** **4 tabel** (`encounters`, `physician_diagnostic_interpretations`, `clinical_orders`, `universal_audit_logs`).
 - `[FACT]` **Tabel Non-Stage-0 Terlibat:** `diagnostic_result_notifications`, `cpoe_order_items`.
-- `[DERIVED]` **Total Interaksi Basis Data Modul:** **38 interaksi** (9 Writes, 29 Reads).
+- `[DERIVED]` **Total Static AST DB Call Sites:** **38 titik pemanggilan** (9 Writes, 29 Reads pada seluruh tabel di dalam modul).
 - `[FACT]` **Tabel Bersama dengan Kandidat Lain:** `clinical_orders` (dengan B dan C1), `universal_audit_logs` (dengan B, C1, dan D), `encounters` (dengan C1 dan fondasi triase).
+- `[FACT]` **Ketergantungan Foreign Key:**
+  - `physician_diagnostic_interpretations(encounter_id) REFERENCES encounters(id)`
+  - `clinical_orders(encounter_id) REFERENCES encounters(id)`
 
 ### F. Kematangan Pengujian & Kesenjangan Real PostgreSQL
-- `[FACT]` **Suite Pengujian Eksisting:** **1 test suite** (`tests/verticalSlice09DiagnosticInterpretationDurability.test.js`).
+- `[FACT]` **Suite Pengujian Eksisting (Terverifikasi di Filesystem):** **1 test suite**:
+  1. `tests/verticalSlice09DiagnosticInterpretationDurability.test.js`
 - `[FACT]` **Tipe Pengujian Eksisting:** Berbasis mock in-memory.
 - `[FACT]` **Cakupan Real PostgreSQL RLS:** **0% (TIDAK ADA)**.
 
@@ -331,6 +366,7 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
 ### A. Lingkup & Batasan Fungsional
 - `[FACT]` **Lingkup Bisnis:** Master Patient Index (MPI), pendaftaran pasien baru rawat jalan/inap/IGD, verifikasi keunikan identitas nasional (NIK) dan asuransi sosial (BPJS), serta pembangkitan nomor rekam medis (*Medical Record Number / MRN*) sekuensial tahunan.
 - `[FACT]` **Komponen Berkas:** `server/controllers/patient.controller.js`, `server/services/patientApplication.service.js`, `server/routes/patients.routes.js`.
+- `[FACT]` **Status Lapisan Service:** Berkas `server/services/patientApplication.service.js` ada dan aktif dipanggil oleh controller.
 
 ### B. Permukaan Stage-0 & Keterjangkauan HTTP
 - `[FACT]` **Stage-0 Call Sites:** **10 Call Sites** (3 Writes/Locks, 7 Reads):
@@ -364,18 +400,31 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
     dalam fungsi `generateNextMrn(client)` (baris 35).
 - `[FACT]` **Transaksi Lintas-Layanan:** **TIDAK ADA**.
 
-### E. Kopling Datastore & Ketergantungan Relasional Global
+### E. Kopling Datastore & Ketergantungan Foreign Key
 - `[FACT]` **Tabel Stage-0 Terlibat:** `master_patients` (1 tabel).
 - `[FACT]` **Tabel Non-Stage-0 Terlibat:** 0 (secara langsung di dalam modul).
-- `[DERIVED]` **Total Interaksi Basis Data Modul:** **15 interaksi** (1 Write, 14 Reads/Locks).
-- `[FACT]` **Ketergantungan Foreign Key Global (Central Parent Hub):**
-  Traversal skema DDL di seluruh 65 berkas migrasi SQL membuktikan:
-  - **65 foreign key constraints** dari **65 tabel unik** merujuk langsung ke kolom `master_patients(id)`.
+- `[DERIVED]` **Total Static AST DB Call Sites:** **15 titik pemanggilan** (1 Write, 14 Reads/Locks pada seluruh tabel di dalam modul).
+- `[DERIVED]` **Ketergantungan Foreign Key Relasional (Empirical Count):**
+  Traversal skema DDL di seluruh 65 berkas migrasi SQL membuktikan data kuantitatif berikut:
+  - **65 foreign key constraints** merujuk langsung ke `master_patients(id)`.
+  - **65 tabel unik** merujuk langsung ke `master_patients(id)`.
   - **Aturan ON DELETE:** 42 tabel `RESTRICT`, 23 tabel `NO ACTION (DEFAULT)`, 0 tabel `CASCADE`.
-  - Tabel `master_patients` adalah entitas induk akar (*root parent entity*) dari seluruh relasi data klinis pasien.
+  - **Constraint Komposit:** 1 constraint komposit (Migration 078: `FOREIGN KEY (patient_id, tenant_id) REFERENCES master_patients(id, tenant_id)`).
 
 ### F. Kematangan Pengujian & Kesenjangan Real PostgreSQL
-- `[FACT]` **Suite Pengujian Eksisting:** **11 test suite** (`tests/verticalSlice01PatientDurability.test.js`, dll.).
+- `[FACT]` **Suite Pengujian Eksisting (Terverifikasi di Filesystem):** **11 test suite** (12 file jika menyertakan pengujian revenue cycle):
+  1. `tests/e2ePatientJourney.test.js`
+  2. `tests/globalPatientSearchMigration.test.js`
+  3. `tests/patientAllergyPersistence.test.js`
+  4. `tests/patientCareJourneyFsm.test.js`
+  5. `tests/patientJourneyEmpi.test.js`
+  6. `tests/s01NewPatientRegistrationReconciliation.test.js`
+  7. `tests/s02FastTrackPatientReconciliation.test.js`
+  8. `tests/s03DhfInpatientAdmissionReconciliation.test.js`
+  9. `tests/sprint4B6LongitudinalPatientTrajectory.test.js`
+  10. `tests/unifiedPatientChartArchitecture.test.js`
+  11. `tests/verticalSlice01PatientDurability.test.js`
+  *(File ke-12: `tests/verticalSlice13PatientFinancialRevenueCycleDurability.test.js` berfokus pada siklus pendapatan keuangan pasien).*
 - `[FACT]` **Tipe Pengujian Eksisting:** Berbasis mock in-memory.
 - `[FACT]` **Cakupan Real PostgreSQL RLS:** **0% (TIDAK ADA)**.
 
@@ -399,7 +448,7 @@ Untuk menjamin objektivitas audit tanpa bias interpretasi, dokumen ini menerapka
 
 ## 9. CROSS-CANDIDATE COMPARISON MATRIX
 
-Tabel komparatif berikut menyajikan perbandingan faktual lintas-kandidat tanpa kolom peringkat (*rank*), skor (*score*), prioritas (*priority*), ataupun penentuan pemenang (*winner/loser*):
+Tabel komparatif berikut menyajikan sintesis data teknis antar kelima kandidat. Seluruh pelabelan kualitatif tanpa ambang matematis (*Rendah/Sedang/Tinggi*) telah dihilangkan dan digantikan dengan data kuantitatif empiris:
 
 | Dimensi Evaluasi | Candidate A<br>(Queue / Appt) | Candidate B<br>(Medication) | Candidate C1<br>(CPOE Orders) | Candidate C2<br>(Diagnostics) | Candidate D<br>(Master Patient) |
 |---|:---:|:---:|:---:|:---:|:---:|
@@ -410,19 +459,53 @@ Tabel komparatif berikut menyajikan perbandingan faktual lintas-kandidat tanpa k
 | **Stage-0 Tables Touched** | 1 (`master_patients`) | 4 (`clinical_orders`, dispense, eMAR, audit) | 3 (`clinical_orders`, audit, safety) | 4 (`encounters`, interpret, orders, audit) | 1 (`master_patients`) |
 | **DML Writes pada Stage-0** | 2 (`[FACT]`) | 5 (`[FACT]`) | 4 (`[FACT]`) | 3 (`[FACT]`) | 3 (`[FACT]`) |
 | **Kueri Reads pada Stage-0** | 1 (`[FACT]`) | 8 (`[FACT]`) | 12 (`[FACT]`) | 8 (`[FACT]`) | 7 (`[FACT]`) |
-| **Total Interaksi DB Modul** | 33 (12W / 21R) | 80 (23W / 57R) | 25 (6W / 19R) | 38 (9W / 29R) | 15 (1W / 14R) |
+| **Total Static AST DB Call Sites**<br>*(Stage-0 + Non-Stage-0 SQL)* | 33 (12W / 21R) (`[DERIVED]`) | 80 (23W / 57R) (`[DERIVED]`) | 25 (6W / 19R) (`[DERIVED]`) | 38 (9W / 29R) (`[DERIVED]`) | 15 (1W / 14R) (`[DERIVED]`) |
 | **Status Gerbang L1 Saat Ini** | FAIL-OPEN (`[FACT]`) | FAIL-OPEN (`[FACT]`) | FAIL-OPEN (`[FACT]`) | FAIL-OPEN (`[FACT]`) | FAIL-OPEN (`[FACT]`) |
 | **Mekanisme Fallback Saat Ini** | `DEFAULT_TENANT_ID` hardcoded | Fallback Mock Actor | Fallback Mock Actor | Fallback Mock Actor | Fallback Actor / Omit Param |
-| **Kebutuhan Lapisan Service** | Perlu dibuat / refactor | Sudah ada berkas service | Sudah ada berkas service | Sudah ada berkas service | Sudah ada berkas service |
-| **Penggunaan Legacy Tx Mgr** | Tidak (`[FACT]`) | Tidak (`[FACT]`) | Ya (`transactionManager.js`) | Tidak (`[FACT]`) | Tidak (`[FACT]`) |
-| **Transaksi Lintas-Layanan** | Tidak (`[FACT]`) | Tidak (`[FACT]`) | Ya (oper `client` ke Safety) | Tidak (`[FACT]`) | Tidak (`[FACT]`) |
-| **Shared Call Sites** | 0 (`[FACT]`) | 0 (`[FACT]`) | 1 (CS 71 pada 2 rute) | 0 (`[FACT]`) | 0 (`[FACT]`) |
-| **Mutasi Tabel Bersama** | `master_patients` (dengan D) | `clinical_orders` (dengan C1, C2) | `clinical_orders` (dengan B, C2) | `clinical_orders` (dengan B, C1) | `master_patients` (dengan A) |
-| **Relational In-Degree FK Hub** | Rendah (Child) | Sedang (Child & Parent) | Sedang (Child & Parent) | Sedang (Child & Parent) | **Tinggi (65 Child Tables)** |
-| **Suite Pengujian Eksisting** | 2 mock suites | 8 mock suites | 3 mock suites | 1 mock suite | 11 mock suites |
+| **Kebutuhan Lapisan Service** | Berkas ada (in-memory); Tidak dipakai controller SQL; Abstraksi DB tidak ada (`[FACT]`) | Berkas ada; Aktif di runtime SQL path (`[FACT]`) | Berkas ada; Aktif di runtime SQL path (`[FACT]`) | Berkas ada; Aktif di runtime SQL path (`[FACT]`) | Berkas ada; Aktif di runtime SQL path (`[FACT]`) |
+| **Penggunaan Legacy Tx Mgr** | Tidak (`[FACT]`) | Tidak (`[FACT]`) | Ya (`transactionManager.js`) (`[FACT]`) | Tidak (`[FACT]`) | Tidak (`[FACT]`) |
+| **Transaksi Lintas-Layanan** | Tidak (`[FACT]`) | Tidak (`[FACT]`) | Ya (oper `client` ke Safety) (`[FACT]`) | Tidak (`[FACT]`) | Tidak (`[FACT]`) |
+| **Shared Call Sites** | 0 (`[FACT]`) | 0 (`[FACT]`) | 1 (CS 71 pada 2 rute) (`[FACT]`) | 0 (`[FACT]`) | 0 (`[FACT]`) |
+| **Mutasi Tabel Bersama** | `master_patients` (dengan D) (`[FACT]`) | `clinical_orders` (dengan C1, C2) (`[FACT]`) | `clinical_orders` (dengan B, C2) (`[FACT]`) | `clinical_orders` (dengan B, C1) (`[FACT]`) | `master_patients` (dengan A) (`[FACT]`) |
+| **Relational In-Degree FK Evidence** | 0 FK masuk (1 FK keluar ke `master_patients`) (`[FACT]`) | FK masuk pada `clinical_orders` + Composite FKs (Mig 078) (`[FACT]`) | FK masuk pada `clinical_orders` (`cpoe_order_items`) (`[FACT]`) | FK masuk pada `clinical_orders` + FK pada `encounters` (`[FACT]`) | **65 FK masuk dari 65 tabel unik** (42 RESTRICT, 23 NO ACTION, 0 CASCADE) (`[DERIVED]`) |
+| **Suite Pengujian Terverifikasi** | 2 mock suites (`[FACT]`) | 8 mock suites (`[FACT]`) | 3 mock suites (`[FACT]`) | 1 mock suite (`[FACT]`) | 11 mock suites (`[FACT]`) |
 | **Pengujian Real PG RLS Eksisting** | 0 (`[FACT]`) | 0 (`[FACT]`) | 0 (`[FACT]`) | 0 (`[FACT]`) | 0 (`[FACT]`) |
-| **Cacat SQL DML Terverifikasi** | Tidak ada cacat sintaks | Tidak ada cacat sintaks | Tidak ada cacat sintaks | **CS 82 (omisi `tenant_id`)** | Tidak ada cacat sintaks |
-| **Prasyarat Utama Remediasi** | Hapus fallback default tenant | Validasi alokasi inventaris & eMAR | Transisi dari legacy tx manager | Perbaiki query DML CS 82 | Isolasi kueri kunci MRN tahunan |
+| **Cacat SQL DML Terverifikasi** | Tidak ada cacat sintaks (`[FACT]`) | Tidak ada cacat sintaks (`[FACT]`) | Tidak ada cacat sintaks (`[FACT]`) | **CS 82 (omisi `tenant_id`)** (`[FACT]`) | Tidak ada cacat sintaks (`[FACT]`) |
+| **Prasyarat Utama Remediasi** | Hapus fallback default tenant (`[IMPLEMENTATION PREREQUISITE]`) | Validasi alokasi inventaris & eMAR multi-tabel (`[TECHNICAL INTERPRETATION]`) | Transisi dari legacy tx manager (`[IMPLEMENTATION PREREQUISITE]`) | Perbaiki query DML CS 82 (`[IMPLEMENTATION PREREQUISITE]`) | Isolasi kueri kunci MRN tahunan (`[IMPLEMENTATION PREREQUISITE]`) |
+
+---
+
+### Verifikasi Sistem Berkas Suite Pengujian Eksisting (Filesystem Ground Truth)
+
+Tabel berikut membuktikan keberadaan fisik seluruh berkas pengujian yang diverifikasi langsung pada direktori `tests/`:
+
+| Candidate | Path Berkas Pengujian Aktual | Status di Filesystem | Sumber Pembuktian |
+|---|---|:---:|---|
+| **A** | `tests/appointmentQueue.test.js` | **YES** | `fs.existsSync` |
+| **A** | `tests/appointmentQueuePersistence.test.js` | **YES** | `fs.existsSync` |
+| **B** | `tests/medicationEventStoreHardening.test.js` | **YES** | `fs.existsSync` |
+| **B** | `tests/medicationKnowledgeBase.test.js` | **YES** | `fs.existsSync` |
+| **B** | `tests/medicationLifecycleEngine.test.js` | **YES** | `fs.existsSync` |
+| **B** | `tests/medicationProjectionEngine.test.js` | **YES** | `fs.existsSync` |
+| **B** | `tests/medicationTerminologyService.test.js` | **YES** | `fs.existsSync` |
+| **B** | `tests/s04PneumoniaMedicationLifecycleReconciliation.test.js` | **YES** | `fs.existsSync` |
+| **B** | `tests/sprint4B3ClosedLoopMedicationPlatform.test.js` | **YES** | `fs.existsSync` |
+| **B** | `tests/verticalSlice07MedicationDurability.test.js` | **YES** | `fs.existsSync` *(koreksi dari verticalSlice03...)* |
+| **C1** | `tests/cpoeCdssEndToEndIntegration.test.js` | **YES** | `fs.existsSync` |
+| **C1** | `tests/phaseD23DSafetyAuthorizationIntegrity.test.js` | **YES** | `fs.existsSync` |
+| **C1** | `tests/verticalSlice06AUniversalCpoeDurability.test.js` | **YES** | `fs.existsSync` |
+| **C2** | `tests/verticalSlice09DiagnosticInterpretationDurability.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/e2ePatientJourney.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/globalPatientSearchMigration.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/patientAllergyPersistence.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/patientCareJourneyFsm.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/patientJourneyEmpi.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/s01NewPatientRegistrationReconciliation.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/s02FastTrackPatientReconciliation.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/s03DhfInpatientAdmissionReconciliation.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/sprint4B6LongitudinalPatientTrajectory.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/unifiedPatientChartArchitecture.test.js` | **YES** | `fs.existsSync` |
+| **D** | `tests/verticalSlice01PatientDurability.test.js` | **YES** | `fs.existsSync` |
 
 ---
 
@@ -543,12 +626,13 @@ Klasifikasi aspek teknis yang sudah terbukti (*Known*), belum terbukti (*Unknown
   - Memiliki tepat 3 Stage-0 Call Sites pada tabel `master_patients`.
   - Memiliki 4 rute Express, di mana 2 rute aktif Stage-0 dan 2 rute zero Stage-0.
   - Memiliki fallback hardcoded `DEFAULT_TENANT_ID`.
-  - Seluruh logika transaksi berada langsung di kontroler tanpa abstraksi service.
+  - Berkas `server/services/appointmentQueue.service.js` ada di disk tetapi merupakan service in-memory yang tidak dipakai oleh kueri SQL controller; abstraksi service database belum ada.
+  - Memiliki 2 berkas pengujian mock terverifikasi di filesystem.
 - **UNKNOWN (`[UNKNOWN]`):**
   - Apakah ada klien eksternal integrasi (seperti mesin kiosk antrean RS) yang saat ini bergantung pada fallback `DEFAULT_TENANT_ID` tanpa menyertakan autentikasi header.
-  - Durasi dan perilaku *lock wait timeout* pada slot jadwal dokter saat terjadi persaingan pemesanan kuota antrean tinggi.
-- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL IMPLICATION]`):**
-  - Evaluasi apakah sebaiknya dibuat service terpisah `appointmentApplication.service.js` atau cukup membungkus panggilan database langsung di controller.
+  - Durasi dan perilaku *lock wait timeout* pada slot jadwal dokter saat terjadi persaingan pemesanan kuota antrean pada connection pool PostgreSQL.
+- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL INTERPRETATION]`):**
+  - Evaluasi kebutuhan pembuatan service database terpisah `appointmentApplication.service.js` versus pembungkusan panggilan database langsung di controller dengan Unit of Work.
   - Verifikasi bahwa rute check-in dan cancel tetap 100% bebas dari pemanggilan tabel Stage-0 setelah refactoring.
 
 ### Candidate B — Medication Closed-Loop
@@ -558,10 +642,11 @@ Klasifikasi aspek teknis yang sudah terbukti (*Known*), belum terbukti (*Unknown
   - Mengelola transaksi multi-tabel kompleks yang melibatkan farmasi, eMAR, dan audit.
   - Memiliki constraint FK komposit (Migration 078) ke `encounters` dan `master_patients`.
   - Menggunakan fallback mock actor pada kontroler.
+  - Memiliki 8 berkas pengujian mock terverifikasi di filesystem.
 - **UNKNOWN (`[UNKNOWN]`):**
   - Potensi siklus deadlock konkurensi antara penguncian baris `clinical_orders` dan `medication_emar_administrations` saat perawat memindai barcode obat di bangsal bersamaan dengan apoteker memverifikasi batch di farmasi.
   - Perilaku constraint FK komposit di bawah RLS default-deny jika transaksi parent belum sepenuhnya committed.
-- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL IMPLICATION]`):**
+- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL INTERPRETATION]`):**
   - Verifikasi urutan eksekusi row lock (`FOR UPDATE`) di seluruh method transaksi agar konsisten dan bebas deadlock.
   - Verifikasi kompatibilitas struktur payload tanda tangan digital dual-nurse terhadap audit trail klinis.
 
@@ -572,10 +657,11 @@ Klasifikasi aspek teknis yang sudah terbukti (*Known*), belum terbukti (*Unknown
   - Memiliki shared call site CS 71 yang dipanggil oleh 2 rute Express terpisah.
   - Mengoper objek `client` database melintasi batas service ke `safetyAuthorization.service.js`.
   - Bergantung pada modul legacy `transactionManager.js`.
+  - Memiliki 3 berkas pengujian mock terverifikasi di filesystem.
 - **UNKNOWN (`[UNKNOWN]`):**
   - Perilaku verifikasi hash SHA-256 token jika terdapat variasi urutan key pada serialisasi JSON payload antar-versi runtime.
   - Toleransi drift jam sistem (*clock skew*) antara server API dan server database saat mengevaluasi kadaluarsa token keamanan.
-- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL IMPLICATION]`):**
+- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL INTERPRETATION]`):**
   - Verifikasi bahwa konteks `withUnitOfWork` dapat diteruskan secara seamless ke `safetyAuthorizationService` tanpa memicu pembuatan transaksi nested yang tidak didukung.
   - Verifikasi bahwa perbaikan pada shared call site CS 71 melayani rute `/orders/cpoe` dan rute legacy `/orders` dengan benar.
 
@@ -585,10 +671,11 @@ Klasifikasi aspek teknis yang sudah terbukti (*Known*), belum terbukti (*Unknown
   - Memiliki 4 rute Express, di mana 3 rute aktif Stage-0 dan 1 rute zero Stage-0.
   - Call site CS 82 memiliki cacat nyata (*verified defect*): omisi kolom `tenant_id` pada `INSERT INTO clinical_orders` yang berstatus `NOT NULL` tanpa default.
   - Tidak memiliki kopling sinkron langsung dengan Candidate C1 (0 import), namun berbagi mutasi datastore pada `clinical_orders`.
+  - Memiliki 1 berkas pengujian mock terverifikasi di filesystem.
 - **UNKNOWN (`[UNKNOWN]`):**
   - Apakah fungsi `executeSecondaryClinicalAction` pernah berhasil dijalankan di PostgreSQL riil tanpa melempar error constraint.
   - Nilai prioritas dan korelasi ID default yang diharapkan oleh modul penerima order sekunder.
-- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL IMPLICATION]`):**
+- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL INTERPRETATION]`):**
   - Verifikasi daftar kolom dan tipe parameter SQL untuk perbaikan CS 82.
   - Verifikasi transisi status notifikasi hasil kritis setelah order sekunder berhasil diterbitkan.
 
@@ -599,10 +686,11 @@ Klasifikasi aspek teknis yang sudah terbukti (*Known*), belum terbukti (*Unknown
   - Tabel `master_patients` dirujuk oleh 65 tabel unik melalui Foreign Key constraints (42 RESTRICT, 23 NO ACTION).
   - Kontroler saat ini mengabaikan parameter tenant pada pencarian dan detail pasien.
   - Fungsi `registerPatient` mengunci baris NIK, BPJS, dan sekuensial nomor rekam medis tahunan.
+  - Memiliki 11 berkas pengujian mock klinis terverifikasi di filesystem (12 berkas jika menyertakan siklus keuangan).
 - **UNKNOWN (`[UNKNOWN]`):**
   - Apakah keunikan NIK dan kartu BPJS secara regulasi HIS nasional diharapkan unik global lintas seluruh rumah sakit atau unik per tenant rumah sakit.
   - Tingkat antrean konkurensi pada generator MRN tahunan saat jam sibuk pendaftaran pasien baru.
-- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL IMPLICATION]`):**
+- **NEEDS VERIFICATION DURING IMPLEMENTATION (`[TECHNICAL INTERPRETATION]`):**
   - Verifikasi definisi unique constraint NIK/BPJS di skema database (apakah mencakup kolom `tenant_id`).
   - Verifikasi bahwa seluruh 65 foreign key anak tidak terganggu integritas referensialnya saat baris pasien dibuat di bawah isolasi RLS.
 
@@ -617,7 +705,7 @@ Klasifikasi aspek teknis yang sudah terbukti (*Known*), belum terbukti (*Unknown
 2. **Ketiadaan Benchmark Rollback Kuantitatif:**
    Repositori tidak memiliki automated test runner atau formula empiris untuk mengukur durasi dan probabilitas kegagalan rollback secara kuantitatif.
 3. **Asimetri Jumlah Berkas Pengujian:**
-   Jumlah berkas pengujian (misal: 11 file pada domain pasien vs 1 file pada diagnostik) merefleksikan riwayat penulisan test mock sebelumnya, bukan persentase cakupan uji (*test coverage*) terhadap call site Stage-0 terkait.
+   Jumlah berkas pengujian (11 file pada domain pasien, 8 pada obat, 3 pada CPOE, 2 pada antrean, 1 pada diagnostik) merefleksikan riwayat penulisan test mock sebelumnya, bukan persentase cakupan uji (*test coverage*) terhadap call site Stage-0 terkait.
 4. **Status Berkas Scratch:**
    Direktori `scratch/` berstatus diabaikan oleh Git (`.gitignore:64`), sehingga artefak JSON di dalamnya hanya terlacak jika ditambahkan secara paksa (*force add*).
 

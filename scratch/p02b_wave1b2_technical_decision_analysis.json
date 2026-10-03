@@ -1,16 +1,16 @@
 {
   "governance_metadata": {
     "document_id": "DOC-AUDIT-P02B-WAVE1B2-TECH-DECISION-ANALYSIS-20261003",
-    "timestamp": "2026-10-03T11:05:00+07:00",
+    "timestamp": "2026-10-03T11:30:00+07:00",
     "repository": "Mojo-Brothers/NurseFlow-WebApp",
     "branch": "feature/security-foundation-wave1a10",
-    "base_evidence_commit": "4efa9362d0e7bce28f541cfdee04caf0308dcdbb",
+    "base_evidence_commit": "a9fba667ce51010741c18da7b201d696a47ba09a",
     "audited_readiness_review_commit": "9680fc99226f13f671b20b8409a62cbfac014cc3",
     "audit_integrity_review_commit": "e3d7b0abe6719fe270cafd61c62b5bc813ec1d46",
-    "evidence_baseline_freeze_commit": "a9fba667ce51010741c18da7b201d696a47ba09a",
-    "audit_mode": "READ-ONLY / EVIDENCE-BASED / DECISION SUPPORT",
+    "integrity_audit_commit": "544d157ae0a8931280e05b15d585385f6ec25a07",
+    "audit_mode": "READ-ONLY / EVIDENCE-NORMALIZED / DECISION SUPPORT",
     "canonical_regression_status": "81/81 PASS",
-    "canonical_regression_time_seconds": 8.33,
+    "canonical_regression_time_seconds": 6.49,
     "production_changes": 0,
     "migration_changes": 0,
     "schema_changes": 0,
@@ -23,16 +23,25 @@
   },
   "analytical_dimensions": {
     "dimension_1_execution_surface": {
+      "metric_operational_definition": {
+        "stage0_call_sites": "Count of unique SQL call sites accessing any of the 33 Stage-0 tables directly outside Unit of Work",
+        "active_stage0_routes": "Registered Express routes whose function execution path triggers at least one Stage-0 table SQL call",
+        "zero_stage0_routes": "Registered Express routes that perform zero SQL operations against Stage-0 tables",
+        "total_static_ast_db_call_sites": "Total count of static AST SQL call sites (Stage-0 + non-Stage-0 tables) identified within candidate controller and service source files"
+      },
       "candidate_a": {
         "stage0_call_sites": 3,
         "active_stage0_routes": 2,
         "zero_stage0_routes": 2,
         "total_routes": 4,
+        "total_static_ast_db_call_sites": 33,
+        "total_writes": 12,
+        "total_reads": 21,
         "controllers": ["server/controllers/appointment.controller.js"],
         "services": [],
         "queries": {
-          "reads": 1,
-          "writes": 2,
+          "stage0_reads": 1,
+          "stage0_writes": 2,
           "mutation_types": ["SELECT with LEFT JOIN (L39)", "SELECT FOR UPDATE (L115)", "INSERT INTO master_patients (L123)"]
         }
       },
@@ -41,11 +50,14 @@
         "active_stage0_routes": 3,
         "zero_stage0_routes": 5,
         "total_routes": 8,
+        "total_static_ast_db_call_sites": 80,
+        "total_writes": 23,
+        "total_reads": 57,
         "controllers": ["server/controllers/medicationClosedLoop.controller.js"],
         "services": ["server/services/medicationClosedLoop.service.js"],
         "queries": {
-          "reads": 8,
-          "writes": 5,
+          "stage0_reads": 8,
+          "stage0_writes": 5,
           "mutation_types": ["SELECT FOR UPDATE (L99, L1312)", "SELECT (L91-96, 100, 101)", "INSERT/UPDATE clinical_orders, medication_dispense_allocations, medication_emar_administrations, universal_audit_logs"]
         }
       },
@@ -54,14 +66,17 @@
         "active_stage0_routes": 6,
         "zero_stage0_routes": 3,
         "total_routes": 9,
+        "total_static_ast_db_call_sites": 25,
+        "total_writes": 6,
+        "total_reads": 19,
         "controllers": ["server/controllers/cpoe.controller.js"],
         "services": [
           "server/services/cpoeApplication.service.js",
           "server/services/safetyAuthorization.service.js"
         ],
         "queries": {
-          "reads": 12,
-          "writes": 4,
+          "stage0_reads": 12,
+          "stage0_writes": 4,
           "mutation_types": ["SELECT FOR UPDATE (L151, L393, L192)", "SELECT (L333-340, L558-608)", "INSERT INTO universal_audit_logs", "UPDATE safety_decision_registry"]
         },
         "shared_call_site": {
@@ -77,11 +92,14 @@
         "active_stage0_routes": 3,
         "zero_stage0_routes": 1,
         "total_routes": 4,
+        "total_static_ast_db_call_sites": 38,
+        "total_writes": 9,
+        "total_reads": 29,
         "controllers": ["server/controllers/diagnosticInterpretation.controller.js"],
         "services": ["server/services/diagnosticInterpretation.service.js"],
         "queries": {
-          "reads": 8,
-          "writes": 3,
+          "stage0_reads": 8,
+          "stage0_writes": 3,
           "mutation_types": ["SELECT FOR UPDATE (L89, L510)", "SELECT encounters, physician_diagnostic_interpretations", "INSERT INTO universal_audit_logs (L416, 424)", "INSERT INTO clinical_orders (L528)"]
         }
       },
@@ -90,11 +108,14 @@
         "active_stage0_routes": 3,
         "zero_stage0_routes": 0,
         "total_routes": 3,
+        "total_static_ast_db_call_sites": 15,
+        "total_writes": 1,
+        "total_reads": 14,
         "controllers": ["server/controllers/patient.controller.js"],
         "services": ["server/services/patientApplication.service.js"],
         "queries": {
-          "reads": 7,
-          "writes": 3,
+          "stage0_reads": 7,
+          "stage0_writes": 3,
           "mutation_types": ["SELECT FOR UPDATE on NIK (L100)", "SELECT FOR UPDATE on BPJS (L115)", "SELECT FOR UPDATE on MRN (L35)", "INSERT INTO master_patients (L170)", "SELECT search/getById (L236-272)"]
         }
       }
@@ -144,15 +165,21 @@
     "dimension_3_uow_migration_topology": {
       "candidate_a": {
         "layer_location": "Controller layer (inline SQL queries)",
-        "service_layer_exists": false,
+        "service_file_exists": true,
+        "service_file_path": "server/services/appointmentQueue.service.js",
+        "service_file_used_in_runtime_sql": false,
+        "database_backed_service_exists": false,
         "legacy_transaction_manager": false,
         "direct_pool_connect": true,
         "transaction_nesting_concern": false,
-        "uow_target": "Wrap inline controller DB transactions with withUnitOfWork or extract service layer"
+        "uow_target": "Wrap inline controller DB transactions with withUnitOfWork or extract dedicated database service"
       },
       "candidate_b": {
         "layer_location": "Service layer (medicationClosedLoop.service.js)",
-        "service_layer_exists": true,
+        "service_file_exists": true,
+        "service_file_path": "server/services/medicationClosedLoop.service.js",
+        "service_file_used_in_runtime_sql": true,
+        "database_backed_service_exists": true,
         "legacy_transaction_manager": false,
         "direct_pool_connect": true,
         "transaction_nesting_concern": true,
@@ -160,7 +187,10 @@
       },
       "candidate_c1": {
         "layer_location": "Service layer (cpoeApplication.service.js & safetyAuthorization.service.js)",
-        "service_layer_exists": true,
+        "service_file_exists": true,
+        "service_file_path": "server/services/cpoeApplication.service.js",
+        "service_file_used_in_runtime_sql": true,
+        "database_backed_service_exists": true,
         "legacy_transaction_manager": true,
         "legacy_manager_reference": "server/utils/transactionManager.js",
         "direct_pool_connect": true,
@@ -169,7 +199,10 @@
       },
       "candidate_c2": {
         "layer_location": "Service layer (diagnosticInterpretation.service.js)",
-        "service_layer_exists": true,
+        "service_file_exists": true,
+        "service_file_path": "server/services/diagnosticInterpretation.service.js",
+        "service_file_used_in_runtime_sql": true,
+        "database_backed_service_exists": true,
         "legacy_transaction_manager": false,
         "direct_pool_connect": true,
         "transaction_nesting_concern": false,
@@ -177,7 +210,10 @@
       },
       "candidate_d": {
         "layer_location": "Service layer (patientApplication.service.js)",
-        "service_layer_exists": true,
+        "service_file_exists": true,
+        "service_file_path": "server/services/patientApplication.service.js",
+        "service_file_used_in_runtime_sql": true,
+        "database_backed_service_exists": true,
         "legacy_transaction_manager": false,
         "direct_pool_connect": true,
         "transaction_nesting_concern": false,
@@ -237,7 +273,10 @@
         "non_stage0_tables": ["appointments", "queue_sequences", "idempotency_keys"],
         "shared_tables_with_other_candidates": ["master_patients (with Candidate D)"],
         "shared_call_sites": 0,
-        "fk_dependencies": "Foreign key to master_patients(id)",
+        "relational_fk_evidence": {
+          "outgoing_fks": ["appointments(patient_id) REFERENCES master_patients(id)"],
+          "referencing_child_constraints_on_stage0_tables": 0
+        },
         "direct_datastore_mutation": "Reads and writes master_patients"
       },
       "candidate_b": {
@@ -245,7 +284,13 @@
         "non_stage0_tables": ["pharmacy_inventory_batches", "medication_orders", "patient_allergies"],
         "shared_tables_with_other_candidates": ["clinical_orders (with C1, C2)", "universal_audit_logs (with C1, C2, D)"],
         "shared_call_sites": 0,
-        "fk_dependencies": "Composite FKs (Migration 078) to encounters(id, tenant_id) and master_patients(id, tenant_id)",
+        "relational_fk_evidence": {
+          "outgoing_fks": [
+            "Composite FKs (Migration 078): FOREIGN KEY (encounter_id, tenant_id) REFERENCES encounters(id, tenant_id)",
+            "Composite FKs (Migration 078): FOREIGN KEY (patient_id, tenant_id) REFERENCES master_patients(id, tenant_id)"
+          ],
+          "referencing_child_constraints_on_stage0_tables": "Child allocations and administrations reference clinical_orders"
+        },
         "direct_datastore_mutation": "Mutates clinical_orders, medication_dispense_allocations, medication_emar_administrations, universal_audit_logs"
       },
       "candidate_c1": {
@@ -254,7 +299,10 @@
         "shared_tables_with_other_candidates": ["clinical_orders (with B, C2)", "universal_audit_logs (with B, C2, D)"],
         "shared_call_sites": 1,
         "shared_call_site_detail": "CS 71 (cpoeApplication.service.js:608) called by GET /api/v1/orders/cpoe and GET /api/v1/orders",
-        "fk_dependencies": "Foreign key to encounters(id), master_patients(id)",
+        "relational_fk_evidence": {
+          "outgoing_fks": ["clinical_orders(encounter_id) REFERENCES encounters(id)", "clinical_orders(patient_id) REFERENCES master_patients(id)"],
+          "referencing_child_constraints_on_stage0_tables": "cpoe_order_items(order_id) REFERENCES clinical_orders(id)"
+        },
         "direct_datastore_mutation": "Mutates clinical_orders, universal_audit_logs, safety_decision_registry"
       },
       "candidate_c2": {
@@ -262,7 +310,10 @@
         "non_stage0_tables": ["diagnostic_result_notifications", "cpoe_order_items"],
         "shared_tables_with_other_candidates": ["clinical_orders (with B, C1)", "universal_audit_logs (with B, C1, D)", "encounters (with C1, Stage-0)"],
         "shared_call_sites": 0,
-        "fk_dependencies": "Foreign key to encounters(id), master_patients(id)",
+        "relational_fk_evidence": {
+          "outgoing_fks": ["physician_diagnostic_interpretations(encounter_id) REFERENCES encounters(id)"],
+          "referencing_child_constraints_on_stage0_tables": "clinical_orders(encounter_id) REFERENCES encounters(id)"
+        },
         "direct_datastore_mutation": "Mutates physician_diagnostic_interpretations, clinical_orders, universal_audit_logs"
       },
       "candidate_d": {
@@ -270,7 +321,15 @@
         "non_stage0_tables": [],
         "shared_tables_with_other_candidates": ["master_patients (with Candidate A)"],
         "shared_call_sites": 0,
-        "fk_dependencies": "Direct FK Root: 65 distinct tables have Foreign Key constraints referencing master_patients(id) (42 RESTRICT, 23 NO ACTION, 0 CASCADE)",
+        "relational_fk_evidence": {
+          "outgoing_fks": [],
+          "referencing_child_constraints_on_stage0_tables": 65,
+          "unique_referencing_tables": 65,
+          "on_delete_restrict_count": 42,
+          "on_delete_no_action_count": 23,
+          "on_delete_cascade_count": 0,
+          "composite_fks": 1
+        },
         "direct_datastore_mutation": "Mutates master_patients, universal_audit_logs"
       },
       "c1_c2_coupling_dissection": {
@@ -291,7 +350,10 @@
     "dimension_6_existing_test_maturity": {
       "candidate_a": {
         "test_suites_count": 2,
-        "suites": ["tests/appointmentQueue.test.js", "tests/appointmentQueuePersistence.test.js"],
+        "suites": [
+          "tests/appointmentQueue.test.js",
+          "tests/appointmentQueuePersistence.test.js"
+        ],
         "type": "Mock / in-memory",
         "real_postgresql_rls_coverage": false,
         "tenant_isolation_coverage": false,
@@ -301,14 +363,14 @@
       "candidate_b": {
         "test_suites_count": 8,
         "suites": [
-          "tests/verticalSlice03MedicationSafetyDurability.test.js",
-          "tests/medicationClosedLoop.test.js",
-          "tests/medicationVerification.test.js",
-          "tests/medicationAdministration.test.js",
-          "tests/medicationAdverseReaction.test.js",
-          "tests/medicationInventoryIntegration.test.js",
-          "tests/medicationSafetyAlerts.test.js",
-          "tests/medicationAuditTrail.test.js"
+          "tests/medicationEventStoreHardening.test.js",
+          "tests/medicationKnowledgeBase.test.js",
+          "tests/medicationLifecycleEngine.test.js",
+          "tests/medicationProjectionEngine.test.js",
+          "tests/medicationTerminologyService.test.js",
+          "tests/s04PneumoniaMedicationLifecycleReconciliation.test.js",
+          "tests/sprint4B3ClosedLoopMedicationPlatform.test.js",
+          "tests/verticalSlice07MedicationDurability.test.js"
         ],
         "type": "Mock / in-memory",
         "real_postgresql_rls_coverage": false,
@@ -319,9 +381,9 @@
       "candidate_c1": {
         "test_suites_count": 3,
         "suites": [
-          "tests/verticalSlice06AUniversalCpoeDurability.test.js",
-          "tests/cpoeApplication.test.js",
-          "tests/safetyAuthorization.test.js"
+          "tests/cpoeCdssEndToEndIntegration.test.js",
+          "tests/phaseD23DSafetyAuthorizationIntegrity.test.js",
+          "tests/verticalSlice06AUniversalCpoeDurability.test.js"
         ],
         "type": "Mock / in-memory",
         "real_postgresql_rls_coverage": false,
@@ -331,7 +393,9 @@
       },
       "candidate_c2": {
         "test_suites_count": 1,
-        "suites": ["tests/verticalSlice09DiagnosticInterpretationDurability.test.js"],
+        "suites": [
+          "tests/verticalSlice09DiagnosticInterpretationDurability.test.js"
+        ],
         "type": "Mock / in-memory",
         "real_postgresql_rls_coverage": false,
         "tenant_isolation_coverage": false,
@@ -340,18 +404,19 @@
       },
       "candidate_d": {
         "test_suites_count": 11,
+        "test_suites_count_note": "11 core clinical/admission patient suites verified on disk (12 total if including verticalSlice13PatientFinancialRevenueCycleDurability.test.js)",
         "suites": [
-          "tests/verticalSlice01PatientDurability.test.js",
-          "tests/patientApplication.test.js",
-          "tests/patientSearch.test.js",
-          "tests/patientRegistration.test.js",
-          "tests/patientMrnGeneration.test.js",
-          "tests/patientDuplicateDetection.test.js",
-          "tests/patientBpjsValidation.test.js",
-          "tests/patientAudit.test.js",
-          "tests/patientConcurrency.test.js",
-          "tests/patientDemographics.test.js",
-          "tests/patientLifecycle.test.js"
+          "tests/e2ePatientJourney.test.js",
+          "tests/globalPatientSearchMigration.test.js",
+          "tests/patientAllergyPersistence.test.js",
+          "tests/patientCareJourneyFsm.test.js",
+          "tests/patientJourneyEmpi.test.js",
+          "tests/s01NewPatientRegistrationReconciliation.test.js",
+          "tests/s02FastTrackPatientReconciliation.test.js",
+          "tests/s03DhfInpatientAdmissionReconciliation.test.js",
+          "tests/sprint4B6LongitudinalPatientTrajectory.test.js",
+          "tests/unifiedPatientChartArchitecture.test.js",
+          "tests/verticalSlice01PatientDurability.test.js"
         ],
         "type": "Mock / in-memory",
         "real_postgresql_rls_coverage": false,
@@ -427,7 +492,7 @@
             "id": "A-PRE-2",
             "type": "MISSING_SERVICE_ABSTRACTION",
             "location": "server/controllers/appointment.controller.js:25-170",
-            "description": "All SQL queries and transaction management are written directly inside the controller file",
+            "description": "All SQL queries and transaction management are written directly inside the controller file; server/services/appointmentQueue.service.js exists on disk as an in-memory service but is not called by the controller's SQL execution path",
             "status": "VERIFIED ARCHITECTURAL DEFECT / Implementation prerequisite for Candidate A"
           }
         ]
@@ -535,7 +600,7 @@
         "synchronous_service_dependency": "None (standalone application service)",
         "shared_datastore": "master_patients, universal_audit_logs",
         "shared_transaction": "None",
-        "fk_dependency": "Direct FK Root: 65 child tables depend on master_patients(id)",
+        "fk_dependency": "65 child tables have Foreign Key constraints referencing master_patients(id)",
         "shared_audit_infrastructure": "Writes to universal_audit_logs",
         "shared_authorization_infrastructure": "Sequential MRN annual lock generator"
       }
@@ -544,7 +609,7 @@
       "candidate_a": {
         "files_potentially_affected": {
           "controllers": ["server/controllers/appointment.controller.js"],
-          "services": ["Potentially new service server/services/appointmentApplication.service.js if refactored from controller"],
+          "services": ["Potentially new database service server/services/appointmentApplication.service.js if refactored from controller"],
           "repositories": [],
           "middleware": [],
           "routes": ["server/routes/appointment.routes.js"],
@@ -561,7 +626,17 @@
           "middleware": [],
           "routes": ["server/routes/medicationClosedLoop.routes.js"],
           "tables": ["clinical_orders", "medication_dispense_allocations", "medication_emar_administrations", "universal_audit_logs", "pharmacy_inventory_batches", "medication_orders", "patient_allergies"],
-          "tests": ["8 existing medication test suites", "New real PostgreSQL RLS test suite"],
+          "tests": [
+            "tests/medicationEventStoreHardening.test.js",
+            "tests/medicationKnowledgeBase.test.js",
+            "tests/medicationLifecycleEngine.test.js",
+            "tests/medicationProjectionEngine.test.js",
+            "tests/medicationTerminologyService.test.js",
+            "tests/s04PneumoniaMedicationLifecycleReconciliation.test.js",
+            "tests/sprint4B3ClosedLoopMedicationPlatform.test.js",
+            "tests/verticalSlice07MedicationDurability.test.js",
+            "New real PostgreSQL RLS test suite"
+          ],
           "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js"]
         }
       },
@@ -573,7 +648,12 @@
           "middleware": [],
           "routes": ["server/routes/cpoe.routes.js", "server/routes/orderCompatibility.routes.js"],
           "tables": ["clinical_orders", "encounters", "cpoe_order_items", "universal_audit_logs", "safety_decision_registry"],
-          "tests": ["3 existing CPOE test suites", "New real PostgreSQL RLS test suite"],
+          "tests": [
+            "tests/cpoeCdssEndToEndIntegration.test.js",
+            "tests/phaseD23DSafetyAuthorizationIntegrity.test.js",
+            "tests/verticalSlice06AUniversalCpoeDurability.test.js",
+            "New real PostgreSQL RLS test suite"
+          ],
           "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js", "server/utils/transactionManager.js (deprecation/removal)"]
         }
       },
@@ -585,7 +665,10 @@
           "middleware": [],
           "routes": ["server/routes/diagnosticInterpretation.routes.js"],
           "tables": ["encounters", "physician_diagnostic_interpretations", "diagnostic_result_notifications", "clinical_orders", "universal_audit_logs"],
-          "tests": ["tests/verticalSlice09DiagnosticInterpretationDurability.test.js", "New real PostgreSQL RLS test suite"],
+          "tests": [
+            "tests/verticalSlice09DiagnosticInterpretationDurability.test.js",
+            "New real PostgreSQL RLS test suite"
+          ],
           "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js"]
         }
       },
@@ -597,7 +680,20 @@
           "middleware": [],
           "routes": ["server/routes/patients.routes.js"],
           "tables": ["master_patients", "universal_audit_logs"],
-          "tests": ["11 existing patient test suites", "New real PostgreSQL RLS test suite"],
+          "tests": [
+            "tests/e2ePatientJourney.test.js",
+            "tests/globalPatientSearchMigration.test.js",
+            "tests/patientAllergyPersistence.test.js",
+            "tests/patientCareJourneyFsm.test.js",
+            "tests/patientJourneyEmpi.test.js",
+            "tests/s01NewPatientRegistrationReconciliation.test.js",
+            "tests/s02FastTrackPatientReconciliation.test.js",
+            "tests/s03DhfInpatientAdmissionReconciliation.test.js",
+            "tests/sprint4B6LongitudinalPatientTrajectory.test.js",
+            "tests/unifiedPatientChartArchitecture.test.js",
+            "tests/verticalSlice01PatientDurability.test.js",
+            "New real PostgreSQL RLS test suite"
+          ],
           "shared_infrastructure": ["server/infrastructure/database/unitOfWork.js"]
         }
       }
@@ -610,12 +706,12 @@
       "stage0_surface": "3 Stage-0 Call Sites (CS 1: Read L39, CS 2: Write L115, CS 3: Write L123)",
       "routes": "4 routes total: 2 active Stage-0 (GET /, POST /book), 2 zero-Stage-0 (POST /check-in, POST /cancel)",
       "controllers": "server/controllers/appointment.controller.js",
-      "services": "None (all logic currently resides directly in controller)",
+      "services": "None used in database execution path (server/services/appointmentQueue.service.js exists on disk as an in-memory service but is not called by controller)",
       "transactions": "Single local transaction inside appointmentController.book (pool.connect(), BEGIN, COMMIT, ROLLBACK)",
       "tables": "Stage-0: master_patients. Non-Stage-0: appointments, queue_sequences, idempotency_keys",
       "rls_uow_requirements": "Install L1 isValidUuid gate, remove hardcoded DEFAULT_TENANT_ID, wrap Stage-0 calls in withUnitOfWork",
-      "test_coverage": "2 mock test suites (tests/appointmentQueue*.test.js), 0 real PostgreSQL RLS tests",
-      "known_defects": ["Hardcoded DEFAULT_TENANT_ID fallback", "Missing service layer abstraction"],
+      "test_coverage": "2 mock test suites verified on disk (tests/appointmentQueue.test.js, tests/appointmentQueuePersistence.test.js), 0 real PostgreSQL RLS tests",
+      "known_defects": ["Hardcoded DEFAULT_TENANT_ID fallback", "Missing database-backed service abstraction"],
       "implementation_prerequisites": [
         "Implement fail-closed L1 tenant gate on GET / and POST /book",
         "Purge DEFAULT_TENANT_ID fallback",
@@ -641,7 +737,7 @@
       "transactions": "Multi-table service transactions in verifyBedsideAndAdminister, documentAdverseReaction, generateMedicationOrdersFromCPOE",
       "tables": "Stage-0: clinical_orders, medication_dispense_allocations, medication_emar_administrations, universal_audit_logs. Non-Stage-0: pharmacy_inventory_batches, medication_orders, patient_allergies",
       "rls_uow_requirements": "Install L1 isValidUuid gate across all routes, wrap 13 Stage-0 calls in withUnitOfWork across multi-table mutations",
-      "test_coverage": "8 mock test suites, 0 real PostgreSQL RLS tests",
+      "test_coverage": "8 mock test suites verified on disk (medicationEventStoreHardening, medicationKnowledgeBase, medicationLifecycleEngine, medicationProjectionEngine, medicationTerminologyService, s04PneumoniaMedicationLifecycleReconciliation, sprint4B3ClosedLoopMedicationPlatform, verticalSlice07MedicationDurability), 0 real PostgreSQL RLS tests",
       "known_defects": ["Controller mock actor fallback USR-DOC-001 and USR-PHARM-01 without tenantId validation"],
       "implementation_prerequisites": [
         "Implement fail-closed L1 gate across controller handlers",
@@ -668,7 +764,7 @@
       "transactions": "createOrder uses legacy transactionManager; cancelOrder passes client across service boundary to safetyAuthorizationService.verifyAndConsumeTransactional",
       "tables": "Stage-0: clinical_orders, universal_audit_logs, safety_decision_registry. Non-Stage-0: encounters (Stage-0 table touched via read), cpoe_order_items, cpoe_alerts",
       "rls_uow_requirements": "Install L1 isValidUuid gate across 6 active routes, migrate from transactionManager to withUnitOfWork, maintain transactional client inheritance across services, remediate shared CS 71",
-      "test_coverage": "3 mock test suites, 0 real PostgreSQL RLS tests",
+      "test_coverage": "3 mock test suites verified on disk (cpoeCdssEndToEndIntegration, phaseD23DSafetyAuthorizationIntegrity, verticalSlice06AUniversalCpoeDurability), 0 real PostgreSQL RLS tests",
       "known_defects": ["Fallback actor USR-DOC-001 in controller", "Legacy transactionManager usage in cpoeApplication.service.js"],
       "implementation_prerequisites": [
         "Implement fail-closed L1 gate across controller routes",
@@ -698,7 +794,7 @@
       "transactions": "Service-level transactions in publishDiagnosticNotification and executeSecondaryClinicalAction",
       "tables": "Stage-0: encounters, physician_diagnostic_interpretations, clinical_orders, universal_audit_logs. Non-Stage-0: diagnostic_result_notifications, cpoe_order_items",
       "rls_uow_requirements": "Install L1 isValidUuid gate across 3 active routes, wrap 11 Stage-0 calls in withUnitOfWork, fix CS 82 SQL query",
-      "test_coverage": "1 mock test suite (tests/verticalSlice09DiagnosticInterpretationDurability.test.js), 0 real PostgreSQL RLS tests",
+      "test_coverage": "1 mock test suite verified on disk (verticalSlice09DiagnosticInterpretationDurability), 0 real PostgreSQL RLS tests",
       "known_defects": [
         "CS 82: diagnosticInterpretation.service.js:528 INSERT INTO clinical_orders omits tenant_id (NOT NULL without default in schema)",
         "Fallback actor USR-LAB-01 in controller without tenant validation"
@@ -730,7 +826,7 @@
       "transactions": "Service-level transaction in registerPatient (pool.connect(), BEGIN, COMMIT, ROLLBACK) with row locks on NIK, BPJS, and MRN",
       "tables": "Stage-0: master_patients. Child tables: 65 distinct tables have Foreign Keys referencing master_patients(id)",
       "rls_uow_requirements": "Install L1 isValidUuid gate across all 3 routes, inject tenantId parameter into search/getById/registerPatient, wrap 10 Stage-0 calls in withUnitOfWork, scope annual MRN lock to tenant",
-      "test_coverage": "11 mock test suites, 0 real PostgreSQL RLS tests",
+      "test_coverage": "11 core clinical/admission mock test suites verified on disk (e2ePatientJourney, globalPatientSearchMigration, patientAllergyPersistence, patientCareJourneyFsm, patientJourneyEmpi, s01NewPatientRegistrationReconciliation, s02FastTrackPatientReconciliation, s03DhfInpatientAdmissionReconciliation, sprint4B6LongitudinalPatientTrajectory, unifiedPatientChartArchitecture, verticalSlice01PatientDurability), 0 real PostgreSQL RLS tests",
       "known_defects": [
         "Controller completely omits tenant extraction on search and getById; uses USR-REG-001 fallback on create",
         "NIK and BPJS duplicate check queries do not filter by tenant_id",
@@ -864,7 +960,7 @@
         "Has exactly 3 Stage-0 call sites on master_patients",
         "Has 4 routes, 2 active Stage-0 routes",
         "Uses hardcoded DEFAULT_TENANT_ID fallback",
-        "Has no service abstraction; SQL executed in controller",
+        "Controller performs inline SQL queries; server/services/appointmentQueue.service.js exists on disk as an in-memory service but is not called by controller",
         "Touches 1 Stage-0 table (master_patients)"
       ],
       "unknown": [
@@ -872,7 +968,7 @@
         "Doctor slot locking concurrency behavior under connection pool saturation"
       ],
       "needs_verification_during_implementation": [
-        "Verify whether extracting a dedicated appointmentApplication.service.js is preferred or if withUnitOfWork can be cleanly called in controller",
+        "Verify whether extracting a dedicated database-backed appointmentApplication.service.js is preferred or if withUnitOfWork can be cleanly called in controller",
         "Verify that check-in and cancel routes remain completely free of Stage-0 access after refactoring"
       ]
     },
@@ -931,7 +1027,7 @@
       "known": [
         "Has 10 Stage-0 call sites on master_patients",
         "Has 3 routes, 3 active Stage-0 routes (100% active)",
-        "Tabel master_patients is referenced by 65 distinct tables via Foreign Key constraints (42 RESTRICT, 23 NO ACTION)",
+        "Table master_patients is referenced by 65 distinct tables via Foreign Key constraints (42 RESTRICT, 23 NO ACTION, 0 CASCADE)",
         "Controller currently ignores tenantId on search and getById",
         "registerPatient performs sequential annual MRN generation with row locks"
       ],
@@ -948,7 +1044,7 @@
   "evidence_limitations": [
     "Zero existing real PostgreSQL RLS tests for Candidates A, B, C1, C2, and D prior to remediation",
     "No quantitative rollback duration benchmarks or automated rollback test suites exist in repository",
-    "Test suite count does not equal test coverage percentage of Stage-0 call sites",
+    "Test suite count reflects existing mock test suites on disk and does not represent percentage test coverage of Stage-0 call sites",
     "Scratch files are git-ignored and only tracked if explicitly force-added"
   ],
   "human_decision_input": {
