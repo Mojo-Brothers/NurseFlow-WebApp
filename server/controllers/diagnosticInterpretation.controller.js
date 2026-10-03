@@ -6,6 +6,7 @@
  */
 
 import { diagnosticInterpretationService, DiagnosticInterpretationDomainError } from '../services/diagnosticInterpretation.service.js';
+import { isValidUuid } from '../db/unitOfWork.js';
 
 export const diagnosticInterpretationController = {
   /**
@@ -18,10 +19,23 @@ export const diagnosticInterpretationController = {
     const timestamp = new Date().toISOString();
 
     try {
-      const actor = req.user || {
-        userId: 'USR-LAB-01',
-        username: 'lab_tech_rina',
-        role: 'ROLE_LAB_TECHNICIAN'
+      const resolvedTenantId = req.tenantId || req.user?.tenantId;
+      if (!resolvedTenantId || !isValidUuid(resolvedTenantId)) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'TENANT_CONTEXT_REQUIRED',
+            message: 'Konteks tenant valid (UUID) wajib disertakan dalam request.'
+          },
+          meta: { requestId, correlationId, timestamp }
+        });
+      }
+
+      const actor = {
+        userId: req.user?.userId || req.user?.id || 'USR-LAB-01',
+        username: req.user?.username || req.user?.fullName || 'lab_tech_rina',
+        role: req.user?.role || 'ROLE_LAB_TECHNICIAN',
+        tenantId: resolvedTenantId
       };
       const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
 
@@ -69,10 +83,23 @@ export const diagnosticInterpretationController = {
     const timestamp = new Date().toISOString();
 
     try {
-      const actor = req.user || {
-        userId: 'DOC-DPJP-01',
-        username: 'dr_siti',
-        role: 'ROLE_DOCTOR_DPJP'
+      const resolvedTenantId = req.tenantId || req.user?.tenantId;
+      if (!resolvedTenantId || !isValidUuid(resolvedTenantId)) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'TENANT_CONTEXT_REQUIRED',
+            message: 'Konteks tenant valid (UUID) wajib disertakan dalam request.'
+          },
+          meta: { requestId, correlationId, timestamp }
+        });
+      }
+
+      const actor = {
+        userId: req.user?.userId || req.user?.id || 'DOC-DPJP-01',
+        username: req.user?.username || req.user?.fullName || 'dr_siti',
+        role: req.user?.role || 'ROLE_DOCTOR_DPJP',
+        tenantId: resolvedTenantId
       };
       const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
 
@@ -124,10 +151,23 @@ export const diagnosticInterpretationController = {
     const timestamp = new Date().toISOString();
 
     try {
-      const actor = req.user || {
-        userId: 'DOC-DPJP-01',
-        username: 'dr_siti',
-        role: 'ROLE_DOCTOR_DPJP'
+      const resolvedTenantId = req.tenantId || req.user?.tenantId;
+      if (!resolvedTenantId || !isValidUuid(resolvedTenantId)) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'TENANT_CONTEXT_REQUIRED',
+            message: 'Konteks tenant valid (UUID) wajib disertakan dalam request.'
+          },
+          meta: { requestId, correlationId, timestamp }
+        });
+      }
+
+      const actor = {
+        userId: req.user?.userId || req.user?.id || 'DOC-DPJP-01',
+        username: req.user?.username || req.user?.fullName || 'dr_siti',
+        role: req.user?.role || 'ROLE_DOCTOR_DPJP',
+        tenantId: resolvedTenantId
       };
       const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
 
@@ -177,10 +217,23 @@ export const diagnosticInterpretationController = {
     const timestamp = new Date().toISOString();
 
     try {
-      const actor = req.user || {
-        userId: 'DOC-DPJP-01',
-        username: 'dr_siti',
-        role: 'ROLE_DOCTOR_DPJP'
+      const resolvedTenantId = req.tenantId || req.user?.tenantId;
+      if (!resolvedTenantId || !isValidUuid(resolvedTenantId)) {
+        return res.status(403).json({
+          success: false,
+          error: {
+            code: 'TENANT_CONTEXT_REQUIRED',
+            message: 'Konteks tenant valid (UUID) wajib disertakan dalam request.'
+          },
+          meta: { requestId, correlationId, timestamp }
+        });
+      }
+
+      const actor = {
+        userId: req.user?.userId || req.user?.id || 'DOC-DPJP-01',
+        username: req.user?.username || req.user?.fullName || 'dr_siti',
+        role: req.user?.role || 'ROLE_DOCTOR_DPJP',
+        tenantId: resolvedTenantId
       };
       const clientIp = req.ip || req.connection?.remoteAddress || '127.0.0.1';
 

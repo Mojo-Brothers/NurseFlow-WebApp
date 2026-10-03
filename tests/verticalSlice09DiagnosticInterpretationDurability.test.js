@@ -5,7 +5,7 @@
  * Complete 25 Chaos Gate Scenarios.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll, vi } from 'vitest';
 import crypto from 'crypto';
 import {
   diagnosticInterpretationService,
@@ -15,6 +15,40 @@ import { postgresPoolService } from '../server/db/postgresPool.js';
 import { ENTERPRISE_ROLES } from '../src/shared/constants/roles.js';
 
 describe('VS-09 — Clinical Results & Diagnostic Interpretation Closed Loop ➔ PostgreSQL Durability & Chaos Gate (25 Scenarios)', () => {
+  // Canonical Test Tenant Fixture (RFC 4122 UUID v4)
+  const CANONICAL_TEST_TENANT_ID = 'a0000000-0000-4000-8000-000000000001';
+
+  const originalPublish = diagnosticInterpretationService.publishDiagnosticNotification;
+  const originalAck = diagnosticInterpretationService.acknowledgeDiagnosticNotification;
+  const originalRecord = diagnosticInterpretationService.recordPhysicianInterpretation;
+  const originalAction = diagnosticInterpretationService.executeSecondaryClinicalAction;
+
+  beforeAll(() => {
+    diagnosticInterpretationService.publishDiagnosticNotification = (payload, actor = {}) => {
+      const enrichedActor = { tenantId: CANONICAL_TEST_TENANT_ID, ...actor };
+      return originalPublish.call(diagnosticInterpretationService, payload, enrichedActor);
+    };
+    diagnosticInterpretationService.acknowledgeDiagnosticNotification = (payload, actor = {}) => {
+      const enrichedActor = { tenantId: CANONICAL_TEST_TENANT_ID, ...actor };
+      return originalAck.call(diagnosticInterpretationService, payload, enrichedActor);
+    };
+    diagnosticInterpretationService.recordPhysicianInterpretation = (payload, actor = {}) => {
+      const enrichedActor = { tenantId: CANONICAL_TEST_TENANT_ID, ...actor };
+      return originalRecord.call(diagnosticInterpretationService, payload, enrichedActor);
+    };
+    diagnosticInterpretationService.executeSecondaryClinicalAction = (payload, actor = {}) => {
+      const enrichedActor = { tenantId: CANONICAL_TEST_TENANT_ID, ...actor };
+      return originalAction.call(diagnosticInterpretationService, payload, enrichedActor);
+    };
+  });
+
+  afterAll(() => {
+    diagnosticInterpretationService.publishDiagnosticNotification = originalPublish;
+    diagnosticInterpretationService.acknowledgeDiagnosticNotification = originalAck;
+    diagnosticInterpretationService.recordPhysicianInterpretation = originalRecord;
+    diagnosticInterpretationService.executeSecondaryClinicalAction = originalAction;
+  });
+
   let mockDatabaseState = {
     encounters: [],
     clinical_orders: [],
@@ -35,6 +69,7 @@ describe('VS-09 — Clinical Results & Diagnostic Interpretation Closed Loop ➔
       encounters: [
         {
           id: 'enc-diag-001',
+          tenant_id: CANONICAL_TEST_TENANT_ID,
           episode_id: 'epc-diag-001',
           patient_id: 'pat-diag-001',
           encounter_number: 'ENC-2026-DIAG-01',
@@ -42,6 +77,7 @@ describe('VS-09 — Clinical Results & Diagnostic Interpretation Closed Loop ➔
         },
         {
           id: 'enc-closed-002',
+          tenant_id: CANONICAL_TEST_TENANT_ID,
           encounter_number: 'ENC-2026-DIAG-99',
           status: 'CLOSED'
         }
@@ -168,22 +204,25 @@ describe('VS-09 — Clinical Results & Diagnostic Interpretation Closed Loop ➔
 
         // INSERT INTO physician_diagnostic_interpretations
         if (normalized.startsWith('INSERT INTO PHYSICIAN_DIAGNOSTIC_INTERPRETATIONS')) {
+          const hasTenant = normalized.includes('TENANT_ID');
+          const offset = hasTenant ? 1 : 0;
           const newInterp = {
             id: params[0],
-            notification_id: params[1],
-            encounter_id: params[2],
-            patient_id: params[3],
-            interpreted_by_id: params[4],
-            interpreted_by_name: params[5],
-            interpreted_by_role: params[6],
-            clinical_impression: params[7],
-            diagnostic_correlation: params[8],
-            impact_on_care_plan: params[9],
-            delta_check_analysis: JSON.parse(params[10] || '{}'),
-            digital_signature_hash: params[11],
-            correlation_id: params[12],
-            interpreted_at: params[13],
-            created_at: params[14]
+            tenant_id: hasTenant ? params[1] : undefined,
+            notification_id: params[1 + offset],
+            encounter_id: params[2 + offset],
+            patient_id: params[3 + offset],
+            interpreted_by_id: params[4 + offset],
+            interpreted_by_name: params[5 + offset],
+            interpreted_by_role: params[6 + offset],
+            clinical_impression: params[7 + offset],
+            diagnostic_correlation: params[8 + offset],
+            impact_on_care_plan: params[9 + offset],
+            delta_check_analysis: JSON.parse(params[10 + offset] || '{}'),
+            digital_signature_hash: params[11 + offset],
+            correlation_id: params[12 + offset],
+            interpreted_at: params[13 + offset],
+            created_at: params[14 + offset]
           };
           if (activeTransactionState) {
             activeTransactionState.stagedInterpretations.push(newInterp);
@@ -243,7 +282,9 @@ describe('VS-09 — Clinical Results & Diagnostic Interpretation Closed Loop ➔
 
         // INSERT INTO clinical_orders
         if (normalized.startsWith('INSERT INTO CLINICAL_ORDERS')) {
-          const newOrder = { id: params[0], order_number: params[3], order_type: params[4], order_status: params[5] };
+          const hasTenant = normalized.includes('TENANT_ID');
+          const offset = hasTenant ? 1 : 0;
+          const newOrder = { id: params[0], tenant_id: hasTenant ? params[1] : undefined, order_number: params[3 + offset], order_type: params[4 + offset], order_status: params[5 + offset] };
           if (activeTransactionState) {
             activeTransactionState.stagedOrders.push(newOrder);
           } else {
