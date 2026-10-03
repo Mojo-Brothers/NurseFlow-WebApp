@@ -16,6 +16,56 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [03 OKTOBER 2026] — P0-2B: TINJAUAN KESIAPAN ARSITEKTUR WAVE 1B.2 (ARCHITECTURE DECISION READINESS REVIEW)
+**Tag Rilis:** `audit-p02b-wave1b2-architecture-readiness-review`  
+**Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
+**Status Audit:** `ARCHITECTURE READINESS REVIEW = COMPLETED | 5 CANDIDATES EVALUATED: A, B, C1, C2, D | MODE: READ-ONLY (ZERO PRODUCTION CODE TOUCH) | STAGE-0 RLS UNSAFE CS: 145 | HTTP REACHABLE: 143 | UNREACHABLE FROM HTTP: 2 | ACTIVE STAGE-0 ROUTES: 42 | ZERO STAGE-0 ROUTES: 46 | 7 ARCHITECTURAL DIMENSIONS EVALUATED | CANONICAL REGRESSION: 81/81 PASS | HUMAN DECISION REQUIRED`  
+**Status Gate P0-2B:** 🛑 **`APPLICATION SECURITY FOUNDATION: PARTIAL | STAGE 0: NO-GO | PRODUCTION: BLOCKED | CURRENT PILOT: ENCOUNTER + TRIAGE = VERIFIED | GLOBAL RLS/UOW: NOT COMPLETE | NEXT WAVE: HOLD — PENDING HUMAN SELECTION | IMPLEMENTATION: NOT STARTED`**
+
+Telah selesai dilaksanakan **Tinjauan Kesiapan Arsitektur (Architecture Decision Readiness Review)** secara mendalam dan komprehensif pada repository `Mojo-Brothers/NurseFlow-WebApp` untuk mendukung pengambilan keputusan eksekutif (*Human Owner Decision*) dalam memilih domain Wave 1B.2:
+
+#### 1. Rekonsiliasi Perbedaan Baseline (Baseline Discrepancy Reconciliation)
+- **Candidate A (Queue / Appointments):** Sinkron. 3 CS pada `master_patients` (CS 1: Read L39, CS 2: Write L115, CS 3: Write L123). Total interaksi basis data modul: 33 (12W / 21R).
+- **Candidate B (Medication Closed-Loop):** Estimasi prompt (10W / 3R) terbalik. Secara faktual: 5 mutasi DML Stage-0 (CS 97-99, 102, 103) dan 8 kueri SELECT Stage-0 (CS 91-96, 100, 101). Total interaksi basis data modul: 80 (23W / 57R).
+- **Candidate C1 (CPOE Orders & Safety):** Secara faktual: 16 Stage-0 CS (13 CPOE + 3 Safety transitif CS 143-145). Terdiri atas 4 mutasi DML Stage-0 (CS 66, 143-145) dan 12 kueri baca Stage-0. Total interaksi basis data modul: 25 (6W / 19R).
+- **Candidate C2 (Diagnostics):** Terdiri atas 11 Stage-0 CS (3 mutasi Stage-0: CS 76, 77, 82; dan 8 kueri baca Stage-0: CS 72-75, 78-81). Total interaksi basis data modul: 38 (9W / 29R).
+- **Candidate D (Master Patient / Admission):** Kueri `INSERT INTO master_patients` (L170) yang sebelumnya tidak terbaca scanner AST telah direkonsiliasi. Terdiri atas 10 Stage-0 CS (1 INSERT L170, 2 SELECT FOR UPDATE L99, L114, dan 7 SELECT murni). Total interaksi basis data modul: 15 (1W / 14R).
+
+#### 2. Evaluasi Mendalam Lintas 7 Dimensi Arsitektural
+1. **Penyelarasan RLS Catalog & Schema:**
+   - Seluruh tabel Stage-0 dilindungi oleh kebijakan RLS canonical default-deny (Migration 079 & 081) dan fungsi resolver `current_app_tenant_id()` (Migration 082).
+   - Tabel anak pada Candidate B (`medication_dispense_allocations`, `medication_emar_administrations`) dan C2 (`physician_diagnostic_interpretations`) memiliki foreign key komposit ganda ke `encounters(id, tenant_id)` dan `master_patients(id, tenant_id)` (Migration 078), serta dynamic tenant default.
+   - **Temuan Kritis CS 82 (Candidate C2):** Ditemukan bahwa baris 528 pada `diagnosticInterpretation.service.js` menyisipkan order ke `clinical_orders` tanpa menyertakan kolom `tenant_id`. Mengingat `clinical_orders.tenant_id` berstatus `NOT NULL` tanpa default, kueri ini pasti gagal di PostgreSQL riil dan membutuhkan remedi DML pada Wave 1B.2.
+2. **Arsitektur Transaksi & Konkurensi:**
+   - Seluruh kandidat menggunakan isolasi `READ COMMITTED`.
+   - Candidate C1 memiliki karakteristik transaksi lintas-layanan (*cross-service spanning*), di mana koneksi transaksi diteruskan dari `cpoeApplicationService` ke `safetyAuthorizationService` untuk verifikasi command hash SHA-256 dan konsumsi token pembatalan.
+   - Candidate B memiliki transaksi multi-tabel paling kompleks (memperbarui order, alokasi dispense, administrasi eMAR dual-nurse, dan audit universal dalam satu transaksi).
+   - Candidate D mengandalkan kunci baris tahunan sekuensial untuk generator MRN (`generateNextMrn`).
+3. **Kesiapan Gerbang Kontroler (L1 Controller Gate):**
+   - Seluruh kontroler kandidat (kecuali Triage yang telah dimigrasi di Wave 1B.1) saat ini berada dalam kondisi **FAIL-OPEN** (menggunakan mock actor default atau hardcoded tenant fallback).
+   - Seluruh 42 rute aktif Stage-0 membutuhkan implementasi gerbang fail-closed L1 (`isValidUuid` check mengembalikan 403 `TENANT_CONTEXT_REQUIRED`).
+4. **Kopling Lintas-Domain & Blast Radius:**
+   - Candidate A: Blast radius minimal (1 controller, 0 service, 3 CS).
+   - Candidate D: Blast radius kode kecil (1 controller, 1 service, 10 CS), namun memiliki kopling relasional paling kritis sebagai tabel induk (*root parent entity*) dari seluruh entitas klinis rumah sakit.
+   - Candidate C1 & C2: Terbukti **100% terdekopel secara sinkron** (0 synchronous imports, 0 shared transactions).
+   - Candidate C1 memiliki shared call site (`CS 71`) yang melayani dua rute Express (`/orders/cpoe` dan `/orders`).
+5. **Kontinuitas Alur Klinis & Standar Keselamatan:**
+   - Standar JCI: Candidate D (IPSG 1 Identifikasi Pasien), Candidate C2 (IPSG 2 Pelaporan Nilai Kritis Lab/Rad), Candidate B (IPSG 3 High-Alert Medications & 5-Benar eMAR), Candidate C1 (Care of Patients - Hak Perintah Medis Dokter).
+6. **Transisi Kontrak Pengujian:**
+   - Tidak ada satu pun kandidat yang memiliki pengujian Real RLS saat ini (seluruhnya berjalan di atas *vi.mock*).
+   - Candidate D membutuhkan fixture paling sederhana (`tenant_organizations`). Candidate B membutuhkan fixture paling kompleks (tenant, user, patient, encounter, CPOE order, formulary, batch inventaris).
+7. **Kelayakan Migrasi & Rollback:**
+   - Seluruh kandidat dapat dibatasi (*bounded*) dalam scope 1 wave. Rollback complexity berbanding lurus dengan luas blast radius (A paling mudah, B paling kompleks).
+
+#### 3. Integritas Kode & Pengujian Regresi Kanonik
+- **Pengujian Regresi Kanonik:** Berhasil mempertahankan status **81/81 PASS (100% lolos)** pada 6 suite pengujian kanonik Triage & Encounter.
+- **Perubahan Kode Produksi:** **NOL (0 baris kode aplikasi/migrasi/skema diubah)**.
+- **Artefak Audit Diterbitkan:**
+  - `docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md`
+  - `scratch/p02b_wave1b2_architecture_readiness_review.json`
+
+---
+
 ### 📌 [02 OKTOBER 2026] — P0-2B: VERIFIKASI MEKANIS JALUR EKSEKUSI RUTE (FINAL ROUTE EXECUTION-PATH VERIFICATION)
 **Tag Rilis:** `audit-p02b-route-execution-path-verification`  
 **Kategori:** `[DOCS]` `[AUDIT]` `[SECURITY]`  
