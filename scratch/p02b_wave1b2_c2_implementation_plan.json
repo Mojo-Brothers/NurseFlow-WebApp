@@ -1,0 +1,561 @@
+{
+  "candidate": "C2",
+  "domain": "Diagnostics",
+  "decision_status": "APPROVED_TO_PLAN",
+  "implementation_status": "NOT_STARTED",
+  "evidence_baseline": {
+    "freeze_commit": "a9fba667ce51010741c18da7b201d696a47ba09a",
+    "final_audit_commit": "74180e3",
+    "stage0_operational_gate": "NO-GO",
+    "production_deployment_gate": "BLOCKED",
+    "canonical_regression_status": "81/81 PASS",
+    "total_c2_static_ast_db_calls": 38,
+    "c2_writes": 9,
+    "c2_reads": 29,
+    "c2_stage0_unsafe_call_sites": 11,
+    "c2_active_stage0_routes": 3,
+    "c2_zero_stage0_routes": 1,
+    "c2_stage0_tables": [
+      "encounters",
+      "physician_diagnostic_interpretations",
+      "clinical_orders",
+      "universal_audit_logs"
+    ],
+    "c2_stage0_writes": 3,
+    "c2_stage0_reads": 8,
+    "existing_c2_real_pg_rls_tests": 0,
+    "existing_c2_mock_durability_tests": 1,
+    "cs82_defect_status": "VERIFIED CURRENT DEFECT / NOT FIXED"
+  },
+  "scope": {
+    "in_scope": [
+      "C2 Diagnostics domain",
+      "server/services/diagnosticInterpretation.service.js",
+      "server/controllers/diagnosticInterpretation.controller.js",
+      "server/routes/diagnosticInterpretation.routes.js",
+      "All 11 C2 Stage-0 unsafe database call sites (CS 72 through CS 82)",
+      "Fail-closed L1 tenant authorization gate on all 4 C2 routes",
+      "Unit of Work (withUnitOfWork) transaction boundary enforcement",
+      "PostgreSQL RLS tenant isolation across all 4 touched Stage-0 tables",
+      "CS82 remediation: explicit tenant_id column and parameter in clinical_orders INSERT",
+      "Real PostgreSQL RLS integration tests (Scenarios C2-RLS-01 through C2-RLS-09)",
+      "Cross-tenant isolation and write rejection verification",
+      "Rollback and transaction atomicity verification",
+      "Connection reuse and tenant-context bleed prevention verification",
+      "Preservation of existing 81/81 canonical regression baseline"
+    ],
+    "out_of_scope": [
+      "Candidate A (Queue / Appointment)",
+      "Candidate B (Medication Closed-Loop)",
+      "Candidate C1 (CPOE Orders & Safety)",
+      "Candidate D (Master Patient / Admission)",
+      "Unrelated Stage-0 call sites (134 non-C2 call sites)",
+      "Unrelated RLS tables (29 non-C2 Stage-0 tables)",
+      "Unrelated feature development or business enhancements",
+      "UI/UX redesign or frontend modifications (src/)",
+      "Workflow redesign or legacy schema alteration",
+      "Opportunistic technical debt cleanup or dormant call-site removal"
+    ]
+  },
+  "stage0_call_sites": [
+    {
+      "cs": "CS 72",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 82,
+      "sql_operation": "pool.connect() [Encounter verification block]",
+      "table": "encounters",
+      "read_write": "READ",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/notifications",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 73",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 83,
+      "sql_operation": "client.connect() socket acquisition",
+      "table": "encounters",
+      "read_write": "READ",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/notifications",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 74",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 86,
+      "sql_operation": "BEGIN ISOLATION LEVEL READ COMMITTED;",
+      "table": "encounters",
+      "read_write": "READ",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/notifications",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 75",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 89,
+      "sql_operation": "SELECT * FROM encounters WHERE id = $1 FOR UPDATE;",
+      "table": "encounters",
+      "read_write": "READ",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/notifications",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 76",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 416,
+      "sql_operation": "UPDATE diagnostic_result_notifications / Audit transaction prep",
+      "table": "universal_audit_logs",
+      "read_write": "WRITE",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/notifications/:id/interpret",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 77",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 424,
+      "sql_operation": "INSERT INTO universal_audit_logs (...) VALUES (...);",
+      "table": "universal_audit_logs",
+      "read_write": "WRITE",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/notifications/:id/interpret",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 78",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 504,
+      "sql_operation": "pool.connect() [Interpretation lookup block]",
+      "table": "physician_diagnostic_interpretations",
+      "read_write": "READ",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/interpretations/:id/actions",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 79",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 505,
+      "sql_operation": "client.connect() socket acquisition",
+      "table": "physician_diagnostic_interpretations",
+      "read_write": "READ",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/interpretations/:id/actions",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 80",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 508,
+      "sql_operation": "BEGIN ISOLATION LEVEL READ COMMITTED;",
+      "table": "physician_diagnostic_interpretations",
+      "read_write": "READ",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/interpretations/:id/actions",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 81",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 510,
+      "sql_operation": "SELECT * FROM physician_diagnostic_interpretations WHERE id = $1 FOR UPDATE;",
+      "table": "physician_diagnostic_interpretations",
+      "read_write": "READ",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/interpretations/:id/actions",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "ABSENT (Raw pool client without app.current_tenant_id GUC)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole })"
+    },
+    {
+      "cs": "CS 82",
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "line": 528,
+      "sql_operation": "INSERT INTO clinical_orders (id, encounter_id, patient_id, ...) VALUES ($1, $2, $3, ...); [OMITS tenant_id]",
+      "table": "clinical_orders",
+      "read_write": "WRITE",
+      "http_reachable": true,
+      "route": "POST /api/v1/diagnostics/interpretations/:id/actions",
+      "current_transaction": "Manual BEGIN ISOLATION LEVEL READ COMMITTED",
+      "tenant_context": "DEFECTIVE (omits tenant_id; NOT NULL violation on real PG)",
+      "target_uow": "withUnitOfWork({ tenantId, actorId, userRole }) + explicit tenant_id in INSERT"
+    }
+  ],
+  "active_routes": [
+    {
+      "route": "POST /api/v1/diagnostics/notifications",
+      "method": "POST",
+      "controller": "server/controllers/diagnosticInterpretation.controller.js",
+      "controller_function": "publishNotification",
+      "service_function": "publishDiagnosticNotification",
+      "db_call_chain": "CS 72-75: SELECT * FROM encounters WHERE id = $1 FOR UPDATE -> INSERT INTO diagnostic_result_notifications -> INSERT INTO clinical_domain_outbox",
+      "stage0_tables": [
+        "encounters"
+      ],
+      "read_write_behavior": "READ on encounters (Stage-0), WRITE on non-Stage-0 tables",
+      "authorization_boundary": "authenticateJwt middleware -> Controller mock actor fallback -> Service validation",
+      "tenant_boundary": "CURRENT: None (FAIL-OPEN) -> TARGET: Fail-Closed L1 Gate (req.tenantId validation)",
+      "transaction_boundary": "CURRENT: Manual pool.connect() -> TARGET: withUnitOfWork",
+      "status": "ACTIVE_STAGE_0"
+    },
+    {
+      "route": "POST /api/v1/diagnostics/notifications/:id/acknowledge",
+      "method": "POST",
+      "controller": "server/controllers/diagnosticInterpretation.controller.js",
+      "controller_function": "acknowledgeNotification",
+      "service_function": "acknowledgeDiagnosticNotification",
+      "db_call_chain": "SELECT * FROM diagnostic_result_notifications WHERE id = $1 FOR UPDATE -> UPDATE diagnostic_result_notifications",
+      "stage0_tables": [],
+      "read_write_behavior": "READ and WRITE on diagnostic_result_notifications only (Non-Stage-0)",
+      "authorization_boundary": "authenticateJwt middleware -> Controller mock actor fallback",
+      "tenant_boundary": "CURRENT: None (FAIL-OPEN) -> TARGET: Fail-Closed L1 Gate (req.tenantId validation)",
+      "transaction_boundary": "CURRENT: Manual pool.connect() -> TARGET: withUnitOfWork",
+      "status": "ZERO_STAGE_0"
+    },
+    {
+      "route": "POST /api/v1/diagnostics/notifications/:id/interpret",
+      "method": "POST",
+      "controller": "server/controllers/diagnosticInterpretation.controller.js",
+      "controller_function": "recordInterpretation",
+      "service_function": "recordPhysicianInterpretation",
+      "db_call_chain": "SELECT * FROM diagnostic_result_notifications FOR UPDATE -> INSERT INTO longitudinal_delta_checks -> INSERT INTO physician_diagnostic_interpretations -> UPDATE diagnostic_result_notifications -> CS 76-77: INSERT INTO universal_audit_logs",
+      "stage0_tables": [
+        "physician_diagnostic_interpretations",
+        "universal_audit_logs"
+      ],
+      "read_write_behavior": "WRITE on physician_diagnostic_interpretations and universal_audit_logs",
+      "authorization_boundary": "authenticateJwt middleware -> Controller mock actor fallback -> DPJP role check",
+      "tenant_boundary": "CURRENT: None (FAIL-OPEN) -> TARGET: Fail-Closed L1 Gate (req.tenantId validation)",
+      "transaction_boundary": "CURRENT: Manual pool.connect() -> TARGET: withUnitOfWork",
+      "status": "ACTIVE_STAGE_0"
+    },
+    {
+      "route": "POST /api/v1/diagnostics/interpretations/:id/actions",
+      "method": "POST",
+      "controller": "server/controllers/diagnosticInterpretation.controller.js",
+      "controller_function": "executeSecondaryAction",
+      "service_function": "executeSecondaryClinicalAction",
+      "db_call_chain": "CS 78-81: SELECT * FROM physician_diagnostic_interpretations WHERE id = $1 FOR UPDATE -> CS 82: INSERT INTO clinical_orders -> INSERT INTO diagnostic_secondary_actions -> UPDATE diagnostic_result_notifications",
+      "stage0_tables": [
+        "physician_diagnostic_interpretations",
+        "clinical_orders"
+      ],
+      "read_write_behavior": "READ on physician_diagnostic_interpretations, WRITE on clinical_orders",
+      "authorization_boundary": "authenticateJwt middleware -> Controller mock actor fallback",
+      "tenant_boundary": "CURRENT: None (FAIL-OPEN) -> TARGET: Fail-Closed L1 Gate (req.tenantId validation)",
+      "transaction_boundary": "CURRENT: Manual pool.connect() -> TARGET: withUnitOfWork",
+      "status": "ACTIVE_STAGE_0"
+    }
+  ],
+  "current_state": {
+    "entry_gate": "FAIL-OPEN: Fallback to mock actors ('USR-LAB-01', 'DOC-DPJP-01') when req.user is absent; zero verification of req.tenantId",
+    "connection_management": "Direct postgresPoolService.getPool().connect() within service methods; raw BEGIN / COMMIT / ROLLBACK blocks",
+    "tenant_guc_status": "GUC app.current_tenant_id is NEVER set on database connection sessions",
+    "cs82_defect": "INSERT INTO clinical_orders in executeSecondaryClinicalAction omits tenant_id column; fails on real PostgreSQL NOT NULL constraint",
+    "real_pg_rls_tests": 0
+  },
+  "target_state": {
+    "entry_gate": "FAIL-CLOSED: Controller inspects resolvedTenantId = req.tenantId || req.user?.tenantId; rejects missing/invalid with 403 TENANT_CONTEXT_REQUIRED before invoking service",
+    "connection_management": "100% managed via withUnitOfWork({ tenantId, actorId, userRole }); automatic SET LOCAL app.current_tenant_id, atomic COMMIT/ROLLBACK, DISCARD ALL cleanup",
+    "tenant_guc_status": "Guaranteed session isolation: SET LOCAL app.current_tenant_id = $1 (true) strictly scoped to transaction lifetime",
+    "cs82_remediation": "Explicit tenant_id included in clinical_orders INSERT statement ($1 parameter bound from uowContext.tenantId)",
+    "real_pg_rls_tests": "Dedicated real PostgreSQL test suite verifying isolation, cross-tenant rejection, rollback, and connection reuse"
+  },
+  "tenant_contract": {
+    "header_key": "x-tenant-id",
+    "request_property": "req.tenantId",
+    "uuid_format_enforced": true,
+    "missing_tenant_response": {
+      "http_status": 403,
+      "error_code": "TENANT_CONTEXT_REQUIRED",
+      "error_message": "Konteks tenant valid (UUID) wajib disertakan dalam request."
+    },
+    "invalid_tenant_response": {
+      "http_status": 403,
+      "error_code": "TENANT_CONTEXT_REQUIRED",
+      "error_message": "Konteks tenant valid (UUID) wajib disertakan dalam request."
+    },
+    "prohibited_patterns": [
+      "DEFAULT_TENANT_ID",
+      "process.env.DEFAULT_TENANT_ID",
+      "mock tenant substitution",
+      "implicit tenant defaulting",
+      "fail-open execution without tenant context"
+    ]
+  },
+  "uow_plan": {
+    "service_module": "server/services/diagnosticInterpretation.service.js",
+    "uow_import": "import { withUnitOfWork } from '../db/unitOfWork.js';",
+    "operations": [
+      {
+        "method": "publishDiagnosticNotification",
+        "atomic_boundary": "Atomic Unit: Verify and row-lock encounters (Stage-0) -> Insert diagnostic_result_notifications -> Insert clinical_domain_outbox",
+        "isolation_level": "READ COMMITTED",
+        "audit_mutation": "Outbox publication for critical notifications"
+      },
+      {
+        "method": "acknowledgeDiagnosticNotification",
+        "atomic_boundary": "Atomic Unit: Row-lock diagnostic_result_notifications -> Verify JCI IPSG 2 Read-Back -> Update diagnostic_result_notifications",
+        "isolation_level": "READ COMMITTED",
+        "audit_mutation": "In-row audit (acknowledged_at, acknowledged_by_id, read_back_confirmed)"
+      },
+      {
+        "method": "recordPhysicianInterpretation",
+        "atomic_boundary": "Atomic Unit: Row-lock diagnostic_result_notifications -> Delta check computation -> Insert physician_diagnostic_interpretations (Stage-0) -> Update diagnostic_result_notifications -> Insert universal_audit_logs (Stage-0)",
+        "isolation_level": "READ COMMITTED",
+        "audit_mutation": "Explicit universal_audit_logs INSERT within same transaction"
+      },
+      {
+        "method": "executeSecondaryClinicalAction",
+        "atomic_boundary": "Atomic Unit: Row-lock physician_diagnostic_interpretations (Stage-0) -> Remediated INSERT into clinical_orders (Stage-0) -> Insert diagnostic_secondary_actions -> Update diagnostic_result_notifications",
+        "isolation_level": "READ COMMITTED",
+        "audit_mutation": "In-row audit on diagnostic_secondary_actions and outbox dispatch"
+      }
+    ]
+  },
+  "cs82": {
+    "defect_file": "server/services/diagnosticInterpretation.service.js",
+    "defect_line": 528,
+    "defect_sql": "INSERT INTO clinical_orders (id, encounter_id, patient_id, order_number, order_type, order_status, priority, ordering_doctor_id, ordering_doctor_name, ordering_doctor_role, notes, correlation_id, created_at)",
+    "schema_constraint": "ALTER TABLE clinical_orders ADD COLUMN tenant_id UUID NOT NULL (Migration 009)",
+    "default_value_in_db": "NONE",
+    "trigger_supplying_tenant": "NONE",
+    "remediation_design": {
+      "tenant_id_source": "Validated uowContext.tenantId (passed from req.tenantId)",
+      "uow_propagation": "withUnitOfWork({ tenantId, ... }, async ({ client, tenantId }) => { ... })",
+      "target_sql": "INSERT INTO clinical_orders (id, tenant_id, encounter_id, patient_id, order_number, order_type, order_status, priority, ordering_doctor_id, ordering_doctor_name, ordering_doctor_role, notes, correlation_id, created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14);",
+      "target_params": "[generatedCpoeOrderId, tenantId, interp.encounter_id, interp.patient_id, ...]",
+      "rls_enforcement": "Evaluated against tenant_isolation_clinical_orders WITH CHECK ((tenant_id = (NULLIF(current_setting('app.current_tenant_id'::text, true), ''::text))::uuid))",
+      "cross_tenant_test": "Test C2-RLS-04 and Test C2-RLS-05"
+    }
+  },
+  "rls_test_plan": [
+    {
+      "test_id": "C2-RLS-01",
+      "name": "Tenant A Read Own Data",
+      "description": "Tenant A issues C2 operation; queries encounters and interpretations belonging to Tenant A; records return successfully",
+      "expected_evidence": "Query returns Tenant A rows; row count > 0; tenant_id matches Tenant A UUID"
+    },
+    {
+      "test_id": "C2-RLS-02",
+      "name": "Tenant A Cannot Read Tenant B Data",
+      "description": "Tenant A attempts to query an encounter or interpretation record created by Tenant B; PostgreSQL RLS policy filters rows",
+      "expected_evidence": "Query returns 0 rows; 404 ENCOUNTER_NOT_FOUND or INTERPRETATION_NOT_FOUND returned; no data leaked"
+    },
+    {
+      "test_id": "C2-RLS-03",
+      "name": "Tenant A Write Own Data",
+      "description": "Tenant A executes publishNotification, recordInterpretation, and executeSecondaryAction; all Stage-0 tables accept writes",
+      "expected_evidence": "INSERT succeeds; rows created in universal_audit_logs, physician_diagnostic_interpretations, and clinical_orders with Tenant A tenant_id"
+    },
+    {
+      "test_id": "C2-RLS-04",
+      "name": "Tenant A Cannot Write Tenant B Record",
+      "description": "Tenant A attempts to mutate or create a downstream clinical order with Tenant B tenant_id; RLS WITH CHECK policy rejects write",
+      "expected_evidence": "PostgreSQL throws SQLSTATE 44000 (new row violates row-level security policy for table clinical_orders); transaction aborts"
+    },
+    {
+      "test_id": "C2-RLS-05",
+      "name": "CS82 Remediated Downstream Order Insert",
+      "description": "executeSecondaryClinicalAction creates downstream clinical_orders row; tenant_id is explicitly supplied and matches active UoW tenant",
+      "expected_evidence": "INSERT INTO clinical_orders succeeds; tenant_id is non-null and matches Tenant A; no NOT NULL constraint violation"
+    },
+    {
+      "test_id": "C2-RLS-06",
+      "name": "Transaction Rollback on Error",
+      "description": "Induced error during secondary action execution after order insertion; verifies atomic rollback of clinical_orders and actions",
+      "expected_evidence": "PostgreSQL ROLLBACK executed; no partial rows remain in clinical_orders, diagnostic_secondary_actions, or universal_audit_logs"
+    },
+    {
+      "test_id": "C2-RLS-07",
+      "name": "Connection Reuse Cleanliness",
+      "description": "Socket used for Tenant A request is returned to pool and subsequently leased for Tenant B request; tests DISCARD ALL cleanliness",
+      "expected_evidence": "Tenant B request cannot access Tenant A GUCs or data; current_setting('app.current_tenant_id') reflects Tenant B"
+    },
+    {
+      "test_id": "C2-RLS-08",
+      "name": "Missing Tenant Context Rejection",
+      "description": "HTTP request submitted to C2 routes without x-tenant-id header or req.user.tenantId; controller intercepts request",
+      "expected_evidence": "HTTP 403 Forbidden with TENANT_CONTEXT_REQUIRED; zero database queries dispatched"
+    },
+    {
+      "test_id": "C2-RLS-09",
+      "name": "Invalid Tenant Context Rejection",
+      "description": "HTTP request submitted with malformed or non-UUID tenant identifier ('tenant-123'); controller validates UUID",
+      "expected_evidence": "HTTP 403 Forbidden with TENANT_CONTEXT_REQUIRED; zero database queries dispatched"
+    }
+  ],
+  "regression_plan": {
+    "canonical_suite_baseline": "81/81 PASS",
+    "canonical_test_files": [
+      "tests/p02b_wave1b1_real_rls_integration.test.js",
+      "tests/triageVerticalSlice.test.js",
+      "tests/p02b_wave1b1_triage_uow.test.js",
+      "tests/verticalSlice04TriageDurability.test.js",
+      "tests/p02b_wave1b1_l1_controller_gate.test.js",
+      "tests/triageEngine.test.js"
+    ],
+    "c2_existing_suite": {
+      "file": "tests/verticalSlice09DiagnosticInterpretationDurability.test.js",
+      "classification": "Mocked Database Persistence Slice (mockDatabaseState)",
+      "target_status": "Must remain 100% passing (25/25 scenarios)"
+    },
+    "new_test_suites": [
+      {
+        "file": "tests/p02b_wave1b2_c2_l1_controller_gate.test.js",
+        "purpose": "Unit testing fail-closed controller gate across all 4 C2 routes without DB"
+      },
+      {
+        "file": "tests/p02b_wave1b2_c2_real_rls_integration.test.js",
+        "purpose": "Integration testing against real PostgreSQL container testing RLS policies, CS82 remediation, rollback, and connection reuse"
+      }
+    ]
+  },
+  "file_change_manifest": [
+    {
+      "file": "server/controllers/diagnosticInterpretation.controller.js",
+      "type": "Production Code",
+      "purpose": "Enforce fail-closed L1 tenant authorization gate across all 4 routes; purge fallback mock actors in production paths",
+      "planned_change": "Add resolvedTenantId check with isValidUuid; return 403 TENANT_CONTEXT_REQUIRED; pass tenantId into actor payload",
+      "required": true,
+      "phase": "Phase C2-02"
+    },
+    {
+      "file": "server/services/diagnosticInterpretation.service.js",
+      "type": "Production Code",
+      "purpose": "Migrate DB operations to withUnitOfWork; remediate CS82; enforce atomic transaction and audit boundaries",
+      "planned_change": "Import withUnitOfWork; wrap methods; remediate line 528 clinical_orders INSERT to include tenant_id; remove raw pool.connect()",
+      "required": true,
+      "phase": "Phase C2-03 to C2-05"
+    },
+    {
+      "file": "tests/p02b_wave1b2_c2_l1_controller_gate.test.js",
+      "type": "Test Suite",
+      "purpose": "Prove controller fail-closed behavior on missing/invalid tenant context across all 4 routes",
+      "planned_change": "Create unit tests asserting 403 on missing/invalid tenant and 200/201 on valid UUID",
+      "required": true,
+      "phase": "Phase C2-02"
+    },
+    {
+      "file": "tests/p02b_wave1b2_c2_real_rls_integration.test.js",
+      "type": "Test Suite",
+      "purpose": "Prove real PostgreSQL RLS tenant isolation, CS82 fix, rollback atomicity, and connection reuse",
+      "planned_change": "Create integration tests executing Scenarios C2-RLS-01 through C2-RLS-09 against real PostgreSQL",
+      "required": true,
+      "phase": "Phase C2-06 to C2-08"
+    },
+    {
+      "file": "docs/audit/P0-2B-WAVE1B2-C2-IMPLEMENTATION-PLAN.md",
+      "type": "Documentation",
+      "purpose": "Authoritative implementation blueprint and evidence specification",
+      "planned_change": "Create document",
+      "required": true,
+      "phase": "Phase C2-01"
+    },
+    {
+      "file": "scratch/p02b_wave1b2_c2_implementation_plan.json",
+      "type": "Documentation",
+      "purpose": "Machine-readable companion specification for implementation plan",
+      "planned_change": "Create document",
+      "required": true,
+      "phase": "Phase C2-01"
+    }
+  ],
+  "forbidden_scope": [
+    "server/controllers/appointment.controller.js (Candidate A)",
+    "server/services/appointmentQueue.service.js (Candidate A)",
+    "server/services/medicationClosedLoop.service.js (Candidate B)",
+    "server/services/cpoeApplication.service.js (Candidate C1)",
+    "server/services/safetyAuthorization.service.js (Candidate C1)",
+    "server/services/patientApplication.service.js (Candidate D)",
+    "server/controllers/patient.controller.js (Candidate D)",
+    "database/migrations/* (Zero migrations permitted; schema already contains tenant_id NOT NULL)",
+    "database/schema/*",
+    "src/* (Zero frontend changes)",
+    "docs/CHANGELOG_PERUBAHAN_HIS.md (Planning phase produces zero changelog entries)"
+  ],
+  "risk_register": [
+    {
+      "risk_id": "R-C2-01",
+      "observed_condition": "CS 82 omits tenant_id in INSERT INTO clinical_orders",
+      "evidence": "diagnosticInterpretation.service.js:528-534",
+      "potential_failure": "PostgreSQL NOT NULL constraint violation (SQLSTATE 23502) or cross-tenant order injection",
+      "detection_method": "Real PostgreSQL integration test C2-RLS-05",
+      "mitigation": "Include explicit tenant_id column and parameter bound from validated uowContext.tenantId",
+      "verification": "Test C2-RLS-05 passes against real PostgreSQL schema"
+    },
+    {
+      "risk_id": "R-C2-02",
+      "observed_condition": "C2 controller methods fallback to hardcoded mock actors when req.user is absent",
+      "evidence": "diagnosticInterpretation.controller.js:21, 72, 127, 180",
+      "potential_failure": "Fail-open security ingress; requests without authentication can execute Stage-0 operations",
+      "detection_method": "Controller unit test without req.user or req.tenantId",
+      "mitigation": "Implement L1 fail-closed gate verifying resolvedTenantId before invoking service",
+      "verification": "Test C2-RLS-08 and C2-RLS-09 assert 403 TENANT_CONTEXT_REQUIRED"
+    },
+    {
+      "risk_id": "R-C2-03",
+      "observed_condition": "Service executes raw BEGIN/COMMIT blocks with manual connection checkout",
+      "evidence": "diagnosticInterpretation.service.js:82-86, 504-508",
+      "potential_failure": "Socket leak on uncaught exception; failure to execute DISCARD ALL; tenant context bleed",
+      "detection_method": "Connection pool stress and reuse test",
+      "mitigation": "Migrate 100% of DB interactions to withUnitOfWork",
+      "verification": "Test C2-RLS-07 proves zero tenant bleed on connection reuse"
+    },
+    {
+      "risk_id": "R-C2-04",
+      "observed_condition": "Universal audit log insertion executed within service try block",
+      "evidence": "diagnosticInterpretation.service.js:424-440",
+      "potential_failure": "Audit trail decoupled from business transaction; possible partial commit without audit",
+      "detection_method": "Atomic failure injection before commit",
+      "mitigation": "Enclose both interpretation mutation and audit log insertion within same withUnitOfWork",
+      "verification": "Test C2-RLS-06 confirms rollback removes audit log and business record atomically"
+    }
+  ],
+  "definition_of_done": [
+    "C2 controller entry gate is 100% fail-closed across all 4 routes (publish, ack, interpret, actions)",
+    "No default tenant, mock actor, or implicit tenant fallback remains in C2 production request paths",
+    "Validated tenant UUID propagates into withUnitOfWork for all C2 Stage-0 database operations",
+    "All 11 C2 Stage-0 unsafe call sites (CS 72 through CS 82) execute within authoritative withUnitOfWork boundaries",
+    "CS 82 defect is completely remediated: clinical_orders INSERT explicitly provides tenant_id",
+    "Real PostgreSQL RLS integration test suite created and passing (Scenarios C2-RLS-01 through C2-RLS-09)",
+    "Tenant A isolation verified on encounters, interpretations, audit logs, and clinical orders",
+    "Cross-tenant read attempts return 0 rows (404 Not Found)",
+    "Cross-tenant write attempts are rejected with RLS policy violation",
+    "Rollback atomicity verified: partial operations leave zero records",
+    "Connection reuse verified: socket checkout has zero tenant context bleed",
+    "All 3 active Stage-0 HTTP routes verified end-to-end",
+    "Zero Stage-0 route (acknowledgeNotification) verified for regression",
+    "Existing C2 durability test suite (verticalSlice09) preserved and passing 25/25 scenarios",
+    "Canonical regression baseline preserved at 81/81 PASS",
+    "Zero modifications made to Candidates A, B, C1, or D",
+    "Evidence artifacts generated and verified by final security closure audit"
+  ],
+  "evidence_requirements": [
+    "p02b_wave1b2_c2_preflight_evidence.json",
+    "p02b_wave1b2_c2_real_rls_evidence.json",
+    "p02b_wave1b2_c2_route_verification_evidence.json",
+    "p02b_wave1b2_c2_closure_evidence.json"
+  ]
+}
