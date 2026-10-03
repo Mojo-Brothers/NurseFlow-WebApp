@@ -1,0 +1,176 @@
+{
+  "audit_metadata": {
+    "document_id": "DOC-AUDIT-P02B-WAVE1B2-DECISION-ANALYSIS-INTEGRITY-20261003",
+    "timestamp": "2026-10-03T11:25:00+07:00",
+    "repository": "Mojo-Brothers/NurseFlow-WebApp",
+    "branch": "feature/security-foundation-wave1a10",
+    "base_evidence_commit": "a9fba667ce51010741c18da7b201d696a47ba09a",
+    "audited_commit": "d443aa1a1a8b4f8bf98f6a85e476f444ec78432b",
+    "audited_artifacts": [
+      "docs/audit/P0-2B-WAVE1B2-TECHNICAL-DECISION-ANALYSIS.md",
+      "scratch/p02b_wave1b2_technical_decision_analysis.json"
+    ],
+    "audit_mode": "READ-ONLY INTEGRITY AUDIT",
+    "decision_support_integrity": "PASS WITH FINDINGS",
+    "candidate_selected": false,
+    "recommendation_generated": false,
+    "implementation_started": false,
+    "human_owner_decision": "PENDING"
+  },
+  "summary_counts": {
+    "unsupported_claims_count": 6,
+    "hidden_recommendations_count": 0,
+    "artifact_drift_count": 2,
+    "governance_violations_count": 0
+  },
+  "matrix_cell_verification": {
+    "total_rows": 20,
+    "total_cells": 100,
+    "classification_breakdown": {
+      "FACT": 70,
+      "DERIVED": 15,
+      "IMPLEMENTATION_PREREQUISITE": 4,
+      "TECHNICAL_INTERPRETATION": 1,
+      "AMBIGUOUS": 5,
+      "UNSUPPORTED_QUALITATIVE_RANKING": 5
+    },
+    "specific_findings": [
+      {
+        "row": "Relational In-Degree FK Hub",
+        "cells": {
+          "candidate_a": "Rendah (Child)",
+          "candidate_b": "Sedang (Child & Parent)",
+          "candidate_c1": "Sedang (Child & Parent)",
+          "candidate_c2": "Sedang (Child & Parent)",
+          "candidate_d": "Tinggi (65 Child Tables)"
+        },
+        "classification": "UNSUPPORTED_QUALITATIVE_RANKING",
+        "rationale": "While 65 foreign keys on master_patients is a verified derived metric, the classification into 'Rendah', 'Sedang', and 'Tinggi' lacks quantitative thresholds, mathematical definitions, or comparative in-degree calculations for Candidates A, B, C1, and C2."
+      },
+      {
+        "row": "Total Interaksi DB Modul",
+        "cells": {
+          "candidate_a": "33 (12W / 21R)",
+          "candidate_b": "80 (23W / 57R)",
+          "candidate_c1": "25 (6W / 19R)",
+          "candidate_c2": "38 (9W / 29R)",
+          "candidate_d": "15 (1W / 14R)"
+        },
+        "classification": "AMBIGUOUS",
+        "rationale": "The operational definition of 'Total Interaksi DB Modul' is not formally stated in the Markdown document, leaving ambiguous whether it represents runtime queries, static AST SQL references, or query method invocations across Stage-0 and non-Stage-0 tables."
+      },
+      {
+        "row": "Kebutuhan Lapisan Service",
+        "cells": {
+          "candidate_a": "Perlu dibuat / refactor",
+          "candidate_b": "Sudah ada berkas service",
+          "candidate_c1": "Sudah ada berkas service",
+          "candidate_c2": "Sudah ada berkas service",
+          "candidate_d": "Sudah ada berkas service"
+        },
+        "classification": "AMBIGUOUS (Candidate A) / FACT (Candidates B, C1, C2, D)",
+        "rationale": "For Candidate A, server/services/appointmentQueue.service.js actually exists on disk but is purely an in-memory service unused by appointment.controller.js. A database-backed service abstraction does not exist."
+      },
+      {
+        "row": "Prasyarat Utama Remediasi",
+        "cells": {
+          "candidate_a": "Hapus fallback default tenant (VERIFIED PREREQUISITE)",
+          "candidate_b": "Validasi alokasi inventaris & eMAR (TECHNICAL INTERPRETATION / AMBIGUOUS)",
+          "candidate_c1": "Transisi dari legacy tx manager (VERIFIED PREREQUISITE)",
+          "candidate_c2": "Perbaiki query DML CS 82 (VERIFIED DEFECT / PREREQUISITE)",
+          "candidate_d": "Isolasi kueri kunci MRN tahunan (VERIFIED PREREQUISITE)"
+        }
+      }
+    ]
+  },
+  "test_maturity_findings": {
+    "status": "UNSUPPORTED_ARTIFACT_DATA",
+    "description": "JSON companion scratch/p02b_wave1b2_technical_decision_analysis.json lists 20 fabricated/placeholder test file names that do not exist on disk in the tests/ directory. Markdown document cites non-existent tests/verticalSlice03MedicationSafetyDurability.test.js (actual file is tests/verticalSlice07MedicationDurability.test.js).",
+    "missing_files_in_json": [
+      "tests/verticalSlice03MedicationSafetyDurability.test.js",
+      "tests/medicationClosedLoop.test.js",
+      "tests/medicationVerification.test.js",
+      "tests/medicationAdministration.test.js",
+      "tests/medicationAdverseReaction.test.js",
+      "tests/medicationInventoryIntegration.test.js",
+      "tests/medicationSafetyAlerts.test.js",
+      "tests/medicationAuditTrail.test.js",
+      "tests/cpoeApplication.test.js",
+      "tests/safetyAuthorization.test.js",
+      "tests/patientApplication.test.js",
+      "tests/patientSearch.test.js",
+      "tests/patientRegistration.test.js",
+      "tests/patientMrnGeneration.test.js",
+      "tests/patientDuplicateDetection.test.js",
+      "tests/patientBpjsValidation.test.js",
+      "tests/patientAudit.test.js",
+      "tests/patientConcurrency.test.js",
+      "tests/patientDemographics.test.js",
+      "tests/patientLifecycle.test.js"
+    ],
+    "existing_verified_suites_on_disk": {
+      "candidate_a": ["tests/appointmentQueue.test.js", "tests/appointmentQueuePersistence.test.js"],
+      "candidate_b": [
+        "tests/medicationEventStoreHardening.test.js",
+        "tests/medicationKnowledgeBase.test.js",
+        "tests/medicationLifecycleEngine.test.js",
+        "tests/medicationProjectionEngine.test.js",
+        "tests/medicationTerminologyService.test.js",
+        "tests/s04PneumoniaMedicationLifecycleReconciliation.test.js",
+        "tests/sprint4B3ClosedLoopMedicationPlatform.test.js",
+        "tests/verticalSlice07MedicationDurability.test.js"
+      ],
+      "candidate_c1": [
+        "tests/cpoeCdssEndToEndIntegration.test.js",
+        "tests/verticalSlice06AUniversalCpoeDurability.test.js",
+        "tests/phaseD23DSafetyAuthorizationIntegrity.test.js"
+      ],
+      "candidate_c2": ["tests/verticalSlice09DiagnosticInterpretationDurability.test.js"],
+      "candidate_d": [
+        "tests/e2ePatientJourney.test.js",
+        "tests/globalPatientSearchMigration.test.js",
+        "tests/patientAllergyPersistence.test.js",
+        "tests/patientCareJourneyFsm.test.js",
+        "tests/patientJourneyEmpi.test.js",
+        "tests/s01NewPatientRegistrationReconciliation.test.js",
+        "tests/s02FastTrackPatientReconciliation.test.js",
+        "tests/s03DhfInpatientAdmissionReconciliation.test.js",
+        "tests/sprint4B6LongitudinalPatientTrajectory.test.js",
+        "tests/unifiedPatientChartArchitecture.test.js",
+        "tests/verticalSlice01PatientDurability.test.js"
+      ]
+    }
+  },
+  "hidden_recommendation_audit": {
+    "status": "CLEAN",
+    "findings": [],
+    "assessment": "No instances of conditional guidance ('Jika X maka pilih Y'), superlatives ('terbaik', 'paling mudah'), or directional selection were detected. 'Jika Candidate X dipilih' is used strictly to state downstream technical prerequisites should the Human Owner select Candidate X."
+  },
+  "c1_c2_coupling_audit": {
+    "status": "VERIFIED_COMPLIANT",
+    "dissection": {
+      "direct_synchronous_service_coupling": "NO (0 imports between services)",
+      "shared_datastore_mutation": "YES (both mutate clinical_orders)",
+      "shared_transaction_boundary": "NO (distinct pool.connect() connections and independent transactions)"
+    },
+    "assessment": "The three dimensions are strictly maintained independently without collapsing into blanket coupled/decoupled labels."
+  },
+  "c2_cs82_defect_audit": {
+    "status": "VERIFIED_COMPLIANT",
+    "classification": "VERIFIED CURRENT DEFECT / Implementation prerequisite for Candidate C2",
+    "assessment": "The defect is documented factually with precise SQL lines and schema constraint proof without biasing against Candidate C2 or declaring it a disqualified candidate."
+  },
+  "governance_compliance": {
+    "production_changes": 0,
+    "migration_changes": 0,
+    "schema_changes": 0,
+    "test_changes": 0,
+    "changelog_changes": 0,
+    "read_only_status": "COMPLIANT",
+    "canonical_regression_status": "81/81 PASS",
+    "candidate_selected": false,
+    "recommendation_generated": false,
+    "implementation_started": false,
+    "human_owner_decision": "PENDING"
+  }
+}
