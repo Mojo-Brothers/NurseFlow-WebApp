@@ -1,0 +1,146 @@
+{
+  "base_commit": "4efa9362d0e7bce28f541cfdee04caf0308dcdbb",
+  "audited_commit": "9680fc99226f13f671b20b8409a62cbfac014cc3",
+  "read_only": true,
+  "production_changes": 0,
+  "migration_changes": 0,
+  "test_changes": 0,
+  "governance_violations": [
+    {
+      "id": "GV-01",
+      "severity": "MAJOR_AUDIT_INTEGRITY",
+      "type": "CONDITIONAL_RECOMMENDATION_DISGUISED_AS_GUIDANCE",
+      "file": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md",
+      "line_range": "410-417",
+      "quoted_text": "1. Trade-off Fondasi Relasional vs Risiko: Memilih Candidate D... 2. Trade-off Keselamatan Pasien Tertinggi vs Kompleksitas Transaksi: Memilih Candidate B... 3. Trade-off Inti Instruksi Medis vs Kopling Modul: Memilih Candidate C1... 4. Trade-off Alur Penunjang Kritis vs Perbaikan Bug: Memilih Candidate C2... 5. Trade-off Kecepatan Eksekusi vs Dampak: Memilih Candidate A...",
+      "rationale": "Substantively functions as a set of conditional recommendations ('Jika memprioritaskan X -> pilih Candidate Y'), violating the strict NO RECOMMENDATION / NO DECISION GUIDANCE directive."
+    },
+    {
+      "id": "GV-02",
+      "severity": "MAJOR_AUDIT_INTEGRITY",
+      "type": "SUBJECTIVE_RANKING_INEQUALITY",
+      "file": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md",
+      "line_range": "344",
+      "quoted_text": "Kompleksitas rollback: Candidate A (Paling Mudah) < Candidate D < Candidate C2 < Candidate C1 < Candidate B (Paling Rumit).",
+      "rationale": "Creates an explicit inequality chain ranking with superlatives ('Paling Mudah', 'Paling Rumit') without automated rollback test benchmarks or empirical metric formulas. Violates NO RANKING directive."
+    }
+  ],
+  "unsupported_claims": [
+    {
+      "id": "UC-01",
+      "claim": "Kompleksitas rollback: Candidate A (Paling Mudah) < Candidate D < Candidate C2 < Candidate C1 < Candidate B (Paling Rumit)",
+      "file": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md",
+      "reason": "No rollback test suite exists in tests/ and no quantitative rollback cost formula was defined. Subjective reviewer interpretation."
+    },
+    {
+      "id": "UC-02",
+      "claim": "Risiko Regresi terhadap Sistem Global: Paling Rendah (A), Sedang-Tinggi (B), Sedang-Tinggi (C1), Rendah-Sedang (C2), Rendah (D)",
+      "file": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md",
+      "reason": "Qualitative risk tiering asserted without defined formula or empirical defect history."
+    },
+    {
+      "id": "UC-03",
+      "claim": "Kopling Transaksi Sinkron antara C1 dan C2 adalah NOL (100% DECOUPLED)",
+      "file": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md",
+      "reason": "While there are 0 synchronous service imports/calls, both modules directly mutate the shared Stage-0 table clinical_orders. Stating 100% DECOUPLED without qualifying datastore coupling is overly broad."
+    },
+    {
+      "id": "UC-04",
+      "claim": "JCI Accreditation Mappings (IPSG 1, 2, 3; COP; ACC)",
+      "file": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md",
+      "reason": "Repository contains no official JCI audit certification or formal compliance artifacts. Valid only as CONCEPTUAL SAFETY PRINCIPLE MAPPING, not certified compliance."
+    }
+  ],
+  "factual_discrepancies": [
+    {
+      "id": "FD-01",
+      "field": "Base Commit SHA",
+      "claimed": "4efa9368d4d73aa7d27e2a9b2ae8b1b22e118944",
+      "actual": "4efa9362d0e7bce28f541cfdee04caf0308dcdbb",
+      "file": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md:14",
+      "impact": "Git rev-parse on the claimed 40-char hash fails because the 8th character was recorded as 8 instead of 2."
+    },
+    {
+      "id": "FD-02",
+      "field": "Test Coverage Equivalence",
+      "claimed": "Candidate D has 11 existing test suites",
+      "actual": "11 test files reference 'patient', but many test domain models (patientAllergyPersistence, patientCareJourneyFsm) rather than the 10 Stage-0 call sites in patientApplication.service.js.",
+      "file": "docs/audit/P0-2B-WAVE1B2-ARCHITECTURE-DECISION-READINESS-REVIEW.md:258",
+      "impact": "Equating test file count to Stage-0 call site coverage overstates verification readiness."
+    }
+  ],
+  "artifact_drift": [
+    {
+      "id": "AD-01",
+      "expected": "scratch/p02b_wave1b2_architecture_readiness.json",
+      "actual": "scratch/p02b_wave1b2_architecture_readiness_review.json",
+      "status": "EXPECTED_FILE_MISSING",
+      "reason": "Previous audit tool output and documentation generated filename with '_review' suffix."
+    },
+    {
+      "id": "AD-02",
+      "scope": "scratch/ directory files",
+      "status": "UNTRACKED_AND_GITIGNORED",
+      "reason": ".gitignore line 64 ignores scratch/, meaning scratch artifacts cannot be committed to Git history."
+    }
+  ],
+  "evidence_gaps": [
+    {
+      "id": "EG-01",
+      "topic": "Empirical Rollback Complexity",
+      "gap": "No test fixtures or automated rollback benchmark measurements exist."
+    },
+    {
+      "id": "EG-02",
+      "topic": "Real PostgreSQL RLS Test Coverage",
+      "gap": "0 Real RLS tests exist for Candidates A, B, C1, C2, D; all existing candidate tests rely on vi.mock or mock pools."
+    }
+  ],
+  "valid_findings": [
+    {
+      "id": "VF-01",
+      "finding": "CS 82 in diagnosticInterpretation.service.js:528 omits tenant_id on INSERT INTO clinical_orders",
+      "classification": "PROVEN_STATIC_DEFECT",
+      "evidence": "clinical_orders.tenant_id is NOT NULL with DROP DEFAULT in migration 009; query passes 13 columns with zero tenant_id; real PG execution will fail."
+    },
+    {
+      "id": "VF-02",
+      "finding": "All candidate controllers are FAIL-OPEN before Wave 1B.2 remediation",
+      "classification": "DIRECTLY_PROVEN",
+      "evidence": "Candidate A has hardcoded DEFAULT_TENANT_ID; Candidates B, C1, C2, D use un-gated fallback mock actors; 0 of 5 controllers enforce isValidUuid."
+    },
+    {
+      "id": "VF-03",
+      "finding": "Candidate D is a high-degree relational parent / direct FK root",
+      "classification": "DIRECTLY_PROVEN",
+      "evidence": "64 distinct database tables hold direct foreign keys referencing master_patients(id)."
+    },
+    {
+      "id": "VF-04",
+      "finding": "145 Stage-0 RLS Call Sites, 143 HTTP-reachable, 2 unreachable, 42 active Stage-0 routes",
+      "classification": "DIRECTLY_PROVEN",
+      "evidence": "AST function-level execution path verification confirmed bidirectional consistency (144 edges)."
+    },
+    {
+      "id": "VF-05",
+      "finding": "Shared Call Site CS 71 in cpoeApplication.service.js:608",
+      "classification": "DIRECTLY_PROVEN",
+      "evidence": "Reached simultaneously by GET /api/v1/orders/cpoe and GET /api/v1/orders."
+    },
+    {
+      "id": "VF-06",
+      "finding": "Canonical 81/81 regression tests PASS",
+      "classification": "DIRECTLY_PROVEN",
+      "evidence": "Vitest run across 6 canonical test files passes 81/81 tests in 7.62s."
+    },
+    {
+      "id": "VF-07",
+      "finding": "Zero production, schema, migration, or test code modified",
+      "classification": "DIRECTLY_PROVEN",
+      "evidence": "git diff 4efa936..9680fc9 confirms changes were strictly confined to docs/."
+    }
+  ],
+  "human_decision_required": true,
+  "candidate_selected": false,
+  "recommendation_generated": false
+}
