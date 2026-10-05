@@ -288,10 +288,10 @@ Meskipun implementasi C2 berhasil secara substantif dan seluruh tes lulus, audit
 - **Deskripsi:** Pada `server/controllers/diagnosticInterpretation.controller.js`, properti non-tenant seperti `userId`, `username`, dan `role` memiliki fallback nilai default (`'USR-LAB-01'`, `'DOC-DPJP-01'`) apabila properti tersebut tidak ada pada `req.user`.
 - **Dampak Keamanan:** **Nihil pada konteks tenant.** `tenantId` terbukti **tidak memiliki fallback** dan diwajibkan fail-closed 403 `TENANT_CONTEXT_REQUIRED`. Namun, untuk kesempurnaan audit trail masa depan, metadata identitas pengguna sebaiknya diambil murni dari token tanpa fallback hardcoded.
 
-### Finding F-02: Isolasi Tabel Relasional Anak (Child Tables) Mengandalkan Foreign Key Cascade
-- **Tingkat Keparahan:** Low / Architectural Note
-- **Deskripsi:** Tabel `diagnostic_result_notifications`, `diagnostic_secondary_actions`, dan `cpoe_order_items` memiliki `relrowsecurity = false` pada catalog PostgreSQL dan tidak memiliki kolom `tenant_id` langsung.
-- **Dampak Keamanan:** Aman karena tabel-tabel tersebut memiliki *foreign key constraint* ketat ke tabel induk yang dilindungi RLS (`encounters`, `physician_diagnostic_interpretations`, `clinical_orders`), serta akses SQL selalu dilingkupi UoW. Namun, ketiadaan direct RLS pada tabel anak harus dicatat sebagai batas cakupan RLS aktual.
+### Finding F-02: Isolasi Tabel Relasional Anak (Child Tables) Mengandalkan Relasi Foreign Key dan Batasan UoW
+- **Tingkat Keparahan:** Low / Architectural Note (ACCEPTED ARCHITECTURAL FINDING)
+- **Deskripsi:** Tabel child tertentu (`diagnostic_result_notifications`, `diagnostic_secondary_actions`, dan `cpoe_order_items`) memiliki `relrowsecurity = false` pada catalog PostgreSQL dan tidak memiliki kolom `tenant_id` langsung.
+- **Karakteristik Arsitektural:** Tabel child tertentu tidak memiliki direct RLS dan bergantung pada relasi FK serta transaction/UoW boundary yang telah diverifikasi dalam C2. Bukti katalog FK menunjukkan 0 CASCADE, 42 RESTRICT, dan 23 NO ACTION pada relasi master_patients yang sebelumnya diaudit. Akses SQL C2 selalu dilingkupi UoW dan join ke tabel induk yang dilindungi RLS (`encounters`, `physician_diagnostic_interpretations`, `clinical_orders`). Ketiadaan direct RLS pada tabel child ini dicatat sebagai batas cakupan RLS aktual tanpa menggeneralisasi perilaku seluruh skema.
 
 ### Finding F-03: Pembuktian Reused Connection PID pada Test C2-RLS-07 [CLOSED / FULLY PROVEN]
 - **Tingkat Keparahan:** Resolved / Evidentiary Closure
@@ -303,8 +303,8 @@ Meskipun implementasi C2 berhasil secara substantif dan seluruh tes lulus, audit
 - **Status Temuan:** **CLOSED** (Skenario `C2-RLS-07`: **FULLY PROVEN**).
 
 ### Finding F-04: Append-Only Trigger Immutability pada Tabel Audit Logs
-- **Tingkat Keparahan:** Low / Operational Constraint
-- **Deskripsi:** Tabel `universal_audit_logs` memiliki trigger database yang melarang operasi `UPDATE` dan `DELETE` demi integritas audit JCI. Pembersihan data uji (*teardown*) tidak boleh mengeksekusi `DELETE FROM universal_audit_logs`.
+- **Tingkat Keparahan:** Low / Operational Constraint (ACCEPTED OPERATIONAL FINDING)
+- **Deskripsi:** `universal_audit_logs` memiliki perilaku append-only yang ditegakkan oleh database trigger. Test teardown tidak boleh melemahkan atau menghapus enforcement tersebut. Finding ini diterima sebagai karakteristik operasional test/evidence environment dan tidak diubah dalam closure ini.
 
 ---
 
