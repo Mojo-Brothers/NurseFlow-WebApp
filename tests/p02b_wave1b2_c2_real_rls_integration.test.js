@@ -553,15 +553,28 @@ describe('P0-2B WAVE 1B.2 — Candidate C2 Real PostgreSQL & RLS Integration Evi
   // SCENARIO C2-RLS-07: CONNECTION REUSE CLEANLINESS (ZERO GUC BLEED)
   // =========================================================================
   it('C2-RLS-07: Connection reuse cleanliness: DISCARD ALL prevents GUC leak across sequential checkouts', async () => {
-    // Checkout client 1 under Tenant A via UoW
-    await withUnitOfWork({ tenantId: TENANT_A }, async ({ query }) => {
+    // 1. Checkout client #1 under Tenant A via UoW and record backend PID
+    let pidA;
+    await withUnitOfWork({ tenantId: TENANT_A }, async ({ query, client }) => {
+      pidA = client.processID;
+      expect(typeof pidA).toBe('number');
+      expect(pidA).toBeGreaterThan(0);
+
+      const sqlPidRes = await query('SELECT pg_backend_pid() AS pid;');
+      expect(Number(sqlPidRes.rows[0].pid)).toBe(pidA);
+
       const res = await query("SELECT current_setting('app.current_tenant_id', true) AS tenant;");
       expect(res.rows[0].tenant).toBe(TENANT_A);
     });
 
-    // Directly acquire a raw client from the pool without setting tenant
+    // 2. Directly acquire raw client from pool without setting tenant; verify socket reuse and zero bleed
+    let pidRaw;
     const client = await pool.connect();
     try {
+      pidRaw = client.processID;
+      expect(typeof pidRaw).toBe('number');
+      expect(pidRaw).toBe(pidA);
+
       const res = await client.query("SELECT current_setting('app.current_tenant_id', true) AS tenant;");
       // Zero bleed: session GUC must be empty or null
       expect(res.rows[0].tenant).toBeFalsy();
@@ -569,11 +582,25 @@ describe('P0-2B WAVE 1B.2 — Candidate C2 Real PostgreSQL & RLS Integration Evi
       client.release();
     }
 
-    // Checkout client under Tenant B via UoW
-    await withUnitOfWork({ tenantId: TENANT_B }, async ({ query }) => {
+    // 3. Checkout client #2 under Tenant B via UoW; verify same socket reuse and authoritative tenant context
+    let pidB;
+    await withUnitOfWork({ tenantId: TENANT_B }, async ({ query, client }) => {
+      pidB = client.processID;
+      expect(typeof pidB).toBe('number');
+      expect(pidB).toBe(pidA);
+
+      const sqlPidRes = await query('SELECT pg_backend_pid() AS pid;');
+      expect(Number(sqlPidRes.rows[0].pid)).toBe(pidB);
+
       const res = await query("SELECT current_setting('app.current_tenant_id', true) AS tenant;");
+      // Context isolation proof: Tenant B sees TENANT_B, not TENANT_A
       expect(res.rows[0].tenant).toBe(TENANT_B);
     });
+
+    // Explicit two-part proof confirmation:
+    // Part A: Same backend connection identity verified
+    expect(pidA).toBe(pidB);
+    expect(pidRaw).toBe(pidA);
   });
 
   // =========================================================================

@@ -200,7 +200,7 @@ Cacat CS 82 yang sebelumnya menyebabkan kegagalan fatal pada PostgreSQL riil tel
 | **C2-RLS-04** | Penulisan langsung lintas-tenant ditolak oleh PostgreSQL RLS | **PROVEN** | Percobaan `INSERT INTO clinical_orders` dengan `tenant_id = TENANT_B` di dalam sesi Tenant A ditolak oleh PostgreSQL RLS dengan `SQLSTATE 42501` (`insufficient_privilege`) via routine `ExecWithCheckOptions`. |
 | **C2-RLS-05** | Verifikasi CS 82: `clinical_orders` dibuat dengan `tenant_id` eksplisit | **PROVEN** | Baris `clinical_orders` tersimpan dengan `tenant_id = TENANT_A` dan tidak terlihat oleh Tenant B. |
 | **C2-RLS-06** | Atomisitas rollback: kegagalan transaksi tidak menyisakan baris kotor | **PROVEN** | Injeksi `quantity: -1` memicu check constraint violation pada `cpoe_order_items`. Verifikasi DB membuktikan baris `clinical_orders` yang sebelumnya di-insert ikut ter-rollback secara bersih (net count = 0). |
-| **C2-RLS-07** | Kebersihan koneksi: `DISCARD ALL` mencegah kebocoran GUC | **PARTIALLY PROVEN** | Terbukti session GUC `app.current_tenant_id` bernilai falsy setelah koneksi dilepas. Namun, pengujian tidak mencatat `client.processID` untuk membuktikan secara matematis bahwa koneksi yang di-checkout ulang adalah soket fisik yang sama. |
+| **C2-RLS-07** | Kebersihan koneksi: `DISCARD ALL` mencegah kebocoran GUC | **PROVEN** | Terbukti secara deterministik pada PostgreSQL riil: `client.processID` dan `SELECT pg_backend_pid()` dicatat identik pada checkout berturut-turut (`PID_A === PID_B === PID_Raw`). Session GUC terbukti bersih (falsy) pada raw checkout dan beralih otoritatif ke `TENANT_B` tanpa kebocoran konteks Tenant A. |
 | **C2-RLS-08** | Penolakan konteks tenant hilang (HTTP 403) | **PROVEN** | Pemanggilan service tanpa `actor.tenantId` melempar `AUTHORITATIVE_TENANT_REQUIRED` (403) sebelum kueri DB dijalankan. |
 | **C2-RLS-09** | Penolakan format UUID tenant tidak valid (HTTP 403) | **PROVEN** | Pemanggilan service dengan non-UUID string melempar `AUTHORITATIVE_TENANT_REQUIRED` (403). |
 
@@ -293,10 +293,14 @@ Meskipun implementasi C2 berhasil secara substantif dan seluruh tes lulus, audit
 - **Deskripsi:** Tabel `diagnostic_result_notifications`, `diagnostic_secondary_actions`, dan `cpoe_order_items` memiliki `relrowsecurity = false` pada catalog PostgreSQL dan tidak memiliki kolom `tenant_id` langsung.
 - **Dampak Keamanan:** Aman karena tabel-tabel tersebut memiliki *foreign key constraint* ketat ke tabel induk yang dilindungi RLS (`encounters`, `physician_diagnostic_interpretations`, `clinical_orders`), serta akses SQL selalu dilingkupi UoW. Namun, ketiadaan direct RLS pada tabel anak harus dicatat sebagai batas cakupan RLS aktual.
 
-### Finding F-03: Keterbatasan Pembuktian Reused Connection PID pada Test C2-RLS-07
-- **Tingkat Keparahan:** Low / Evidentiary Limitation
-- **Deskripsi:** Test `C2-RLS-07` memverifikasi bahwa GUC `app.current_tenant_id` tidak bocor ke koneksi yang diambil dari pool berikutnya. Namun, test tidak mencatat `client.processID` untuk membuktikan secara matematis bahwa koneksi yang diambil kedua kalinya adalah proses backend PostgreSQL yang identik dengan koneksi pertama.
-- **Status Skenario:** Diklasifikasikan sebagai **PARTIALLY PROVEN** (terbukti tidak bocor secara empiris, namun belum menyertakan asersi identitas PID).
+### Finding F-03: Pembuktian Reused Connection PID pada Test C2-RLS-07 [CLOSED / FULLY PROVEN]
+- **Tingkat Keparahan:** Resolved / Evidentiary Closure
+- **Deskripsi:** Sebelumnya, test `C2-RLS-07` memverifikasi bahwa GUC `app.current_tenant_id` tidak bocor, namun belum mencatat `client.processID`. Test kini telah diperbarui untuk mencatat dan menguji `client.processID` serta `SELECT pg_backend_pid()`.
+- **Bukti Penutupan (Closure Evidence):**
+  - Checkout #1 (`withUnitOfWork` Tenant A): merekam `PID_A` (terverifikasi `PID_A === pg_backend_pid()`).
+  - Checkout Antara (raw pool checkout): merekam `PID_Raw` dan memverifikasi `PID_Raw === PID_A` serta `current_setting('app.current_tenant_id', true)` kosong/falsy (nol kebocoran).
+  - Checkout #2 (`withUnitOfWork` Tenant B): merekam `PID_B` dan memverifikasi `PID_B === PID_A` serta `current_setting('app.current_tenant_id', true) === TENANT_B`.
+- **Status Temuan:** **CLOSED** (Skenario `C2-RLS-07`: **FULLY PROVEN**).
 
 ### Finding F-04: Append-Only Trigger Immutability pada Tabel Audit Logs
 - **Tingkat Keparahan:** Low / Operational Constraint
@@ -316,7 +320,7 @@ Meskipun implementasi C2 berhasil secara substantif dan seluruh tes lulus, audit
 | **RLS Read** | Cross-Tenant Read Isolated | Kueri Tenant A terhadap record Tenant B mengembalikan 0 baris di PostgreSQL | **VERIFIED** |
 | **RLS Write** | Cross-Tenant Write Blocked | PostgreSQL RLS menolak penulisan lintas-tenant dengan `SQLSTATE 42501` | **VERIFIED** |
 | **Rollback** | Transaction Rollback Atomicity | Kegagalan pada `cpoe_order_items` me-rollback baris `clinical_orders` secara bersih | **VERIFIED** |
-| **Connection Reuse** | Zero GUC Bleed via DISCARD ALL | GUC bersih setelah release; tidak mencatat `processID` backend fisik | **VERIFIED WITH FINDINGS** |
+| **Connection Reuse** | Zero GUC Bleed via DISCARD ALL | PID backend PostgreSQL identik (`PID_A === PID_B === PID_Raw`) dan GUC bersih tanpa kebocoran | **VERIFIED (CLOSED)** |
 | **Durability** | 25/25 Scenarios PASS | Suite `verticalSlice09` lulus 25/25; asersi utuh tanpa pelemahan | **VERIFIED** |
 | **Canonical** | 81/81 Baseline PASS | 6 suite regresi kanonik lulus 100% (81/81) tanpa kegagalan | **VERIFIED** |
 | **Combined** | 129/129 Tests PASS | 81 Canonical + 48 C2 = 129 total tests lulus 100% | **VERIFIED** |
