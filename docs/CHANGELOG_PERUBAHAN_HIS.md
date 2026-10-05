@@ -16,6 +16,56 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [05 OKTOBER 2026] — P0-2B WAVE 1B.3: IMPLEMENTASI C1-A (CPOE ORDERS & SAFETY FOUNDATION)
+**Tag Rilis:** `p02b-wave1b3-c1a-foundation`  
+**Kategori:** `[MAJOR]` `[SECURITY]` `[FEATURE]`  
+**Status Implementasi:** `C1-A IMPLEMENTATION = COMPLETED & VERIFIED | CONTROLLER GATE: 5/5 HANDLERS (6 ACTIVE STAGE-0 ROUTES) FAIL-CLOSED 403 (18/18 PASS) | ACTOR PROVENANCE: 100% AUTHENTICATED JWT, ZERO MOCK DEFAULTS (401 FAIL-CLOSED) | CREATEORDER UOW: SINGLE TRANSACTION CLIENT, ZERO SECOND CONNECT, ZERO TRANSACTIONMANAGER | CANCELORDER UOW: DEDICATED TX CLIENT SHARED WITH SAFETY AUTHORIZATION (ZERO POOL.CONNECT) | IDEMPOTENCY RECOVERY: HARDENED TO UNITOFWORK & TENANT-SCOPED (ZERO CROSS-TENANT BLEED) | CS 71 SHARED PATH: SECURED ACROSS /ORDERS/CPOE & /ORDERS | CHILD TABLE ISOLATION: C1-CHILD-01..05 VERIFIED VIA PARENT RLS SCOPING | REAL POSTGRESQL RLS (NURSEFLOW_SECURITY_LAB): 19/19 PASS | CANONICAL BASELINE REGRESSION: 129/129 PASS | GRAND TOTAL: 166/166 PASS (100% GREEN) | DDL MIGRATIONS: 0 | FRONTEND: 0 | SCOPE: C1-A ONLY`  
+**Status Gate P0-2B:** 🛑 **`C1-A SECURITY & TRANSACTION FOUNDATION: COMPLETED | NEXT PHASE: C1-B PENDING HUMAN OWNER AUTHORIZATION | STAGE 0: NO-GO | PRODUCTION: BLOCKED`**
+
+Menindaklanjuti otorisasi resmi oleh **Human Owner** untuk memulai implementasi **Wave 1B.3 Phase C1-A** (CPOE Orders & Safety — Security + Transaction Foundation), telah diselesaikan secara penuh:
+
+#### 1. Gerbang Ingress Kontroler L1 Fail-Closed (`server/controllers/cpoe.controller.js`)
+- Mengimplementasikan gerbang validasi ketat `isValidUuid` pada seluruh 5 handler controller CPOE (melindungi 6 rute aktif Stage-0):
+  - `POST /api/v1/orders/cpoe` (`createOrder`)
+  - `POST /api/v1/orders/cpoe/:id/cancel` (`cancelOrder`)
+  - `GET /api/v1/orders/cpoe/:id` (`getOrderById`)
+  - `GET /api/v1/orders/cpoe/encounter/:encounterId` (`getOrdersByEncounter`)
+  - `GET /api/v1/orders/cpoe` dan `GET /api/v1/orders` (`listOrders` — Shared Call Site CS 71)
+- Setiap request yang tidak menyertakan konteks tenant atau memiliki nilai bukan UUID v4 langsung ditolak dengan status HTTP `403 Forbidden` (`TENANT_CONTEXT_REQUIRED`) sebelum koneksi database diambil.
+- **Eradikasi Penuh Aktor Sintetis:** Seluruh fallback identitas tiruan (`USR-DOC-001`, `DOC-SYSTEM-001`, `dr_siti`, `Dokter Pemeriksa`, `Dokter Pembatal`) dan fallback tenant (`00000000-0000-0000-0000-000000000001` / `DEFAULT_TENANT_ID`) telah dihapus secara tuntas. Request mutasi tanpa aktor JWT sah ditolak dengan HTTP `401 Unauthorized` (`UNAUTHORIZED`).
+
+#### 2. Migrasi Transaksi `createOrder` ke `withUnitOfWork` (`server/services/cpoeApplication.service.js`)
+- Mengeliminasi total ketergantungan pada modul legacy `transactionManager.js`.
+- Seluruh mutasi `createOrder` (lock idempotensi, verifikasi status encounter, insert header `clinical_orders`, insert `cpoe_order_items`, insert `universal_audit_logs`, dan insert `clinical_domain_outbox`) kini berjalan di bawah **1 (satu) klien transaksi terisolasi** (`withUnitOfWork`) dengan tingkat isolasi `READ COMMITTED`.
+- Injeksi otomatis GUC tenant `SET LOCAL app.current_tenant_id` dan sanitasi soket 3-tier (`DISCARD ALL`) sebelum pelepasan koneksi ke pool.
+- Menjamin konsistensi PID: `client.processID === pg_backend_pid()`.
+
+#### 3. Migrasi Transaksi `cancelOrder` ke `withUnitOfWork` & Penyatuan Klien Safety Decision
+- Mengeliminasi alur manual `pool.connect()`, `BEGIN`, `COMMIT`, `ROLLBACK` pada pembatalan order medicolegal.
+- Pemanggilan `safetyAuthorizationService.verifyAndConsumeTransactional` kini menggunakan objek klien transaksi UoW (`client`) yang sama secara sekuensial tanpa membuka koneksi pool kedua (*zero hidden connect*).
+- Log audit pembatalan mencatat `tenant_id` secara eksplisit, memenuhi kebijakan RLS `universal_audit_logs`.
+
+#### 4. Remediasi Cacat Pemulihan Idempotensi (Hardened Recovery)
+- Memperbaiki blok penanganan error 23505 (`uq_clinical_orders_idempotency`): Kueri pemulihan raw `pool.query('SELECT * FROM clinical_orders WHERE idempotency_key = $1;')` tanpa tenant scoping telah dihapus.
+- Alur pemulihan kini dijalankan strictly melalui `withUnitOfWork` dengan filter terisolasi `WHERE idempotency_key = $1 AND tenant_id = $2`. Jika tenant lain mencoba menggunakan key yang sama, data tidak akan bocor ke tenant tersebut.
+
+#### 5. Pengamanan Shared Call Site CS 71 (`listOrders`)
+- Rute `GET /api/v1/orders/cpoe` dan rute kompatibilitas `GET /api/v1/orders` kini sama-sama dilindungi gerbang fail-closed 403.
+- Eksekusi kueri di lapisan service mewajibkan `tenantId` dan berjalan di bawah `withUnitOfWork` sehingga RLS PostgreSQL secara aktif menyaring hasil kueri.
+- Pengambilan item child dilakukan secara sekuensial teratur (`for...of`) tanpa memicu peringatan konkurensi soket pg.
+
+#### 6. Pembuktian Isolasi Child Table (`cpoe_order_items`, C1-CHILD-01..05)
+- Membuktikan bahwa seluruh akses aplikasi ke `cpoe_order_items` selalu dipagari oleh `order_id` yang divalidasi oleh RLS parent `clinical_orders`.
+- Direct query/mutation lintas tenant terhadap child table terbukti menghasilkan 0 baris / ditolak.
+
+#### 7. Verifikasi Pengujian Komprehensif
+- **Unit L1 Controller Gate:** `tests/p02b_wave1b3_c1_l1_controller_gate.test.js` $\to$ **18/18 PASS**.
+- **Real PostgreSQL RLS Integration:** `tests/p02b_wave1b3_c1_real_rls_integration.test.js` $\to$ **19/19 PASS** (15 skenario section G + C1-CHILD-01..05).
+- **Existing Canonical Regression:** 9 file / 129 pengujian $\to$ **129/129 PASS (100% Green, Zero Regression)**.
+- **Grand Total Suite:** **166/166 PASS**.
+
+---
+
 ### 📌 [03 OKTOBER 2026] — P0-2B: IMPLEMENTASI & AUDIT BUKTI TERTUTUP WAVE 1B.2 CANDIDATE C2 (DIAGNOSTIC INTERPRETATION SECURITY FOUNDATION)
 **Tag Rilis:** `p02b-wave1b2-c2-implementation-audit-closure`  
 **Kategori:** `[MAJOR]` `[FEATURE]` `[SECURITY]` `[FIX]` `[AUDIT]`  
