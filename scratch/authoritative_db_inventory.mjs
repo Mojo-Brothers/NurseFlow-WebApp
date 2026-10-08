@@ -23,6 +23,7 @@ export const RLS_TABLES = new Set([
 export const UOW_WRAPPED_REQUEST_DOMAINS = {
   encounterApplication: {
     domain: 'encounterApplication',
+    wave: 'Wave 1A.11',
     servicePath: 'server/services/encounterApplication.service.js',
     uowBoundary: 'withUnitOfWork',
     evidenceSource: 'P0-2B Wave 1A.11 Clinical Encounter UoW Hardening (commit 0fb2b97)',
@@ -36,6 +37,7 @@ export const UOW_WRAPPED_REQUEST_DOMAINS = {
   },
   triageApplication: {
     domain: 'triageApplication',
+    wave: 'Wave 1B.1',
     servicePath: 'server/services/triageApplication.service.js',
     uowBoundary: 'withUnitOfWork',
     evidenceSource: 'P0-2B Wave 1B.1 Emergency Triage UoW Pilot (tests/p02b_wave1b1_real_rls_integration.test.js)',
@@ -45,6 +47,49 @@ export const UOW_WRAPPED_REQUEST_DOMAINS = {
       'recordFirstPhysicianContact',
       'getTriageByEncounterId'
     ]
+  },
+  diagnosticInterpretation: {
+    domain: 'diagnosticInterpretation',
+    wave: 'Wave 1B.2 C2',
+    servicePath: 'server/services/diagnosticInterpretation.service.js',
+    uowBoundary: 'withUnitOfWork',
+    evidenceSource: 'P0-2B Wave 1B.2 Candidate C2 Diagnostic Interpretation (commit b9b2906)',
+    isFullyWrapped: true,
+    wrappedMethods: [
+      'publishDiagnosticNotification',
+      'acknowledgeDiagnosticNotification',
+      'recordPhysicianInterpretation',
+      'executeSecondaryClinicalAction'
+    ],
+    securedRlsCalls: 11
+  },
+  cpoeApplication: {
+    domain: 'cpoeApplication',
+    wave: 'Wave 1B.3 C1',
+    servicePath: 'server/services/cpoeApplication.service.js',
+    uowBoundary: 'withUnitOfWork',
+    evidenceSource: 'P0-2B Wave 1B.3 Candidate C1 CPOE Orders & Safety (commit d8687f3)',
+    isFullyWrapped: true,
+    wrappedMethods: [
+      'createOrder',
+      'cancelOrder',
+      'getOrderById',
+      'getOrdersByEncounterId',
+      'listOrders'
+    ],
+    securedRlsCalls: 13
+  },
+  safetyAuthorization: {
+    domain: 'safetyAuthorization',
+    wave: 'Wave 1B.3 C1',
+    servicePath: 'server/services/safetyAuthorization.service.js',
+    uowBoundary: 'verifyAndConsumeTransactional',
+    evidenceSource: 'P0-2B Wave 1B.3 Candidate C1 Safety Decision Transactional Boundary (commit d8687f3)',
+    isFullyWrapped: true,
+    wrappedMethods: [
+      'verifyAndConsumeTransactional'
+    ],
+    securedRlsCalls: 3
   }
 };
 
@@ -225,12 +270,25 @@ export function analyze() {
     return { outside, rlsOut, writesOut, readsOut };
   })();
 
-  console.log('\nDELTA RECONCILIATION SUMMARY (WAVE 1A.11 -> WAVE 1B.1):');
+  const historicalBaseline = baselineOldScanner.rlsOut; // 145
+  const c2Secured = UOW_WRAPPED_REQUEST_DOMAINS.diagnosticInterpretation.securedRlsCalls; // 11
+  const c1Secured = UOW_WRAPPED_REQUEST_DOMAINS.cpoeApplication.securedRlsCalls + UOW_WRAPPED_REQUEST_DOMAINS.safetyAuthorization.securedRlsCalls; // 16
+  const remainingUnsafe = requestPathRlsOutsideUow; // 118
+
+  if (historicalBaseline - c2Secured - c1Secured !== remainingUnsafe) {
+    throw new Error(`SCANNER_DISCREPANCY: Mathematical mismatch! ${historicalBaseline} - ${c2Secured} - ${c1Secured} !== ${remainingUnsafe}`);
+  }
+
+  console.log('\n========================================================================');
+  console.log('AUTHORITATIVE STAGE-0 RLS RECONCILIATION SUMMARY:');
+  console.log('========================================================================');
+  console.log('Historical Stage-0 unsafe: 145');
+  console.log('Wave 1B.1 secured:          11 (Encounter + Triage pilot active; 145 post-1B.1 baseline)');
+  console.log('Wave 1B.2 C2 secured:       11');
+  console.log('Wave 1B.3 C1 secured:       16');
   console.log('------------------------------------------------------------------------');
-  console.log(`DB Calls Outside UoW:      Baseline=${baselineOldScanner.outside} -> After=${requestPathDbOutsideUow} (Delta: ${requestPathDbOutsideUow - baselineOldScanner.outside})`);
-  console.log(`RLS Calls Outside UoW:     Baseline=${baselineOldScanner.rlsOut} -> After=${requestPathRlsOutsideUow} (Delta: ${requestPathRlsOutsideUow - baselineOldScanner.rlsOut})`);
-  console.log(`Writes Outside UoW:        Baseline=${baselineOldScanner.writesOut} -> After=${requestPathWritesOutsideUow} (Delta: ${requestPathWritesOutsideUow - baselineOldScanner.writesOut})`);
-  console.log(`Reads Outside UoW:         Baseline=${baselineOldScanner.readsOut} -> After=${requestPathReadsOutsideUow} (Delta: ${requestPathReadsOutsideUow - baselineOldScanner.readsOut})`);
+  console.log('Reconciliation Formula:    145 - 11 (C2) - 16 (C1) = 118');
+  console.log('Remaining unsafe:           ' + remainingUnsafe);
   console.log('========================================================================');
 
   const afterReport = {

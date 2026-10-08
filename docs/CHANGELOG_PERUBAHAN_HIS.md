@@ -16,6 +16,26 @@ Dokumen ini adalah **catatan resmi riwayat perubahan dan update sistem HIS** (ba
 >    - `[DOCS]` Perubahan dokumentasi, SRS, atau panduan arsitektur.
 >    - `[CHORE]` Pembersihan berkas, restrukturisasi folder, atau skrip pembantu.
 
+### 📌 [08 OKTOBER 2026] — P0-2B WAVE 1B.3: REMEDIASI CLOSURE C1-A & REKONSILIASI SCANNER AUTHORITATIVE
+**Tag Rilis:** `p02b-wave1b3-c1a-closure-remediation`
+**Kategori:** `[FIX]` `[SECURITY]` `[TEST]` `[DOCS]`
+**Status Implementasi:** `C1-A CLOSURE REMEDIATION = COMPLETED | FAILURE INJECTION GAPS CLOSED: C1-FI-02 (POST-ITEM MUTATION), C1-FI-03 (POST-SAFETY CONSUMPTION), C1-FI-06 (IDEMPOTENCY RECOVERY FAILURE) ALL PROVEN ON REAL POSTGRESQL | AUTHORITATIVE STAGE-0 SCANNER RECONCILED: HISTORICAL 145 -> C2 SECURED 11 -> C1 SECURED 16 -> REMAINING UNSAFE 118 | CHILD TABLE BOUNDARY: APPLICATION-PATH ISOLATION PROVEN, DIRECT DB RLS ABSENT (NO MIGRATION, CONTRACT HONORED) | TEST REGRESSION: BASELINE 129/129 PASS | C1-A REAL RLS 22/22 PASS (INCL 3 FI TESTS) | C1-A CONTROLLER GATE 18/18 PASS | COMBINED SUITE 100% GREEN | DDL MIGRATIONS: 0 | SCHEMA CHANGES: 0 | FRONTEND: 0 | PRODUCTION SCOPE: UNTOUCHED`
+**Status Gate P0-2B:** 🛑 **`C1-A CLOSURE: REMEDIATED & EVIDENCE LOCKED | NEXT PHASE: C1-B PENDING HUMAN OWNER AUTHORIZATION | STAGE 0: NO-GO | PRODUCTION: BLOCKED | REMAINING STAGE-0 UNSAFE CALL SITES: 118`**
+
+Menindaklanjuti audit penerimaan adversarially (adversarial acceptance audit) pada Wave 1B.3 Phase C1-A, telah diselesaikan remediasi penutupan bukti (*closure remediation*):
+1. **Penutupan Gap Failure Injection C1-A (Real PostgreSQL):**
+   - `C1-FI-02`: Injeksi kegagalan eksplisit setelah mutasi baris item child (`cpoe_order_items`) membuktikan rollback atomik penuh (0 orphan header di `clinical_orders`, 0 orphan di `cpoe_order_items`, 0 audit, 0 outbox).
+   - `C1-FI-03`: Injeksi kegagalan eksplisit setelah konsumsi token otorisasi keselamatan (`safetyAuthorizationService.verifyAndConsumeTransactional`) membuktikan konsumsi token dan pembatalan order berbagi boundary transaksi yang sama (status order tetap `ORDERED`, status token kembali `ISSUED`, 0 audit/outbox pembatalan tersisa).
+   - `C1-FI-06`: Pembuktian kegagalan jalur pemulihan idempotensi error 23505 (`uq_clinical_orders_idempotency`) saat tabrakan key lintas tenant (0 order parsial, 0 item yatim, 0 audit/outbox bocor, konteks tenant tetap otoritatif).
+2. **Rekonsiliasi Scanner Authoritative Stage-0 (`scratch/authoritative_db_inventory.mjs`):**
+   - Memperbarui registri UoW untuk memverifikasi dan mendaftarkan Wave 1B.2 C2 (`diagnosticInterpretation`, 11 call sites) dan Wave 1B.3 C1 (`cpoeApplication`, 13 call sites + `safetyAuthorization`, 3 call sites).
+   - Menghasilkan bukti rekonsiliasi matematis: Baseline Historis (145) - C2 (11) - C1 (16) = **118 Call Sites Stage-0 Tersisa**.
+3. **Penegasan Batas Arsitektural Child Table (`cpoe_order_items`):**
+   - Isolasi application-path: `PROVEN` (seluruh kueri aplikasi dibatasi oleh `order_id` yang divalidasi oleh RLS parent `clinical_orders`).
+   - RLS direct database: `ABSENT` (`relrowsecurity = false`, kolom `tenant_id` nihil pada katalog PostgreSQL). Tidak ada klaim palsu bahwa tabel child memiliki proteksi RLS database mandiri.
+
+---
+
 ### 📌 [05 OKTOBER 2026] — P0-2B WAVE 1B.3: IMPLEMENTASI C1-A (CPOE ORDERS & SAFETY FOUNDATION)
 **Tag Rilis:** `p02b-wave1b3-c1a-foundation`  
 **Kategori:** `[MAJOR]` `[SECURITY]` `[FEATURE]`  

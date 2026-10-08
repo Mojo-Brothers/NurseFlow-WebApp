@@ -456,6 +456,241 @@ describe('P0-2B WAVE 1B.3 — Candidate C1 Real PostgreSQL & RLS Integration Evi
   });
 
   // =========================================================================
+  // REMEDIATION: GRANULAR FAILURE INJECTION ACCEPTANCE (C1-FI-02, C1-FI-03, C1-FI-06)
+  // =========================================================================
+  describe('Granular Failure Injection Acceptance: C1-FI-02, C1-FI-03, C1-FI-06', () => {
+    it('C1-FI-02: Failure explicitly injected after item mutation rolls back all rows (clinical_orders=0, cpoe_order_items=0, audit=0, outbox=0)', async () => {
+      const orderId = crypto.randomUUID();
+      const itemId = crypto.randomUUID();
+      const testCorrelationId = `CORR-FI02-${crypto.randomUUID()}`;
+      const testIdempotencyKey = `IDEMP-FI02-${crypto.randomUUID()}`;
+      const orderNumber = `ORD-FI02-${Date.now()}`;
+
+      await expect(
+        withUnitOfWork({ tenantId: TENANT_A }, async ({ query }) => {
+          // 1. Order header successfully inserted
+          await query(`
+            INSERT INTO clinical_orders (
+              id, tenant_id, order_number, patient_id, episode_id, encounter_id,
+              ordered_by, order_category, priority, clinical_indication,
+              status, is_cito, order_items_count, total_estimated_amount,
+              idempotency_key, version, requester_id, requester_name, requester_role,
+              correlation_id, created_at, updated_at
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6,
+              'dr. Siti Rahma, Sp.PD', 'LABORATORY', 'ROUTINE', 'FI-02 Post-item crash simulation',
+              'ORDERED', false, 1, 50000,
+              $7, 1, 'DOC-DPJP-A01', 'dr. Siti Rahma, Sp.PD', 'ROLE_DOCTOR_DPJP',
+              $8, NOW(), NOW()
+            );
+          `, [orderId, TENANT_A, orderNumber, PATIENT_A_ID, EPISODE_A_ID, ENCOUNTER_A_ID, testIdempotencyKey, testCorrelationId]);
+
+          // 2. At least one cpoe_order_items successfully inserted
+          await query(`
+            INSERT INTO cpoe_order_items (
+              id, order_id, item_type, catalog_code, item_name,
+              item_specifications, quantity, unit, unit_price, total_price,
+              priority, status, instructions, created_at, updated_at
+            ) VALUES (
+              $1, $2, 'LABORATORY', 'LAB-FI02', 'Serum Creatinine',
+              '{}', 1, 'TEST', 50000, 50000,
+              'ROUTINE', 'ORDERED', 'Immediate processing', NOW(), NOW()
+            );
+          `, [itemId, orderId]);
+
+          // 3. Explicit failure injection AFTER child item mutation has succeeded
+          throw new Error('C1_FI_02_SIMULATED_FAILURE_AFTER_ITEM_INSERTION');
+        })
+      ).rejects.toThrow('C1_FI_02_SIMULATED_FAILURE_AFTER_ITEM_INSERTION');
+
+      // 4. Verification in PostgreSQL database under Tenant A context: All tables = 0 rows
+      await withUnitOfWork({ tenantId: TENANT_A }, async ({ query }) => {
+        const orderRes = await query('SELECT COUNT(*)::int AS count FROM clinical_orders WHERE id = $1;', [orderId]);
+        expect(orderRes.rows[0].count).toBe(0);
+
+        const itemsRes = await query('SELECT COUNT(*)::int AS count FROM cpoe_order_items WHERE id = $1;', [itemId]);
+        expect(itemsRes.rows[0].count).toBe(0);
+
+        const auditRes = await query('SELECT COUNT(*)::int AS count FROM universal_audit_logs WHERE correlation_id = $1;', [testCorrelationId]);
+        expect(auditRes.rows[0].count).toBe(0);
+
+        const outboxRes = await query('SELECT COUNT(*)::int AS count FROM clinical_domain_outbox WHERE correlation_id = $1;', [testCorrelationId]);
+        expect(outboxRes.rows[0].count).toBe(0);
+      });
+    });
+
+    it('C1-FI-03: Failure explicitly injected after safety authorization consumption preserves original ORDERED status and rolls back token consumption (status remains ISSUED)', async () => {
+      // 1. Prepare valid CPOE order
+      const order = await cpoeApplicationService.createOrder({
+        encounterId: ENCOUNTER_A_ID,
+        patientId: PATIENT_A_ID,
+        orderCategory: 'RADIOLOGY',
+        priority: 'ROUTINE',
+        clinicalIndication: 'Pre-op Thorax PA for safety test',
+        items: [{ catalogCode: 'RAD-THORAX', itemName: 'Thorax PA', quantity: 1, unitPrice: 150000 }]
+      }, ACTOR_A_DOC);
+
+      expect(order.status).toBe('ORDERED');
+
+      // 2. Prepare valid safety authorization / decision
+      const cancellationReason = 'Simulasi kegagalan paska-konsumsi token otorisasi FI-03';
+      let decision;
+      await withUnitOfWork({ tenantId: TENANT_A }, async ({ client }) => {
+        decision = await safetyAuthorizationService.issueSafetyDecision(client, {
+          patientId: PATIENT_A_ID,
+          encounterId: ENCOUNTER_A_ID,
+          actor: ACTOR_A_DOC,
+          action: 'CPOE_ORDER_CANCEL',
+          justification: cancellationReason,
+          tenantId: TENANT_A,
+          targetPayload: {
+            orderId: order.id,
+            cancellationReason
+          }
+        });
+      });
+
+      expect(decision.status).toBe('ISSUED');
+
+      // 3. Begin cancel transaction, execute verifyAndConsumeTransactional, then inject exception
+      await expect(
+        withUnitOfWork({ tenantId: TENANT_A }, async ({ client, query }) => {
+          // Lock order
+          await query('SELECT * FROM clinical_orders WHERE id = $1 FOR UPDATE;', [order.id]);
+
+          // Execute consumption on the transactional client
+          await safetyAuthorizationService.verifyAndConsumeTransactional(client, {
+            safetyDecision: decision,
+            actualCommandPayload: {
+              orderId: order.id,
+              cancellationReason
+            },
+            expectedAction: 'CPOE_ORDER_CANCEL',
+            expectedPatientId: PATIENT_A_ID,
+            expectedEncounterId: ENCOUNTER_A_ID,
+            actor: ACTOR_A_DOC,
+            tenantId: TENANT_A,
+            justification: cancellationReason
+          });
+
+          // Verify that inside ongoing transaction, the token is updated to CONSUMED
+          const inTxTokenRes = await client.query('SELECT status FROM safety_decision_registry WHERE decision_id = $1;', [decision.decisionId]);
+          expect(inTxTokenRes.rows[0].status).toBe('CONSUMED');
+
+          // Mutate order status
+          await query("UPDATE clinical_orders SET status = 'CANCELLED' WHERE id = $1;", [order.id]);
+
+          // INJECT EXCEPTION explicitly AFTER consumption has succeeded!
+          throw new Error('C1_FI_03_SIMULATED_FAILURE_AFTER_SAFETY_TOKEN_CONSUMED');
+        })
+      ).rejects.toThrow('C1_FI_03_SIMULATED_FAILURE_AFTER_SAFETY_TOKEN_CONSUMED');
+
+      // 4. Verify post-rollback database state in PostgreSQL
+      await withUnitOfWork({ tenantId: TENANT_A }, async ({ query }) => {
+        // Order remains in original status
+        const ordRes = await query('SELECT status, version FROM clinical_orders WHERE id = $1;', [order.id]);
+        expect(ordRes.rows[0].status).toBe('ORDERED');
+        expect(ordRes.rows[0].version).toBe(1);
+
+        // Safety decision registry status rolled back to original status ('ISSUED')!
+        const tokRes = await query('SELECT status FROM safety_decision_registry WHERE decision_id = $1;', [decision.decisionId]);
+        expect(tokRes.rows[0].status).toBe('ISSUED');
+
+        // Zero new cancellation audit rows
+        const auditRes = await query(
+          "SELECT COUNT(*)::int AS count FROM universal_audit_logs WHERE resource_id = $1 AND action_type = 'UPDATE';",
+          [order.id]
+        );
+        expect(auditRes.rows[0].count).toBe(0);
+
+        // Zero new outbox events created for cancellation
+        const outboxRes = await query(
+          "SELECT COUNT(*)::int AS count FROM clinical_domain_outbox WHERE aggregate_id = $1 AND event_type = 'ORDER_CANCELLED';",
+          [order.id]
+        );
+        expect(outboxRes.rows[0].count).toBe(0);
+      });
+    });
+
+    it('C1-FI-06: Idempotency recovery failure leaves zero orphan items, zero partial orders, zero audit/outbox leak', async () => {
+      const sharedIdempotencyKey = `IDEMP-FI06-${crypto.randomUUID()}`;
+      const correlationIdB = `CORR-FI06-B-${crypto.randomUUID()}`;
+
+      // 1. Tenant A creates order with shared key successfully
+      const orderA = await cpoeApplicationService.createOrder({
+        encounterId: ENCOUNTER_A_ID,
+        patientId: PATIENT_A_ID,
+        orderCategory: 'PHARMACY',
+        priority: 'ROUTINE',
+        clinicalIndication: 'Tenant A original order for idempotency test',
+        items: [{ catalogCode: 'MED-FI06-A', itemName: 'Paracetamol 500mg', quantity: 10, unitPrice: 2000 }],
+        idempotencyKey: sharedIdempotencyKey
+      }, ACTOR_A_DOC);
+
+      expect(orderA.id).toBeDefined();
+
+      // 2. Tenant B calls createOrder with identical idempotencyKey
+      // This MUST trigger PostgreSQL unique constraint (23505 uq_clinical_orders_idempotency).
+      // Inside createOrder catch block, the recovery query runs under Tenant B context:
+      // SELECT * FROM clinical_orders WHERE idempotency_key = $1 AND tenant_id = TENANT_B
+      // This returns 0 rows (recovery failure), so recovery returns null and re-throws the error.
+      await expect(
+        cpoeApplicationService.createOrder({
+          encounterId: ENCOUNTER_B_ID,
+          patientId: PATIENT_B_ID,
+          orderCategory: 'PHARMACY',
+          priority: 'ROUTINE',
+          clinicalIndication: 'Tenant B colliding idempotency key attempt',
+          items: [{ catalogCode: 'MED-FI06-B', itemName: 'Amoxicillin 500mg', quantity: 10, unitPrice: 5000 }],
+          idempotencyKey: sharedIdempotencyKey
+        }, ACTOR_B_DOC, '192.168.2.1', correlationIdB)
+      ).rejects.toThrow();
+
+      // 3. PostgreSQL Database State Verification: Zero leakage, zero orphan rows under Tenant B
+      await withUnitOfWork({ tenantId: TENANT_B }, async ({ query }) => {
+        // Zero partial orders under Tenant B for this attempt
+        const bOrderRes = await query(
+          'SELECT COUNT(*)::int AS count FROM clinical_orders WHERE idempotency_key = $1 AND tenant_id = $2;',
+          [sharedIdempotencyKey, TENANT_B]
+        );
+        expect(bOrderRes.rows[0].count).toBe(0);
+
+        // Zero orphan items for this attempt
+        const bItemRes = await query(
+          "SELECT COUNT(*)::int AS count FROM cpoe_order_items WHERE catalog_code = 'MED-FI06-B';"
+        );
+        expect(bItemRes.rows[0].count).toBe(0);
+
+        // Zero audit logs for Tenant B on this correlation ID
+        const bAuditRes = await query(
+          'SELECT COUNT(*)::int AS count FROM universal_audit_logs WHERE correlation_id = $1;',
+          [correlationIdB]
+        );
+        expect(bAuditRes.rows[0].count).toBe(0);
+
+        // Zero outbox events for Tenant B on this correlation ID
+        const bOutboxRes = await query(
+          'SELECT COUNT(*)::int AS count FROM clinical_domain_outbox WHERE correlation_id = $1;',
+          [correlationIdB]
+        );
+        expect(bOutboxRes.rows[0].count).toBe(0);
+      });
+
+      // 4. Verify Tenant A original order remains intact and unchanged in PostgreSQL
+      await withUnitOfWork({ tenantId: TENANT_A }, async ({ query }) => {
+        const aOrderRes = await query('SELECT status, version FROM clinical_orders WHERE id = $1;', [orderA.id]);
+        expect(aOrderRes.rows[0].status).toBe('ORDERED');
+        expect(aOrderRes.rows[0].version).toBe(1);
+      });
+
+      // 5. Tenant B cannot read Tenant A order (fails with ORDER_NOT_FOUND)
+      await expect(
+        cpoeApplicationService.getOrderById(orderA.id, { tenantId: TENANT_B })
+      ).rejects.toThrow('ORDER_NOT_FOUND');
+    });
+  });
+
+  // =========================================================================
   // SCENARIO 9 & 10: IDEMPOTENCY REPLAY & CROSS-TENANT ISOLATION
   // =========================================================================
   describe('Scenarios 9 & 10: Idempotency Replay & Cross-Tenant Isolation', () => {

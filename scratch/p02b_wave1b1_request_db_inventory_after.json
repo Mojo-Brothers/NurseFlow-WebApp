@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-30T08:33:49.199Z",
-  "productionRequestDbBypassCount": 846,
-  "filesCount": 30,
-  "rlsImpactedCallSites": 157,
+  "generatedAt": "2026-10-02T06:19:38.001Z",
+  "productionRequestDbBypassCount": 831,
+  "filesCount": 29,
+  "rlsImpactedCallSites": 146,
   "referenceImplementation": "server/services/encounterApplication.service.js",
   "encounterDomainMigrated": true,
   "files": [
@@ -3088,7 +3088,7 @@
       "directDbAccessCount": 39,
       "calls": [
         {
-          "line": 64,
+          "line": 65,
           "method": "if",
           "callType": "getPool",
           "isWrite": false,
@@ -3100,7 +3100,7 @@
           "isUow": false
         },
         {
-          "line": 68,
+          "line": 69,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3112,7 +3112,7 @@
           "isUow": false
         },
         {
-          "line": 89,
+          "line": 90,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3124,7 +3124,7 @@
           "isUow": false
         },
         {
-          "line": 96,
+          "line": 97,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3136,7 +3136,7 @@
           "isUow": false
         },
         {
-          "line": 99,
+          "line": 100,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3148,7 +3148,7 @@
           "isUow": false
         },
         {
-          "line": 114,
+          "line": 126,
           "method": "if",
           "callType": "getPool",
           "isWrite": false,
@@ -3162,7 +3162,7 @@
           "isUow": false
         },
         {
-          "line": 121,
+          "line": 133,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3176,7 +3176,7 @@
           "isUow": false
         },
         {
-          "line": 181,
+          "line": 193,
           "method": "if",
           "callType": "getPool",
           "isWrite": false,
@@ -3190,7 +3190,7 @@
           "isUow": false
         },
         {
-          "line": 187,
+          "line": 199,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3204,7 +3204,7 @@
           "isUow": false
         },
         {
-          "line": 190,
+          "line": 202,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3218,7 +3218,7 @@
           "isUow": false
         },
         {
-          "line": 204,
+          "line": 216,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3232,7 +3232,7 @@
           "isUow": false
         },
         {
-          "line": 223,
+          "line": 235,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3246,7 +3246,7 @@
           "isUow": false
         },
         {
-          "line": 238,
+          "line": 250,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3258,7 +3258,7 @@
           "isUow": false
         },
         {
-          "line": 260,
+          "line": 272,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3273,7 +3273,7 @@
           "isUow": false
         },
         {
-          "line": 268,
+          "line": 280,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3287,7 +3287,7 @@
           "isUow": false
         },
         {
-          "line": 274,
+          "line": 286,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3301,7 +3301,7 @@
           "isUow": false
         },
         {
-          "line": 277,
+          "line": 289,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3313,7 +3313,7 @@
           "isUow": false
         },
         {
-          "line": 314,
+          "line": 326,
           "method": "if",
           "callType": "getPool",
           "isWrite": false,
@@ -3325,7 +3325,7 @@
           "isUow": false
         },
         {
-          "line": 321,
+          "line": 333,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3337,7 +3337,7 @@
           "isUow": false
         },
         {
-          "line": 343,
+          "line": 355,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3349,7 +3349,7 @@
           "isUow": false
         },
         {
-          "line": 368,
+          "line": 380,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3363,7 +3363,7 @@
           "isUow": false
         },
         {
-          "line": 374,
+          "line": 386,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3377,7 +3377,7 @@
           "isUow": false
         },
         {
-          "line": 377,
+          "line": 389,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3389,7 +3389,7 @@
           "isUow": false
         },
         {
-          "line": 392,
+          "line": 404,
           "method": "if",
           "callType": "getPool",
           "isWrite": false,
@@ -3403,7 +3403,7 @@
           "isUow": false
         },
         {
-          "line": 398,
+          "line": 410,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3417,7 +3417,7 @@
           "isUow": false
         },
         {
-          "line": 400,
+          "line": 412,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3431,7 +3431,7 @@
           "isUow": false
         },
         {
-          "line": 420,
+          "line": 432,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3445,7 +3445,7 @@
           "isUow": false
         },
         {
-          "line": 436,
+          "line": 448,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3459,7 +3459,7 @@
           "isUow": false
         },
         {
-          "line": 442,
+          "line": 454,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3473,7 +3473,7 @@
           "isUow": false
         },
         {
-          "line": 445,
+          "line": 457,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3485,7 +3485,7 @@
           "isUow": false
         },
         {
-          "line": 496,
+          "line": 508,
           "method": "createDischargeSummary",
           "callType": "getPool",
           "isWrite": false,
@@ -3499,7 +3499,7 @@
           "isUow": false
         },
         {
-          "line": 502,
+          "line": 514,
           "method": "createDischargeSummary",
           "callType": "client.query",
           "isWrite": false,
@@ -3513,7 +3513,7 @@
           "isUow": false
         },
         {
-          "line": 505,
+          "line": 517,
           "method": "createDischargeSummary",
           "callType": "client.query",
           "isWrite": false,
@@ -3527,7 +3527,7 @@
           "isUow": false
         },
         {
-          "line": 533,
+          "line": 545,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -3539,7 +3539,7 @@
           "isUow": false
         },
         {
-          "line": 549,
+          "line": 561,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3554,7 +3554,7 @@
           "isUow": false
         },
         {
-          "line": 568,
+          "line": 580,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3569,7 +3569,7 @@
           "isUow": false
         },
         {
-          "line": 576,
+          "line": 588,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3583,7 +3583,7 @@
           "isUow": false
         },
         {
-          "line": 582,
+          "line": 594,
           "method": "if",
           "callType": "client.query",
           "isWrite": true,
@@ -3597,7 +3597,7 @@
           "isUow": false
         },
         {
-          "line": 585,
+          "line": 597,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -5620,7 +5620,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 334,
@@ -5635,7 +5635,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 340,
@@ -5650,7 +5650,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 387,
@@ -5664,7 +5664,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 388,
@@ -5678,7 +5678,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 391,
@@ -5692,7 +5692,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 393,
@@ -5706,7 +5706,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 445,
@@ -5720,7 +5720,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 454,
@@ -5735,7 +5735,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 472,
@@ -5749,7 +5749,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 504,
@@ -5763,7 +5763,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 531,
@@ -5775,7 +5775,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 539,
@@ -5787,7 +5787,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 558,
@@ -5802,7 +5802,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 559,
@@ -5817,7 +5817,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 565,
@@ -5831,7 +5831,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 581,
@@ -5845,7 +5845,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 582,
@@ -5860,7 +5860,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 590,
@@ -5874,7 +5874,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 608,
@@ -5888,7 +5888,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 636,
@@ -5902,7 +5902,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 639,
@@ -5916,11 +5916,11 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         }
       ],
-      "isUowDomain": false,
-      "uowEvidence": null
+      "isUowDomain": true,
+      "uowEvidence": "P0-2B Wave 1B.3 Candidate C1 CPOE Orders & Safety (commit d8687f3)"
     },
     {
       "filePath": "server/services/diagnosticInterpretation.service.js",
@@ -5939,7 +5939,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 83,
@@ -5953,7 +5953,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 86,
@@ -5967,7 +5967,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 89,
@@ -5981,7 +5981,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 127,
@@ -5993,7 +5993,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 154,
@@ -6007,7 +6007,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 182,
@@ -6019,7 +6019,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 185,
@@ -6031,7 +6031,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 205,
@@ -6045,7 +6045,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 206,
@@ -6059,7 +6059,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 209,
@@ -6073,7 +6073,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 211,
@@ -6087,7 +6087,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 247,
@@ -6099,7 +6099,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 257,
@@ -6113,7 +6113,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 278,
@@ -6125,7 +6125,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 281,
@@ -6137,7 +6137,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 317,
@@ -6151,7 +6151,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 318,
@@ -6165,7 +6165,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 321,
@@ -6179,7 +6179,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 323,
@@ -6193,7 +6193,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 364,
@@ -6205,7 +6205,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 397,
@@ -6217,7 +6217,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 416,
@@ -6233,7 +6233,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 424,
@@ -6247,7 +6247,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 448,
@@ -6261,7 +6261,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 473,
@@ -6273,7 +6273,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 479,
@@ -6285,7 +6285,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 504,
@@ -6299,7 +6299,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 505,
@@ -6313,7 +6313,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 508,
@@ -6327,7 +6327,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 510,
@@ -6341,7 +6341,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 528,
@@ -6355,7 +6355,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 553,
@@ -6369,7 +6369,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 588,
@@ -6381,7 +6381,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": true,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 604,
@@ -6397,7 +6397,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 612,
@@ -6411,7 +6411,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 636,
@@ -6423,7 +6423,7 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 639,
@@ -6435,11 +6435,11 @@
           "touchesRlsTable": false,
           "tenantContextRequired": false,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         }
       ],
-      "isUowDomain": false,
-      "uowEvidence": null
+      "isUowDomain": true,
+      "uowEvidence": "P0-2B Wave 1B.2 Candidate C2 Diagnostic Interpretation (commit b9b2906)"
     },
     {
       "filePath": "server/services/encounterApplication.service.js",
@@ -6481,10 +6481,10 @@
     {
       "filePath": "server/services/governanceScanner.service.js",
       "domain": "governanceScanner",
-      "directDbAccessCount": 5,
+      "directDbAccessCount": 10,
       "calls": [
         {
-          "line": 130,
+          "line": 135,
           "method": "for",
           "callType": "getPool",
           "isWrite": false,
@@ -6498,7 +6498,7 @@
           "isUow": false
         },
         {
-          "line": 131,
+          "line": 136,
           "method": "for",
           "callType": "pool.connect",
           "isWrite": false,
@@ -6512,7 +6512,7 @@
           "isUow": false
         },
         {
-          "line": 133,
+          "line": 138,
           "method": "for",
           "callType": "client.query",
           "isWrite": false,
@@ -6528,7 +6528,7 @@
           "isUow": false
         },
         {
-          "line": 140,
+          "line": 145,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
@@ -6544,14 +6544,95 @@
           "isUow": false
         },
         {
-          "line": 147,
+          "line": 152,
           "method": "if",
           "callType": "client.query",
           "isWrite": false,
           "isTx": false,
           "tablesTouched": [
             "pg_namespace",
-            "pg_policy"
+            "pg_policy",
+            "pg_class"
+          ],
+          "touchesRlsTable": false,
+          "tenantContextRequired": false,
+          "canUseReadOnlyUow": true,
+          "isUow": false
+        },
+        {
+          "line": 155,
+          "method": "if",
+          "callType": "client.query",
+          "isWrite": false,
+          "isTx": false,
+          "tablesTouched": [
+            "pg_policy",
+            "pg_class",
+            "pg_namespace"
+          ],
+          "touchesRlsTable": false,
+          "tenantContextRequired": false,
+          "canUseReadOnlyUow": true,
+          "isUow": false
+        },
+        {
+          "line": 163,
+          "method": "if",
+          "callType": "client.query",
+          "isWrite": false,
+          "isTx": false,
+          "tablesTouched": [
+            "pg_policy",
+            "pg_class",
+            "pg_namespace"
+          ],
+          "touchesRlsTable": false,
+          "tenantContextRequired": false,
+          "canUseReadOnlyUow": true,
+          "isUow": false
+        },
+        {
+          "line": 171,
+          "method": "if",
+          "callType": "client.query",
+          "isWrite": false,
+          "isTx": false,
+          "tablesTouched": [
+            "pg_namespace",
+            "pg_policy",
+            "pg_class"
+          ],
+          "touchesRlsTable": false,
+          "tenantContextRequired": false,
+          "canUseReadOnlyUow": true,
+          "isUow": false
+        },
+        {
+          "line": 177,
+          "method": "if",
+          "callType": "client.query",
+          "isWrite": false,
+          "isTx": false,
+          "tablesTouched": [
+            "pg_policy",
+            "pg_class",
+            "pg_namespace"
+          ],
+          "touchesRlsTable": false,
+          "tenantContextRequired": false,
+          "canUseReadOnlyUow": true,
+          "isUow": false
+        },
+        {
+          "line": 183,
+          "method": "if",
+          "callType": "client.query",
+          "isWrite": false,
+          "isTx": false,
+          "tablesTouched": [
+            "pg_policy",
+            "pg_class",
+            "pg_namespace"
           ],
           "touchesRlsTable": false,
           "tenantContextRequired": false,
@@ -11370,7 +11451,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 252,
@@ -11384,7 +11465,7 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
+          "isUow": true
         },
         {
           "line": 344,
@@ -11398,299 +11479,18 @@
           "touchesRlsTable": true,
           "tenantContextRequired": true,
           "canUseReadOnlyUow": false,
-          "isUow": false
-        }
-      ],
-      "isUowDomain": false,
-      "uowEvidence": null
-    },
-    {
-      "filePath": "server/services/triageApplication.service.js",
-      "domain": "triageApplication",
-      "directDbAccessCount": 20,
-      "calls": [
-        {
-          "line": 130,
-          "method": "if",
-          "callType": "getPool",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 131,
-          "method": "if",
-          "callType": "pool.connect",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 134,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 137,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 179,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": false,
-          "tablesTouched": [],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": true,
-          "isUow": true
-        },
-        {
-          "line": 216,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": false,
-          "tablesTouched": [],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": true,
-          "isUow": true
-        },
-        {
-          "line": 230,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": true,
-          "isTx": false,
-          "tablesTouched": [
-            "encounter",
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 250,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": true,
-          "isTx": false,
-          "tablesTouched": [
-            "universal_audit_logs"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 276,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 285,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": false,
-          "tablesTouched": [],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": true,
-          "isUow": true
-        },
-        {
-          "line": 300,
-          "method": "recordFirstPhysicianContact",
-          "callType": "getPool",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [
-            "triage_sla_timers"
-          ],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 301,
-          "method": "recordFirstPhysicianContact",
-          "callType": "pool.connect",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [
-            "triage_sla_timers"
-          ],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 304,
-          "method": "recordFirstPhysicianContact",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [
-            "triage_sla_timers"
-          ],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 306,
-          "method": "recordFirstPhysicianContact",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [
-            "triage_sla_timers"
-          ],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 333,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": true,
-          "isTx": false,
-          "tablesTouched": [
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 341,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": true,
-          "isTx": true,
-          "tablesTouched": [
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 346,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": true,
-          "isTx": true,
-          "tablesTouched": [
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 349,
-          "method": "if",
-          "callType": "client.query",
-          "isWrite": false,
-          "isTx": true,
-          "tablesTouched": [],
-          "touchesRlsTable": false,
-          "tenantContextRequired": false,
-          "canUseReadOnlyUow": false,
-          "isUow": true
-        },
-        {
-          "line": 360,
-          "method": "getTriageByEncounterId",
-          "callType": "getPool",
-          "isWrite": false,
-          "isTx": false,
-          "tablesTouched": [
-            "triage_assessments",
-            "master_patients",
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": true,
-          "isUow": true
-        },
-        {
-          "line": 370,
-          "method": "getTriageByEncounterId",
-          "callType": "pool.query",
-          "isWrite": false,
-          "isTx": false,
-          "tablesTouched": [
-            "encounters"
-          ],
-          "touchesRlsTable": true,
-          "tenantContextRequired": true,
-          "canUseReadOnlyUow": true,
           "isUow": true
         }
       ],
       "isUowDomain": true,
-      "uowEvidence": "P0-2B Wave 1B.1 Emergency Triage UoW Pilot (tests/p02b_wave1b1_real_rls_integration.test.js)"
+      "uowEvidence": "P0-2B Wave 1B.3 Candidate C1 Safety Decision Transactional Boundary (commit d8687f3)"
     }
   ],
   "scannerEngine": "Authoritative UoW Multi-Domain AST Scanner Rev 2.0",
   "uowRegistry": {
     "encounterApplication": {
       "domain": "encounterApplication",
+      "wave": "Wave 1A.11",
       "servicePath": "server/services/encounterApplication.service.js",
       "uowBoundary": "withUnitOfWork",
       "evidenceSource": "P0-2B Wave 1A.11 Clinical Encounter UoW Hardening (commit 0fb2b97)",
@@ -11704,6 +11504,7 @@
     },
     "triageApplication": {
       "domain": "triageApplication",
+      "wave": "Wave 1B.1",
       "servicePath": "server/services/triageApplication.service.js",
       "uowBoundary": "withUnitOfWork",
       "evidenceSource": "P0-2B Wave 1B.1 Emergency Triage UoW Pilot (tests/p02b_wave1b1_real_rls_integration.test.js)",
@@ -11713,6 +11514,49 @@
         "recordFirstPhysicianContact",
         "getTriageByEncounterId"
       ]
+    },
+    "diagnosticInterpretation": {
+      "domain": "diagnosticInterpretation",
+      "wave": "Wave 1B.2 C2",
+      "servicePath": "server/services/diagnosticInterpretation.service.js",
+      "uowBoundary": "withUnitOfWork",
+      "evidenceSource": "P0-2B Wave 1B.2 Candidate C2 Diagnostic Interpretation (commit b9b2906)",
+      "isFullyWrapped": true,
+      "wrappedMethods": [
+        "publishDiagnosticNotification",
+        "acknowledgeDiagnosticNotification",
+        "recordPhysicianInterpretation",
+        "executeSecondaryClinicalAction"
+      ],
+      "securedRlsCalls": 11
+    },
+    "cpoeApplication": {
+      "domain": "cpoeApplication",
+      "wave": "Wave 1B.3 C1",
+      "servicePath": "server/services/cpoeApplication.service.js",
+      "uowBoundary": "withUnitOfWork",
+      "evidenceSource": "P0-2B Wave 1B.3 Candidate C1 CPOE Orders & Safety (commit d8687f3)",
+      "isFullyWrapped": true,
+      "wrappedMethods": [
+        "createOrder",
+        "cancelOrder",
+        "getOrderById",
+        "getOrdersByEncounterId",
+        "listOrders"
+      ],
+      "securedRlsCalls": 13
+    },
+    "safetyAuthorization": {
+      "domain": "safetyAuthorization",
+      "wave": "Wave 1B.3 C1",
+      "servicePath": "server/services/safetyAuthorization.service.js",
+      "uowBoundary": "verifyAndConsumeTransactional",
+      "evidenceSource": "P0-2B Wave 1B.3 Candidate C1 Safety Decision Transactional Boundary (commit d8687f3)",
+      "isFullyWrapped": true,
+      "wrappedMethods": [
+        "verifyAndConsumeTransactional"
+      ],
+      "securedRlsCalls": 3
     }
   }
 }
